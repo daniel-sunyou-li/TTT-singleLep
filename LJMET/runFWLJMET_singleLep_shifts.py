@@ -1,9 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 import os
 
-
 relBase = os.environ['CMSSW_BASE']
-
 
 ## PARSE ARGUMENTS
 from FWCore.ParameterSet.VarParsing import VarParsing
