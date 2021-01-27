@@ -15,9 +15,13 @@ parser.add_argument("--brux",action="store_true")
 parser.add_argument("--outfolder",action="store",default="FWLJMET_crab_output")
 option = parser.parse_args()
 
+if option.year not in [ "2016", "2017", "2018" ]: 
+	print( "Invalid '--year' argument: {}.  Use: 2016, 2017, 2018".format( option.year ) )
+	sys.exit()
+
 #Sample list file
-sampleListPath = "sample_list_"+option.finalState+option.year+".py"
-sample = imp.load_source("Sample",sampleListPath,open(sampleListPath,"r"))
+sampleListPath = "sample_list_"+option.finalState+".py"
+sample = imp.load_source("Sample",sampleListPath,open(sampleListPath,"r"))[ option.year ]
 
 ####################
 ### SET YOUR STRINGS
