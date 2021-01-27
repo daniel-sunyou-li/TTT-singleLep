@@ -126,35 +126,26 @@ if __name__=='__main__':
 
         #### fourtops MC
         create_crab_config_files_from_template(
-                sample.fourtopssigdict,
+                sample.threetopssigdict,
                 ISMC='True',
                 ISVLQSIGNAL='False',
                 ISTTBAR='False',
  		  DOGENHT='False',
                 )
         create_crab_config_files_from_template(
-                sample.fourtopsttdict,
+                sample.threetopsttdict,
                 ISMC='True',
                 ISVLQSIGNAL='False',
                 ISTTBAR='True',
  		  DOGENHT='False',
                 )
         create_crab_config_files_from_template(
-                sample.fourtopsbkgdict,
+                sample.threetopsbkgdict,
                 ISMC='True',
                 ISVLQSIGNAL='False',
                 ISTTBAR='False',
  		  DOGENHT='False',
                 )
-
-	#### VLQ signal MC
-	create_crab_config_files_from_template(
-		sample.signaldict,
-		ISMC='True',
-		ISVLQSIGNAL='True',
-		ISTTBAR='False',
-		DOGENHT='False',
-		)
 
 	#### Data
 	create_crab_config_files_from_template(
