@@ -6,7 +6,7 @@ parser.add_argument("--year",action="store")
 option = parser.parse_args()
 
 #Sample list file
-sampleListPath = "sample_list_"+option.finalState+option.year+".py"
+sampleListPath = "sample_list_"+option.finalState+".py"
 sample = imp.load_source("Sample",sampleListPath,open(sampleListPath,"r"))
 
 home = os.environ['HOME']
@@ -27,7 +27,10 @@ def submit_multiple_crab_jobs(sample_dict):
 
 if __name__ == '__main__':
 
-	submit_multiple_crab_jobs(sample.signaldict)
-	submit_multiple_crab_jobs(sample.bkgdict)
-	submit_multiple_crab_jobs(sample.ttbarbkgdict)
-	submit_multiple_crab_jobs(sample.datadict)
+	submit_multiple_crab_jobs( sample.bkgdict[ option.year ] )
+	submit_multiple_crab_jobs( sample.bkghtdict[ option.year ] )
+	submit_multiple_crab_jobs( sample.ttbarbkgdict[ option.year ] )
+	submit_multiple_crab_jobs( sample.threetopsttdict[ option.year ] )
+	submit_multiple_crab_jobs( sample.threetopsbkgdict[ option.year ] )
+	submit_multiple_crab_jobs( sample.signaldict[ option.year ] )
+	submit_multiple_crab_jobs( sample.datadict[ option.year ] )
