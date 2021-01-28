@@ -100,7 +100,16 @@ def create_crab_config_files_from_template(sample_dict,**kwargs):
 if __name__=='__main__':
 
 	os.system('mkdir -vp '+CRABCONFIG_DIR)
-
+	
+	#### Sig MC - TTT
+        create_crab_config_files_from_template(
+                sample.signaldict,
+                ISMC='True',
+                ISVLQSIGNAL='False',
+                ISTTBAR='False',
+ 		DOGENHT='False',
+                )
+	
 	#### Bkg MC - no ttbar - yes MLM
 	create_crab_config_files_from_template(
 		sample.bkghtdict,
@@ -128,27 +137,20 @@ if __name__=='__main__':
  		DOGENHT='False',
  		)
 
-        #### fourtops MC
-        create_crab_config_files_from_template(
-                sample.threetopssigdict,
-                ISMC='True',
-                ISVLQSIGNAL='False',
-                ISTTBAR='False',
- 		  DOGENHT='False',
-                )
+        #### threetops mc
         create_crab_config_files_from_template(
                 sample.threetopsttdict,
                 ISMC='True',
                 ISVLQSIGNAL='False',
                 ISTTBAR='True',
- 		  DOGENHT='False',
+ 		DOGENHT='False',
                 )
         create_crab_config_files_from_template(
                 sample.threetopsbkgdict,
                 ISMC='True',
                 ISVLQSIGNAL='False',
                 ISTTBAR='False',
- 		  DOGENHT='False',
+ 		DOGENHT='False',
                 )
 
 	#### Data
