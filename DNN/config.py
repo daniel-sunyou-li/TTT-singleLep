@@ -214,13 +214,25 @@ weightStr = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPr
             "(MCWeight_MultiLepCalc / abs(MCWeight_MultiLepCalc) ) * xsecEff * tthfWeight * njetsWeight * btagCSVWeight * btagCSVRenormWeight"
 
 # general cut, add selection based cuts in training scripts
-cutStr =  "( ( leptonPt_MultiLepCalc > 20 && isElectron ) || " + \
-          "( leptonPt_MultiLepCalc > 20 && isMuon ) ) && " + \
-          "( corr_met_MultiLepCalc > 60 ) && " + \
-          "( MT_lepMet > 60 ) && " + \
-          "( theJetPt_JetSubCalc_PtOrdered[0] > 0 ) && " + \
-          "( theJetPt_JetSubCalc_PtOrdered[1] > 0 ) && " + \
-          "( theJetPt_JetSubCalc_PtOrdered[2] > 0 ) && " + \
-          "( minDR_lepJet > 0.4 ) && " + \
-          "( AK4HT > 250 ) && " + \
+
+cut = {
+  "lepPt":   20,
+  "met":     60,
+  "MT_lmet": 60,
+  "JetPt0":  0,
+  "JetPt1":  0,
+  "JetPt2":  0,
+  "minDR":   0.4,
+  "HT":      250
+}
+
+cutStr =  "( ( leptonPt_MultiLepCalc > {} && isElectron ) || ".format( cut["lepPt"] ) + \
+          "( leptonPt_MultiLepCalc > {} && isMuon ) ) && ".format( cut["lepPt"] ) + \
+          "( corr_met_MultiLepCalc > {} ) && ".format( cut["met"] ) + \
+          "( MT_lepMet > {} ) && ".format( cut["MT_lmet"] ) + \
+          "( theJetPt_JetSubCalc_PtOrdered[0] > {} ) && ".format( cut["JetPt0"] ) + \
+          "( theJetPt_JetSubCalc_PtOrdered[1] > {} ) && ".format( cut["JetPt1"] ) + \
+          "( theJetPt_JetSubCalc_PtOrdered[2] > {} ) && ".format( cut["JetPt2"] ) + \
+          "( minDR_lepJet > {} ) && ".format( cut["minDR"] ) + \
+          "( AK4HT > {} ) && ".format( cut["HT"] ) + \
           "( DataPastTriggerX == 1 ) && ( MCPastTriggerX == 1 )"
