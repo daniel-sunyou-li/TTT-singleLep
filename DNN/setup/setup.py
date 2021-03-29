@@ -10,7 +10,7 @@ sys.path.insert(0,"../DNN")
 import config
 
 # setup the working area
-home = os.path.expanduser( "~/nobackup/CMSSW_10_2_13/src/TTT-singleLep/DNN" )
+home = os.path.expanduser( "~/nobackup/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN" )
 brux_pwd = None
 
 parser = ArgumentParser()
