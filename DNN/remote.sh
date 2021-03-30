@@ -16,7 +16,7 @@ xrdcp -s root://cmseos.fnal.gov//store/user/$eos_username/CMSSW946_ttt.tgz .
 tar -xf CMSSW946_ttt.tgz
 rm CMSSW946_ttt.tgz
 
-cd ./CMSSW_9_4_6_patch1/src/TTT_TMVA_DNN
+cd ./CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/
 
 export SCRAM_ARCH=slc7_amd64_gcc630
 eval `scramv1 runtime -sh`

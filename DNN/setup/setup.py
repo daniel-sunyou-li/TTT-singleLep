@@ -264,7 +264,7 @@ def lpc_only( year, systematics, samples, split ):
 
 def create_tar():
   # tar the CMSSW repo
-  tarDir = "/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-single-lep/"
+  tarDir = "CMSSW_9_4_6_patch1/src/TTT-singleLep/"
   if "CMSSW946_ttt.tgz" in os.listdir( home ):
     print( ">> Deleting existing CMSSW946_ttt.tgz" ) 
     os.system( "rm {}{}".format( home, "CMSSW946_ttt.tgz" ) )
@@ -277,7 +277,7 @@ def create_tar():
     tarDir + "FWLJMET/*",
     tarDir + "notebooks/*",
     tarDir + "cut_events*",
-    tarDir + "CMSSW946.tgz",
+    tarDir + "*.tgz",
     tarDir + ".git/*",
     "CMSSW_9_4_6_patch1/" 
   ) )
