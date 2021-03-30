@@ -121,6 +121,47 @@ bkg_training = {
   ]
 }
 
+# generalized efficiency values
+eff = {
+  "TTJetsSemiLepNjet9": 0.0057,
+  "TTJets0mtt":         0.8832,
+  "TTJets700mtt":       0.0921,
+  "TTJets1000mtt":      0.02474
+}
+
+# generalized branching ratio values
+BR = {
+  "TTJetsHad":     0.457,
+  "TTJetsSemiLep": 0.438,
+  "TTJets2L2nu":   0.105
+}
+
+# generalized cross section values
+xsec = {
+  "TTJets":             831.76,
+  "TTJetsSemiLepNjet9": 831.76 * BR["TTJetsSemiLep"] * eff["TTJetsSemiLepNjet9"]
+}
+
+# generalized number of processed MC events  
+nrun = {
+  "TTJetsHad":            { "2017": 129092906.0, "2018": 132368556.0 },
+  "TTJetsHadUEdn":        { "2017": 25943263.0,  "2018": 26459542.0 },
+  "TTJetsHadUEup":        { "2017": 26986311.0,  "2018": 23298972.0 },
+  "TTJetsHadHDAMPdn":     { "2017": 26007959.0,  "2018": 25988142.0 },
+  "TTJetsHadHDAMPup":     { "2017": 25586551.0,  "2018": 24851988.0 },
+  "TTJets2L2nu":          { "2017": 68448328.0,  "2018": 63791484.0 },
+  "TTJets2L2nuUEdn":      { "2017": 5431150.0,   "2018": 4914480.0 },
+  "TTJets2L2nuUEup":      { "2017": 5455598.0,   "2018": 5401744.0 },
+  "TTJets2L2nuHDAMPdn":   { "2017": 5248352.0,   "2018": 5368300.0 },
+  "TTJets2L2nuHDAMPup":   { "2017": 5389169.0,   "2018": 5368300.0 },
+  "TTJetsSemiLep":        { "2017": 109124472.0, "2018": 100579948.0 },
+  "TTJetsSemiLepUEdn":    { "2017": 26885578.0,  "2018": 20274614.0 },
+  "TTJetsSemiLepUEup":    { "2017": 25953874.0,  "2018": 26729924.0 },
+  "TTJetsSemiLepHDAMPdn": { "2017": 26359926.0,  "2018": 25270096.0 },
+  "TTJetsSemiLepHDAMPup": { "2017": 27068397.0,  "2018": 26841790.0 },
+  "TTJetsSemiLepNjet9":   { "2017": 8648145.0,   "2018": 8398387.0 }
+}
+
 all_samples = { 
   "2017": {
     "TTTT": ("TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root", 849964.0, 0.012 ),
