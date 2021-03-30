@@ -15,8 +15,8 @@ step2Sample = {
 }
 
 step3Sample = {
-  "2017": "FWLJMET102X_1lep2017_Oct2019_4t_{}_step3".format( date ),
-  "2018": "FWLJMET102X_1lep2018_Oct2019_4t_{}_step3".format( date )
+  "2017": "FWLJMET102X_1lep2017_Oct2019_3t_{}_step3".format( date ),
+  "2018": "FWLJMET102X_1lep2018_Oct2019_3t_{}_step3".format( date )
 }
 
 step2DirBRUX = {
@@ -25,13 +25,13 @@ step2DirBRUX = {
 }
 
 step2DirLPC = {
-  "2017": "~/nobackup/CMSSW_9_4_6_patch1/src/TTTT_TMVA_DNN/{}/".format( step2Sample[ "2017" ] ),
-  "2018": "~/nobackup/CMSSW_9_4_6_patch1/src/TTTT_TMVA_DNN/{}/".format( step2Sample[ "2018" ] )
+  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step2Sample[ "2017" ] ),
+  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step2Sample[ "2018" ] )
 }
 
 step3DirLPC = {
-  "2017": "~/nobackup/CMSSW_9_4_6_patch1/src/TTTT_TMVA_DNN/{}/".format( step3Sample[ "2017" ] ),
-  "2018": "~/nobackup/CMSSW_9_4_6_patch1/src/TTTT_TMVA_DNN/{}/".format( step3Sample[ "2018" ] )
+  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step3Sample[ "2017" ] ),
+  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step3Sample[ "2018" ] )
 }
 
 step2DirEOS = {
