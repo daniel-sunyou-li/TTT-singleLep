@@ -228,7 +228,80 @@ for param, value in CONFIG.iteritems():
 # Persist cut events to speed up process
 cut_events = None
 
+@use_named_args(opt_space)
+def objective(**X):
+  global cut_events
+    
+  print(">> Configuration:\n{}\n".format(X))
+  if not "variables" in X: X["variables"] = CONFIG["variables"]
+  if not "patience" in X: X["patience"] = CONFIG["patience"]
+  if not "epochs" in X: X["epochs"] = CONFIG["epochs"]
+  model = mltools.HyperParameterModel(
+    X, 
+    signal_files, background_files,
+    args.njets, args.nbjets, 
+    CONFIG["model_name"]
+  )
+    
+  if cut_events == None:
+    if not os.path.exists(mltools.CUT_SAVE_FILE):
+      print( ">> Generating saved cut event file." )
+      model.load_trees()
+      model.apply_cut()
+      model.save_cut_events(mltools.CUT_SAVE_FILE)
+    else:
+      print( ">> Loading saved cut event files." )
+      model.load_cut_events(mltools.CUT_SAVE_FILE)
+    cut_events = model.cut_events.copy()
+  else:
+    model.cut_events = cut_events.copy()
 
+  model.build_model()
+  model.train_model()
+    
+  print( ">> Obtained ROC-Integral value: {}".format(model.auc_test))
+  logfile.write('{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n'.format(
+    str(X["hidden_layers"]),
+    str(X["initial_nodes"]),
+    str(X["learning_rate"]),
+    str(2**X["batch_power"]),
+    str(X["node_pattern"]),
+    str(X["regulator"]),
+    str(X["activation_function"]),
+    str(round(model.auc_test, 5))
+    )
+  )
+  opt_metric = log(1 - model.auc_test)
+  print( ">> Metric: {:.4f}".format( opt_metric ) )
+  return opt_metric
 
+# Perform the optimization
+start_time = datetime.now()
 
+res_gp = gp_minimize(
+            func = objective,
+            dimensions = opt_space,
+            n_calls = CONFIG["n_calls"],
+            n_random_starts = CONFIG["n_starts"],
+            verbose = True
+            )
+
+logfile.close()
+
+# Report results
+print(">> Writing optimized parameter log to: optimized_params_" + CONFIG["tag"] + ".txt and .json")
+with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".txt"), "w") as f:
+  f.write("TTT DNN Hyper Parameter Optimization Parameters \n")
+  f.write("Static and Parameter Space stored in: {}\n".format(config_file))
+  f.write("Optimized Parameters:\n")
+  f.write("    Hidden Layers: {}\n".format(res_gp.x[opt_order["hidden_layers"]]))
+  f.write("    Initial Nodes: {}\n".format(res_gp.x[opt_order["initial_nodes"]]))
+  f.write("    Batch Power: {}\n".format(res_gp.x[opt_order["batch_power"]]))
+  f.write("    Learning Rate: {}\n".format(res_gp.x[opt_order["learning_rate"]]))
+  f.write("    Node Pattern: {}\n".format(res_gp.x[opt_order["node_pattern"]]))
+  f.write("    Regulator: {}\n".format(res_gp.x[opt_order["regulator"]]))
+  f.write("    Activation Function: {}\n".format(res_gp.x[opt_order["activation_function"]]))
+with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".json"), "w") as f:
+  f.write(write_json(dict([(key, res_gp.x[val]) for key, val in opt_order.iteritems()]), indent=2))
+print( "[OK ] Finished optimization in: {}".format( datetime.now() - start_time ) )
 
