@@ -24,9 +24,9 @@ if args.year != "2017" and args.year != "2018":
   raise ValueError( "[ERR] Invaid year selected: {}. Year must be 2017 or 2018.".format( args.year ) )
 
 # Gather list of signal and background folders
-tree_folder = varsList.step2DirLPC[ args.year ] + "nominal"
-signal_files = [ os.path.join( tree_folder, sig ) for sig in varsList.sig_training[ args.year ] ]
-background_files = [ os.path.join( tree_folder, bkg ) for bkg in varsList.bkg_training[ args.year ] ]
+tree_folder = config.step2DirLPC[ args.year ] + "nominal"
+signal_files = [ os.path.join( tree_folder, sig ) for sig in config.sig_training[ args.year ] ]
+background_files = [ os.path.join( tree_folder, bkg ) for bkg in config.bkg_training[ args.year ] ]
 
 # Look for HPO data files
 hpo_data = {}
