@@ -91,28 +91,34 @@ for config_num, config_path in enumerate(config_order):
   print( ">> Using njets >= {} and nbjets >= {}".format( config[ "njets" ], config[ "nbjets" ] ) )
   
   model_path = os.path.join(folder, "final_model_{}j_{}to{}.h5".format( config[ "njets" ], config[ "start_index" ], config[ "end_index" ] ) )
-
+  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, args.nbjets, args.year ) )
+  
   model = mltools.CrossValidationModel(
     parameters,
     signal_files, background_files, 
     cv_folder, 
     config["njets"], config["nbjets"], int(args.num_folds ) )
   if not args.no_cut_save:
-    if not os.path.exists(mltools.CUT_SAVE_FILE):
+    if not os.path.exists(save_path):
       print( ">> Generating saved cut event files." )
       model.load_trees()
-      model.apply_cut()
-      model.save_cut_events(mltools.CUT_SAVE_FILE)
+      #model.apply_cut_pkl()
+      model.apply_cut_prq()
+      #model.save_cut_events_pkl(mltools.CUT_SAVE_FILE)
+      model.save_cut_events_prq(save_path)
     else:
       print( ">> Loading saved cut event files." )
-      model.load_cut_events(mltools.CUT_SAVE_FILE)
+      #model.load_cut_events_pkl(save_path)
+      model.load_cut_events_prq(save_path)
   else:
     model.load_trees()
-    model.apply_cut()
+    #model.apply_cut_pkl()
+    model.apply_cut_prq()
 
   print( ">> Starting cross-validation." )
     
-  model.train_model()
+  #model.train_model_prq()
+  model.train_model_prq()
 
   print( ">> Collecting results." )
 
