@@ -375,7 +375,7 @@ class CrossValidationModel( HyperParameterModel ):
     if not os.path.exists( self.model_folder ):
       os.mkdir( self.model_folder )
 
-  def train_model( self ):
+  def train_model_pkl( self ):
     shuffle = ShuffleSplit( n_splits = self.num_folds, test_size = float( 1.0 / self.num_folds ), random_state = 0 )
 
     # Set up and store k-way cross validation events
@@ -427,6 +427,135 @@ class CrossValidationModel( HyperParameterModel ):
       bkg_test_k = np.concatenate([
         self.cut_events["background"][path][fold_mask["background"][path][k]["test"]] for path in self.cut_events["background"]
       ])
+            
+      fold_data.append( {
+        "train_x": np.array( self.select_ml_variables(
+          sig_train_k, bkg_train_k, self.parameters[ "variables" ] ) ),
+        "test_x": np.array( self.select_ml_variables(
+          sig_test_k, bkg_test_k, self.parameters[ "variables" ] ) ),
+
+        "train_y": np.concatenate( (
+          np.full( np.shape( sig_train_k )[0], 1 ).astype( "bool" ),
+          np.full( np.shape( bkg_train_k )[0], 0 ).astype( "bool" ) ) ),
+        "test_y": np.concatenate( (
+          np.full( np.shape( sig_test_k )[0], 1 ).astype( "bool" ),
+          np.full( np.shape( bkg_test_k )[0], 0 ).astype( "bool" ) ) ) 
+      } )
+
+    # Train each fold
+    print( ">> Beginning Training and Evaluation." )
+    self.model_paths = []
+    self.loss = []
+    self.accuracy = []
+    self.fpr_train = []
+    self.fpr_test = []
+    self.tpr_train = []
+    self.tpr_test = []
+    self.auc_train = []
+    self.auc_test = []
+    self.best_fold = -1
+
+    for k, events in enumerate(fold_data):
+      print("CV Iteration {} of {}".format(k + 1, self.num_folds))  
+      clear_session()
+
+      model_name = os.path.join(self.model_folder, "fold_{}.h5".format(k))
+
+      self.build_model(events["train_x"].shape[1])
+
+      model_checkpoint = ModelCheckpoint(
+        model_name,
+        verbose=0,
+        save_best_only=True,
+        save_weights_only=False,
+        mode="auto",
+        period=1
+      )
+
+      early_stopping = EarlyStopping(
+        monitor = "val_loss",
+        patience=self.parameters[ "patience" ]
+      )
+
+      shuffled_x, shuffled_y = shuffle_data( events[ "train_x" ], events[ "train_y" ], random_state=0 )
+      shuffled_test_x, shuffled_test_y = shuffle_data( events[ "test_x" ], events[ "test_y" ], random_state=0 )
+
+      history = self.model.fit(
+        shuffled_x, shuffled_y,
+        epochs = self.parameters[ "epochs" ],
+        batch_size = 2**self.parameters[ "batch_power" ],
+        shuffle = True,
+        verbose = 1,
+        callbacks = [ early_stopping, model_checkpoint ],
+        validation_split = 0.25
+      )
+
+      model_ckp = load_model(model_name)
+      loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
+         
+      fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )
+      fpr_test, tpr_test, _ = roc_curve( shuffled_test_y.astype(int), model_ckp.predict(shuffled_test_x)[:,0] )
+
+      auc_train = auc( fpr_train, tpr_train )
+      auc_test  = auc( fpr_test, tpr_test )
+
+      if self.best_fold == -1 or auc_test > max(self.auc_test):
+        self.best_fold = k
+
+      self.model_paths.append( model_name )
+      self.loss.append( loss )
+      self.accuracy.append( accuracy )
+      self.fpr_train.append( fpr_train[ 0::int( len(fpr_train) / SAVE_FPR_TPR_POINTS ) ] )
+      self.tpr_train.append( tpr_train[ 0::int( len(tpr_train) / SAVE_FPR_TPR_POINTS ) ] )
+      self.fpr_test.append( fpr_test[ 0::int( len(fpr_test) / SAVE_FPR_TPR_POINTS ) ] )
+      self.tpr_test.append( tpr_test[ 0::int( len(tpr_test) / SAVE_FPR_TPR_POINTS ) ] )
+      self.auc_train.append( auc_train )
+      self.auc_test.append( auc_test )
+
+    print( "[OK ] Finished." )
+	
+  def train_model_prq( self ):
+    shuffle = ShuffleSplit( n_splits = self.num_folds, test_size = float( 1.0 / self.num_folds ), random_state = 0 )
+
+    # Set up and store k-way cross validation events
+    # Event inclusion masks
+    print( ">> Splitting events into {} sets for cross-validation.".format( self.num_folds ) )
+    signal_events = []
+    background_events = []
+    fold_mask = {
+      "signal": {},
+      "background": {}
+    }
+	
+    for i in range( len( self.cut_events_prq.index ) ):
+      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+      else: background_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+        
+    for event in signal_events:
+      k = 0
+      for train, test in shuffle.split(signal_events):
+        fold_mask["signal"][k] = {
+          "train": train,
+          "test": test
+        }
+        k += 1
+
+    for event in background_events:
+      k = 0
+      for train, test in shuffle.split(background_events):
+        fold_mask["background"][k] = {
+          "train": train,
+          "test": test
+        }
+        k += 1
+
+    # Event lists
+    fold_data = []
+    for k in range(self.num_folds):
+      sig_train_k = signal_events[ fold_mask["signal"][k]["train"] ]
+      sig_test_k  = signal_events[ fold_mask["signal"][k]["test"]  ]
+      bkg_train_k = background_events[ fold_mask["background"][k]["train"] ]
+      bkg_test_k  = background_events[ fold_mask["background"][k]["test"] ]
             
       fold_data.append( {
         "train_x": np.array( self.select_ml_variables(
