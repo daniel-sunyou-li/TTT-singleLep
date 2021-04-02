@@ -38,7 +38,7 @@ base_cut = "((%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1) or ".forma
             "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
             "( %(isTraining)s == 1 or %(isTraining)s == 2 )"
 
-ML_VARIABLES = [ x[0] for x in varsList.varList[ "DNN" ] ]
+ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
 VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ) ) ) )
 CUT_VARIABLES = [ ( v, VARIABLES.index(v) ) for v in CUT_VARIABLES ]
 
@@ -193,7 +193,7 @@ class MLTrainingInstance(object):
 		# train the model on the signal and background data formatted with parquet
 		pass
 
-  class HyperParameterModel(MLTrainingInstance):
+class HyperParameterModel(MLTrainingInstance):
   def __init__(self, parameters, signal_paths, background_paths, njets, nbjets, model_name=None):
     MLTrainingInstance.__init__(self, signal_paths, background_paths, njets, nbjets)
     self.parameters = parameters
