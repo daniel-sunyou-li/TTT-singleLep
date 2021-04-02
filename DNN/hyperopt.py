@@ -242,8 +242,8 @@ def objective(**X):
     args.njets, args.nbjets, 
     CONFIG["model_name"]
   )
-  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, nbjets, args.year ) )
-  if cut_events == None:
+  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, args.nbjets, args.year ) )
+  if cut_events is None:
     if not os.path.exists(save_path):
       #print( ">> Generating saved cut event .pkl file." )
       print( ">> Generating saved cut event .parquet file." )

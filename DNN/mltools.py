@@ -50,8 +50,8 @@ class MLTrainingInstance(object):
   def __init__(self, signal_paths, background_paths, njets, nbjets):
     self.signal_paths = signal_paths
     self.background_paths = background_paths
-		self.njets = njets
-		self.nbjets = nbjets
+    self.njets = njets
+    self.nbjets = nbjets
     self.cut = base_cut + \
                " and ( %(NJetsCSV_MultiLepCalc)s >= {} ) ".format( nbjets ) + \
                " and ( %(NJets_JetSubCalc)s >= {} )".format( njets)
@@ -72,16 +72,16 @@ class MLTrainingInstance(object):
         self.cut_events_pkl = cut_events_pkl
 	
   def load_cut_events_prq(self, path):
-		is os.path.exists( path ):
-			self.cut_events_prq = pd.read_parquet( path )
+    if os.path.exists( path ):
+      self.cut_events_prq = pd.read_parquet( path )
 				
   def save_cut_events_pkl( self, path ):
     # Load pickled events files
     with open( path, "wb" ) as f:
       pickle_dump( self.cut_events_pkl, f )
 
-	def save_cut_events_prq( self, path ):
-		self.cut_events_prq.to_parquet( path )
+  def save_cut_events_prq( self, path ):
+    self.cut_events_prq.to_parquet( path )
 			
   def load_trees( self ):
     # Load signal files
@@ -142,7 +142,7 @@ class MLTrainingInstance(object):
 
     print(">> Signal {}/{}, Background {}/{}".format(c_s, n_s, c_b, n_b))
 		
-	def apply_cut_prq( self ):
+  def apply_cut_prq( self ):
     test_cut = lambda d: eval( self.cut % d )
     all_signals = {}
     for path, signal_tree in self.signal_trees.iteritems():
@@ -159,11 +159,10 @@ class MLTrainingInstance(object):
       else:
         all_backgrounds[ path ] = bkg_list
 				
-		all_events = []
+    all_events = []
     n_s = 0
     c_s = 0
     for path, events in all_signals.iteritems():
-      self.cut_events[ "signal" ][ path ] = []
       n_s += len( events )
       for event in events:
         if test_cut( { var: event[i] for var, i in CUT_VARIABLES } ):
@@ -172,14 +171,13 @@ class MLTrainingInstance(object):
     n_b = 0
     c_b = 0
     for path, events in all_backgrounds.iteritems():
-      self.cut_events[ "background" ][ path ] = []
       n_b += len( events )
       for event in events:
         if test_cut( { var: event[i] for var, i in CUT_VARIABLES } ):
           all_events.append( np.append( event, 0 ) )
           c_b += 1
 
-		self.cut_events_prq = pd.DataFrame( all_events, columns = [ variable for variable in VARIABLES ] + [ "type" ] )
+    self.cut_events_prq = pd.DataFrame( all_events, columns = [ variable for variable in VARIABLES ] + [ "type" ] )
                 
   def build_model(self):
     # Override with the code that builds the Keras model.
@@ -189,9 +187,9 @@ class MLTrainingInstance(object):
     # Train the model on the singal and background data formatted with pickle
     pass        
 	
-	def train_model_prq(self):
-		# train the model on the signal and background data formatted with parquet
-		pass
+  def train_model_prq(self):
+    # train the model on the signal and background data formatted with parquet
+    pass
 
 class HyperParameterModel(MLTrainingInstance):
   def __init__(self, parameters, signal_paths, background_paths, njets, nbjets, model_name=None):
@@ -313,10 +311,10 @@ class HyperParameterModel(MLTrainingInstance):
   def train_model_prq( self ):
     # Join all signals and backgrounds
     signal_events = []
-		background_events = []
-		for i in range( len( self.cut_events_prq.index ) ):
-			if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
-			else: background_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+    background_events = []
+    for i in range( len( self.cut_events_prq.index ) ):
+      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+      else: background_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
         
     signal_labels = np.full( len( signal_events ), [1] ).astype( "bool" )
     background_labels = np.full( len( background_events ), [0] ).astype( "bool" )
