@@ -25,13 +25,13 @@ step2DirBRUX = {
 }
 
 step2DirLPC = {
-  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step2Sample[ "2017" ] ),
-  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step2Sample[ "2018" ] )
+  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step2Sample[ "2017" ] ),
+  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step2Sample[ "2018" ] )
 }
 
 step3DirLPC = {
-  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step3Sample[ "2017" ] ),
-  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/{}/".format( step3Sample[ "2018" ] )
+  "2017": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step3Sample[ "2017" ] ),
+  "2018": "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step3Sample[ "2018" ] )
 }
 
 step2DirEOS = {
