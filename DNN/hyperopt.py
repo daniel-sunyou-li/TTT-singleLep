@@ -29,7 +29,7 @@ args = parser.parse_args()
 year = args.year
 if year not in [ "2016", "2017", "2018" ]:
   raise ValueError( "[ERR] Invaid year selected: {}. Year must be 2016, 2017, or 2018.".format( year ) )
-tree_folder = os.path.join( config.step2DirLPC[ year ], "/nominal/" )
+tree_folder = config.step2DirLPC[ year ] + "nominal/"
 signal_files = [ os.path.join( tree_folder, sig ) for sig in ( config.sig_training[ year ] ) ]
 background_files = [ os.path.join( tree_folder, bkg ) for bkg in ( config.bkg_training[ year ] ) ]
 
