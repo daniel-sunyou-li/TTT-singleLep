@@ -242,22 +242,30 @@ def objective(**X):
     args.njets, args.nbjets, 
     CONFIG["model_name"]
   )
-    
+  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, nbjets, args.year ) )
   if cut_events == None:
-    if not os.path.exists(mltools.CUT_SAVE_FILE):
-      print( ">> Generating saved cut event file." )
+    if not os.path.exists(save_path):
+      #print( ">> Generating saved cut event .pkl file." )
+      print( ">> Generating saved cut event .parquet file." )
+      #model.load_trees_pkl()
       model.load_trees()
-      model.apply_cut()
-      model.save_cut_events(mltools.CUT_SAVE_FILE)
+      #model.apply_cut_pkl()
+      model.apply_cut_prq()
+      #model.save_cut_events_pkl(mltools.CUT_SAVE_FILE)
+      model.save_cut_events_prq(save_path)
     else:
-      print( ">> Loading saved cut event files." )
-      model.load_cut_events(mltools.CUT_SAVE_FILE)
-    cut_events = model.cut_events.copy()
+      #print( ">> Loading saved cut event .pkl files." )
+      print( ">> Loading saved cut event .parquet files." )
+      #model.load_cut_events_pkl(mltools.CUT_SAVE_FILE)
+      model.load_cut_events_prq(save_path)
+    cut_events = model.cut_events_prq.copy()
   else:
-    model.cut_events = cut_events.copy()
+    model.cut_events_prq = cut_events.copy()
+    
 
   model.build_model()
-  model.train_model()
+  #model.train_model_pkl()
+  model.train_model_prq()
     
   print( ">> Obtained ROC-Integral value: {}".format(model.auc_test))
   logfile.write('{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n'.format(
