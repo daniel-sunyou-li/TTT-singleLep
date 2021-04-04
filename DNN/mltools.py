@@ -313,8 +313,8 @@ class HyperParameterModel(MLTrainingInstance):
     signal_events = []
     background_events = []
     for i in range( len( self.cut_events_prq.index ) ):
-      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
-      else: background_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].values[:-1] )
+      else: background_events.append( self.cut_events_prq.iloc[i].values[:-1] )
         
     signal_labels = np.full( len( signal_events ), [1] ).astype( "bool" )
     background_labels = np.full( len( background_events ), [0] ).astype( "bool" )
