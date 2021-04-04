@@ -195,7 +195,7 @@ Queue 1"""%dict
     
 def submit_jobs( files, key, condorDir, logrDir, sampleDir ):
   os.system( "mkdir -p " + logrDir )
-  outputDir = sampleDir.replace("step2","step3") + "/" + key
+  outputDir = sampleDir.replace("step2","step3").replace("4t","3t") + "/" + key
   if args.verbose: print( ">> Making new EOS directory: store/user/{}/{}/".format( config.eosUserName, outputDir ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, sampleDir.replace( "step2","step3" ) ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, outputDir ) ) 
