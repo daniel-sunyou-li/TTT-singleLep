@@ -11,7 +11,7 @@ import os, sys
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
 import keras
-import varsList
+import config
 
 # read in arguments
 parser = ArgumentParser()
