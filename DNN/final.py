@@ -38,7 +38,7 @@ for dataset in datasets:
   if os.path.exists(dataset):
     if os.path.isdir(dataset):
       for dfile in os.listdir(dataset):
-        if dfile.startswith("optimized_parameters") and dfile.endswith(".json"):
+        if dfile.startswith("optimized_params") and dfile.endswith(".json"):
           try:
             with open( os.path.join( dataset, dfile ), "r") as f:
               hpo_data[os.path.join(dataset, dfile)] = load_json(f.read())
@@ -91,7 +91,7 @@ for config_num, config_path in enumerate(config_order):
   print( ">> Using njets >= {} and nbjets >= {}".format( config[ "njets" ], config[ "nbjets" ] ) )
   
   model_path = os.path.join(folder, "final_model_{}j_{}to{}.h5".format( config[ "njets" ], config[ "start_index" ], config[ "end_index" ] ) )
-  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, args.nbjets, args.year ) )
+  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( config[ "njets" ], config[ "nbjets" ], args.year ) )
   
   model = mltools.CrossValidationModel(
     parameters,
@@ -117,7 +117,7 @@ for config_num, config_path in enumerate(config_order):
 
   print( ">> Starting cross-validation." )
     
-  #model.train_model_prq()
+  #model.train_model_pkl()
   model.train_model_prq()
 
   print( ">> Collecting results." )

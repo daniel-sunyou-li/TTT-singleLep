@@ -526,36 +526,43 @@ class CrossValidationModel( HyperParameterModel ):
       "signal": {},
       "background": {}
     }
-	
-    for i in range( len( self.cut_events_prq.index ) ):
-      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
-      else: background_events.append( self.cut_events_prq.iloc[i].as_matrix()[:-1] )
+    n_events = len( self.cut_events_prq.index ) 
+    print( "Total number of events: {}".format( n_events ) )
+    checkpoints = np.rint( np.linspace( 0, n_events, 21 ) )	
+    for i in range( n_events ):
+      if i in checkpoints: 
+        print( ">> Event {}: {:.2f}% events loaded...".format( i, 100.*(float(i)/float(n_events)) ) )
+      if self.cut_events_prq.iloc[i]["type"] == 1.0: signal_events.append( self.cut_events_prq.iloc[i].values[:-1] )
+      else: background_events.append( self.cut_events_prq.iloc[i].values[:-1] )
         
-    for event in signal_events:
-      k = 0
-      for train, test in shuffle.split(signal_events):
-        fold_mask["signal"][k] = {
-          "train": train,
-          "test": test
-        }
-        k += 1
+    print( "[OK ] Finished loading events from parquet, splitting into {} folds".format( self.num_folds ) )
+    k = 0
+    for train, test in shuffle.split(signal_events):
+      fold_mask["signal"][k] = {
+        "train": train,
+        "test": test
+      }
+      k += 1
+    
+    print( "[OK ] Signal events split into {} folds.".format( self.num_folds ) )
+    k = 0
+    for train, test in shuffle.split(background_events):
+      fold_mask["background"][k] = {
+        "train": train,
+        "test": test
+      }
+      k += 1
+    print( "[OK ] Background events split into {} folds...".format( self.num_folds ) )
 
-    for event in background_events:
-      k = 0
-      for train, test in shuffle.split(background_events):
-        fold_mask["background"][k] = {
-          "train": train,
-          "test": test
-        }
-        k += 1
-
+    print( ">> Formatting events into trainable format..." )
     # Event lists
     fold_data = []
     for k in range(self.num_folds):
-      sig_train_k = signal_events[ fold_mask["signal"][k]["train"] ]
-      sig_test_k  = signal_events[ fold_mask["signal"][k]["test"]  ]
-      bkg_train_k = background_events[ fold_mask["background"][k]["train"] ]
-      bkg_test_k  = background_events[ fold_mask["background"][k]["test"] ]
+      print( ">> Formatting fold {}...".format( k ) )
+      sig_train_k = np.array( signal_events )[ fold_mask["signal"][k]["train"] ]
+      sig_test_k  = np.array( signal_events )[ fold_mask["signal"][k]["test"]  ]
+      bkg_train_k = np.array( background_events )[ fold_mask["background"][k]["train"] ]
+      bkg_test_k  = np.array( background_events )[ fold_mask["background"][k]["test"] ]
             
       fold_data.append( {
         "train_x": np.array( self.select_ml_variables(
