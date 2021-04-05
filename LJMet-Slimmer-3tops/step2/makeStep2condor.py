@@ -4,14 +4,17 @@ from ROOT import *
 
 start_time = time.time()
 shift = sys.argv[1]
+year = 2017
 
 #IO directories must be full paths
 foldnum = '-1'
-relbase   = '/home/wzhang/work/fwljmet_201905/CMSSW_10_2_16_UL/'
-inputDir  = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_02162021_step1hadds/'+shift+'/'
+relbase   = '/home/dli50/TTT_1lep/CMSSW_10_2_13/'
+#inputDir  = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_02162021_step1hadds/'+shift+'/'
 #inputDir  = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2016_Feb2020_4t_080420_step1hadds/'+shift+'/'
+inputDir = '/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET_1lep{}_4t_02182021_step1hadds'.format( year )
 # outputDir = '/mnt/hadoop/users/jlee/TTTT/LJMet94X_1lepTT_022219_step2/'+shift+'/'
-outputDir = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_03062021_step2/'+shift+'/'
+#outputDir = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_03062021_step2/'+shift+'/'
+outputDir = '/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET_1lep{}_3t_02182021_step2/{}/'.format( year, shift ) 
 runDir=os.getcwd()
 gROOT.ProcessLine('.x compileStep2.C')
 
