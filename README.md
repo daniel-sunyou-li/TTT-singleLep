@@ -3,9 +3,9 @@ Full framework of running the three top quark to single lepton final state analy
 
 The overall steps throughout the analysis framework are as follows:
 > 1. __`FWLJMET`__ - an EDProducer instance producing the AOD file with relevant collections
-> 2. __`Step 1`__ - slims the ntuple to only include necessary variables  
-> 3. __`Step 2`__ - adds multivariate jet-tagging discriminators to the 'Step 1' ntuple  
-> 4. __`TTT DNN`__ - train and optimize a dense neural network to produce a single discriminator for the analysis
+> 2. __`LJMET-Slimmer-4tops/step1`__ - slims the ntuple to only include necessary variables  
+> 3. __`LJMET-Slimmer-4tops/step2`__ - adds multivariate jet-tagging discriminators to the 'Step 1' ntuple  
+> 4. __`Variable Importance`__ - train and optimize a dense neural network to produce a single discriminator for the analysis
 > 5. __`Step 3`__ - adds the DNN discriminator(s) to the 'Step 2' ntuple
 > 6. __`singleLepAnalyzer`__ - computes the significance and limits for the signal strength 
 
