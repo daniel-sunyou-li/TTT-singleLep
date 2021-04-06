@@ -10,8 +10,10 @@ import os, sys
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
+import tensorflow as tf
 import keras
 import config
+
 
 # read in arguments
 parser = ArgumentParser()
@@ -23,7 +25,7 @@ args = parser.parse_args()
 
 step3_file = args.fileName + ".root" 
 
-modelNames = glob.glob("*.h5")
+modelNames = glob.glob("*.tf")
 jsonNames  = glob.glob("*.json")
 
 def setup( modelNames, jsonNames ):
@@ -41,7 +43,7 @@ def setup( modelNames, jsonNames ):
     # load in the keras DNN models
     for modelName in sorted( modelNames ):
         print( ">> Testing model: {}".format( modelName ) )
-        models.append( keras.models.load_model( modelName ) )
+        models.append( tf.keras.models.load_model( modelName ) )
 
     return models, varlist, jetlist, indexlist
 
@@ -90,6 +92,7 @@ def fill_tree( modelNames, jetlist, varlist, indexlist, disclist, rootTree ):
     out.Close()
 
 def main():
+    print( ">> Running the step3 production..." )
     models, varlist, jetlist, indexlist = setup( modelNames, jsonNames )
     rootFile = TFile.Open( "{}/{}/{}.root".format( args.inputDir, args.tag, args.fileName ) );
     print( ">> Creating step3 for sample: {}/{}.root".format( args.tag, args.fileName ) )

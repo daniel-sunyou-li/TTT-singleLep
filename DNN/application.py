@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 # start message
 if args.verbose:
-    print(">> Running step 3 application for the .h5 DNN, producing new step3 ROOT files...")
+    print(">> Running step 3 application for the .tf DNN, producing new step3 ROOT files...")
 
 # set some paths
 condorDir   = config.step2DirEOS[ args.year ] # location where samples stored on EOS
@@ -34,6 +34,8 @@ files_step3 = {}
 # test on one signal and one background sample
 if args.test:
   files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTTJ" ][0] ]
+  files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTW" ][0] )
+  files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTT" ][0] )
 else:
   files_step2[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step2Sample ), shell = True ).split("\n")[:-1]
   if args.resubmit != None: files_step3[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step3Sample ),shell=True).split("\n")[:-1]
@@ -63,7 +65,7 @@ if args.resubmit != None:
       if sample_tag not in submit_files.keys():
         submit_files[ sample_tag ] = [ sample_name ]
       else: submit_files[ sample_tag ].append( sample_name )
-        resubmit_count += 1
+      resubmit_count += 1
       if args.verbose: print( ">> Resubmitting failed job: {}".format( sample_name ) )
   # check for failed jobs based on .log and .out file -- job was held due to insufficient memory requested, resubmit with more memory
   for log_file in log_files:
@@ -117,10 +119,10 @@ jsonNames_arg = ""
 for jsonName in jsonNames:
   jsonNames_arg += jsonName + ", "
 
-# check for .h5 model
+# check for .tf model
 models = []
 for folder in resultDir:
-  modelCheck = glob.glob("{}/*.h5".format(folder))
+  modelCheck = glob.glob("{}/*.tf".format(folder))
   opt_model = None
   for modelName in modelCheck:
     if "final" in modelName.lower(): opt_model = modelName
@@ -182,6 +184,7 @@ Executable = application.sh
 Should_Transfer_Files = Yes
 WhenToTransferOutput = ON_EXIT
 request_memory = %(MEMORY)s
+Requirements = has_avx == true
 Transfer_Input_Files = %(MODEL)s %(PARAMFILE)s
 Output = %(LOGDIR)s/%(FILENAME)s_%(TAG)s.out
 Error = %(LOGDIR)s/%(FILENAME)s_%(TAG)s.err

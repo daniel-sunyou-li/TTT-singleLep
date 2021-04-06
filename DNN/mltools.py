@@ -4,13 +4,19 @@ from pickle import dump as pickle_dump
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.backend import clear_session
+
+import keras==2.2.0
 from keras.models import Sequential
 from keras.models import load_model
 from keras.layers.core import Dense, Dropout
 from keras.layers import BatchNormalization
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.backend import clear_session
+#from keras.optimizers import Adam
+#from keras.callbacks import EarlyStopping, ModelCheckpoint
+#from keras.backend import clear_session
 
 from ROOT import TFile
 
@@ -208,8 +214,8 @@ class HyperParameterModel(MLTrainingInstance):
     return events
 
   def build_model(self, input_size="auto"):
-    self.model = Sequential()
-    self.model.add( Dense(
+    self.model = tf.keras.models.Sequential()
+    self.model.add( tf.keras.layers.Dense(
       self.parameters[ "initial_nodes" ],
       input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
       kernel_initializer="glorot_normal",
@@ -217,23 +223,23 @@ class HyperParameterModel(MLTrainingInstance):
     ) )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
     for i in range( self.parameters[ "hidden_layers" ] ):
-      self.model.add( BatchNormalization() )
+      self.model.add( tf.keras.layers.BatchNormalization() )
       if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
-        self.model.add( Dropout( 0.5 ) )
+        self.model.add( tf.keras.layers.Dropout( 0.5 ) )
       if self.parameters[ "node_pattern" ] == "dynamic":
-        self.model.add( Dense(
+        self.model.add( tf.keras.layers.Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
           kernel_initializer = "glorot_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       elif self.parameters[ "node_pattern" ] == "static":
-	self.model.add( Dense(
+	self.model.add( tf.keras.layers.Dense(
           self.parameters[ "initial_nodes" ],
           kernel_initializer = "glorot_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       # Final classification node
-    self.model.add(Dense(
+    self.model.add( tf.keras.layers.Dense(
       1,
       activation = "sigmoid"
     ) )
@@ -244,6 +250,7 @@ class HyperParameterModel(MLTrainingInstance):
     )
 
     if self.model_name != None:
+      #tf.keras.experimental.export_saved_model( self.model, self.model_name )
       self.model.save( self.model_name )
 
     self.model.summary()
@@ -459,7 +466,7 @@ class CrossValidationModel( HyperParameterModel ):
       print("CV Iteration {} of {}".format(k + 1, self.num_folds))  
       clear_session()
 
-      model_name = os.path.join(self.model_folder, "fold_{}.h5".format(k))
+      model_name = os.path.join(self.model_folder, "fold_{}.tf".format(k))
 
       self.build_model(events["train_x"].shape[1])
 
@@ -490,7 +497,7 @@ class CrossValidationModel( HyperParameterModel ):
         validation_split = 0.25
       )
 
-      model_ckp = load_model(model_name)
+      model_ckp = tf.keras.models.load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
       fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )
@@ -595,7 +602,7 @@ class CrossValidationModel( HyperParameterModel ):
       print("CV Iteration {} of {}".format(k + 1, self.num_folds))  
       clear_session()
 
-      model_name = os.path.join(self.model_folder, "fold_{}.h5".format(k))
+      model_name = os.path.join(self.model_folder, "fold_{}.tf".format(k))
 
       self.build_model(events["train_x"].shape[1])
 
@@ -626,7 +633,7 @@ class CrossValidationModel( HyperParameterModel ):
         validation_split = 0.25
       )
 
-      model_ckp = load_model(model_name)
+      model_ckp = tf.keras.models.load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
       fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )

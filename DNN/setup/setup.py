@@ -276,7 +276,7 @@ def create_tar():
     tarDir + "DNN/application_log*",
     tarDir + "FWLJMET/*",
     tarDir + "notebooks/*",
-    tarDir + "cut_events*",
+    tarDir + "DNN/*.parquet",
     tarDir + "*.tgz",
     tarDir + ".git/*",
     "CMSSW_9_4_6_patch1/" 

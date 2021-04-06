@@ -4,6 +4,7 @@ from json import loads as load_json
 from json import dump as dump_json
 from datetime import datetime
 from shutil import rmtree, copy
+import tensorflow as tf
 import numpy as np
 
 import config
@@ -90,7 +91,7 @@ for config_num, config_path in enumerate(config_order):
     parameters["epochs"] = config["epochs"][-1] if type(config["epochs"]) == list else config["epochs"]
   print( ">> Using njets >= {} and nbjets >= {}".format( config[ "njets" ], config[ "nbjets" ] ) )
   
-  model_path = os.path.join(folder, "final_model_{}j_{}to{}.h5".format( config[ "njets" ], config[ "start_index" ], config[ "end_index" ] ) )
+  model_path = os.path.join(folder, "final_model_{}j_{}to{}.tf".format( config[ "njets" ], config[ "start_index" ], config[ "end_index" ] ) )
   save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( config[ "njets" ], config[ "nbjets" ], args.year ) )
   
   model = mltools.CrossValidationModel(
@@ -138,8 +139,6 @@ for config_num, config_path in enumerate(config_order):
     "auc_train": model.auc_train,
     "auc_test_k": [ np.mean(model.auc_test), np.std(model.auc_test) ],
     "auc_train_k": [ np.mean(model.auc_train), np.std(model.auc_train) ],
-    "loss": model.loss,
-    "accuracy": model.accuracy,
     "fpr_train": [",".join([str(x) for x in fpr]) for fpr in model.fpr_train],
     "tpr_train": [",".join([str(x) for x in tpr]) for tpr in model.tpr_train],
     "fpr_test": [",".join([str(x) for x in fpr]) for fpr in model.fpr_test],
