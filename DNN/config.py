@@ -7,11 +7,15 @@ varList = {}
 bruxUserName = "dli50"
 lpcUserName = "dsunyou"
 eosUserName = "dali"
-date = "10072020" # production date
+#date = "10072020" # production date
+date = "02182021"
 
 step2Sample = {
-  "2017": "FWLJMET102X_1lep2017_Oct2019_4t_{}_step2".format( date ),
-  "2018": "FWLJMET102X_1lep2018_Oct2019_4t_{}_step2".format( date )
+  "2017": "FWLJMET102X_1lep2017_Oct2019_3t_{}_step2".format( date ),
+  "2018": "FWLJMET102X_1lep2018_Oct2019_3t_{}_step2".format( date )
+
+#  "2017": "FWLJMET102X_1lep2017_Oct2019_4t_{}_step2".format( date ),
+#  "2018": "FWLJMET102X_1lep2018_Oct2019_4t_{}_step2".format( date )
 }
 
 step3Sample = {
@@ -20,8 +24,10 @@ step3Sample = {
 }
 
 step2DirBRUX = {
-  "2017": "/mnt/hadoop/store/group/bruxljm/{}/".format( step2Sample[ "2017" ] ),
-  "2018": "/mnt/hadoop/store/group/bruxljm/{}/".format( step2Sample[ "2018" ] )
+#  "2017": "/mnt/hadoop/store/group/bruxljm/{}/".format( step2Sample[ "2017" ] ),
+#  "2018": "/mnt/hadoop/store/group/bruxljm/{}/".format( step2Sample[ "2018" ] )
+  "2017": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/{}/".format( step2Sample[ "2017" ] ),
+  "2018": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/{}/".format( step2Sample[ "2018" ] )
 }
 
 step2DirLPC = {

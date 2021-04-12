@@ -9,7 +9,6 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.backend import clear_session
 
-import keras==2.2.0
 from keras.models import Sequential
 from keras.models import load_model
 from keras.layers.core import Dense, Dropout
@@ -218,7 +217,7 @@ class HyperParameterModel(MLTrainingInstance):
     self.model.add( tf.keras.layers.Dense(
       self.parameters[ "initial_nodes" ],
       input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
-      kernel_initializer="glorot_normal",
+      kernel_initializer = "he_normal",
       activation=self.parameters[ "activation_function" ]
     ) )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
@@ -229,13 +228,13 @@ class HyperParameterModel(MLTrainingInstance):
       if self.parameters[ "node_pattern" ] == "dynamic":
         self.model.add( tf.keras.layers.Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
-          kernel_initializer = "glorot_normal",
+          kernel_initializer = "he_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       elif self.parameters[ "node_pattern" ] == "static":
 	self.model.add( tf.keras.layers.Dense(
           self.parameters[ "initial_nodes" ],
-          kernel_initializer = "glorot_normal",
+          kernel_initializer = "he_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       # Final classification node
@@ -306,7 +305,7 @@ class HyperParameterModel(MLTrainingInstance):
 
     # Test
     print( ">> Testing." )
-    model_ckp = load_model( self.model_name )
+    model_ckp = tf.keras.models.load_model( self.model_name )
     self.loss, self.accuracy = model_ckp.evaluate( test_x, test_y, verbose = 1 )
       
     self.fpr_train, self.tpr_train, _ = roc_curve( train_y.astype(int), model_ckp.predict( train_x )[:,0] )
@@ -363,7 +362,7 @@ class HyperParameterModel(MLTrainingInstance):
 
     # Test
     print( ">> Testing." )
-    model_ckp = load_model( self.model_name )
+    model_ckp = tf.keras.models.load_model( self.model_name )
     self.loss, self.accuracy = model_ckp.evaluate( test_x, test_y, verbose = 1 )
       
     self.fpr_train, self.tpr_train, _ = roc_curve( train_y.astype(int), model_ckp.predict( train_x )[:,0] )

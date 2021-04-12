@@ -17,7 +17,6 @@ cd CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 source /cvmfs/sft.cern.ch/lcg/views/LCG_97/x86_64-centos7-gcc8-opt/setup.sh
-#source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-centos7-gcc8-opt/setup.sh
 
 python step3.py -i $condorDir -f $fileName -o $outputDir -t $tag
 

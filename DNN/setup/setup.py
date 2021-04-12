@@ -10,7 +10,7 @@ sys.path.insert(0,"../DNN")
 import config
 
 # setup the working area
-home = os.path.expanduser( "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN" )
+home = os.path.expanduser( "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/" )
 brux_pwd = None
 
 parser = ArgumentParser()
@@ -105,10 +105,10 @@ def split_root( sample, directory, splits ):
   print( "[OK ] Finished splitting {}, now transferring to EOS".format( sample ) )
   
 def brux_to_lpc( directoryBRUX, sample, step2Dir ):
-  child = pexpect.spawn( "scp -r {}@brux.hep.brown.edu:{}{} ./{}".format(
+  print( ">> Transffering {} to {}".format( os.path.join( directoryBRUX, sample ), step2Dir ) )
+  child = pexpect.spawn( "scp -r {}@brux.hep.brown.edu:{} ./{}".format(
     config.bruxUserName,
-    directoryBRUX,
-    sample,
+    os.path.join( directoryBRUX, sample ),
     step2Dir
     ))
     
@@ -136,7 +136,7 @@ def brux_to_eos( year, systematics, samples, split ):
   if step2Sample not in os.listdir( home ):
     print( ">> Creating LPC directory for Step2 samples" )
     sys_call( "mkdir {}{}".format( home, step2Sample ), shell = True )
-  if "nominal" not in os.listdir( home + step2Sample ):
+  if "nominal" not in os.listdir( os.path.join( home, step2Sample ) ):
     print( ">> Creating LPC directory for nominal samples" )
     os.system( "mkdir {}{}/nominal".format( home, step2Sample ) )
   if args.systematics:
@@ -177,29 +177,34 @@ def brux_to_eos( year, systematics, samples, split ):
       if sample.replace( "hadd", split_tag ) not in os.listdir( "{}{}/nominal/".format( home, step2Sample ) ):
         print( ">> Transferring {} to {}/nominal/".format( sample, step2Sample ) )
         brux_to_lpc(
-          step2DirBRUX + "/nominal/",
+          os.path.join( step2DirBRUX, "nominal" ),
           sample,
-          step2Sample + "/nominal/"
+          os.path.join( step2Sample, "nominal" )
         ) 
         if split > -1:
           print( ">> Splitting {} into {} parts.".format( sample, splits ) )
           split_root( sample, step2DirLPC + "nominal/", str(splits) )
-        print( ">> Removing {} from LPC".format( sample ) )
 
       print( ">> Transferring {} to /nominal/ EOS".format( sample.replace( "hadd", split_tag ) ) )
-      sys_call( "xrdcp {}{} {}nominal/".format(
-        step2DirLPC + "nominal/",
-        sample.replace( "hadd", split_tag ),
-        config.eosUserName,
-        step2DirEOS
+      sys_call( "xrdcp {} {}".format(
+        os.path.join( step2DirLPC, "nominal", sample.replace( "hadd", split_tag ) ),
+        os.path.join( step2DirEOS, "nominal" )
       ), shell = True )
       if args.remove and sample not in training_samples:
-        print( ">> Removing all {} files from /nominal/ LPC".format( sample ) )
+        print( ">> Removing {} files from /nominal/ LPC".format( sample ) )
         if split > -1:
-          os.system( "rm {}nominal/{}".format( step2DirLPC, sample.replace( "hadd.root", "split*" ) ) )
+          os.system( "rm {}".format( os.path.join( step2DirLPC, "nominal", sample.replace( "hadd.root", "split*" ) ) ) )
         else:
-          os.system( "rm {}nominal/{}".format( step2DirLPC, sample ) )
-    else: print( "[OK ] {} exists in /nominal/ on EOS, skipping...".format( sample.replace( "hadd", split_tag ) ) ) 
+          os.system( "rm {}".format( os.path.join( step2DirLPC, "nominal", sample ) ) )
+    else: 
+      if args.remove and sample not in training_samples:
+        print( ">> Removing {} files from /nominal/ LPC".format( sample ) )
+        if split > -1:
+          os.system( "rm {}".format( os.path.join( step2DirLPC, "nominal", sample.replace( "hadd.root", "split*" ) ) ) )
+        else:
+          os.system( "rm {}".format( os.path.join( step2DirLPC, "nominal", sample ) ) )
+      print( "[OK ] {} exists in /nominal/ on EOS, skipping...".format( sample.replace( "hadd", split_tag ) ) ) 
+
 
     if args.systematics:
       for syst in [ "JEC", "JER" ]:
@@ -207,33 +212,31 @@ def brux_to_eos( year, systematics, samples, split ):
           if "up" in sample.lower() or "down" in sample.lower(): continue
           if "muon" in sample.lower() or "electron" in sample.lower() or "egamma" in sample.lower() or "jetht" in sample.lower(): continue
           if sample.replace( "hadd", split_tag ) not in eos_samples[ syst + dir ]:
-            if sample.replace( "hadd", split_tag ) not in os.listdir( "{}{}/{}{}/".format( home, step2Sample, syst, dir ) ):
-              print( ">> Transferring {} to {}/{}{}/".format( sample, step2Sample, syst, dir ) )
+            if sample.replace( "hadd", split_tag ) not in os.listdir( os.path.join( home, step2Sample, syst + dir ) ):
+              print( ">> Transferring {} to {}".format( sample, os.path.join( step2Sample, syst + dir ) ) )
               brux_to_lpc(
-                step2DirBRUX + syst + dir + "/",
+                os.path.join( step2DirBRUX, syst + dir ),
                 sample,
-                step2Sample + "/" + syst + dir + "/"
+                os.path.join( step2Sample, syst + dir )
               ) 
               if split > -1:
                 print( ">> Splitting {} into {} parts.".format( sample, splits ) )
                 split_root( sample, step2DirLPC + syst + dir + "/", str(splits) )
               print( ">> Removing {} from /{}{}/ on LPC".format( sample, syst, dir ) )
             print( ">> Transferring {} to /{}{}/ on EOS".format( sample.replace( "hadd", split_tag ), syst, dir ) )
-            sys_call( "xrdcp {}{} {}/".format(
-              step2DirLPC + syst + dir + "/",
-              sample.replace( "hadd", split_tag ),
-              config.eosUserName,
-              step2DirEOS + syst + dir 
+            sys_call( "xrdcp {} {}/".format(
+              os.path.join( step2DirLPC, syst + dir, sample.replace( "hadd", split_tag ) ),
+              os.path.join( step2DirEOS, syst + dir )
             ), shell = True )
             if args.remove:
               print( ">> Removing all {} files from /{}{}/ LPC".format( sample, syst, dir ) )
               if split > -1:
                 os.system( "rm {}{}{}/{}".format( step2DirLPC, syst, dir, sample.replace( "hadd.root", "split*" ) ) )
               else:
-                os.system( "rm {}{}{}/{}".format( step2DirLPC, syst, dir, sample ) ) 
+                os.system( "rm {}".format( os.path.join( step2DirLPC, syst + dir, sample ) ) ) 
           else: print( "[OK ] {} exists in /{}{}/ on EOS, skipping...".format( sample.replace( "hadd", split_tag ), syst, dir ) )
     print( "[OK ] Transfer of {} from BRUX to EOS complete.  Proceeding to next sample.\n".format( sample ) ) 
-     
+
   print( "[OK ] All samples transferred..." )
 
   

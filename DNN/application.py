@@ -34,8 +34,9 @@ files_step3 = {}
 # test on one signal and one background sample
 if args.test:
   files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTTJ" ][0] ]
-  files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTW" ][0] )
-  files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTT" ][0] )
+  #files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTJetsSemiLepNjet9binTTjj" ][0] ]
+  #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTW" ][0] )
+  #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTT" ][0] )
 else:
   files_step2[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step2Sample ), shell = True ).split("\n")[:-1]
   if args.resubmit != None: files_step3[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step3Sample ),shell=True).split("\n")[:-1]
@@ -84,7 +85,7 @@ if args.resubmit != None:
       if file not in files_step3[key]:
         submit_files[key].append(file)
         resubmit_count += 1
-        if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( sample_name ) )
+        if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( file ) )
   print( ">> {} samples to resubmit".format( resubmit_count ) )
   if resubmit_count == 0: 
     print( "[OK ] No samples found to resubmit, exiting program" )    
