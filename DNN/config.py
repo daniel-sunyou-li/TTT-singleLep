@@ -1,4 +1,4 @@
-#1/usr/bin/env python
+#!/usr/bin/env python
 
 #input variables
 varList = {}
@@ -98,32 +98,32 @@ bkg_training = {
   ],
   "2018": [
     "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
+#    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
+#    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+#    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+#    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+#    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+#    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+#    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+#    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+#    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+#    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+#    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+#    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+#    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+#    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+#    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+#    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"
   ]
 }
 
@@ -572,7 +572,6 @@ cut = {
   "JetPt1":  0,
   "JetPt2":  0,
   "minDR":   0.4,
-  "HT":      250
 }
 
 cutStr =  "( ( leptonPt_MultiLepCalc > {} && isElectron ) || ".format( cut["lepPt"] ) + \
@@ -583,5 +582,4 @@ cutStr =  "( ( leptonPt_MultiLepCalc > {} && isElectron ) || ".format( cut["lepP
           "( theJetPt_JetSubCalc_PtOrdered[1] > {} ) && ".format( cut["JetPt1"] ) + \
           "( theJetPt_JetSubCalc_PtOrdered[2] > {} ) && ".format( cut["JetPt2"] ) + \
           "( minDR_lepJet > {} ) && ".format( cut["minDR"] ) + \
-          "( AK4HT > {} ) && ".format( cut["HT"] ) + \
           "( DataPastTriggerX == 1 ) && ( MCPastTriggerX == 1 )"

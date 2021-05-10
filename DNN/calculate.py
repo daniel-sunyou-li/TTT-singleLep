@@ -14,11 +14,11 @@ parser = ArgumentParser()
 parser.add_argument("folders", nargs="*", default=[], help="condor_log folders to use, default is all condor_log*")
 parser.add_argument("-f", "--output-folder", default="auto", help="The folder to output calculations to.")
 parser.add_argument("-v", "--verbose", action="store_true", help="Display output from job tracker system.")
-parser.add_argument("-o", "--sort-order", default="importance", help="Which attribute to sort variables by in resulting files. Choose from (importance, freq, sum, mean, rms).")
+parser.add_argument("-o", "--sort-order", default="significance", help="Which attribute to sort variables by in resulting files. Choose from (significance, freq, sum, mean, rms).")
 parser.add_argument("--sort-increasing", action="store_true", help="Sort in increasing instead of decreasing order")
 args = parser.parse_args()
 
-print(" >> Running variable importance calculation")
+print(" >> Running variable significance calculation")
 
 # Interpret folder paths
 for d in args.folders:
@@ -39,15 +39,15 @@ if not os.path.exists(ds_folder):
   os.mkdir(ds_folder)
   print(">> Output directory {} created.".format(ds_folder))
 else:
-  print(">> Output variable importance results to {}.".format(ds_folder))
+  print(">> Output variable significance results to {}.".format(ds_folder))
   
 # Set verbosity
 jt.LOG = args.verbose
 
 # Interpret sort order
-sort_order = "importance"
-if args.sort_order.lower() not in ["importance", "freq", "sum", "mean", "rms"]:
-  print(">> Invalid sort option: {}. Using \"importance\".".format(args.sort_order.lower()))
+sort_order = "significance"
+if args.sort_order.lower() not in ["significance", "freq", "sum", "mean", "rms"]:
+  print(">> Invalid sort option: {}. Using \"significance\".".format(args.sort_order.lower()))
 else:
   sort_order = args.sort_order.lower()
 sort_increasing = args.sort_increasing
@@ -73,9 +73,9 @@ print( "[OK ] All data loaded." )
 
 print( ">> Computing Importances..." )
 
-# Compute importances, stats, and normalization
-importances = {}
-importance_stats = {}
+# Compute significances, stats, and normalization
+significances = {}
+significance_stats = {}
 normalization = 0
 
 # Find ROC-integral values for all seeds
@@ -86,10 +86,10 @@ for jf in job_folders:
       seed_rocs[seed_j.seed] = (seed_j.roc_integral, jf)
       for var, included in seed_j.seed.states.iteritems():
         if included:
-          if var in importance_stats:
-            importance_stats[var]["freq"] += 1
+          if var in significance_stats:
+            significance_stats[var]["freq"] += 1
           else:
-            importance_stats[var] = { "freq": 1 }
+            significance_stats[var] = { "freq": 1 }
 
 print( "Found " + str(len(seed_rocs.keys())) + " seed ROC-integrals." )
 
@@ -103,30 +103,30 @@ for seed, seed_roc in seed_rocs.iteritems():
     if subseed_j.has_result:
       for var, included in subseed_j.subseed.states.iteritems():
         if not included and seed.states[var]:
-          if var in importances:
-            importances[var].append(seed_roc[0] - subseed_j.roc_integral)
+          if var in significances:
+            significances[var].append(seed_roc[0] - subseed_j.roc_integral)
           else:
-            importances[var] = [seed_roc[0] - subseed_j.roc_integral]
+            significances[var] = [seed_roc[0] - subseed_j.roc_integral]
     
 print( "\n>> Computing stats." )
-for var, importance in importances.iteritems():
-  normalization += sum(importance)
+for var, significance in significances.iteritems():
+  normalization += sum(significance)
 
   # Compute stats
-  mean = np.mean(importance)
-  std = np.std(importance)
+  mean = np.mean(significance)
+  std = np.std(significance)
 
-  importance_stats[var]["mean"] = mean
-  importance_stats[var]["rms"] = std
-  importance_stats[var]["importance"] = mean / std
-  importance_stats[var]["sum"] = sum(importance)
+  significance_stats[var]["mean"] = mean
+  significance_stats[var]["rms"] = std
+  significance_stats[var]["significance"] = mean / std
+  significance_stats[var]["sum"] = sum(significance)
 
 print( "[OK ] Importances computed." )
 
 print( ">> Writing to output files." )
 
-num_vars = len(importances.keys())
-sorted_vars = list(sorted(importances.keys(), key=lambda k: importance_stats[k][sort_order]))
+num_vars = len(significances.keys())
+sorted_vars = list(sorted(significances.keys(), key=lambda k: significance_stats[k][sort_order]))
 if not sort_increasing:
   sorted_vars = list(reversed(sorted_vars))
 
@@ -146,23 +146,23 @@ with open(os.path.join(ds_folder, "VariableImportanceResults_" + str(num_vars) +
     "Sum",
     "Mean",
     "RMS",
-    "Importance"
+    "Significance"
   ))
     
   for i, var in enumerate(sorted_vars):
     f.write("\n{:<6} / {:<34} / {:<6} / {:<8.4f} / {:<7.4f} / {:<7.4f} / {:<11.3f}".format(
       str(i + 1) + ".",
       var,
-      importance_stats[var]["freq"],
-      importance_stats[var]["sum"],
-      importance_stats[var]["mean"],
-      importance_stats[var]["rms"],
-      importance_stats[var]["importance"]
+      significance_stats[var]["freq"],
+      significance_stats[var]["sum"],
+      significance_stats[var]["mean"],
+      significance_stats[var]["rms"],
+      significance_stats[var]["significance"]
     ))
 print( "[OK ] Wrote VariableImportanceResults_" + str(num_vars) + "vars.txt" )
 
 # ROC Hists File
-np.save(os.path.join(ds_folder, "ROC_hists_" + str(num_vars) + "vars"), importances)
+np.save(os.path.join(ds_folder, "ROC_hists_" + str(num_vars) + "vars"), significances)
 print( "Wrote ROC_hists_" + str(num_vars) + "vars" )
 
 # Importance Order File
@@ -170,6 +170,6 @@ with open(os.path.join(ds_folder, "VariableImportanceOrder_" + str(num_vars) + "
   for var in sorted_vars:
     f.write(var + "\n")
 
-print( "[OK \ Wrote " + "VariableImportanceOrder_" + str(num_vars) + "vars.txt" )
+print( "[OK ] Wrote " + "VariableImportanceOrder_" + str(num_vars) + "vars.txt" )
 
-print( "[OK ] Finished obtaining all variable importance results." )
+print( "[OK ] Finished obtaining all variable significance results." )

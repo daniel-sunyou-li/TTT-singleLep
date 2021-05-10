@@ -1,16 +1,18 @@
-  
 from ROOT import TMVA, TFile, TCut
 from random import randint
 import numpy as np
 import os
+print( ">> Importing jobtracker..." )
 from jobtracker import Seed
+print( ">> Importing config..." )
 import config
 
-# Initialize TMVA library
+print( ">> Initializing ROOT.TMVA Library..." )
+# Initialize ROOT.TMVA library
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-def get_correlation_matrix(year, variables, njets, nbjets):
+def get_correlation_matrix(year, variables, njets, nbjets, ak4ht):
   # Returns the correlation matrix of the given variables
   # Get signal and background paths
   tttw_path = os.path.join(os.getcwd(),
@@ -23,7 +25,7 @@ def get_correlation_matrix(year, variables, njets, nbjets):
                              config.step2Sample[ str(year) ] + "/nominal/",
                              config.bkg_training[ str(year) ][0] )
 
-  # Create TMVA object
+  # Create ROOT.TMVA object
   loader = TMVA.DataLoader("tmva_data")
 
   # Load used variables
@@ -58,6 +60,7 @@ def get_correlation_matrix(year, variables, njets, nbjets):
   cutStr = config.cutStr
   cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( nbjets ) 
   cutStr += " && ( NJets_JetSubCalc >= {} )".format( njets )
+  cutStr += " && ( AK4HT >= {} )".format( ak4ht )
   cutStr += " && ( ( isTraining == 1 ) || ( isTraining == 2 ) )"
   cut_string = TCut( cutStr )
   loader.PrepareTrainingAndTestTree(
@@ -80,11 +83,11 @@ def get_correlation_matrix(year, variables, njets, nbjets):
     
   return sig_corr
 
-def reweight_importances( year, variables, importances, njets, nbjets ):
+def reweight_importances( year, variables, importances, njets, nbjets, ak4ht ):
   # Re-weight the variable importances
   for i, importance in enumerate( importances ):
     if importance < 0: importances[i] = 0 
-  corr_mat = abs( get_correlation_matrix( int(year), variables, njets, nbjets ) / 100.0 )
+  corr_mat = abs( get_correlation_matrix( int(year), variables, njets, nbjets, ak4ht ) / 100.0 )
   mod_corr_mat = np.zeros( ( len( corr_mat ), len( corr_mat ) ) )
   for i in range(len(corr_mat)):
     for j in range(len(corr_mat)):
@@ -111,8 +114,8 @@ def reweight_importances( year, variables, importances, njets, nbjets ):
   for i in range( len( weightQSig ) ):
     if weightQSig[i] < 0: weightQSig[i] = 0
   
-  print("Weighted Quadratic Sum: {}".format(np.sum(np.sqrt(weightQSig))))
-  print("Weighted Linear Sum: {}".format(np.sum(weightLSig)))
+#  print("Weighted Quadratic Sum: {}".format(np.sum(np.sqrt(weightQSig))))
+#  print("Weighted Linear Sum: {}".format(np.sum(weightLSig)))
   return weightLSig, np.sqrt(weightQSig)
 
 def get_correlated_groups(corr_mat, variables, cutoff):
@@ -144,11 +147,11 @@ def get_correlated_groups(corr_mat, variables, cutoff):
 				
   return groups, pairs
 
-def generate_uncorrelated_seeds(count, variables, cutoff, year, njets, nbjets):
+def generate_uncorrelated_seeds(count, variables, cutoff, year, njets, nbjets, ak4ht):
   # Generates <count> uncorrelated Seed objects using the specified variables
   # Get correlated pairs of variables
   groups, _ = get_correlated_groups(
-    get_correlation_matrix(year, variables, njets, nbjets),
+    get_correlation_matrix(year, variables, njets, nbjets, ak4ht),
     variables,
     cutoff
   )

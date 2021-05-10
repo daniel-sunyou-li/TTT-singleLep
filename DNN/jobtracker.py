@@ -5,6 +5,7 @@ from shutil import rmtree
 import os.path
 import pickle
 
+
 LOG = True
 def log(s):
     if LOG:

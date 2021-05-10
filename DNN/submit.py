@@ -22,6 +22,7 @@ parser.add_argument(       "--unstarted",   action = "store_true", help = "Inclu
 parser.add_argument( "folders", nargs="*",  default = [],          help = "Condor log folders to [re]submit to." ) 
 parser.add_argument( "-nj", "--njets",      default = "4",         help = "Number of jets to cut on" )
 parser.add_argument( "-nb", "--nbjets",     default = "2",         help = "Number of b jets to cut on" )
+parser.add_argument( "-ht", "--ak4ht",      default = "500",       help = "AK4 Jet HT cut" )
 args = parser.parse_args()
 
 if args.year not in [ "2016", "2017", "2018" ]:
@@ -44,7 +45,7 @@ if args.folders == []:
 else:
   folders = args.folders
 
-if args.resubmit and args.seeds != 500:
+if args.resubmit:
   print "Number of Seeds argument ignored in resubmit mode."
 
 variables = None
@@ -67,11 +68,13 @@ def print_options():
   print( ">> # Seeds: {}".format( args.seeds ) )
   print( ">> # Jets: {}".format( args.njets ) )
   print( ">> # b Jets: {}".format( args.nbjets ) ) 
+  print( ">> AK4HT: >{}".format( args.ak4ht ) )
   print( ">> # Input Variables: {}".format ( len( variables ) ) )
   print( "{} Verbosity".format( "[ON ]" if args.verbose else "[OFF]" ) )
   print( "{} Test".format( "[ON ]" if args.test else "[OFF]" ) )
   print( "{} Resubmit".format( "[ON ]" if args.test else "[OFF]" ) )
-  
+  sleep(5)  
+
 def check_voms():
 # Returns True if the VOMS proxy is already running
   print( ">> Checking VOMS" )
@@ -102,13 +105,15 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
+    "MEMORY": "3.8" if int( args.ak4ht ) > 400 else "4.2"
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
     "EOSUSERNAME": config.eosUserName,
     "YEAR": args.year,
     "NJETS": args.njets,
-    "NBJETS": args.nbjets 
+    "NBJETS": args.nbjets
+    "AK4HT": args.ak4ht 
   }
  
   with open( job.path, "w" ) as f:
@@ -117,13 +122,13 @@ def submit_job(job):
 Executable = %(RUNDIR)s/remote.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-request_memory = 4.2 GB
+request_memory = %(MEMORY)s
 request_cpus = 2
 Output = %(FILENAME)s.out
 Error = %(FILENAME)s.err
 Log = %(FILENAME)s.log
 Notification = Never
-Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s
+Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s %(AK4HT)s
 Queue 1"""%condorParams )
     
   os.chdir(job.folder)
@@ -218,7 +223,7 @@ def resubmit_jobs():
 def submit_new_jobs():
   jf = jt.JobFolder.create(folders[0])
   print( ">> Submitting new jobs into folder: {}".format(jf.path))
-  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.njets, args.nbjets )
+  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.njets, args.nbjets, args.ak4ht )
 
   print "Generating jobs."
   if jf.jobs == None:

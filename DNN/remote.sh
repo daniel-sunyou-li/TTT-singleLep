@@ -5,6 +5,7 @@ year=${2}
 seed_vars=${3}
 njets=${4}
 nbjets=${5}
+ak4ht=${6}
 
 echo ">> Setting Up TTT Job"
 
@@ -24,4 +25,4 @@ source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt
 
 echo "[OK ] Setup finished."
 
-python remote.py -y $year -s $seed_vars -nj $njets -nb $nbjets
+python remote.py -y $year -s $seed_vars -nj $njets -nb $nbjets -ht $ak4ht

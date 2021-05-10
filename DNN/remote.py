@@ -21,6 +21,7 @@ parser.add_argument( "-y",  "--year", required = True, help = "Sample year" )
 parser.add_argument( "-s",  "--seedvars", required = True, help = "Seed value" )
 parser.add_argument( "-nj", "--njets", required = True, help = "Number of jets to cut on" )
 parser.add_argument( "-nb", "--nbjets", required = True, help = "Number of b jets to cut on" )
+parser.add_argument( "-ht", "--ak4ht", required = True, help = "AK4 Jet HT cut" )
 args = parser.parse_args()
 
 seed_vars = set(b64decode(args.seedvars).split(","))
@@ -66,7 +67,8 @@ for bkg in config.bkg_training[ args.year ]:
 # Set weights and cuts
 cutStr = config.cutStr
 cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( args.nbjets ) 
-cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.njets ) 
+cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.njets )
+cutStr += " && ( AK4HT > {} )".format( args.ak4ht ) 
 cutStr += " && ( ( isTraining == 1 ) || ( isTraining == 2 ) )"
 
 loader.SetSignalWeightExpression( config.weightStr )
@@ -105,7 +107,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=30:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=40:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

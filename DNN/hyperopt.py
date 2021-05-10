@@ -5,23 +5,27 @@ from json import loads as load_json
 from json import dumps as write_json
 from math import log
 
+print( ">> Importing mltools..." )
 import mltools
+print( ">> Importing correlation..." )
 from correlation import reweight_importances
 
 from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 from skopt import gp_minimize
 
+print( ">> Importing config..." )
 import config
 
 parser = ArgumentParser()
 parser.add_argument(      "dataset", help="The dataset folder to use variable importance results from.")
-parser.add_argument("-o", "--sort-order", default="importance", help="Which attribute to sort variables by. Choose from (importance, freq, sum, mean, rms, or specify a filepath).")
+parser.add_argument("-o", "--sort-order", default="significance", help="Which attribute to sort variables by. Choose from (significance, freq, sum, mean, rms, or specify a filepath).")
 parser.add_argument(      "--sort-increasing", action="store_true", help="Sort in increasing instead of decreasing order")
 parser.add_argument("-n", "--numvars", default="all", help="How many variables, from the top of the sorted order, to use.")
 parser.add_argument("-y", "--year", required=True, help="The dataset to use when training. Specify 2017 or 2018")
 parser.add_argument("-p", "--parameters", default=None, help="Specify a JSON folder with static and hyper parameters.")
-parser.add_argument("-nj", "--njets", default = "4", help = "Number of jets to cut on" )
+parser.add_argument("-ht", "--ak4ht",  default = "500", help = "AK4 Jet HT cut" )
+parser.add_argument("-nj", "--njets",  default = "4", help = "Number of jets to cut on" )
 parser.add_argument("-nb", "--nbjets", default = "2", help = "Number of b jets to cut on" )
 args = parser.parse_args()
 
@@ -91,8 +95,8 @@ if os.path.exists(args.sort_order):
 else:
   sort_order = args.sort_order.lower()
   if sort_order not in var_data:
-    print( ">> Invalid sort option: {}. Using \"importance\".".format( sort_order ) )
-    sort_order = "importance"
+    print( ">> Invalid sort option: {}. Using \"significance\".".format( sort_order ) )
+    sort_order = "significance"
   else:
     print( ">> Sorting {} variables by {}.".format( len( var_data[ "variable name" ] ), sort_order ) )
   sorted_vars = sorted( [ (n, i) for i, n in enumerate( var_data[ "variable name" ] ) ],
@@ -120,9 +124,18 @@ os.system( "mkdir ./{}/".format( os.path.join( args.dataset, subDirName ) ) )
 print( ">> Variables used in optimization:\n - {}".format( "\n - ".join( variables ) ) )
 
 # Calculate re-weighted significance
-LMS, QMS = reweight_importances( year, variables, [ var_data[ "importance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], args.njets, args.nbjets )
+LMS, QMS = reweight_importances( year, variables, [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], args.njets, args.nbjets, args.ak4ht )
+LMI, QMI = reweight_importances( year, variables, [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ], args.njets, args.nbjets, args.ak4ht )
 LSI = sum( [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
-LSS = sum( [ var_data[ "importance" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
+LSS = sum( [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
+
+print( ">> Cumulative Importance Metrics:" )
+print( "   o LSI: {:.4f}".format( LSI ) )
+print( "   o LMI: {:.4f}".format( sum(LMI) ) )
+print( "   o QMI: {:.4f}".format( sum(QMI) ) )
+print( "   o LSS: {:.4f}".format( LSS ) )
+print( "   o LMS: {:.4f}".format( sum(LMS) ) )
+print( "   o QMS: {:.4f}".format( sum(QMS) ) )
 
 # Determine static and hyper parameter
 timestamp = datetime.now()
@@ -138,6 +151,7 @@ CONFIG = {
     "n_starts",
     "njets",
     "nbjets",
+    "ak4ht",
     "weight_string",
     "cut_string",
     "start_index",
@@ -146,10 +160,12 @@ CONFIG = {
     "LMS",
     "QMS",
     "LSI",
-    "LSS"
+    "LSS",
+    "LMI",
+    "QMI"
   ],
-    "epochs": 30,
-    "patience": 5,
+    "epochs": 5,
+    "patience": 3,
     "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
 
     "hidden_layers": [ 1, 3 ],
@@ -158,10 +174,10 @@ CONFIG = {
     "batch_power": [ 8, 11 ],
     "learning_rate": [ 1e-5, 1e-4, 1e-3, 1e-2],
     "regulator": [ "dropout", "none" ],
-    "activation_function": [ "relu", "softplus", "elu", "tanh" ],
+    "activation_function": [ "relu", "softplus", "elu" ],
 
-    "n_calls": 20,
-    "n_starts": 15,
+    "n_calls": 2,
+    "n_starts": 1,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }
@@ -182,10 +198,13 @@ CONFIG.update({
   "variables": variables,
   "LMS": sum(LMS),
   "QMS": sum(QMS),
+  "LMI": sum(LMI),
+  "QMI": sum(QMI),
   "LSI": LSI,
   "LSS": LSS,
   "njets": args.njets,
-  "nbjets": args.nbjets
+  "nbjets": args.nbjets,
+  "ak4ht": args.ak4ht
 } )
 
 # Save used parameters to file
@@ -239,33 +258,40 @@ def objective(**X):
   model = mltools.HyperParameterModel(
     X, 
     signal_files, background_files,
-    args.njets, args.nbjets, 
+    args.njets, args.nbjets, args.ak4ht,
     CONFIG["model_name"]
   )
-  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( args.njets, args.nbjets, args.year ) )
-  if cut_events is None:
-    if not os.path.exists(save_path):
-      #print( ">> Generating saved cut event .pkl file." )
-      print( ">> Generating saved cut event .parquet file." )
-      #model.load_trees_pkl()
-      model.load_trees()
-      #model.apply_cut_pkl()
-      model.apply_cut_prq()
-      #model.save_cut_events_pkl(mltools.CUT_SAVE_FILE)
-      model.save_cut_events_prq(save_path)
-    else:
-      #print( ">> Loading saved cut event .pkl files." )
-      print( ">> Loading saved cut event .parquet files." )
-      #model.load_cut_events_pkl(mltools.CUT_SAVE_FILE)
-      model.load_cut_events_prq(save_path)
-    cut_events = model.cut_events_prq.copy()
-  else:
-    model.cut_events_prq = cut_events.copy()
-    
+  save_paths = []
+  parts = 1
+  if int( args.ak4ht ) >= 500: parts = 1
+  elif int( args.ak4ht ) >= 400: parts = 2
+  else: parts = 3
 
+  for i in range( parts ):
+    save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( args.njets, args.nbjets, args.ak4ht, args.year, i + 1 ) ) )
+
+  if cut_events is None:
+    if not os.path.exists(save_paths[0]):
+      print( ">> Generating saved cut event .pkl file." )
+      print( "   >> Loading Trees..." )
+      model.load_trees()
+      print( "   >> Applying Cuts..." )
+      #model.apply_cut_prq(save_paths)
+      model.apply_cut( save_paths )
+      print( "   >> Saving Events to .pkl" )
+      model.save_cut_events_pkl( save_paths )
+    else:
+      print( ">> Loading saved cut event .pkl files." )
+      model.load_cut_events_pkl( save_paths )
+    #cut_events = model.cut_events_prq.copy()
+    cut_events = model.cut_events_pkl.copy()
+  else:
+    #model.cut_events_prq = cut_events.copy()
+    model.cut_events_pkl = cut_events.copy()
+    
   model.build_model()
-  #model.train_model_pkl()
-  model.train_model_prq()
+  #model.train_model_prq()
+  model.train_model_pkl()
     
   print( ">> Obtained ROC-Integral value: {}".format(model.auc_test))
   logfile.write('{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n'.format(
