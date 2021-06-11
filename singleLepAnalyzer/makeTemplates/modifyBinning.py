@@ -45,7 +45,7 @@ lumiStr = str(targetlumi/1000).replace('.','p')+'fb' # 1/fb
 templateDir = os.getcwd()+'/templates_'+year+'_'+sys.argv[3]+'/'+cutString
 combinefile = 'templates_'+iPlot+'_'+lumiStr+'.root'
 
-blindBDT = False
+blindBDT = True
 
 quiet = True #if you don't want to see the warnings that are mostly from the stat. shape algorithm!
 rebinCombine = True #else rebins theta templates
@@ -690,7 +690,7 @@ procNames['ttnobb'] = '$\\ttbar+!\\bbbar$'
 for sig in sigProcList: 
 	if 'LH' in sig:  procNames[sig]='LH \\xft ('+str(float(sig[6:])/1000)+' \\TeV)'
 	elif 'RH' in sig: procNames[sig]='RH \\xft ('+str(float(sig[6:])/1000)+' \\TeV)'
-	else: procNames[sig]='\\fourt'
+	else: procNames[sig]=sig
 
 print "List of systematics for "+bkgProcList[0]+" process and "+channels[0]+" channel:"
 print "        ",sorted([hist[hist.find(bkgProcList[0]+'__')+len(bkgProcList[0])+2:hist.find(upTag)] for hist in yieldsAll.keys() if channels[0] in hist and '__'+bkgProcList[0]+'__' in hist and upTag in hist])# and 'muRF' not in hist

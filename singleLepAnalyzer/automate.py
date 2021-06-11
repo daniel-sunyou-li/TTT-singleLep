@@ -1,18 +1,23 @@
-import os
+import os, time
 
 cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_2_13/src"
 
-step = 1 # steps range from 1 through 6
-postfixes = []
+step = 5 # steps range from 1 through 6
+postfixes = ["DNN250_C{}".format(num) for num in [18,19]]#[16,17,20,21]]
+#postfixes = ["DNN500_C{}".format(num) for num in [16,17,18,19,20,21]]
+#postfixes = ["DNN500_C21"]
 years = ["17"] 
 variables = [
   "DNN_4j_1to50"
 ]
 
+date = "02182021"
+#date = "10072020"
+
 paths = {
-  "16": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2016_Feb2020_3t_02182021_step3/",
-  "17": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2017_Oct2019_3t_02182021_step3/",
-  "18": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2018_Oct2019_3t_02182021_step3/"
+  "16": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2016_Feb2020_3t_{}_step3/".format(date),
+  "17": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2017_Oct2019_3t_{}_step3/".format(date),
+  "18": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2018_Oct2019_3t_{}_step3/".format(date)
 }
 
 # this is used in step = 1, 2, 3, 4
@@ -69,6 +74,7 @@ python doTemplates.py " + training["year"] + " " + training["postfix"] + "\n" )
 Executable = " + os.getcwd() + "/" + shell_name + "\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
+JobBatchName = SLA_step2_dli50\n\
 request_memory = 5000\n\
 Output = " + os.getcwd() + "/log/" + shell_name.split(".")[0].split("/")[1] + ".out\n\
 Error = " + os.getcwd() + "/log/" + shell_name.split(".")[0].split("/")[1] + ".err\n\
@@ -105,6 +111,7 @@ python plotTemplates.py '+train['year']+' '+v+' '+train['postfix']+'\n')
 Executable = '+os.getcwd()+'/'+shell_name+'\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
+JobBatchName = SLA_step3_dli50\n\
 request_memory = 3072\n\
 Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
 Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\
@@ -144,6 +151,7 @@ cd ..\n')
 Executable = '+os.getcwd()+'/'+shell_name+'\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
+JobBatchName = SLA_step4_dli50\n\
 request_memory = 3072\n\
 Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
 Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\
@@ -167,7 +175,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd '+cmsswbase+'\n\
 eval `scramv1 runtime -sh`\n\
 cd '+os.getcwd()+'\n\
-combineCards.py R16=limits_R16_'+combo+'/cmb/combined.txt.cmb R17=limits_R17_'+combo+'/cmb/combined.txt.cmb R18=limits_R18_'+combo+'/cmb/combined.txt.cmb &> BDTcomb/'+combo+'.txt\n\
+combineCards.py R17=limits_R17_'+combo+'/cmb/combined.txt.cmb R18=limits_R18_'+combo+'/cmb/combined.txt.cmb &> BDTcomb/'+combo+'.txt\n\
 text2workspace.py  BDTcomb/'+combo+'.txt  -o BDTcomb/'+combo+'.root\n\
 combine -M Significance BDTcomb/'+combo+'.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 &> BDTcomb/sig_'+combo+'.txt\n\
 combine -M AsymptoticLimits BDTcomb/'+combo+'.root --run=blind --cminDefaultMinimizerStrategy 0 &> BDTcomb/asy_'+combo+'.txt\n')
@@ -179,6 +187,7 @@ combine -M AsymptoticLimits BDTcomb/'+combo+'.root --run=blind --cminDefaultMini
 Executable = '+os.getcwd()+'/'+shell_name+'\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
+JobBatchName = SLA_step5_dli50\n\
 request_memory = 3072\n\
 Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
 Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\

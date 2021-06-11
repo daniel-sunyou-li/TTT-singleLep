@@ -160,7 +160,7 @@ def analyze(tTree,process,flv,cutList,doAllSys,doPDF,iPlot,plotDetails,catStr,re
 		weightStr          += ' * '+TrigSF+' * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc * (MCWeight_MultiLepCalc/abs(MCWeight_MultiLepCalc)) * '+str(weight[process])
 		if '16' in year: weightStr += ' * muTrkSF * muPtSF'
 		#weightStr 	   	   += ' * btagCSVWeight * btagCSVRenormWeight'
-		weightStr += ' * btagCSVWeight * btagCSV2DWeight_HTnj'
+		weightStr += ' * btagCSVWeight ' # * btagCSV2DWeight_HTnj'
 		weightStrNoNjet = weightStr
 		#weightStr = njetStr + ' * ' + weightStr #UNCOMMENT HERE TO APPLY NJET SF!!!!!!!
 		weightTriggerUpStr  = weightStr.replace(TrigSF,'('+TrigSF+'+'+TrigSF+'Uncert)')
