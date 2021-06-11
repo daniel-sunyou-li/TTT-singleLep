@@ -1,7 +1,8 @@
+import os, sys
+sys.argv = []
 from ROOT import TMVA, TFile, TCut
 from random import randint
 import numpy as np
-import os
 print( ">> Importing jobtracker..." )
 from jobtracker import Seed
 print( ">> Importing config..." )

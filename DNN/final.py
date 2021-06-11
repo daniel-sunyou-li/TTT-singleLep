@@ -92,34 +92,40 @@ for config_num, config_path in enumerate(config_order):
   print( ">> Using njets >= {} and nbjets >= {}".format( config[ "njets" ], config[ "nbjets" ] ) )
   
   model_path = os.path.join(folder, "final_model_{}j_{}to{}.tf".format( config[ "njets" ], config[ "start_index" ], config[ "end_index" ] ) )
-  save_path = os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_{}.parquet".format( config[ "njets" ], config[ "nbjets" ], args.year ) )
+  parts = 1
+  if int( config["ak4ht"] ) >= 500: parts = 1
+  elif int( config["ak4ht"] ) >= 400: parts = 2
+  else: parts = 3
+  save_paths = []
+  for i in range( parts ):
+    save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( config[ "njets" ], config[ "nbjets" ], config[ "ak4ht" ], args.year, i + 1 ) ) )  
   
   model = mltools.CrossValidationModel(
     parameters,
     signal_files, background_files, 
     cv_folder, 
-    config["njets"], config["nbjets"], int(args.num_folds ) )
+    config["njets"], config["nbjets"], config["ak4ht"], int(args.num_folds ) )
   if not args.no_cut_save:
-    if not os.path.exists(save_path):
+    if not os.path.exists(save_paths[0]):
       print( ">> Generating saved cut event files." )
       model.load_trees()
-      #model.apply_cut_pkl()
-      model.apply_cut_prq()
-      #model.save_cut_events_pkl(mltools.CUT_SAVE_FILE)
-      model.save_cut_events_prq(save_path)
+      model.apply_cut()
+      #model.apply_cut_prq()
+      model.save_cut_events( save_paths )
+      #model.save_cut_events_prq( save_paths )
     else:
       print( ">> Loading saved cut event files." )
-      #model.load_cut_events_pkl(save_path)
-      model.load_cut_events_prq(save_path)
+      model.load_cut_events( save_paths )
+      #model.load_cut_events_prq(save_path)
   else:
     model.load_trees()
-    #model.apply_cut_pkl()
-    model.apply_cut_prq()
+    model.apply_cut()
+    #model.apply_cut_prq()
 
   print( ">> Starting cross-validation." )
     
-  #model.train_model_pkl()
-  model.train_model_prq()
+  model.train_model_pkl()
+  #model.train_model_prq()
 
   print( ">> Collecting results." )
 

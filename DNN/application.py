@@ -164,8 +164,8 @@ def voms_init():
  
 def condor_job( fileName, condorDir, outputDir, logDir, tag ):
   request_memory = "10240" 
-  if "tttosemilepton" in fileName.lower() and "ttjj_hadd" in fileName.lower(): request_memory = "12288" 
-  if args.resubmit != None: request_memory = "12288"
+  if "tttosemilepton" in fileName.lower() and "ttjj_hadd" in fileName.lower(): request_memory = "14336" 
+  if args.resubmit != None: request_memory = "16384"
   dict = {
     "MODEL"     : models_arg,          # stays the same across all samples
     "PARAMFILE" : jsonNames_arg,       # stays the same across all samples

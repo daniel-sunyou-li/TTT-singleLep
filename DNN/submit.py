@@ -4,7 +4,6 @@ from multiprocessing import Process, Lock, Value
 from subprocess import check_output
 from time import sleep
 from sys import exit as sys_exit
-from correlation import generate_uncorrelated_seeds
 from base64 import b64encode
 import os
 import config
@@ -24,6 +23,8 @@ parser.add_argument( "-nj", "--njets",      default = "4",         help = "Numbe
 parser.add_argument( "-nb", "--nbjets",     default = "2",         help = "Number of b jets to cut on" )
 parser.add_argument( "-ht", "--ak4ht",      default = "500",       help = "AK4 Jet HT cut" )
 args = parser.parse_args()
+
+from correlation import generate_uncorrelated_seeds
 
 if args.year not in [ "2016", "2017", "2018" ]:
   raise ValueError( "[ERR] {} is an invalid year. Please choose from: 2016, 2017, 2018.".format( args.year ) )
@@ -105,14 +106,14 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "3.8" if int( args.ak4ht ) > 400 else "4.2"
+    "MEMORY": "3.8 GB" if int( args.ak4ht ) > 400 else "4.2 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
     "EOSUSERNAME": config.eosUserName,
     "YEAR": args.year,
     "NJETS": args.njets,
-    "NBJETS": args.nbjets
+    "NBJETS": args.nbjets,
     "AK4HT": args.ak4ht 
   }
  

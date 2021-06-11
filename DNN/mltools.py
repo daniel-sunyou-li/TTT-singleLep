@@ -1,4 +1,5 @@
 import os, sys
+import numpy as np
 from pickle import load as pickle_load
 from pickle import dump as pickle_dump
 
@@ -12,16 +13,12 @@ from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.backend import clear_session
 
-print( ">> Importing ROOT.TFile..." )
 from ROOT import TFile
 
-print( ">> Importing SKLearn..." )
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, roc_curve, auc
 from sklearn.model_selection import ShuffleSplit
 from sklearn.utils import shuffle as shuffle_data
-
-import numpy as np
 
 import config
 
@@ -58,32 +55,17 @@ class MLTrainingInstance(object):
                " and ( %(NJets_JetSubCalc)s >= {} )".format( njets) + \
                " and ( %(AK4HT)s >= {} )".format( ak4ht )
 
-  def load_cut_events( self, path ):
-    # Save the cut signal and background events to pickled files 
-    if os.path.exists( path ):
-      with open( path, "rb" ) as f:
-        cut_events_pkl = pickle_load( f ) 
-        if cut_events_pkl[ "condition" ] != self.cut:
-          print( "[WARN] Cut condition in file {} is different from cut condition in program.".format( path ) )
-          print( ">> File will be regenerated." )
-          self.load_trees( path ) 
-          self.apply_cut( path )
-          self.save_cut_events( path )
-          print( "[OK] Cut condition file saved." )
-          return
-        self.cut_events = cut_events
-	
-  def load_cut_events_pkl( self, paths ):
+  def load_cut_events( self, paths ):
     cut_events_pkl = []
     override = False
     for path in paths:
       with open( path, "rb" ) as f:
-        cut_events_pkl = pickle_load( f )
-        if cut_events_pkl[ "condition" ] != self.cut:
+        cut_event_pkl = pickle_load( f )
+        if cut_event_pkl[ "condition" ] != self.cut:
           print( "[WARN] Event cut in {} is different from cut in varsList.py".format( path ) ) 
           print( ">> Cut events file will be overridden." )
           override = True
-        cut_events_pkl.append( cut_events_pkl )
+        cut_events_pkl.append( cut_event_pkl )
 
     if override:
       self.load_trees()
@@ -91,41 +73,40 @@ class MLTrainingInstance(object):
       self.save_cut_events_pkl( paths )
       print( "[OK] New cut events saved." )
     else:
-      self.cut_events_pkl = {
+      self.cut_events = {
         "condition": self.cut,
         "signal": cut_events_pkl[0]["signal"],
         "background": cut_events_pkl[0]["background"]
       }
       for cut_event in cut_events_pkl[1:]:
         for event_key in cut_event[ "signal" ].keys():
-          self.cut_events_pkl[ "signal" ][ event_key ].extend( cut_event[ event_key ] )
-        for event_key in cut_events[ "background" ].keys():
-          self.cut_events_pkl[ "background" ][ event_key ].extend( cut_event[ event_key ] )
+          self.cut_events[ "signal" ][ event_key ].extend( cut_event[ "signal" ][ event_key ] )
+        for event_key in cut_event[ "background" ].keys():
+          self.cut_events[ "background" ][ event_key ].extend( cut_event[ "background" ][ event_key ] )
 
-  def load_cut_events_prq( self, paths ):
-    self.cut_events_prq = []
-    for path in paths:
-      if os.path.exists( path ):
-        self.cut_events_prq.append( pd.read_parquet( path ) )
-				
-  def save_cut_events( self, path ):
-    # Load pickled events files
-    with open( path, "wb" ) as f:
-      pickle_dump( self.cut_events_pkl, f )
-
-  def save_cut_events_pkl( self, paths ):
+  def save_cut_events( self, paths ):
+    config.ratio = 10. # limit background to signal ratio to this
     for i, path in enumerate( paths ):
       event_partition = {
         "condition": self.cut,
         "signal": {},
         "background": {}
       }
+      signal_size = 0
       for signal in self.cut_events[ "signal" ]:
         event_partition[ "signal" ][ signal ] = self.cut_events[ "signal" ][ signal ][ i::len( paths ) ] 
-      for background in self.cut_events[ "background" ]:
-        event_partition[ "background" ][ background ] = self.cut_events[ "background" ][ background ][ i::len( paths ) ]
+        signal_size += len( self.cut_events[ "signal" ][ signal ][ i::len( paths ) ] )
 
-      with open( os.path.join( path, ".pkl" ), "wb" ) as f:
+      background_size = 0
+      for background in self.cut_events[ "background" ]:
+        background_size += len( self.cut_events[ "background" ][ background ][ i::len( paths ) ] )
+
+      sig_to_bkg = float( config.ratio ) * float( signal_size ) / float( background_size )
+      for background in self.cut_events[ "background" ]:
+        keep_size = int( sig_to_bkg * float( len( self.cut_events[ "background" ][ background ] ) ) )
+        event_partition[ "background" ][ background ] = self.cut_events[ "background" ][ background ][:keep_size][ i::len( paths ) ]
+
+      with open( path, "wb" ) as f:
         pickle_dump( event_partition, f )
 
   def save_cut_events_prq( self, paths ):
@@ -153,18 +134,22 @@ class MLTrainingInstance(object):
     test_cut = lambda d: eval( self.cut % d )
     all_signals = {}
     for path, signal_tree in self.signal_trees.iteritems():
+      print( "  >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       sig_list = np.asarray( signal_tree.AsMatrix( VARIABLES ) )
       if path in all_signals:
         all_signals[path] = np.concatenate( ( all_signals[path], sig_list ) )
       else:
         all_signals[path] = sig_list
+    print( "[OK] Signal cuts are complete" )
     all_backgrounds = {}
     for path, background_tree in self.background_trees.iteritems():
+      print( "  >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       bkg_list = np.asarray( background_tree.AsMatrix( VARIABLES ) )
       if path in all_backgrounds:
         all_backgrounds[ path ] = np.concatenate( ( all_backgrounds[path], bkg_list ) )
       else:
         all_backgrounds[ path ] = bkg_list
+    print( "[OK] Background cuts are complete" )
     # Apply cuts
     self.cut_events = {
       "condition": self.cut,
@@ -267,8 +252,8 @@ class HyperParameterModel(MLTrainingInstance):
     return events
 
   def build_model(self, input_size="auto"):
-    self.model = tf.keras.models.Sequential()
-    self.model.add( tf.keras.layers.Dense(
+    self.model = Sequential()
+    self.model.add( Dense(
       self.parameters[ "initial_nodes" ],
       input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
       kernel_initializer = "he_normal",
@@ -276,23 +261,23 @@ class HyperParameterModel(MLTrainingInstance):
     ) )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
     for i in range( self.parameters[ "hidden_layers" ] ):
-      self.model.add( tf.keras.layers.BatchNormalization() )
+      self.model.add( BatchNormalization() )
       if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
-        self.model.add( tf.keras.layers.Dropout( 0.5 ) )
+        self.model.add( Dropout( 0.2 ) )
       if self.parameters[ "node_pattern" ] == "dynamic":
-        self.model.add( tf.keras.layers.Dense(
+        self.model.add( Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
           kernel_initializer = "he_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       elif self.parameters[ "node_pattern" ] == "static":
-	self.model.add( tf.keras.layers.Dense(
+	self.model.add( Dense(
           self.parameters[ "initial_nodes" ],
           kernel_initializer = "he_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
       # Final classification node
-    self.model.add( tf.keras.layers.Dense(
+    self.model.add( Dense(
       1,
       activation = "sigmoid"
     ) )
@@ -311,11 +296,11 @@ class HyperParameterModel(MLTrainingInstance):
   def train_model_pkl( self ):
     # Join all signals and backgrounds
     signal_events = []
-    for events in self.cut_events_pkl[ "signal" ].values():
+    for events in self.cut_events[ "signal" ].values():
       for event in events:
         signal_events.append( event )
     background_events = []
-    for events in self.cut_events_pkl[ "background" ].values():
+    for events in self.cut_events[ "background" ].values():
       for event in events:
         background_events.append( event )
         
@@ -359,7 +344,7 @@ class HyperParameterModel(MLTrainingInstance):
 
     # Test
     print( ">> Testing." )
-    model_ckp = tf.keras.models.load_model( self.model_name )
+    model_ckp = load_model( self.model_name )
     self.loss, self.accuracy = model_ckp.evaluate( test_x, test_y, verbose = 1 )
       
     self.fpr_train, self.tpr_train, _ = roc_curve( train_y.astype(int), model_ckp.predict( train_x )[:,0] )
@@ -416,7 +401,7 @@ class HyperParameterModel(MLTrainingInstance):
     )
     # Test
     print( ">> Testing." )
-    model_ckp = tf.keras.models.load_model( self.model_name )
+    model_ckp = load_model( self.model_name )
     self.loss, self.accuracy = model_ckp.evaluate( test_x, test_y, verbose = 1 )
       
     self.fpr_train, self.tpr_train, _ = roc_curve( train_y.astype(int), model_ckp.predict( train_x )[:,0] )
@@ -426,8 +411,8 @@ class HyperParameterModel(MLTrainingInstance):
     self.auc_test  = auc( self.fpr_test,  self.tpr_test )
     
 class CrossValidationModel( HyperParameterModel ):
-  def __init__( self, parameters, signal_paths, background_paths, model_folder, njets, nbjets, num_folds = 5 ):
-    HyperParameterModel.__init__( self, parameters, signal_paths, background_paths, njets, nbjets, None )
+  def __init__( self, parameters, signal_paths, background_paths, model_folder, njets, nbjets, ak4ht, num_folds = 5 ):
+    HyperParameterModel.__init__( self, parameters, signal_paths, background_paths, njets, nbjets, ak4ht, None )
         
     self.model_folder = model_folder
     self.num_folds = num_folds
@@ -550,7 +535,7 @@ class CrossValidationModel( HyperParameterModel ):
         validation_split = 0.25
       )
 
-      model_ckp = tf.keras.models.load_model(model_name)
+      model_ckp = load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
       fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )
@@ -688,7 +673,7 @@ class CrossValidationModel( HyperParameterModel ):
         validation_split = 0.25
       )
 
-      model_ckp = tf.keras.models.load_model(model_name)
+      model_ckp = load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
       fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )

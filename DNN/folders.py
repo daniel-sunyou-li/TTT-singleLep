@@ -27,7 +27,7 @@ elif args.import_data != None:
     varlist = []
     if args.import_data.lower() == "all":
         print( ">> Default variable list will be used." )
-        varlist = [v[0] for v in __import__("varsList").varList["DNN"]]
+        varlist = [v[0] for v in __import__("config").varList["DNN"]]
     else:
         print( ">> Reading variable list from {}.".format(args.import_data) )
         with open(args.import_data, "r") as vlf:

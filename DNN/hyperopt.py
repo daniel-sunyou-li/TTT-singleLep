@@ -1,21 +1,14 @@
-import os
+import os, sys
 from datetime import datetime
 from argparse import ArgumentParser
 from json import loads as load_json
 from json import dumps as write_json
 from math import log
 
-print( ">> Importing mltools..." )
-import mltools
-print( ">> Importing correlation..." )
-from correlation import reweight_importances
 
 from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 from skopt import gp_minimize
-
-print( ">> Importing config..." )
-import config
 
 parser = ArgumentParser()
 parser.add_argument(      "dataset", help="The dataset folder to use variable importance results from.")
@@ -28,6 +21,14 @@ parser.add_argument("-ht", "--ak4ht",  default = "500", help = "AK4 Jet HT cut" 
 parser.add_argument("-nj", "--njets",  default = "4", help = "Number of jets to cut on" )
 parser.add_argument("-nb", "--nbjets", default = "2", help = "Number of b jets to cut on" )
 args = parser.parse_args()
+
+print( ">> Importing correlation..." )
+from correlation import reweight_importances
+print( ">> Importing config..." )
+import config
+print( ">> Importing mltools..." )
+sys.argv = []
+import mltools
 
 # Parse year
 year = args.year
@@ -164,8 +165,8 @@ CONFIG = {
     "LMI",
     "QMI"
   ],
-    "epochs": 5,
-    "patience": 3,
+    "epochs": 30,
+    "patience": 5,
     "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
 
     "hidden_layers": [ 1, 3 ],
@@ -176,8 +177,8 @@ CONFIG = {
     "regulator": [ "dropout", "none" ],
     "activation_function": [ "relu", "softplus", "elu" ],
 
-    "n_calls": 2,
-    "n_starts": 1,
+    "n_calls": 20,
+    "n_starts": 15,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }
@@ -265,7 +266,8 @@ def objective(**X):
   parts = 1
   if int( args.ak4ht ) >= 500: parts = 1
   elif int( args.ak4ht ) >= 400: parts = 2
-  else: parts = 3
+  elif int( args.ak4ht ) >= 300: parts = 3
+  else: parts = 4
 
   for i in range( parts ):
     save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( args.njets, args.nbjets, args.ak4ht, args.year, i + 1 ) ) )
@@ -277,17 +279,17 @@ def objective(**X):
       model.load_trees()
       print( "   >> Applying Cuts..." )
       #model.apply_cut_prq(save_paths)
-      model.apply_cut( save_paths )
+      model.apply_cut()
       print( "   >> Saving Events to .pkl" )
-      model.save_cut_events_pkl( save_paths )
+      model.save_cut_events( save_paths )
     else:
       print( ">> Loading saved cut event .pkl files." )
       model.load_cut_events_pkl( save_paths )
     #cut_events = model.cut_events_prq.copy()
-    cut_events = model.cut_events_pkl.copy()
+    cut_events = model.cut_events.copy()
   else:
     #model.cut_events_prq = cut_events.copy()
-    model.cut_events_pkl = cut_events.copy()
+    model.cut_events = cut_events.copy()
     
   model.build_model()
   #model.train_model_prq()

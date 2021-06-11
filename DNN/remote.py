@@ -4,7 +4,6 @@ from base64 import b64decode
 
 os.environ['KERAS_BACKEND'] = 'tensorflow'
 
-from ROOT import TMVA, TCut, TFile
 
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout
@@ -12,7 +11,6 @@ from keras.layers import BatchNormalization
 from keras.optimizers import Adam
 from argparse import ArgumentParser
 
-import jobtracker as jt
 import config
 
 # Parse the arguments
@@ -23,6 +21,10 @@ parser.add_argument( "-nj", "--njets", required = True, help = "Number of jets t
 parser.add_argument( "-nb", "--nbjets", required = True, help = "Number of b jets to cut on" )
 parser.add_argument( "-ht", "--ak4ht", required = True, help = "AK4 Jet HT cut" )
 args = parser.parse_args()
+
+sys.argv = []
+import jobtracker as jt
+from ROOT import TMVA, TCut, TFile
 
 seed_vars = set(b64decode(args.seedvars).split(","))
 
