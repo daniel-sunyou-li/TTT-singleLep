@@ -145,6 +145,18 @@ class JobFolder(object):
             path = path.rstrip("/")
         self.path = os.path.join(getcwd(), path) if os.path.exists(os.path.join(getcwd(), path)) else path
         self.jobs = None
+        self.cuts = {
+          "AK4HT": 0,
+          "NJETS": 0,
+          "NBJETS": 0,
+          "MET": 0,
+          "LEPPT": 0,
+          "MT": 0,
+          "MINDR": 0,
+          "JET0PT": 0,
+          "JET1PT": 0,
+          "JET2PT": 0,
+        }
         if path.endswith(".jtd"):
             # The folder has been compacted
             self.compacted = True
