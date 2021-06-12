@@ -3,17 +3,14 @@ sys.argv = []
 from ROOT import TMVA, TFile, TCut
 from random import randint
 import numpy as np
-print( ">> Importing jobtracker..." )
 from jobtracker import Seed
-print( ">> Importing config..." )
 import config
 
-print( ">> Initializing ROOT.TMVA Library..." )
 # Initialize ROOT.TMVA library
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-def get_correlation_matrix(year, variables, njets, nbjets, ak4ht):
+def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jetPt0, jetPt1, jetPt2 ):
   # Returns the correlation matrix of the given variables
   # Get signal and background paths
   tttw_path = os.path.join(os.getcwd(),
@@ -58,11 +55,13 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht):
   loader.SetBackgroundWeightExpression( weight_string )
 
   # Set cuts
-  cutStr = config.cutStr
-  cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( nbjets ) 
-  cutStr += " && ( NJets_JetSubCalc >= {} )".format( njets )
-  cutStr += " && ( AK4HT >= {} )".format( ak4ht )
-  cutStr += " && ( ( isTraining == 1 ) || ( isTraining == 2 ) )"
+  cutStr = config.baseCut
+  cutStr += " && ( NJetsCSV_MultiLepCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
+  cutStr += " && ( minDR_lepJet > {} )".format( minDR )
+  cutStr += " && ( theJetPt_JetSubCalc_PtOrdered[0] > {} && theJetPt_JetSubCalc_PtOrdered[1] > {} && theJetPt_JetSubCalc_PtOrdered[2] > {} )".format( jetPt0, jetPt1, jetPt2 )
+  cutStr += " && ( AK4HT >= {} ) && ( MT_lepMet > {} ) && ( corr_met_MultiLepCalc > {} ) ".format( ak4ht, mt, met )
+  cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron ) ||".format( lepPt )
+  cutStr += " ( leptonPt_MultiLepCalc > {} && isMuon ) )".format( lepPt )
   cut_string = TCut( cutStr )
   loader.PrepareTrainingAndTestTree(
     cut_string, cut_string,
