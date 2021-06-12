@@ -9,6 +9,8 @@ from modSyst import *
 from utils import *
 import CMS_lumi, tdrstyle
 
+print( "Running plotTemplates.py..." )
+
 rt.gROOT.SetBatch(1)
 start_time = time.time()
 
@@ -35,14 +37,14 @@ elif region=='TTCR': pfix='ttbar_'+year
 if not isCategorized: pfix='kinematics_'+region+'_'+year
 templateDir=os.getcwd()+'/'+pfix+'_'+sys.argv[3]+'/'+cutString+'/'
 
-blindBDT = False
+blindBDT = True
 
-isRebinned='_rebinned_stat1p1' #post for ROOT file names
+isRebinned='_rebinned_stat0p3' #post for ROOT file names
 if not isCategorized: isRebinned='_rebinned_stat1p1'
 saveKey = '' # tag for plot names
 
 sig='tttx' #  choose the 1st signal to plot
-sigleg='t#bar{t}t#bar{t}'
+sigleg='tttj+tttw'
 scaleSignalsToXsec = False # !!!!!Make sure you know signal x-sec used in input files to this script. If this is True, it will scale signal histograms by x-sec in weights.py!!!!!
 scaleSignals = False
 sigScaleFact = 10 #put -1 if auto-scaling wanted
@@ -59,6 +61,7 @@ if '53' in sig: bkgHistColors = {'tt2b':rt.kRed+3,'tt1b':rt.kRed-3,'ttbj':rt.kRe
 elif 'tttx' in sig: bkgHistColors = {'tt2b':rt.kRed+3,'tt1b':rt.kRed-3,'ttbj':rt.kRed+3,'ttbb':rt.kRed,'ttcc':rt.kRed-5,'ttjj':rt.kRed-7,'ttnobb':rt.kRed-9,'top':rt.kBlue,'ttH':rt.kRed+3,'ewk':rt.kMagenta-2,'qcd':rt.kOrange+5,'ttbar':rt.kRed} #4T
 elif 'HTB' in sig: bkgHistColors = {'ttbar':rt.kGreen-3,'wjets':rt.kPink-4,'top':rt.kAzure+8,'ewk':rt.kMagenta-2,'qcd':rt.kOrange+5} #HTB
 else: bkgHistColors = {'top':rt.kAzure+8,'ewk':rt.kMagenta-2,'qcd':rt.kOrange+5} #TT
+sigProcList = [ "TTTW", "TTTJ" ]
 
 systematicList = ['pileup','JEC','JER','isr','fsr','muRF','pdf']#,'njet','hdamp','ue','ht','trigeff','toppt','tau32','jmst','jmrt','tau21','jmsW','jmrW','tau21pt']
 systematicList+= ['CSVshapelf','CSVshapehf','CSVshapehfstats1','CSVshapehfstats2','CSVshapecferr1','CSVshapecferr2','CSVshapelfstats1','CSVshapelfstats2']#['CSVshapelf','CSVshapehf']
@@ -70,7 +73,7 @@ doAllSys = True
 addCRsys = False
 doNormByBinWidth=True
 doOneBand = True
-blind = False
+blind = True
 yLog  = True
 doRealPull = False
 compareShapes = False
@@ -246,6 +249,7 @@ table.append(['Categories','prob_KS','prob_KS_X','prob_chi2','chi2','ndof'])
 table.append(['break'])
 bkghists = {}
 bkghistsmerged = {}
+sighists = {}
 systHists = {}
 totBkgTemp1 = {}
 totBkgTemp2 = {}
@@ -277,14 +281,25 @@ for catEStr in catsElist:
 			try: bkgHT_test.Add(bkghists[proc+catStr])
 			except: pass
 		print hData_test.Integral(),bkgHT_test.Integral()
-		hsig = RFile.Get(histPrefix+'__'+sigName).Clone(histPrefix+'__'+sigName)
-		if scaleSignalsToXsec: hsig.Scale(xsec[sig])
+    
+		sighists["sig"+catStr] = RFile.Get(histPrefix+"__"+sigProcList[0]).Clone(histPrefix+"__sig")
+		if scaleSignalsToXsec: sighists["sig"+catStr].Scale(xsec[sigProcList[0]])
+
+		for proc in sigProcList:
+			if proc != sigProcList[0]:
+				if scaleSignalsToXsec:
+					sighists["sig"+catStr].Add( RFile.Get(histPrefix+"__"+proc).Scale(xsec[proc]) )
+				else:
+					sighists["sig"+catStr].Add( RFile.Get(histPrefix+"__"+proc) )
+
 		if doNormByBinWidth:
 			for proc in bkgProcList:
 				try: normByBinWidth(bkghists[proc+catStr])
 				except: pass
-			normByBinWidth(hsig)
+			normByBinWidth(sighists["sig"+catStr])
 			normByBinWidth(hData)
+
+		hsig = sighists["sig"+catStr]
 
 		if doAllSys:
 			print systematicList_
@@ -719,9 +734,15 @@ for catEStr in catsElist:
 	for proc in bkgProcList[1:]:
 		try: bkgHTmerged_test.Add(bkghistsmerged[proc+catLStr])
 		except: pass
-	hsigmerged = RFile.Get(histPrefixE+'__'+sigName).Clone(histPrefixE+'__'+sigName+'merged')
-	hsigmerged.Add(RFile.Get(histPrefixM+'__'+sigName).Clone())
-	if scaleSignalsToXsec: hsigmerged.Scale(xsec[sig])
+
+	hsigmerged = RFile.Get(histPrefixE+'__'+sigProcList[0]).Clone(histPrefixE+'__'+sigProcList[0]+'merged')
+	hsigmerged.Add(RFile.Get(histPrefixM+'__'+sigProcList[0]).Clone())
+	if scaleSignalsToXsec: hsigmerged.Scale(xsec[sigProcList[0]])
+	for proc in sigProcList:
+		if proc != sigProcList[0]:
+			if scaleSignalsToXsec:
+				hsigmerged.Add( RFile.Get( histPrefixE + "__" + proc ).Clone().Scale( xsec[proc] ) )
+				hsigmerged.Add( RFile.Get( histPrefixM + "__" + proc ).Clone().Scale( xsec[proc] ) )
 	if doNormByBinWidth:
 		for proc in bkgProcList:
 			try: normByBinWidth(bkghistsmerged[proc+catLStr])

@@ -28,17 +28,17 @@ sys.argv[2],
 isEMlist  = ['E','M']
 nhottlist = ['0','1','2p']
 nttaglist = ['0p']
-nWtaglist = ['0p']
-nbtaglist = ['2','3','4p']
+nWtaglist = ['0','1p']
+nbtaglist = ['2','3p']
 njetslist = ['5','6','7','8p']
 
 # baseline categories
-# isEMlist  = ['E','M']
-# nhottlist = ['0p']
-# nttaglist = ['0p']
-# nWtaglist = ['0p']
-# nbtaglist = ['2p']
-# njetslist = ['4p']
+#isEMlist  = ['E','M']
+#nhottlist = ['0p']
+#nttaglist = ['0p']
+#nWtaglist = ['0p']
+#nbtaglist = ['2p']
+#njetslist = ['4p']
 
 if not categorize: 	
 	nhottlist = ['0p']
@@ -68,6 +68,12 @@ for iplot in iPlotList:
 		if skip(cat): continue #check the "skip" function in utils module to see if you want to remove specific categories there!!!
 		catDir = cat[0]+'_nHOT'+cat[1]+'_nT'+cat[2]+'_nW'+cat[3]+'_nB'+cat[4]+'_nJ'+cat[5]
 		print "iPlot: "+iplot+", cat: "+catDir
+		if (int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0])) > int(cat[5][0]):
+			print( "{} is not topologically possible, skipping...".format( catDir ) )
+			continue
+		if (int(cat[5][0])==5) and ( ( int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0]) ) > 3 ): 
+			print( "{} has too few signal yield, skipping...".format( catDir ) )
+			continue
 		if not os.path.exists(outDir+'/'+catDir): os.system('mkdir '+catDir)
 		os.chdir(catDir)
 	
@@ -85,11 +91,11 @@ request_memory = 5000
 Output = condor_%(iPlot)s.out
 Error = condor_%(iPlot)s.err
 Log = condor_%(iPlot)s.log
+JobBatchName = SLA_step1_DNN250
 Notification = Error
 Arguments = %(dir)s %(iPlot)s %(region)s %(isCategorized)s %(year)s %(isEM)s %(nhott)s %(nttag)s %(nWtag)s %(nbtag)s %(njets)s %(step1dir)s
 Queue 1"""%dict)
 		jdf.close()
-
 		os.system('condor_submit condor_'+iplot+'.job')
 		os.chdir('..')
 		count+=1

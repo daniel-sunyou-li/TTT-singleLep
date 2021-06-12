@@ -514,10 +514,12 @@ void step2::Loop()
 
      
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
+     if ( jentry == 317626 ) continue;
      Long64_t ientry = LoadTree(jentry);
      if (ientry < 0) break;
      nb = inputTree->GetEntry(jentry);   nbytes += nb;
      if (Cut(ientry) != 1) continue;
+     //std::cout << "Event: " << jentry << std::endl;
      //if (jentry > 5000 ) break;  // debug
 //     cout << "\n start event # " << jentry << endl;
      if(jentry % 1000 ==0) std::cout<<"Completed "<<jentry<<" out of "<<nentries<<" events"<<std::endl;      
