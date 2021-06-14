@@ -22,11 +22,11 @@ parser.add_argument( "-nb", "--NBJETS" )
 parser.add_argument( "-ht", "--AK4HT" )
 parser.add_argument( "-met", "--MET" )
 parser.add_argument( "-lpt", "--LEPPT" )
-parser.add_argument( "-mt", "--MET" )
+parser.add_argument( "-mt", "--MT" )
+parser.add_argument( "-dr", "--MINDR" )
 parser.add_argument( "-j0", "--JET0PT" )
 parser.add_argument( "-j1", "--JET1PT" )
 parser.add_argument( "-j2", "--JET2PT" )
-parser.add_argument()
 args = parser.parse_args()
 
 sys.argv = []

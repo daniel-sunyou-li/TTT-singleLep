@@ -55,7 +55,7 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
   loader.SetBackgroundWeightExpression( weight_string )
 
   # Set cuts
-  cutStr = config.baseCut
+  cutStr = config.base_cut
   cutStr += " && ( NJetsCSV_MultiLepCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
   cutStr += " && ( minDR_lepJet > {} )".format( minDR )
   cutStr += " && ( theJetPt_JetSubCalc_PtOrdered[0] > {} && theJetPt_JetSubCalc_PtOrdered[1] > {} && theJetPt_JetSubCalc_PtOrdered[2] > {} )".format( jet0Pt, jet1Pt, jet2Pt )
