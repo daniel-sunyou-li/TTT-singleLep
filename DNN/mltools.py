@@ -28,11 +28,7 @@ CUT_VARIABLES = ["leptonPt_MultiLepCalc", "isElectron", "isMuon",
                  "DataPastTriggerX", "MCPastTriggerX", "isTraining", "AK4HT",
                  "NJetsCSV_MultiLepCalc", "NJets_JetSubCalc"]
 
-base_cut = "((%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1) or ".format( config.cut["lepPt"] ) + \
-            "(%(leptonPt_MultiLepCalc)s > {} and %(isMuon)s == 1)) and ".format( config.cut["lepPt"] ) + \
-            "%(corr_met_MultiLepCalc)s > {} and %(MT_lepMet)s > {} and ".format( config.cut["met"], config.cut["MT_lmet"] ) + \
-            "%(minDR_lepJet)s > {} and ".format( config.cut["minDR"] ) + \
-            "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
+base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
             "( %(isTraining)s == 1 or %(isTraining)s == 2 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
@@ -44,16 +40,25 @@ SAVE_FPR_TPR_POINTS = 20
 print(">> mltools.py using {} variables.".format(len(VARIABLES)))
 
 class MLTrainingInstance(object):
-  def __init__(self, signal_paths, background_paths, njets, nbjets, ak4ht):
+  def __init__(self, signal_paths, background_paths, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
     self.signal_paths = signal_paths
     self.background_paths = background_paths
     self.njets = njets
     self.nbjets = nbjets
     self.ak4ht = ak4ht
+    self.met = met
+    self.lepPt = lepPt
+    self.mt = mt
+    self.minDR = minDR
     self.cut = base_cut + \
+               " ( (%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1 )".format( lepPt ) + \
+               " ( (%(leptonPt_MultiLepCalc)s > {} and %(isMuon)s == 1 ) ) and ".format( lepPt ) + \
                " and ( %(NJetsCSV_MultiLepCalc)s >= {} ) ".format( nbjets ) + \
                " and ( %(NJets_JetSubCalc)s >= {} )".format( njets) + \
-               " and ( %(AK4HT)s >= {} )".format( ak4ht )
+               " and ( %(AK4HT)s >= {} )".format( ak4ht ) + \
+               " and ( %(corr_met_MultiLepCalc)s > {} )".format( met ) + \
+               " and ( %(MT_lepMet)s > {} )".format( mt ) + \
+               " and ( %(minDR_lepJet)s > {} )".format( minDR )
 
   def load_cut_events( self, paths ):
     cut_events_pkl = []

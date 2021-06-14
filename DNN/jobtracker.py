@@ -145,6 +145,7 @@ class JobFolder(object):
             path = path.rstrip("/")
         self.path = os.path.join(getcwd(), path) if os.path.exists(os.path.join(getcwd(), path)) else path
         self.jobs = None
+        self.year = None
         self.cuts = {
           "AK4HT": 0,
           "NJETS": 0,

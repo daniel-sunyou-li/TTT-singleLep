@@ -56,8 +56,13 @@ print( ">> Using Folders: \n - " + "\n - ".join(condor_folders) )
 
 print( ">> Loading job data" )
 job_folders = []
+cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR", "JET0PT", "JET1PT", "JET2PT" ]
+cuts = { variable: [] for variable in cut_variables }
+years = []
 for folder in condor_folders:
   jf = jt.JobFolder(folder)
+  for variable in cut_variables: cuts[ variable ].append( jf.cuts[ variable ] )
+  years.append( jf.year )
   if jf.jobs == None:
     # Folder needs to be imported
     print( "[WARN] The folder {} has not been loaded by the job tracker.".format(folder) )
@@ -70,6 +75,23 @@ for folder in condor_folders:
   job_folders.append(jf)
   print(">> Loaded {}".format(folder))
 print( "[OK ] All data loaded." )
+
+print( ">> Checking year consistency between folders..." )
+
+if len( set( years ) ) > 1: 
+  print( "[ERR] Exiting calculate.py, compacted folders have multiple years..." )
+  quit()
+
+print( ">> Checking cut consistency between folders..." )
+
+quit_ = False
+for variable in cut_variables:
+  if len( set( cuts[ variable ] ) ) > 1: 
+    print( "[WARN] {} has {} different settings...".format( len( set( cuts[ variable ] ) ) )  
+    quit_ = True
+if quit_ is True: 
+  print( "[ERR] Exiting calculate.py, cut conditions are not consistent..." )
+  quit()
 
 print( ">> Computing Importances..." )
 
@@ -132,8 +154,9 @@ if not sort_increasing:
 
 # Variable Importance File
 with open(os.path.join(ds_folder, "VariableImportanceResults_" + str(num_vars) + "vars.txt"), "w") as f:
-  f.write("Weight: {}\n".format(config.weightStr))
-  f.write("Cut: {}\n".format(config.cutStr))
+  f.write("Year:{}\n".format(years[0])
+  f.write("Weight:{}\n".format(config.weightStr))
+  for variable in cut_variables:  f.write( "{}:{}\n".format( variable, cuts[ variable ][0] ) )
   f.write("Folders: \n - " + "\n - ".join(condor_folders) + "\n")
   f.write("Number of Variables: {}\n".format(num_vars))
   f.write("Date: {}\n".format(datetime.today().strftime("%Y-%m-%d")))

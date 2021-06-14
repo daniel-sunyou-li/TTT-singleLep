@@ -3,9 +3,16 @@
 eos_username=${1}
 year=${2}
 seed_vars=${3}
-njets=${4}
-nbjets=${5}
-ak4ht=${6}
+NJETS=${4}
+NBJETS=${5}
+AK4HT=${6}
+MET=${7}
+LEPPT=${8}
+MT=${9}
+MINDR=${10}
+JET0PT=${11}
+JET1PT=${12}
+JET2PT=${13}
 
 echo ">> Setting Up TTT Job"
 
@@ -25,4 +32,4 @@ source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt
 
 echo "[OK ] Setup finished."
 
-python remote.py -y $year -s $seed_vars -nj $njets -nb $nbjets -ht $ak4ht
+python remote.py -y $year -s $seed_vars -nj $NJETS -nb $NBJETS -ht $AK4HT -met $MET -lpt $LEPPT -mt $MT -dr $MINDR -j0 $JET0PT -j1 $JET1PT -j2 $JET2PT
