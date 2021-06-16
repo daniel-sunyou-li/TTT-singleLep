@@ -56,14 +56,15 @@ print( ">> Using Folders: \n - " + "\n - ".join(condor_folders) )
 
 print( ">> Loading job data" )
 job_folders = []
-cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR", "JET0PT", "JET1PT", "JET2PT" ]
+cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR" ]
 cuts = { variable: [] for variable in cut_variables }
 years = []
 for folder in condor_folders:
   jf = jt.JobFolder(folder)
-  for variable in cut_variables: cuts[ variable ].append( jf.cuts[ variable ] )
-  years.append( jf.year )
-  if jf.jobs == None:
+  for variable in cut_variables: 
+    cuts[ variable ].append( jf.pickle[ "CUTS" ][ variable ] )
+  years.append( jf.pickle[ "YEAR" ] )
+  if jf.pickle[ "JOBS" ] == None:
     # Folder needs to be imported
     print( "[WARN] The folder {} has not been loaded by the job tracker.".format(folder) )
     choice = raw_input ("Import with default variables? (Y/n)")
@@ -87,7 +88,7 @@ print( ">> Checking cut consistency between folders..." )
 quit_ = False
 for variable in cut_variables:
   if len( set( cuts[ variable ] ) ) > 1: 
-    print( "[WARN] {} has {} different settings...".format( len( set( cuts[ variable ] ) ) )  
+    print( "[WARN] {} has {} different settings...".format( len( set( cuts[ variable ] ) ) ) )  
     quit_ = True
 if quit_ is True: 
   print( "[ERR] Exiting calculate.py, cut conditions are not consistent..." )
@@ -154,7 +155,7 @@ if not sort_increasing:
 
 # Variable Importance File
 with open(os.path.join(ds_folder, "VariableImportanceResults_" + str(num_vars) + "vars.txt"), "w") as f:
-  f.write("Year:{}\n".format(years[0])
+  f.write("Year:{}\n".format(years[0]))
   f.write("Weight:{}\n".format(config.weightStr))
   for variable in cut_variables:  f.write( "{}:{}\n".format( variable, cuts[ variable ][0] ) )
   f.write("Folders: \n - " + "\n - ".join(condor_folders) + "\n")
@@ -162,7 +163,7 @@ with open(os.path.join(ds_folder, "VariableImportanceResults_" + str(num_vars) +
   f.write("Date: {}\n".format(datetime.today().strftime("%Y-%m-%d")))
   f.write("\nImportance Calculation:")
   f.write("\nNormalization: {}".format(normalization))
-  f.write("\n{:<6} / {:<34} / {:<6} / {:<7} / {:<7} / {:<11} / {:<11}".format(
+  f.write("\n{:<6} / {:<34} / {:<6} / {:<8} / {:<7} / {:<7} / {:<11}".format(
     "Index",
     "Variable Name",
     "Freq.",

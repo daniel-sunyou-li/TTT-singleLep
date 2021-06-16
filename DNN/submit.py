@@ -22,9 +22,6 @@ parser.add_argument( "-ht",  "--AK4HT",       default = "500",       help = "AK4
 parser.add_argument( "-met", "--MET",         default = "60",        help = "MET cut" )
 parser.add_argument( "-lpt", "--LEPPT",       default = "20",        help = "Lepton PT cut" )
 parser.add_argument( "-mt",  "--MT",          default = "60",        help = "MT of lepton and MET" )
-parser.add_argument( "-j0",  "--JET0PT",      default = "0",         help = "Jet #0 pt cut" )
-parser.add_argument( "-j1",  "--JET1PT",      default = "0",         help = "Jet #1 pt cut" )
-parser.add_argument( "-j2",  "--JET2PT",      default = "0",         help = "Jet #2 pt cut" )
 parser.add_argument( "-dr",  "--MINDR",       default = "0.4",       help = "min DR between lepton and jet" )
 parser.add_argument(         "--test",        action = "store_true", help = "Only submit one job to test submission mechanics." )
 parser.add_argument(         "--unstarted",   action = "store_true", help = "Include unstarted jobs in the resubmit list." )
@@ -81,9 +78,6 @@ def print_options():
   print( ">> Lepton pT: >{}".format( args.LEPPT ) )
   print( ">> MET and Lepton MT: >{}".format( args.MT ) )
   print( ">> Lepton and Jet min(dR): >{}".format( args.MINDR ) )
-  print( ">> Jet 0 pT: >{}".format( args.JET0PT ) )
-  print( ">> Jet 1 pT: >{}".format( args.JET1PT ) )
-  print( ">> Jet 2 pT: >{}".format( args.JET2PT ) ) 
   print( ">> # Input Variables: {}".format ( len( variables ) ) )
   print( "{} Verbosity".format( "[ON ]" if args.verbose else "[OFF]" ) )
   print( "{} Test".format( "[ON ]" if args.test else "[OFF]" ) )
@@ -133,9 +127,6 @@ def submit_job(job):
     "LEPPT": args.LEPPT,
     "MT": args.MT,
     "MINDR": args.MINDR,
-    "JET0PT": args.JET0PT,
-    "JET1PT": args.JET1PT,
-    "JET2PT": args.JET2PT
   }
  
   with open( job.path, "w" ) as f:
@@ -151,7 +142,7 @@ Output = %(FILENAME)s.out
 Error = %(FILENAME)s.err
 Log = %(FILENAME)s.log
 Notification = Never
-Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s %(AK4HT)s %(MET)s %(LEPPT)s %(MT)s %(MINDR)s %(JET0PT)s %(JET1PT)s %(JET2PT)s
+Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s %(AK4HT)s %(MET)s %(LEPPT)s %(MT)s %(MINDR)s 
 Queue 1"""%condorParams )
     
   os.chdir(job.folder)
@@ -245,23 +236,20 @@ def resubmit_jobs():
 # Run in Submit mode
 def submit_new_jobs():
   jf = jt.JobFolder.create(folders[0])
-  jf.year = args.year
-  jf.cuts[ "AK4HT" ] = args.AK4HT
-  jf.cuts[ "NJETS" ] = args.NJETS
-  jf.cuts[ "NBJETS" ] = args.NBJETS
-  jf.cuts[ "MET" ] = args.MET
-  jf.cuts[ "LEPPT" ] = args.LEPPT
-  jf.cuts[ "MT" ] = args.MT
-  jf.cuts[ "MINDR" ] = args.MINDR
-  jf.cuts[ "JET0PT" ] = args.JET0PT
-  jf.cuts[ "JET1PT" ] = args.JET1PT
-  jf.cuts[ "JET2PT" ] = args.JET2PT
+  jf.pickle[ "YEAR" ] = args.year
+  jf.pickle[ "CUTS" ][ "AK4HT" ] = args.AK4HT
+  jf.pickle[ "CUTS" ][ "NJETS" ] = args.NJETS
+  jf.pickle[ "CUTS" ][ "NBJETS" ] = args.NBJETS
+  jf.pickle[ "CUTS" ][ "MET" ] = args.MET
+  jf.pickle[ "CUTS" ][ "LEPPT" ] = args.LEPPT
+  jf.pickle[ "CUTS" ][ "MT" ] = args.MT
+  jf.pickle[ "CUTS" ][ "MINDR" ] = args.MINDR
   print( ">> Submitting new jobs into folder: {}".format(jf.path))
-  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.NJETS, args.NBJETS, args.AK4HT, args.LEPPT, args.MET, args.MT, args.MINDR, args.JET0PT, args.JET1PT, args.JET2PT )
+  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.NJETS, args.NBJETS, args.AK4HT, args.LEPPT, args.MET, args.MT, args.MINDR )
 
   print "Generating jobs."
-  if jf.jobs == None:
-    jf.jobs = []
+  if jf.pickle[ "JOBS" ] == None:
+    jf.pickle[ "JOBS" ] = []
   job_list = []
   for seed in seeds:
     seed_num = int(seed.binary, base=2)
@@ -285,7 +273,7 @@ def submit_new_jobs():
   if args.test:
     job_list = [job_list[0]]
 
-  jf.jobs.extend(job_list)
+  jf.pickle[ "JOBS" ].extend(job_list)
   jf._save_jtd()
   print(">> {} jobs generated and saved.".format(len(job_list)))
 

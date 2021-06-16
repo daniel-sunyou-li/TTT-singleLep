@@ -117,7 +117,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:TriesEarlyStopping=10:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=10:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

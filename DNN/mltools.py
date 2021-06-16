@@ -26,7 +26,7 @@ import config
 CUT_VARIABLES = ["leptonPt_MultiLepCalc", "isElectron", "isMuon",
                  "corr_met_MultiLepCalc", "MT_lepMet", "minDR_lepJet",
                  "DataPastTriggerX", "MCPastTriggerX", "isTraining", "AK4HT",
-                 "NJetsCSV_MultiLepCalc", "NJets_JetSubCalc"]
+                 "NJetsCSV_MultiLepCalc", "NJets_JetSubCalc" ]
 
 base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
             "( %(isTraining)s == 1 or %(isTraining)s == 2 )"
@@ -51,8 +51,8 @@ class MLTrainingInstance(object):
     self.mt = mt
     self.minDR = minDR
     self.cut = base_cut + \
-               " ( (%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1 )".format( lepPt ) + \
-               " ( (%(leptonPt_MultiLepCalc)s > {} and %(isMuon)s == 1 ) ) and ".format( lepPt ) + \
+               " and ( (%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1 )".format( lepPt ) + \
+               " or (%(leptonPt_MultiLepCalc)s > {} and %(isMuon)s == 1 ) )".format( lepPt ) + \
                " and ( %(NJetsCSV_MultiLepCalc)s >= {} ) ".format( nbjets ) + \
                " and ( %(NJets_JetSubCalc)s >= {} )".format( njets) + \
                " and ( %(AK4HT)s >= {} )".format( ak4ht ) + \
@@ -67,7 +67,7 @@ class MLTrainingInstance(object):
       with open( path, "rb" ) as f:
         cut_event_pkl = pickle_load( f )
         if cut_event_pkl[ "condition" ] != self.cut:
-          print( "[WARN] Event cut in {} is different from cut in varsList.py".format( path ) ) 
+          print( "[WARN] Event cut in {} is different from cut used in Variable Importance...".format( path ) ) 
           print( ">> Cut events file will be overridden." )
           override = True
         cut_events_pkl.append( cut_event_pkl )
@@ -241,8 +241,8 @@ class MLTrainingInstance(object):
     pass
 
 class HyperParameterModel(MLTrainingInstance):
-  def __init__(self, parameters, signal_paths, background_paths, njets, nbjets, ak4ht, model_name=None):
-    MLTrainingInstance.__init__(self, signal_paths, background_paths, njets, nbjets, ak4ht)
+  def __init__(self, parameters, signal_paths, background_paths, njets, nbjets, ak4ht, lepPt, met, mt, minDR, model_name=None):
+    MLTrainingInstance.__init__(self, signal_paths, background_paths, njets, nbjets, ak4ht, lepPt, met, mt, minDR)
     self.parameters = parameters
     self.model_name = model_name
 
@@ -416,8 +416,8 @@ class HyperParameterModel(MLTrainingInstance):
     self.auc_test  = auc( self.fpr_test,  self.tpr_test )
     
 class CrossValidationModel( HyperParameterModel ):
-  def __init__( self, parameters, signal_paths, background_paths, model_folder, njets, nbjets, ak4ht, num_folds = 5 ):
-    HyperParameterModel.__init__( self, parameters, signal_paths, background_paths, njets, nbjets, ak4ht, None )
+  def __init__( self, parameters, signal_paths, background_paths, model_folder, njets, nbjets, ak4ht, lepPt, met, mt, minDR, num_folds = 5 ):
+    HyperParameterModel.__init__( self, parameters, signal_paths, background_paths, njets, nbjets, ak4ht, lepPt, met, mt, minDR, None )
         
     self.model_folder = model_folder
     self.num_folds = num_folds

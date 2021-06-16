@@ -5,7 +5,6 @@ from json import loads as load_json
 from json import dumps as write_json
 from math import log
 
-
 from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 from skopt import gp_minimize
@@ -18,14 +17,11 @@ parser.add_argument("-n", "--numvars", default="all", help="How many variables, 
 parser.add_argument("-p", "--parameters", default=None, help="Specify a JSON folder with static and hyper parameters.")
 args = parser.parse_args()
 
+sys.argv = []
+
 from correlation import reweight_importances
 import config
-sys.argv = []
 import mltools
-
-tree_folder = config.step2DirLPC[ year ] + "nominal/"
-signal_files = [ os.path.join( tree_folder, sig ) for sig in ( config.sig_training[ year ] ) ]
-background_files = [ os.path.join( tree_folder, bkg ) for bkg in ( config.bkg_training[ year ] ) ]
 
 # Load dataset
 datafile_path = None
@@ -40,22 +36,24 @@ if datafile_path == None:
   
 print( ">> Loading variable importance data from {}.".format( datafile_path ) )
 # Read the data file
-cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR", "JET0PT", "JET1PT", "JET2PT" ]
+cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR" ]
 cut = { variable: 0 for variable in cut_variables }
 var_data = {}
+year = None
 with open( datafile_path, "r" ) as f:
   # Scroll to variable entries
-  if "Year" in line: 
-    year = line.split(":")[-1] 
-    print( ">> Running year: {}".format( year ) )
   line = f.readline()
-  for variable in cut_variables:
-    if variable in line:
-      cut[ variable ] = float( line.split(":")[-1] )
+  if "Year" in line: 
+    year = line.split(":")[-1][:-1] 
+    print( ">> Running year: {}".format( year ) )
   while not "Normalization" in line:
     line = f.readline()
     if line == "":
       raise IOError( ">> End of File Reached, no data found." )
+    for variable in cut_variables:
+      if variable in line:
+        cut[ variable ] = line.split(":")[-1][:-1]
+        print( "{}: {}".format( variable, cut[ variable] ) )
   # Data reached.
   # Read headers
   headers = [ h.strip().rstrip().lower().replace(".", "") for h in f.readline().rstrip().split("/") ]
@@ -123,9 +121,19 @@ print( ">> Creating hyper parameter optimization sub-directory: {}".format( args
 os.system( "mkdir ./{}/".format( os.path.join( args.dataset, subDirName ) ) ) 
 print( ">> Variables used in optimization:\n - {}".format( "\n - ".join( variables ) ) )
 
+tree_folder = config.step2DirLPC[ year ] + "nominal/"
+signal_files = [ os.path.join( tree_folder, sig ) for sig in ( config.sig_training[ year ] ) ]
+background_files = [ os.path.join( tree_folder, bkg ) for bkg in ( config.bkg_training[ year ] ) ]
+
 # Calculate re-weighted significance
-LMS, QMS = reweight_importances( year, variables, [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], cuts["NJETS"], cuts["NBJETS"], cuts["AK4HT"] )
-LMI, QMI = reweight_importances( year, variables, [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ], cuts["NJETS"], cuts["NBJETS"], cuts["AK4HT"] )
+LMS, QMS = reweight_importances( 
+  year, variables, [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], 
+  cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut["MET"], cut["MT"], cut["MINDR"]
+)
+LMI, QMI = reweight_importances( 
+  year, variables, [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ], 
+  cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut["MET"], cut["MT"], cut["MINDR"] 
+)
 LSI = sum( [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
 LSS = sum( [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
 
@@ -153,6 +161,10 @@ CONFIG = {
     "njets",
     "nbjets",
     "ak4ht",
+    "mindr",
+    "met",
+    "mt",
+    "leppt",
     "weight_string",
     "cut_string",
     "start_index",
@@ -177,8 +189,8 @@ CONFIG = {
     "regulator": [ "dropout", "none" ],
     "activation_function": [ "relu", "softplus", "elu" ],
 
-    "n_calls": 20,
-    "n_starts": 15,
+    "n_calls": 2,
+    "n_starts": 1,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }
@@ -190,13 +202,12 @@ if args.parameters != None and os.path.exists(args.parameters):
     u_params = load_json(f.read())
     CONFIG.update(u_params)
     
-tag = "{}j_{}to{}".format( cuts["NJETS"], subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
+tag = "{}j_{}to{}".format( cut["NJETS"], subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
 CONFIG.update({
   "year":year,
   "tag": tag,
   "log_file": os.path.join(args.dataset, subDirName, "hpo_log_" + tag + ".txt"),
   "weight_string": config.weightStr,
-  "cut_string": config.cutStr,
   "variables": variables,
   "LMS": sum(LMS),
   "QMS": sum(QMS),
@@ -204,16 +215,13 @@ CONFIG.update({
   "QMI": sum(QMI),
   "LSI": LSI,
   "LSS": LSS,
-  "njets": cuts["NJETS"],
-  "nbjets": cuts["NBJETS"],
-  "ak4ht": cuts["AK4HT"],
-  "met": cuts["MET"],
-  "leppt": cuts["LEPPT"],
-  "mt": cuts["MT"],
-  "mindr": cuts["MINDR"],
-  "jet0pt": cuts["JET0PT"],
-  "jet1pt": cuts["JET1PT"],
-  "jet2pt": cuts["JET2PT"]
+  "njets": cut["NJETS"],
+  "nbjets": cut["NBJETS"],
+  "ak4ht": cut["AK4HT"],
+  "met": cut["MET"],
+  "leppt": cut["LEPPT"],
+  "mt": cut["MT"],
+  "mindr": cut["MINDR"],
 } )
 
 # Save used parameters to file
@@ -242,6 +250,7 @@ opt_order = {}
 i = 0
 for param, value in CONFIG.iteritems():
   if param not in CONFIG["static"]:
+    print(param,value)
     if type(value[0]) == str:
       opt_space.append( Categorical(value, name=param) )
     elif param == "learning_rate":
@@ -267,18 +276,18 @@ def objective(**X):
   model = mltools.HyperParameterModel(
     X, 
     signal_files, background_files,
-    cuts["NJETS"], cuts["NBJETS"], cuts["AK4HT"],
+    cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut[ "MET" ], cut[ "MT" ], cut[ "MINDR" ],
     CONFIG["model_name"]
   )
   save_paths = []
   parts = 1
-  if int( cuts["AK4HT"] ) >= 500: parts = 1
-  elif int( cuts["AK4HT"] ) >= 400: parts = 2
-  elif int( cuts["AK4HT"] ) >= 300: parts = 3
+  if int( cut["AK4HT"] ) >= 500: parts = 1
+  elif int( cut["AK4HT"] ) >= 400: parts = 2
+  elif int( cut["AK4HT"] ) >= 300: parts = 3
   else: parts = 4
 
   for i in range( parts ):
-    save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( cuts["NJETS"], cuts["NBJETS"], cuts["AK4HT"], year, i + 1 ) ) )
+    save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( cut["NJETS"], cut["NBJETS"], cut["AK4HT"], year, i + 1 ) ) )
 
   if cut_events is None:
     if not os.path.exists(save_paths[0]):

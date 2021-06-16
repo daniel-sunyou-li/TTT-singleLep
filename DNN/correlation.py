@@ -10,7 +10,7 @@ import config
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jet0Pt, jet1Pt, jet2Pt ):
+def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
   # Returns the correlation matrix of the given variables
   # Get signal and background paths
   tttw_path = os.path.join(os.getcwd(),
@@ -58,7 +58,6 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
   cutStr = config.base_cut
   cutStr += " && ( NJetsCSV_MultiLepCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
   cutStr += " && ( minDR_lepJet > {} )".format( minDR )
-  cutStr += " && ( theJetPt_JetSubCalc_PtOrdered[0] > {} && theJetPt_JetSubCalc_PtOrdered[1] > {} && theJetPt_JetSubCalc_PtOrdered[2] > {} )".format( jet0Pt, jet1Pt, jet2Pt )
   cutStr += " && ( AK4HT >= {} ) && ( MT_lepMet > {} ) && ( corr_met_MultiLepCalc > {} ) ".format( ak4ht, mt, met )
   cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron ) ||".format( lepPt )
   cutStr += " ( leptonPt_MultiLepCalc > {} && isMuon ) )".format( lepPt )
@@ -83,11 +82,11 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
     
   return sig_corr
 
-def reweight_importances( year, variables, importances, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jet0Pt, jet1Pt, jet2Pt ):
+def reweight_importances( year, variables, importances, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
   # Re-weight the variable importances
   for i, importance in enumerate( importances ):
     if importance < 0: importances[i] = 0 
-  corr_mat = abs( get_correlation_matrix( int(year), variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jet0Pt, jet1Pt, jet2Pt ) / 100.0 )
+  corr_mat = abs( get_correlation_matrix( int(year), variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR) / 100.0 )
   mod_corr_mat = np.zeros( ( len( corr_mat ), len( corr_mat ) ) )
   for i in range(len(corr_mat)):
     for j in range(len(corr_mat)):
@@ -147,11 +146,11 @@ def get_correlated_groups(corr_mat, variables, cutoff):
 				
   return groups, pairs
 
-def generate_uncorrelated_seeds(count, variables, cutoff, year, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jet0Pt, jet1Pt, jet2Pt ):
+def generate_uncorrelated_seeds(count, variables, cutoff, year, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
   # Generates <count> uncorrelated Seed objects using the specified variables
   # Get correlated pairs of variables
   groups, _ = get_correlated_groups(
-    get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR, jet0Pt, jet1Pt, jet2Pt ),
+    get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ),
     variables,
     cutoff
   )
