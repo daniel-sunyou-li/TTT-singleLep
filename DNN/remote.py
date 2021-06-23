@@ -24,9 +24,6 @@ parser.add_argument( "-met", "--MET" )
 parser.add_argument( "-lpt", "--LEPPT" )
 parser.add_argument( "-mt", "--MT" )
 parser.add_argument( "-dr", "--MINDR" )
-parser.add_argument( "-j0", "--JET0PT" )
-parser.add_argument( "-j1", "--JET1PT" )
-parser.add_argument( "-j2", "--JET2PT" )
 args = parser.parse_args()
 
 sys.argv = []
@@ -77,9 +74,8 @@ for bkg in config.bkg_training[ args.year ]:
 cutStr = config.base_cut
 cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( args.NBJETS ) 
 cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.NJETS )
-cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet > {} ) && ( minDR_lepJet > {} )".format( args.AK4HT, args.MET, args.MT, args.MINDR ) 
+cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet > {} ) && ( minDR_lepJet > {} )".format( args.AK4HT, args.MET, args.MT, args.MINDR )
 cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( args.LEPPT, args.LEPPT ) 
-cutStr += " && ( theJetPt_JetSubCalc_PtOrdered[0] > {} ) && ( theJetPt_JetSubCalc_PtOrdered[1] > {} ) && ( theJetPt_JetSubCalc_PtOrdered[2] > {} )".format( args.JET0PT, args.JET1PT, args.JET2PT )
 
 loader.SetSignalWeightExpression( config.weightStr )
 loader.SetBackgroundWeightExpression( config.weightStr )
@@ -117,7 +113,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=10:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

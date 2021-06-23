@@ -33,7 +33,7 @@ files_step3 = {}
 
 # test on one signal and one background sample
 if args.test:
-  files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTTJ" ][0] ]
+  files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTTJ" ] ]
   #files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTJetsSemiLepNjet9binTTjj" ][0] ]
   #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTW" ][0] )
   #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTT" ][0] )

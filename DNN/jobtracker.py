@@ -5,7 +5,6 @@ from shutil import rmtree
 import os.path
 import pickle
 
-
 LOG = True
 def log(s):
     if LOG:
@@ -147,6 +146,7 @@ class JobFolder(object):
         self.pickle = {
           "JOBS": None,
           "YEAR": 0,
+          "BACKGROUND": [],
           "CUTS": {
             "AK4HT": 0,
             "NJETS": 0,
@@ -155,9 +155,6 @@ class JobFolder(object):
             "LEPPT": 0,
             "MT": 0,
             "MINDR": 0,
-            "JET0PT": 0,
-            "JET1PT": 0,
-            "JET2PT": 0 
           }
         } 
         self.path = os.path.join(getcwd(), path) if os.path.exists(os.path.join(getcwd(), path)) else path

@@ -237,6 +237,7 @@ def resubmit_jobs():
 def submit_new_jobs():
   jf = jt.JobFolder.create(folders[0])
   jf.pickle[ "YEAR" ] = args.year
+  jf.pickle[ "BACKGROUND" ] = config.bkg_training[ args.year ]
   jf.pickle[ "CUTS" ][ "AK4HT" ] = args.AK4HT
   jf.pickle[ "CUTS" ][ "NJETS" ] = args.NJETS
   jf.pickle[ "CUTS" ][ "NBJETS" ] = args.NBJETS

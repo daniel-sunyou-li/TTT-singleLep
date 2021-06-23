@@ -14,7 +14,9 @@ parser.add_argument(      "dataset", help="The dataset folder to use variable im
 parser.add_argument("-o", "--sort-order", default="significance", help="Which attribute to sort variables by. Choose from (significance, freq, sum, mean, rms, or specify a filepath).")
 parser.add_argument(      "--sort-increasing", action="store_true", help="Sort in increasing instead of decreasing order")
 parser.add_argument("-n", "--numvars", default="all", help="How many variables, from the top of the sorted order, to use.")
+parser.add_argument("-r", "--ratio", default = "-1", help="Ratio of background to signal training samples. Default = -1 to use all background" )
 parser.add_argument("-p", "--parameters", default=None, help="Specify a JSON folder with static and hyper parameters.")
+parser.add_argument("-t", "--tag", default="", help="Tag to add to the results directory name" )
 args = parser.parse_args()
 
 sys.argv = []
@@ -117,6 +119,8 @@ else:
   else:
     variables = var_order[:int(args.numvars)]
     subDirName = "1to{}".format( len(variables) )
+if args.tag != "":
+  subDirName += "_{}".format( args.tag )
 print( ">> Creating hyper parameter optimization sub-directory: {}".format( args.dataset + subDirName + "/" ) )
 os.system( "mkdir ./{}/".format( os.path.join( args.dataset, subDirName ) ) ) 
 print( ">> Variables used in optimization:\n - {}".format( "\n - ".join( variables ) ) )
@@ -150,6 +154,8 @@ timestamp = datetime.now()
 CONFIG = {
   "static": [
     "year",
+    "background",
+    "ratio",
     "static",
     "epochs",
     "patience",
@@ -189,8 +195,8 @@ CONFIG = {
     "regulator": [ "dropout", "none" ],
     "activation_function": [ "relu", "softplus", "elu" ],
 
-    "n_calls": 2,
-    "n_starts": 1,
+    "n_calls": 20,
+    "n_starts": 15,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }
@@ -205,6 +211,8 @@ if args.parameters != None and os.path.exists(args.parameters):
 tag = "{}j_{}to{}".format( cut["NJETS"], subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
 CONFIG.update({
   "year":year,
+  "background": background_files, 
+  "ratio": args.ratio,
   "tag": tag,
   "log_file": os.path.join(args.dataset, subDirName, "hpo_log_" + tag + ".txt"),
   "weight_string": config.weightStr,
@@ -275,7 +283,7 @@ def objective(**X):
   if not "epochs" in X: X["epochs"] = CONFIG["epochs"]
   model = mltools.HyperParameterModel(
     X, 
-    signal_files, background_files,
+    signal_files, background_files, float(args.ratio),
     cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut[ "MET" ], cut[ "MT" ], cut[ "MINDR" ],
     CONFIG["model_name"]
   )
@@ -292,25 +300,19 @@ def objective(**X):
   if cut_events is None:
     if not os.path.exists(save_paths[0]):
       print( ">> Generating saved cut event .pkl file." )
-      print( "   >> Loading Trees..." )
-      model.load_trees()
       print( "   >> Applying Cuts..." )
-      #model.apply_cut_prq(save_paths)
       model.apply_cut()
       print( "   >> Saving Events to .pkl" )
       model.save_cut_events( save_paths )
     else:
       print( ">> Loading saved cut event .pkl files." )
-      model.load_cut_events_pkl( save_paths )
-    #cut_events = model.cut_events_prq.copy()
+      model.load_cut_events( save_paths )
     cut_events = model.cut_events.copy()
   else:
-    #model.cut_events_prq = cut_events.copy()
     model.cut_events = cut_events.copy()
     
   model.build_model()
-  #model.train_model_prq()
-  model.train_model_pkl()
+  model.train_model()
     
   print( ">> Obtained ROC-Integral value: {}".format(model.auc_test))
   logfile.write('{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n'.format(

@@ -56,6 +56,7 @@ print( ">> Using Folders: \n - " + "\n - ".join(condor_folders) )
 
 print( ">> Loading job data" )
 job_folders = []
+bkg_samples = []
 cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR" ]
 cuts = { variable: [] for variable in cut_variables }
 years = []
@@ -64,6 +65,7 @@ for folder in condor_folders:
   for variable in cut_variables: 
     cuts[ variable ].append( jf.pickle[ "CUTS" ][ variable ] )
   years.append( jf.pickle[ "YEAR" ] )
+  bkg_samples.append( jf.pickle[ "BACKGROUND" ] )
   if jf.pickle[ "JOBS" ] == None:
     # Folder needs to be imported
     print( "[WARN] The folder {} has not been loaded by the job tracker.".format(folder) )
@@ -83,12 +85,19 @@ if len( set( years ) ) > 1:
   print( "[ERR] Exiting calculate.py, compacted folders have multiple years..." )
   quit()
 
+print( ">> Checking background sample consistency between folders..." )
+
+quit_ = False
+for i, bkg_sample in enumerate( bkg_samples ):
+  if set( bkg_sample ) != set( bkg_samples[0] ):
+    print( "[WARN] Different collection of background samples in {}: {}...".format( condor_folders[i], set( bkg_samples[0] ).difference( bkg_sample ) ) ) 
+
 print( ">> Checking cut consistency between folders..." )
 
 quit_ = False
 for variable in cut_variables:
   if len( set( cuts[ variable ] ) ) > 1: 
-    print( "[WARN] {} has {} different settings...".format( len( set( cuts[ variable ] ) ) ) )  
+    print( "[WARN] Inconsistent cut settings for {}: {}...".format( variable, set( cuts[ variable ] ) ) )  
     quit_ = True
 if quit_ is True: 
   print( "[ERR] Exiting calculate.py, cut conditions are not consistent..." )

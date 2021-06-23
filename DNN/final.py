@@ -77,7 +77,8 @@ for config_num, config_path in enumerate(config_order):
     config_json = load_json(f.read())
     parameters["variables"] = config_json["variables"]
     parameters["patience"] = config_json["patience"][-1] if type(config_json["patience"]) == list else config_json["patience"]
-    parameters["epochs"] = config_json["epochs"][-1] if type(config_json["epochs"]) == list else config_json["epochs"]
+    #parameters["epochs"] = config_json["epochs"][-1] if type(config_json["epochs"]) == list else config_json["epochs"]
+    parameters["epochs"] = 100
   print( ">> Using njets >= {} and nbjets >= {}".format( config_json[ "njets" ], config_json[ "nbjets" ] ) )
   
   model_path = os.path.join(folder, "final_model_{}j_{}to{}.tf".format( config_json[ "njets" ], config_json[ "start_index" ], config_json[ "end_index" ] ) )
@@ -96,31 +97,24 @@ for config_num, config_path in enumerate(config_order):
   
   model = mltools.CrossValidationModel(
     parameters,
-    signal_files, background_files, 
+    signal_files, background_files, float( config_json["ratio"] ), 
     cv_folder, 
     config_json["njets"], config_json["nbjets"], config_json["ak4ht"], config_json["leppt"], config_json["met"], config_json["mt"], config_json["mindr"],
     int(args.num_folds ) )
   if not args.no_cut_save:
     if not os.path.exists(save_paths[0]):
       print( ">> Generating saved cut event files." )
-      model.load_trees()
       model.apply_cut()
-      #model.apply_cut_prq()
       model.save_cut_events( save_paths )
-      #model.save_cut_events_prq( save_paths )
     else:
       print( ">> Loading saved cut event files." )
       model.load_cut_events( save_paths )
-      #model.load_cut_events_prq(save_path)
   else:
-    model.load_trees()
     model.apply_cut()
-    #model.apply_cut_prq()
 
   print( ">> Starting cross-validation." )
     
-  model.train_model_pkl()
-  #model.train_model_prq()
+  model.train_model()
 
   print( ">> Collecting results." )
 
