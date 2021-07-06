@@ -183,20 +183,20 @@ CONFIG = {
     "LMI",
     "QMI"
   ],
-    "epochs": 30,
+    "epochs": 50,
     "patience": 5,
     "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
 
-    "hidden_layers": [ 1, 3 ],
+    "hidden_layers": [ 1, 2 ],
     "initial_nodes": [ len(variables), len(variables) * 10 ],
     "node_pattern": [ "static", "dynamic" ],
-    "batch_power": [ 8, 11 ],
-    "learning_rate": [ 1e-5, 1e-4, 1e-3, 1e-2],
+    "batch_power": [ 8, 9, 10 ],
+    "learning_rate": [ 1e-4, 1e-3, 1e-2],
     "regulator": [ "dropout", "none" ],
-    "activation_function": [ "relu", "softplus", "elu" ],
+    "activation_function": [ "selu", "softplus", "elu" ],
 
-    "n_calls": 20,
-    "n_starts": 15,
+    "n_calls": 30,
+    "n_starts": 20,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }

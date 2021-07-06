@@ -66,6 +66,7 @@ class MLTrainingInstance(object):
     cut_events_pkl = []
     override = False
     for path in paths:
+      print( "  - {}".format( path ) )
       with open( path, "rb" ) as f:
         cut_event_pkl = pickle_load( f )
         if cut_event_pkl[ "condition" ] != self.cut:
@@ -91,14 +92,25 @@ class MLTrainingInstance(object):
         "condition": self.cut,
         "ratio": self.ratio,
         "samples": self.samples,                                                                     
-        "signal": cut_events_pkl[0]["signal"],
-        "background": cut_events_pkl[0]["background"]
+        "signal": cut_events_pkl[0]["signal"].copy(),
+        "background": cut_events_pkl[0]["background"].copy()
       }
+      c_s, c_b = 0, 0
+      for event_key in self.cut_events["signal"].keys(): 
+        self.cut_events["signal"][event_key] = self.cut_events["signal"][event_key]
+        c_s += len( self.cut_events["signal"][event_key] )
+      for event_key in self.cut_events["background"].keys():
+        self.cut_events["background"][event_key] = self.cut_events["background"][event_key].tolist()
+        c_b += len( self.cut_events["background"][event_key] )
+
       for cut_event in cut_events_pkl[1:]:
         for event_key in cut_event[ "signal" ].keys():
           self.cut_events[ "signal" ][ event_key ].extend( cut_event[ "signal" ][ event_key ] )
+          c_s += len( cut_event[ "signal" ][ event_key ] )
         for event_key in cut_event[ "background" ].keys():
-          self.cut_events[ "background" ][ event_key ].extend( cut_event[ "background" ][ event_key ] )
+          self.cut_events[ "background" ][ event_key ].extend( cut_event[ "background" ][ event_key ].tolist() )
+          c_b += len( cut_event[ "background" ][ event_key ] )
+      print( "[OK] Found {} signal events and {} background events...".format( c_s, c_b ) )
 
   def save_cut_events( self, paths ):
     for i, path in enumerate( paths ):
@@ -223,11 +235,11 @@ class HyperParameterModel(MLTrainingInstance):
       kernel_initializer = "he_normal",
       activation=self.parameters[ "activation_function" ]
     ) )
+    self.model.add( BatchNormalization() )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
     for i in range( self.parameters[ "hidden_layers" ] ):
-      self.model.add( BatchNormalization() )
       if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
-        self.model.add( Dropout( 0.2 ) )
+        self.model.add( Dropout( 0.3 ) )
       if self.parameters[ "node_pattern" ] == "dynamic":
         self.model.add( Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
@@ -240,6 +252,7 @@ class HyperParameterModel(MLTrainingInstance):
           kernel_initializer = "he_normal",
           activation=self.parameters[ "activation_function" ]
         ) )
+      self.model.add( BatchNormalization() )
       # Final classification node
     self.model.add( Dense(
       1,
@@ -374,10 +387,10 @@ class CrossValidationModel( HyperParameterModel ):
         self.cut_events["signal"][path][fold_mask["signal"][path][k]["test"]] for path in self.cut_events["signal"]
       ])
       bkg_train_k = np.concatenate([
-        self.cut_events["background"][path][fold_mask["background"][path][k]["train"]] for path in self.cut_events["background"]
+        self.cut_events["background"][path][fold_mask["background"][path][k]["train"]] for path in self.cut_events["background"] if len( self.cut_events["background"][path][fold_mask["background"][path][k]["train"]] ) > self.num_folds
       ])
       bkg_test_k = np.concatenate([
-        self.cut_events["background"][path][fold_mask["background"][path][k]["test"]] for path in self.cut_events["background"]
+        self.cut_events["background"][path][fold_mask["background"][path][k]["test"]] for path in self.cut_events["background"] if len( self.cut_events["background"][path][fold_mask["background"][path][k]["test"]] ) > self.num_folds
       ])
             
       fold_data.append( {

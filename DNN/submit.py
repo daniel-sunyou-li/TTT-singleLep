@@ -114,7 +114,7 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "3.8 GB" if int( args.AK4HT ) > 400 else "4.2 GB",
+    "MEMORY": "5 GB" if int( args.AK4HT ) > 400 else "4.2 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
@@ -128,6 +128,7 @@ def submit_job(job):
     "MT": args.MT,
     "MINDR": args.MINDR,
   }
+  if args.resubmit: condorParams[ "MEMORY" ] = "6.5 GB" 
  
   with open( job.path, "w" ) as f:
     f.write(
