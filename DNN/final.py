@@ -76,7 +76,8 @@ for config_num, config_path in enumerate(config_order):
   with open(config_path.replace("optimized_params", "config"), "r") as f:
     config_json = load_json(f.read())
     parameters["variables"] = config_json["variables"]
-    parameters["patience"] = config_json["patience"][-1] if type(config_json["patience"]) == list else config_json["patience"]
+    #parameters["patience"] = config_json["patience"][-1] if type(config_json["patience"]) == list else config_json["patience"]
+    parameters["patience"] = 10
     #parameters["epochs"] = config_json["epochs"][-1] if type(config_json["epochs"]) == list else config_json["epochs"]
     parameters["epochs"] = 100
   print( ">> Using njets >= {} and nbjets >= {}".format( config_json[ "njets" ], config_json[ "nbjets" ] ) )

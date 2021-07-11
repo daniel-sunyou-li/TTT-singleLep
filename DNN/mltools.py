@@ -233,6 +233,8 @@ class HyperParameterModel(MLTrainingInstance):
       self.parameters[ "initial_nodes" ],
       input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
       kernel_initializer = "he_normal",
+      #kernel_initializer = "glorot_uniform",
+      kernel_regularizer="l2",
       activation=self.parameters[ "activation_function" ]
     ) )
     self.model.add( BatchNormalization() )
@@ -244,12 +246,16 @@ class HyperParameterModel(MLTrainingInstance):
         self.model.add( Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
           kernel_initializer = "he_normal",
+          #kernel_initializer = "glorot_uniform",
+          kernel_regularizer = "l2",
           activation=self.parameters[ "activation_function" ]
         ) )
       elif self.parameters[ "node_pattern" ] == "static":
 	self.model.add( Dense(
           self.parameters[ "initial_nodes" ],
           kernel_initializer = "he_normal",
+          #kernel_initializer = "glorot_uniform",
+          kernel_regularizer = "l2",
           activation=self.parameters[ "activation_function" ]
         ) )
       self.model.add( BatchNormalization() )
