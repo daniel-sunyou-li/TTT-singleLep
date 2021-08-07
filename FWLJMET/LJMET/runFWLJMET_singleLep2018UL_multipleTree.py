@@ -15,12 +15,12 @@ options.register('doGenHT', '', VarParsing.multiplicity.singleton, VarParsing.va
 
 ## SET DEFAULT VALUES
 ## ATTENTION: THESE DEFAULT VALUES ARE SET FOR VLQ SIGNAL ! isMC=True, isTTbar=False, isVLQsignal=True 
-options.isMC = ISMC
-options.isTTbar = ISTTBAR
-options.isVLQsignal = ISVLQSIGNAL
-options.doGenHT = DOGENHT
+options.isMC = True  #ISMC
+options.isTTbar = False #ISTTBAR
+options.isVLQsignal = False #ISVLQSIGNAL
+options.doGenHT = False #DOGENHT
 options.inputFiles = [
-    'root://cmsxrootd.fnal.gov//store/mc/RunIIAutumn18MiniAOD/TprimeTprime_M-1400_TuneCP5_PSweights_13TeV-madgraph-pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/80000/FEFD008E-00DF-9A4A-B3C4-4CE60A67B5C6.root'
+    'root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL18MiniAODv2/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/00000/160FA97C-8D41-1646-9359-F181664CAEE9.root'
     ]
 options.maxEvents = 100
 options.parseArguments()
