@@ -1,0 +1,27 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/PluginManager"/>
+<use name="FWCore/ParameterSet"/>
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="PhysicsTools/SelectorUtils"/>
+<use name="JetMETCorrections/Objects"/>
+<use name="JetMETCorrections/Algorithms"/>
+<use name="JetMETCorrections/Modules"/>
+<use name="CondFormats/JetMETObjects"/>
+<use name="CondFormats/BTauObjects"/>
+<use name="CondTools/BTau"/>
+<use name="py2-pybind11"/>
+<use name="python"/>
+<export>
+  <use name="py2-pybind11"/>
+  <lib name="1"/>
+</export>
+
+<use name="SimDataFormats/GeneratorProducts"/>
+<use name="SimGeneral/HepPDTRecord"/>
+<use name="lhapdf"/>
+<use name="lwtnn/lwtnn"/>
+<use name="fastjet"/>
+<use name="fastjet-contrib"/>
+<use name="PhysicsTools/CandUtils"/>
+<use name="TopTagger/TopTagger"/>
+<flags EDM_PLUGIN="1"/>
