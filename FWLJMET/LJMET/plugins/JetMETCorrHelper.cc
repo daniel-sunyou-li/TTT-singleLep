@@ -29,7 +29,7 @@ void JetMETCorrHelper::Initialize(const edm::ParameterSet& iConfig){
     std::string JERAK8_txtfile           = iConfig.getParameter<edm::FileInPath>("JERAK8_txtfile").fullPath();
     int year = 2018;
     if(JEC_txtfile.find("UL17") != std::string::npos) year = 2017;
-    else if(JEC_txtfile.find("Summer16") != std::string::npos) year = 2016;
+    else if(JEC_txtfile.find("UL16") != std::string::npos) year = 2016;
 
     if(debug) std::cout << mLegend << "Using JEC files JEC_txtfile    : " << JEC_txtfile << std::endl;
     if(debug) std::cout << mLegend << "Using JEC files JERSF_txtfile  : " << JERSF_txtfile << std::endl;
@@ -102,7 +102,7 @@ void JetMETCorrHelper::Initialize(const edm::ParameterSet& iConfig){
 	searchStr = "BCD_V";
 	mEraReplaceStr["BCD"] = "BCD_V";
 	mEraReplaceStr["EF"] = "EF_V";
-	mEraReplaceStr["GH"] = "GH_V";
+	mEraReplaceStr["GH"] = "GH_V"; // I don't think this available yet
       }
 
       for (std::map<std::string,std::string>::iterator it=mEraReplaceStr.begin();it!=mEraReplaceStr.end();it++){
