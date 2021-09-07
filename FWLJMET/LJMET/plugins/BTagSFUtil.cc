@@ -12,7 +12,11 @@ Author: Michael Segala
 Contact: michael.segala@gmail.com
 Updated: Ulrich Heintz 12/23/2011
 Updated: Gena Kukartsev 10/30/2012 
+Updated: Daniel Li 09/07/2021
 v 1.2
+Comments (09/07/2021):
+- Updated to use deepJet instead of deepCSV for b-tagging
+- Update subjet WP for UL 
 *************************************************************/
 
 
