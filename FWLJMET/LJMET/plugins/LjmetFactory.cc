@@ -8,14 +8,14 @@ Updated: Daniel Li 09/08/2021
 #include "FWLJMET/LJMet/interface/TTbarTagProbeEventSelector.h"
 #include "FWLJMET/LJMet/interface/DileptonEventSelector.h"
 
-#include "FWLJMET/LJMet/interface/CommonCalc.h"
+// #include "FWLJMET/LJMet/interface/CommonCalc.h"
 #include "FWLJMET/LJMet/interface/MultiLepCalc.h"
 #include "FWLJMET/LJMet/interface/JetSubCalc.h"
 #include "FWLJMET/LJMet/interface/TpTpCalc.h"
 #include "FWLJMET/LJMet/interface/TTbarMassCalc.h"
 #include "FWLJMET/LJMet/interface/DeepAK8Calc.h"
 #include "FWLJMET/LJMet/interface/HOTTaggerCalc.h"
-#include "FWLJMET/LJMet/interface/BestCalc.h"
+// #include "FWLJMET/LJMet/interface/BestCalc.h"
 
 #include "FWLJMET/LJMet/interface/DileptonCalc.h"
 
@@ -33,14 +33,14 @@ LjmetFactory::LjmetFactory(): theSelector(0)
     this->Register(new TTbarTagProbeEventSelector(), "TTbarTagProbeSelector");
     this->Register(new DileptonEventSelector(), "DileptonSelector");
 
-    this->Register(new CommonCalc(), "CommonCalc");
+//    this->Register(new CommonCalc(), "CommonCalc");
     this->Register(new MultiLepCalc(), "MultiLepCalc");
     this->Register(new JetSubCalc(), "JetSubCalc");
     this->Register(new TpTpCalc(), "TpTpCalc");
     this->Register(new TTbarMassCalc(), "TTbarMassCalc");
     this->Register(new DeepAK8Calc(), "DeepAK8Calc");
     this->Register(new HOTTaggerCalc(), "HOTTaggerCalc");
-    this->Register(new BestCalc(), "BestCalc");
+//    this->Register(new BestCalc(), "BestCalc");
 
     this->Register(new DileptonCalc(), "DileptonCalc");
 
