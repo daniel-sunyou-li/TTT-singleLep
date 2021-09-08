@@ -40,16 +40,8 @@ OR use the "create config" script below and do a dryrun on one of the configs it
 
        python create_crab_config_files_from_template.py --finalState singleLep --year 2017 (--nominalTreeOnly) (--brux)  # year can be 2018 too
 
-       python submit_mutiple_crab_jobs.py --finalState singleLep --year 2017 (--nominalTreeOnly) # year can be 2018 too
-
-#### 3Lep
-
-       python create_crab_config_files_from_template.py --finalState multiLep --year 2017 (--nominalTreeOnly) (--brux) # year can be 2018 too
-
-       python submit_mutiple_crab_jobs.py --finalState multiLep --year 2017 (--nominalTreeOnly) # year can be 2018 too
-
+       python submit_crab_jobs.py --finalState singleLep --year 2017 (--nominalTreeOnly) # year can be 2018 too
 
 Note:
- * sample_list_XX.py contain the dataset lists.
+ * sampleULXX.py contain the dataset lists.
  * crab_script.sh -- is used when running VLQ samples. This resets environment variable in order to access LHApdf files not in CMSSW. This is run using scripExe in the crab cfg.
-
