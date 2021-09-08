@@ -8,16 +8,16 @@ Updated: Daniel Li 09/08/2021
 #include "FWLJMET/LJMet/interface/TTbarTagProbeEventSelector.h"
 #include "FWLJMET/LJMet/interface/DileptonEventSelector.h"
 
-// #include "FWLJMET/LJMet/interface/CommonCalc.h"
+#include "FWLJMET/LJMet/interface/CommonCalc.h"
 #include "FWLJMET/LJMet/interface/MultiLepCalc.h"
 #include "FWLJMET/LJMet/interface/JetSubCalc.h"
-#include "FWLJMET/LJMet/interface/TpTpCalc.h"
+// #include "FWLJMET/LJMet/interface/TpTpCalc.h"
 #include "FWLJMET/LJMet/interface/TTbarMassCalc.h"
 #include "FWLJMET/LJMet/interface/DeepAK8Calc.h"
 #include "FWLJMET/LJMet/interface/HOTTaggerCalc.h"
 // #include "FWLJMET/LJMet/interface/BestCalc.h"
 
-#include "FWLJMET/LJMet/interface/DileptonCalc.h"
+// #include "FWLJMET/LJMet/interface/DileptonCalc.h"
 
 #include "FWLJMET/LJMet/interface/DummyCalc.h"
 #include "FWLJMET/LJMet/interface/DummyEventSelector.h"
