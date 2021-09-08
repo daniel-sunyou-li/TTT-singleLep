@@ -16,7 +16,7 @@ parser.add_argument("--outfolder",action="store",default="FWLJMET_crab_output")
 option = parser.parse_args()
 
 if option.year not in [ "16", "17", "18" ]: 
-	print( "Invalid '--year' argument: {}.  Use: 2016, 2017, 2018".format( option.year ) )
+	print( "Invalid '--year' argument: {}.  Use: 16, 17, 18".format( option.year ) )
 	sys.exit()
 
 #Sample list file
