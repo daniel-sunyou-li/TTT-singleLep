@@ -6,9 +6,35 @@ from array import array
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument( "-f", nargs = "*", default = [], help = "ROOT files to consolidate into one file" )
-parser.add_argument( "-v", nargs = "+", default = [ "AK4HT", "DNN" ], help = "Variables to transform" )
+parser.add_argument( "-y", "--year", default = "2017", help = "Year for sample" )
+parser.add_argument( "-f", "--finalstate", required = True, help = "Final state of ttbar [Hadronic,Semilep,2L2nu]" )
+parser.add_argument( "-sI", "--sIn", nargs = "+", default = [], help = "Source ROOT files to consolidate into one file" )
+parser.add_argument( "-tI", "--tIn", nargs = "+", default = [], help = "Target ROOT files to consolidate into one file" )
+parser.add_argument( "-sO", "--sOut", default = "source_ttbar", help = "Output name of source ROOT file" )
+parser.add_argument( "-tO", "--tOut", default = "target_data", help = "Output name of target ROOT file" )
+parser.add_argument( "-v", "--variables", nargs = "+", default = [ "AK4HT", "DNN" ], help = "Variables to transform" )
+parser.add_argument( "-p", "--pEvents", default = 100, help = "Percent of events (0 to 100) to include from each file." )
 args = parser.parse_args()
+
+# some params to consider editing --> need to check this (09/29)
+ttbar_xsec = 831.76
+target_lumi = {
+  "2016": 1.,
+  "2017": 41530.,
+  "2018": 1.
+}
+BR = {
+  "Hadronic": 0.457,
+  "Semilep": 0.438,
+  "2L2nu": 0.105
+}
+num_MC = {
+  "2016": 1,
+  "2017": 109124472,
+  "2018": 1
+}
+
+weight_ttbar = ttbar_xsec * target_lumi[ args.year ] * BR[ args.finalstate ] / num_MC[ args.year ]
 
 class ToyTree:
   def __init__( self, name, trans_var ):
@@ -41,25 +67,32 @@ class ToyTree:
       self.rFile.Write()
       self.rFile.Close()
       
-def format_ntuple( output, inputs, selection, weight = None ):
-  ntuple = ToyTree( output )
+def format_ntuple( output, inputs, variables, weight = None ):
+  ntuple = ToyTree( output, variables )
   for input in inputs:
     print( ">> Processing {}".format( input ) )
     rFile_in = ROOT.TFile( "{}.root".format( input ), "READ" )
     rTree_in = rFile_in.Get( "ljmet" )
     branches_in = [ branch.GetName() for branch in rTree_in.GetListOfBranches() ]
+    n_stop = int ( rTree_in.GetEntries() * args.pEvents / 100. )
+    n_pass = 0
     for i in range( rTree_in.GetEntries() ):
+      if n_pass >= n_stop: 
+        print( ">> {} events from {}".format( n_stop, input ) )
+        continue
       rTree_in.GetEntry(i)
       
       for variable in selection:
         value = getattr( rTree_in, str( variable ) )
         if value < selection[ variable ]: continue
+          
+      n_pass += 1
       
       event_data = {}
       for variable in ntuple.variables:
         if str( variable ) != "xsecWeight":
           if variable not in branches_in: 
-            if i == 0: print( "[WARN] {} is not a valid branch in {}.root, skipping...")
+            if i == 0: print( "[WARN] {} is not a valid branch in {}.root, skipping..." )
             continue
             
           event_data[ variable ] = getattr( rTree_in, str( variable ) )
@@ -76,11 +109,7 @@ def format_ntuple( output, inputs, selection, weight = None ):
     rFile_in.Close()
   ntuple.Write()
   
+format_ntuple( inputs = args.sIn, output = args.sOut, weight = weight_ttbar, variables = args.variables )
+format_ntuple( inputs = args.tIn, output = args.tOut, weight = None, variables = args.variables )
 
                                                                                                   
-                                                                                                  
-        
-      
-      
-
-  
