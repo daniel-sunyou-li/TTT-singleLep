@@ -42,17 +42,26 @@ class ToyTree:
     self.name = name
     self.rFile = ROOT.TFile( "{}.root".format( name ), "RECREATE" )
     self.rTree = ROOT.TTree( "Events", name )
-    self.variables = {
+    self.variables = { # variables that are used regardless of the transformation variables
       "NJets_JetSubCalc": { "ARRAY": array( "i", [0] ), "STRING": "NJets_JetSubCalc/I" },
       "NJetsCSV_MultiLepCalc": { "ARRAY": array( "i", [0] ), "STRING": "NJetsCSV_MultiLepCalc/I" },
       "xsecWeight": { "ARRAY": array( "f", [0] ), "STRING": "xsecWeight/F" }
     }
-    self.selection = {
-      "NJets_JetSubCalc": {},
-      "NJetsCSV_MultiLepCalc": {}
-    }
+    
     for variable in trans_var:
       self.variables[ variable ] = { "ARRAY": array( "f", [0] ), "STRING": "{}/F".format( variable ) }
+    
+    self.selection = { # edit these accordingly
+      "NJets_JetSubCalc": { "VALUE": 4, "CONDITIONS": [ ">=" ] },
+      "NJetsCSV_MultiLepCalc": { "VALUE": 2, "CONDITIONS": [ ">=" ] },
+      "corr_met_MultiLepCalc": { "VALUE": 30, "CONDITIONS": [ ">" ] },
+      "MT_lepMet": { "VALUE": 0, "CONDITIONS": [ ">" ] },
+      "minDR_lepJet": { "VALUE": 0.4, "CONDITIONS": [ ">" ] },
+      "AK4HT": { "VALUE": 350, "CONDITIONS": [ ">" ] },
+      "DataPastTriggerX": { "VALUE": 1, "CONDITIONS": [ "==" ] },
+      "MCPastTriggerX": { "VALUE": 1, "CONDITIONS": [ "==" ] },
+      "isTraining": { "VALUE": 3, "CONDITIONS": [ "==" ] }
+    }
     
     for variable in self.variables:
       self.rTree.Branch( str( variable ), self.variables[ variable ][ "ARRAY" ], self.variables[ variable ][ "STRING" ] )
@@ -67,8 +76,8 @@ class ToyTree:
       self.rFile.Write()
       self.rFile.Close()
       
-def format_ntuple( output, inputs, variables, weight = None ):
-  ntuple = ToyTree( output, variables )
+def format_ntuple( output, inputs, trans_var, weight = None ):
+  ntuple = ToyTree( output, trans_var )
   for input in inputs:
     print( ">> Processing {}".format( input ) )
     rFile_in = ROOT.TFile( "{}.root".format( input ), "READ" )
@@ -82,9 +91,18 @@ def format_ntuple( output, inputs, variables, weight = None ):
         continue
       rTree_in.GetEntry(i)
       
-      for variable in selection:
+      for variable in selection: # apply the selection cut
         value = getattr( rTree_in, str( variable ) )
-        if value < selection[ variable ]: continue
+        if selection[ variable ][ "CONDITION" ] == ">=":
+          if value < selection[ variable ][ "VALUE" ]: continue
+        elif selection[ variable ][ "CONDITION" ] == ">":
+          if value <= selection[ variable ][ "VALUE" ]: continue
+        elif selection[ variable ][ "CONDITION" ] == "<=":
+          if value > selection[ variable ][ "VALUE" ]: continue
+        elif selection[ variable ][ "CONDITION" ] == "<":
+          if value >= selection[ variable ][ "VALUE" ]: continue
+        else:
+          if value != selection[ variable ][ "VALUE" ]: continue
           
       n_pass += 1
       
