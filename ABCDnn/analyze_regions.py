@@ -21,7 +21,14 @@ for file in args.files:
 # get event information
 n_event = {}
 for file in rTrees:
-  n_event[ file ] = {
+  branches = [ branch.GetName() for branch in rTrees[ file ].GetListOfBranches() ]
+  if args.x1 not in branches:
+    print("[ERR] {} is not a valid branch, exiting...".format( args.x1 ) )
+    quit()
+  if args.x2 not in branches:
+    print("[ERR] {} is not a valid branch, exiting...".format( args.x2 ) )
+  for i in rTrees[ file ].GetEntries():
+    rTrees[ file ].GetEntry(i)
     
   
 
