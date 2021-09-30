@@ -8,8 +8,8 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", default = "2017", help = "Year for sample" )
 parser.add_argument( "-f", "--finalstate", required = True, help = "Final state of ttbar [Hadronic,Semilep,2L2nu]" )
-parser.add_argument( "-sI", "--sIn", nargs = "+", default = [], help = "Source ROOT files to consolidate into one file" )
-parser.add_argument( "-tI", "--tIn", nargs = "+", default = [], help = "Target ROOT files to consolidate into one file" )
+parser.add_argument( "-sI", "--sIn", nargs = "*", default = [], help = "Source ROOT files to consolidate into one file" )
+parser.add_argument( "-tI", "--tIn", nargs = "*", default = [], help = "Target ROOT files to consolidate into one file" )
 parser.add_argument( "-sO", "--sOut", default = "source_ttbar", help = "Output name of source ROOT file" )
 parser.add_argument( "-tO", "--tOut", default = "target_data", help = "Output name of target ROOT file" )
 parser.add_argument( "-v", "--variables", nargs = "+", default = [ "AK4HT", "DNN" ], help = "Variables to transform" )
@@ -52,15 +52,15 @@ class ToyTree:
       self.variables[ variable ] = { "ARRAY": array( "f", [0] ), "STRING": "{}/F".format( variable ) }
     
     self.selection = { # edit these accordingly
-      "NJets_JetSubCalc": { "VALUE": 4, "CONDITIONS": [ ">=" ] },
-      "NJetsCSV_MultiLepCalc": { "VALUE": 2, "CONDITIONS": [ ">=" ] },
-      "corr_met_MultiLepCalc": { "VALUE": 30, "CONDITIONS": [ ">" ] },
-      "MT_lepMet": { "VALUE": 0, "CONDITIONS": [ ">" ] },
-      "minDR_lepJet": { "VALUE": 0.4, "CONDITIONS": [ ">" ] },
-      "AK4HT": { "VALUE": 350, "CONDITIONS": [ ">" ] },
-      "DataPastTriggerX": { "VALUE": 1, "CONDITIONS": [ "==" ] },
-      "MCPastTriggerX": { "VALUE": 1, "CONDITIONS": [ "==" ] },
-      "isTraining": { "VALUE": 3, "CONDITIONS": [ "==" ] }
+      "NJets_JetSubCalc": { "VALUE": 4, "CONDITION": [ ">=" ] },
+      "NJetsCSV_MultiLepCalc": { "VALUE": 2, "CONDITION": [ ">=" ] },
+      "corr_met_MultiLepCalc": { "VALUE": 30, "CONDITION": [ ">" ] },
+      "MT_lepMet": { "VALUE": 0, "CONDITION": [ ">" ] },
+      "minDR_lepJet": { "VALUE": 0.4, "CONDITION": [ ">" ] },
+      "AK4HT": { "VALUE": 350, "CONDITION": [ ">" ] },
+      "DataPastTriggerX": { "VALUE": 1, "CONDITION": [ "==" ] },
+      "MCPastTriggerX": { "VALUE": 1, "CONDITION": [ "==" ] },
+      "isTraining": { "VALUE": 3, "CONDITION": [ "==" ] }
     }
     
     for variable in self.variables:
@@ -80,29 +80,27 @@ def format_ntuple( output, inputs, trans_var, weight = None ):
   ntuple = ToyTree( output, trans_var )
   for input in inputs:
     print( ">> Processing {}".format( input ) )
-    rFile_in = ROOT.TFile( "{}.root".format( input ), "READ" )
+    rFile_in = ROOT.TFile.Open( "{}".format( input ) )
     rTree_in = rFile_in.Get( "ljmet" )
     branches_in = [ branch.GetName() for branch in rTree_in.GetListOfBranches() ]
-    n_stop = int ( rTree_in.GetEntries() * args.pEvents / 100. )
+    n_stop = int ( rTree_in.GetEntries() * float( args.pEvents ) / 100. )
     n_pass = 0
     for i in range( rTree_in.GetEntries() ):
-      if n_pass >= n_stop: 
-        print( ">> {} events from {}".format( n_stop, input ) )
-        continue
+      if n_pass >= n_stop: continue
       rTree_in.GetEntry(i)
       
-      for variable in selection: # apply the selection cut
+      for variable in ntuple.selection: # apply the selection cut
         value = getattr( rTree_in, str( variable ) )
-        if selection[ variable ][ "CONDITION" ] == ">=":
-          if value < selection[ variable ][ "VALUE" ]: continue
-        elif selection[ variable ][ "CONDITION" ] == ">":
-          if value <= selection[ variable ][ "VALUE" ]: continue
-        elif selection[ variable ][ "CONDITION" ] == "<=":
-          if value > selection[ variable ][ "VALUE" ]: continue
-        elif selection[ variable ][ "CONDITION" ] == "<":
-          if value >= selection[ variable ][ "VALUE" ]: continue
+        if ntuple.selection[ variable ][ "CONDITION" ] == ">=":
+          if value < ntuple.selection[ variable ][ "VALUE" ]: continue
+        elif ntuple.selection[ variable ][ "CONDITION" ] == ">":
+          if value <= ntuple.selection[ variable ][ "VALUE" ]: continue
+        elif ntuple.selection[ variable ][ "CONDITION" ] == "<=":
+          if value > ntuple.selection[ variable ][ "VALUE" ]: continue
+        elif ntuple.selection[ variable ][ "CONDITION" ] == "<":
+          if value >= ntuple.selection[ variable ][ "VALUE" ]: continue
         else:
-          if value != selection[ variable ][ "VALUE" ]: continue
+          if value != ntuple.selection[ variable ][ "VALUE" ]: continue
           
       n_pass += 1
       
@@ -124,10 +122,12 @@ def format_ntuple( output, inputs, trans_var, weight = None ):
         event_data[ "xsecWeight" ] *= weight * 3
         
       ntuple.Fill( event_data )
+
+    print( ">> {} events from {}".format( n_stop, input ) )
     rFile_in.Close()
   ntuple.Write()
   
-format_ntuple( inputs = args.sIn, output = args.sOut, weight = weight_ttbar, variables = args.variables )
-format_ntuple( inputs = args.tIn, output = args.tOut, weight = None, variables = args.variables )
+format_ntuple( inputs = args.sIn, output = args.sOut + "_mc" , weight = weight_ttbar, trans_var = args.variables )
+format_ntuple( inputs = args.tIn, output = args.tOut + "_data" , weight = None, trans_var = args.variables )
 
                                                                                                   
