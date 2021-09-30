@@ -17,5 +17,11 @@ rTrees = {}
 for file in args.files:
   rFiles[ file ] = ROOT.TFile.Open( file )
   rTrees[ file ] = rFiles[ file ].Get( "Events" )
+
+# get event information
+n_event = {}
+for file in rTrees:
+  n_event[ file ] = {
+    
   
 
