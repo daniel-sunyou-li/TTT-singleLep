@@ -60,22 +60,6 @@ for file in rTrees:
   for j in range( range_x2[0], range_x2[1] ):
     print( "{:<3}".format( j ) ),
     for i in list( n_event[ file ] ):
-      print( "{:8<}".format( n_event[ file ][ i ][ j ] )
-    for i in 
-  for x1 in n_event[ file ]:
-    for x2
-    print( "{:3<}".format( x1
-    
-    
-    
-    
-      
-      
-      
-    
-    
-    
-    
-    
-  
-
+      print( "{:8<}".format( n_event[ file ][ i ][ j ] ),
+    print( "" )
+   
