@@ -52,15 +52,15 @@ class ToyTree:
       self.variables[ variable ] = { "ARRAY": array( "f", [0] ), "STRING": "{}/F".format( variable ) }
     
     self.selection = { # edit these accordingly
-      "NJets_JetSubCalc": { "VALUE": 4, "CONDITION": [ ">=" ] },
-      "NJetsCSV_MultiLepCalc": { "VALUE": 2, "CONDITION": [ ">=" ] },
-      "corr_met_MultiLepCalc": { "VALUE": 30, "CONDITION": [ ">" ] },
-      "MT_lepMet": { "VALUE": 0, "CONDITION": [ ">" ] },
-      "minDR_lepJet": { "VALUE": 0.4, "CONDITION": [ ">" ] },
-      "AK4HT": { "VALUE": 350, "CONDITION": [ ">" ] },
-      "DataPastTriggerX": { "VALUE": 1, "CONDITION": [ "==" ] },
-      "MCPastTriggerX": { "VALUE": 1, "CONDITION": [ "==" ] },
-      "isTraining": { "VALUE": 3, "CONDITION": [ "==" ] }
+      "NJets_JetSubCalc": { "VALUE": [ 4 ], "CONDITION": [ ">=" ] },
+      "NJetsCSV_MultiLepCalc": { "VALUE": [ 2 ], "CONDITION": [ ">=" ] },
+      "corr_met_MultiLepCalc": { "VALUE": [ 30. ], "CONDITION": [ ">" ] },
+      "MT_lepMet": { "VALUE": [ 0 ], "CONDITION": [ ">" ] },
+      "minDR_lepJet": { "VALUE": [ 0.4 ], "CONDITION": [ ">" ] },
+      "AK4HT": { "VALUE": [ 350. ], "CONDITION": [ ">" ] },
+      "DataPastTriggerX": { "VALUE": [ 1 ], "CONDITION": [ "==" ] },
+      "MCPastTriggerX": { "VALUE": [ 1 ], "CONDITION": [ "==" ] },
+      "isTraining": { "VALUE": [ 3 ], "CONDITION": [ "==" ] }
     }
     
     for variable in self.variables:
@@ -79,29 +79,33 @@ class ToyTree:
 def format_ntuple( output, inputs, trans_var, weight = None ):
   ntuple = ToyTree( output, trans_var )
   for input in inputs:
-    print( ">> Processing {}".format( input ) )
+    print( ">> Processing {}".format( input.split( "/" )[-1] ) )
     rFile_in = ROOT.TFile.Open( "{}".format( input ) )
     rTree_in = rFile_in.Get( "ljmet" )
     branches_in = [ branch.GetName() for branch in rTree_in.GetListOfBranches() ]
     n_stop = int ( rTree_in.GetEntries() * float( args.pEvents ) / 100. )
     n_pass = 0
     for i in range( rTree_in.GetEntries() ):
+      skip = False
       if n_pass >= n_stop: continue
       rTree_in.GetEntry(i)
       
       for variable in ntuple.selection: # apply the selection cut
         value = getattr( rTree_in, str( variable ) )
-        if ntuple.selection[ variable ][ "CONDITION" ] == ">=":
-          if value < ntuple.selection[ variable ][ "VALUE" ]: continue
-        elif ntuple.selection[ variable ][ "CONDITION" ] == ">":
-          if value <= ntuple.selection[ variable ][ "VALUE" ]: continue
-        elif ntuple.selection[ variable ][ "CONDITION" ] == "<=":
-          if value > ntuple.selection[ variable ][ "VALUE" ]: continue
-        elif ntuple.selection[ variable ][ "CONDITION" ] == "<":
-          if value >= ntuple.selection[ variable ][ "VALUE" ]: continue
-        else:
-          if value != ntuple.selection[ variable ][ "VALUE" ]: continue
+        for j, condition in enumerate( ntuple.selection[ variable ][ "CONDITION" ] ):
+          if condition == ">=":
+            if value < ntuple.selection[ variable ][ "VALUE" ][j]: skip = True 
+          elif condition  == ">":
+            if value <= ntuple.selection[ variable ][ "VALUE" ][j]: skip = True
+          elif condition == "<=":
+            if value > ntuple.selection[ variable ][ "VALUE" ][j]: skip = True 
+          elif condition == "<":
+            if value >= ntuple.selection[ variable ][ "VALUE" ][j]: skip = True 
+          elif condition == "==":
+            if value != ntuple.selection[ variable ][ "VALUE" ][j]: skip = True
+          if skip: continue
           
+      if skip: continue
       n_pass += 1
       
       event_data = {}
@@ -123,11 +127,12 @@ def format_ntuple( output, inputs, trans_var, weight = None ):
         
       ntuple.Fill( event_data )
 
-    print( ">> {} events from {}".format( n_stop, input ) )
+    print( ">> {}/{} events passed...".format( n_pass, rTree_in.GetEntries(), input ) )
     rFile_in.Close()
   ntuple.Write()
   
-format_ntuple( inputs = args.sIn, output = args.sOut + "_mc" , weight = weight_ttbar, trans_var = args.variables )
-format_ntuple( inputs = args.tIn, output = args.tOut + "_data" , weight = None, trans_var = args.variables )
-
-                                                                                                  
+if args.sIn != []:
+  format_ntuple( inputs = args.sIn, output = args.sOut + "_mc" , weight = weight_ttbar, trans_var = args.variables )
+if args.tIn != []:
+  format_ntuple( inputs = args.tIn, output = args.tOut + "_data" , weight = None, trans_var = args.variables )
+                                                                                                

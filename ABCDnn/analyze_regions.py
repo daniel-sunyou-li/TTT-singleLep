@@ -31,7 +31,7 @@ for file in rTrees:
   n_event[ file ] = {}
   range_x1 = [0,0]
   range_x2 = [0,0]
-  for i in rTrees[ file ].GetEntries():
+  for i in range( rTrees[ file ].GetEntries() ):
     rTrees[ file ].GetEntry(i)
     x1 = getattr( rTrees[ file ], args.x1 )
     x2 = getattr( rTrees[ file ], args.x2 )
@@ -54,12 +54,17 @@ for file in rTrees:
       
   print( ">> ({},{}) event count for {}".format( args.x1, args.x2, file ) )
   print( "" )
-  print( "   " ),
-  for i in list( n_event[ file ] ):
-    print( "{:8<}".format( i ) )
+  print( "     " ),
+  for i in range( range_x1[0], range_x1[1] ):
+    print( "{:<8}".format( i ) ),
+  print( "" )
+  print( "     " ),
+  for i in range( range_x1[0], range_x1[1] ):
+    print( "{:<8}".format( "________" ) ),
+  print( "" )
   for j in range( range_x2[0], range_x2[1] ):
-    print( "{:<3}".format( j ) ),
-    for i in list( n_event[ file ] ):
-      print( "{:8<}".format( n_event[ file ][ i ][ j ] ),
-    print( "" )
+    print( "{:<3} |".format( j ) ),
+    for i in range( range_x1[0], range_x1[1]  ):
+      print( "{:<8}".format( n_event[ file ][ i ][ j ] ) ),
+    print( " " )
    
