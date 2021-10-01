@@ -27,8 +27,52 @@ for file in rTrees:
     quit()
   if args.x2 not in branches:
     print("[ERR] {} is not a valid branch, exiting...".format( args.x2 ) )
+    
+  n_event[ file ] = {}
+  range_x1 = [0,0]
+  range_x2 = [0,0]
   for i in rTrees[ file ].GetEntries():
     rTrees[ file ].GetEntry(i)
+    x1 = getattr( rTrees[ file ], args.x1 )
+    x2 = getattr( rTrees[ file ], args.x2 )
+    
+    if x1 > range_x1[1]: range_x1[1] = x1
+    if x2 > range_x2[1]: range_x2[1] = x2
+    
+    if x1 not in list( n_event[ file ].keys() ):
+      n_event[ file ][ x1 ] = {}
+    if x2 not in list( n_event[ file ][ x1 ].keys() ):
+      n_event[ file ][ x1 ][ x2 ] = 0
+    n_event[ file ][ x1 ][ x2 ] += 1
+      
+  for i in range( range_x1[0], range_x1[1] ):
+    if i not in list( n_event[ file ].keys() ):
+      n_event[ file ][ i ] = {}
+    for j in range( range_x2[0], range_x2[1] ):
+      if j not in list( n_event[ file ][ i ].keys() ):
+        n_event[ file ][ i ][ j ] = 0
+      
+  print( ">> ({},{}) event count for {}".format( args.x1, args.x2, file ) )
+  print( "" )
+  print( "   " ),
+  for i in list( n_event[ file ] ) ):
+    print( "{:8<}".format( i ) )
+  for j in 
+    for i in 
+  for x1 in n_event[ file ]:
+    for x2
+    print( "{:3<}".format( x1
+    
+    
+    
+    
+      
+      
+      
+    
+    
+    
+    
     
   
 
