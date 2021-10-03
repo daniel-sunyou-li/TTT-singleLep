@@ -27,10 +27,14 @@ sys.argv[2],
 
 isEMlist  = ['E','M']
 nhottlist = ['0','1','2p']
+#nhottlist = ['0p']
 nttaglist = ['0p']
+#nWtaglist = ['0p']
 nWtaglist = ['0','1p']
 nbtaglist = ['2','3p']
+#nbtaglist = ['2p']
 njetslist = ['5','6','7','8p']
+#njetslist = ['5p']
 
 # baseline categories
 #isEMlist  = ['E','M']
@@ -91,7 +95,7 @@ request_memory = 5000
 Output = condor_%(iPlot)s.out
 Error = condor_%(iPlot)s.err
 Log = condor_%(iPlot)s.log
-JobBatchName = SLA_step1_DNN250
+JobBatchName = SLA_step1_cutD
 Notification = Error
 Arguments = %(dir)s %(iPlot)s %(region)s %(isCategorized)s %(year)s %(isEM)s %(nhott)s %(nttag)s %(nWtag)s %(nbtag)s %(njets)s %(step1dir)s
 Queue 1"""%dict)
