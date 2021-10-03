@@ -272,13 +272,15 @@ def create_tar():
     print( ">> Deleting existing CMSSW946_ttt.tgz" ) 
     os.system( "rm {}{}".format( home, "CMSSW946_ttt.tgz" ) )
   print( ">> Creating new tar file for CMSSW946_ttt.tgz" )
-  os.system( "tar -C ~/nobackup/TTT-singleLep/ -zcvf CMSSW946_ttt.tgz --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\"  --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" {}".format(
+  os.system( "tar -C ~/nobackup/TTT-singleLep/ -zcvf CMSSW946_ttt.tgz --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\"  --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" {}".format(
+    tarDir + "LJMet-Slimmer-3tops/*",
+    tarDir + "singleLepAnalyzer/*",
+    tarDir + "FWLJMET/*",
     tarDir + "DNN/FWLJMET*",
     tarDir + "DNN/condor_log*",
     tarDir + "DNN/dataset*",
     tarDir + "DNN/application_log*",
-    tarDir + "FWLJMET/*",
-    tarDir + "notebooks/*",
+    tarDir + "DNN/notebooks/*",
     tarDir + "DNN/*.pkl",
     tarDir + "*.tgz",
     tarDir + ".git/*",

@@ -15,11 +15,15 @@ import config
 
 # Parse the arguments
 parser = ArgumentParser()
-parser.add_argument( "-y",  "--year", required = True, help = "Sample year" )
-parser.add_argument( "-s",  "--seedvars", required = True, help = "Seed value" )
-parser.add_argument( "-nj", "--njets", required = True, help = "Number of jets to cut on" )
-parser.add_argument( "-nb", "--nbjets", required = True, help = "Number of b jets to cut on" )
-parser.add_argument( "-ht", "--ak4ht", required = True, help = "AK4 Jet HT cut" )
+parser.add_argument( "-y",  "--year" )
+parser.add_argument( "-s",  "--seedvars" )
+parser.add_argument( "-nj", "--NJETS" )
+parser.add_argument( "-nb", "--NBJETS" )
+parser.add_argument( "-ht", "--AK4HT" )
+parser.add_argument( "-met", "--MET" )
+parser.add_argument( "-lpt", "--LEPPT" )
+parser.add_argument( "-mt", "--MT" )
+parser.add_argument( "-dr", "--MINDR" )
 args = parser.parse_args()
 
 sys.argv = []
@@ -28,7 +32,7 @@ from ROOT import TMVA, TCut, TFile
 
 seed_vars = set(b64decode(args.seedvars).split(","))
 
-print(">> TTT Condor Job using data from: {}".format( config.step2Sample[ args.year ] ) )
+print(">> TTT Condor Job using {} samples".format( config.step2Sample[ args.year ] ) )
 
 # Initialize TMVA
 TMVA.Tools.Instance()
@@ -67,11 +71,11 @@ for bkg in config.bkg_training[ args.year ]:
     loader.AddBackgroundTree( background_trees[-1], 1 )
 
 # Set weights and cuts
-cutStr = config.cutStr
-cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( args.nbjets ) 
-cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.njets )
-cutStr += " && ( AK4HT > {} )".format( args.ak4ht ) 
-cutStr += " && ( ( isTraining == 1 ) || ( isTraining == 2 ) )"
+cutStr = config.base_cut
+cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( args.NBJETS ) 
+cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.NJETS )
+cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet > {} ) && ( minDR_lepJet > {} )".format( args.AK4HT, args.MET, args.MT, args.MINDR )
+cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( args.LEPPT, args.LEPPT ) 
 
 loader.SetSignalWeightExpression( config.weightStr )
 loader.SetBackgroundWeightExpression( config.weightStr )
@@ -92,7 +96,7 @@ model.add( Dense( num_vars,
                 activation = "relu") )
 for _ in range( 3 ):
     model.add( BatchNormalization() )
-    model.add( Dropout( 0.5 ) )
+    model.add( Dropout( 0.3 ) )
     model.add( Dense( 50, activation = "relu" ) )
 model.add( Dense( 2, activation="sigmoid" ) )
 
@@ -109,7 +113,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=40:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

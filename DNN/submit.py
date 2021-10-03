@@ -9,19 +9,23 @@ import os
 import config
 
 parser = ArgumentParser()
-parser.add_argument( "-v", "--verbose",     action = "store_true", help = "Display detailed logs." )
-parser.add_argument( "-r", "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
-parser.add_argument( "-p", "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
-parser.add_argument( "-y", "--year",        required = True,       help = "The dataset year to use data from. Valid: 2017 or 2018." )
-parser.add_argument( "-n", "--seeds",       default = "500",       help = "The number of seeds to submit (only in submit mode)." )
-parser.add_argument( "-c", "--correlation", default = "60",        help = "The correlation cutoff percentage." )
-parser.add_argument( "-l", "--varlist",     default = "all",       help = "The variables to use when generating seeds." )
-parser.add_argument(       "--test",        action = "store_true", help = "Only submit one job to test submission mechanics." )
-parser.add_argument(       "--unstarted",   action = "store_true", help = "Include unstarted jobs in the resubmit list." )
-parser.add_argument( "folders", nargs="*",  default = [],          help = "Condor log folders to [re]submit to." ) 
-parser.add_argument( "-nj", "--njets",      default = "4",         help = "Number of jets to cut on" )
-parser.add_argument( "-nb", "--nbjets",     default = "2",         help = "Number of b jets to cut on" )
-parser.add_argument( "-ht", "--ak4ht",      default = "500",       help = "AK4 Jet HT cut" )
+parser.add_argument( "-v",   "--verbose",     action = "store_true", help = "Display detailed logs." )
+parser.add_argument( "-r",   "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
+parser.add_argument( "-p",   "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
+parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from. Valid: 2017 or 2018." )
+parser.add_argument( "-n",   "--seeds",       default = "500",       help = "The number of seeds to submit (only in submit mode)." )
+parser.add_argument( "-c",   "--correlation", default = "60",        help = "The correlation cutoff percentage." )
+parser.add_argument( "-l",   "--varlist",     default = "all",       help = "The variables to use when generating seeds." )
+parser.add_argument( "-nj",  "--NJETS",       default = "4",         help = "Number of jets to cut on" )
+parser.add_argument( "-nb",  "--NBJETS",      default = "2",         help = "Number of b jets to cut on" )
+parser.add_argument( "-ht",  "--AK4HT",       default = "500",       help = "AK4 Jet HT cut" )
+parser.add_argument( "-met", "--MET",         default = "60",        help = "MET cut" )
+parser.add_argument( "-lpt", "--LEPPT",       default = "20",        help = "Lepton PT cut" )
+parser.add_argument( "-mt",  "--MT",          default = "60",        help = "MT of lepton and MET" )
+parser.add_argument( "-dr",  "--MINDR",       default = "0.4",       help = "min DR between lepton and jet" )
+parser.add_argument(         "--test",        action = "store_true", help = "Only submit one job to test submission mechanics." )
+parser.add_argument(         "--unstarted",   action = "store_true", help = "Include unstarted jobs in the resubmit list." )
+parser.add_argument( "folders", nargs="*",    default = [],          help = "Condor log folders to [re]submit to." ) 
 args = parser.parse_args()
 
 from correlation import generate_uncorrelated_seeds
@@ -32,7 +36,7 @@ if args.year not in [ "2016", "2017", "2018" ]:
 # Parse command line arguments
 jt.LOG = args.verbose
 
-# set some parameters
+# set some paraMETers
 step2Sample = config.step2Sample[ args.year ] 
 step2DirLPC = config.step2DirLPC[ args.year ] 
 
@@ -47,7 +51,7 @@ else:
   folders = args.folders
 
 if args.resubmit:
-  print "Number of Seeds argument ignored in resubmit mode."
+  print( ">> Number of Seeds argument ignored in resubmit mode." )
 
 variables = None
 if not args.resubmit:
@@ -55,7 +59,7 @@ if not args.resubmit:
   if args.varlist.lower() == "all":
     variables = [ v[0] for v in config.varList["DNN"] ]
   else:
-    print(">> Reading variable list from {}.".format(args.varlist))
+    print( ">> Reading variable list from {}.".format( args.varlist ) )
     with open(args.varlist, "r") as vlf:
       for line in vlf.readlines():
         if line != "":
@@ -67,9 +71,13 @@ def print_options():
   print( ">> Training Samples: {}".format( step2Sample ) )
   print( ">> Correlation Threshold: {}".format( args.correlation ) ) 
   print( ">> # Seeds: {}".format( args.seeds ) )
-  print( ">> # Jets: {}".format( args.njets ) )
-  print( ">> # b Jets: {}".format( args.nbjets ) ) 
-  print( ">> AK4HT: >{}".format( args.ak4ht ) )
+  print( ">> # Jets: {}+".format( args.NJETS ) )
+  print( ">> # b Jets: {}+".format( args.NBJETS ) ) 
+  print( ">> AK4HT: >{}".format( args.AK4HT ) )
+  print( ">> MET: >{}".format( args.MET ) )
+  print( ">> Lepton pT: >{}".format( args.LEPPT ) )
+  print( ">> MET and Lepton MT: >{}".format( args.MT ) )
+  print( ">> Lepton and Jet min(dR): >{}".format( args.MINDR ) )
   print( ">> # Input Variables: {}".format ( len( variables ) ) )
   print( "{} Verbosity".format( "[ON ]" if args.verbose else "[OFF]" ) )
   print( "{} Test".format( "[ON ]" if args.test else "[OFF]" ) )
@@ -106,16 +114,21 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "3.8 GB" if int( args.ak4ht ) > 400 else "4.2 GB",
+    "MEMORY": "5 GB" if int( args.AK4HT ) > 400 else "4.2 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
     "EOSUSERNAME": config.eosUserName,
     "YEAR": args.year,
-    "NJETS": args.njets,
-    "NBJETS": args.nbjets,
-    "AK4HT": args.ak4ht 
+    "NJETS": args.NJETS,
+    "NBJETS": args.NBJETS,
+    "AK4HT": args.AK4HT,
+    "MET": args.MET,
+    "LEPPT": args.LEPPT,
+    "MT": args.MT,
+    "MINDR": args.MINDR,
   }
+  if args.resubmit: condorParams[ "MEMORY" ] = "6.5 GB" 
  
   with open( job.path, "w" ) as f:
     f.write(
@@ -125,11 +138,12 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 request_memory = %(MEMORY)s
 request_cpus = 2
+JobBatchName = VariableImportance
 Output = %(FILENAME)s.out
 Error = %(FILENAME)s.err
 Log = %(FILENAME)s.log
 Notification = Never
-Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s %(AK4HT)s
+Arguments = %(EOSUSERNAME)s %(YEAR)s %(SEEDVARS)s %(NJETS)s %(NBJETS)s %(AK4HT)s %(MET)s %(LEPPT)s %(MT)s %(MINDR)s 
 Queue 1"""%condorParams )
     
   os.chdir(job.folder)
@@ -223,12 +237,21 @@ def resubmit_jobs():
 # Run in Submit mode
 def submit_new_jobs():
   jf = jt.JobFolder.create(folders[0])
+  jf.pickle[ "YEAR" ] = args.year
+  jf.pickle[ "BACKGROUND" ] = config.bkg_training[ args.year ]
+  jf.pickle[ "CUTS" ][ "AK4HT" ] = args.AK4HT
+  jf.pickle[ "CUTS" ][ "NJETS" ] = args.NJETS
+  jf.pickle[ "CUTS" ][ "NBJETS" ] = args.NBJETS
+  jf.pickle[ "CUTS" ][ "MET" ] = args.MET
+  jf.pickle[ "CUTS" ][ "LEPPT" ] = args.LEPPT
+  jf.pickle[ "CUTS" ][ "MT" ] = args.MT
+  jf.pickle[ "CUTS" ][ "MINDR" ] = args.MINDR
   print( ">> Submitting new jobs into folder: {}".format(jf.path))
-  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.njets, args.nbjets, args.ak4ht )
+  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.NJETS, args.NBJETS, args.AK4HT, args.LEPPT, args.MET, args.MT, args.MINDR )
 
   print "Generating jobs."
-  if jf.jobs == None:
-    jf.jobs = []
+  if jf.pickle[ "JOBS" ] == None:
+    jf.pickle[ "JOBS" ] = []
   job_list = []
   for seed in seeds:
     seed_num = int(seed.binary, base=2)
@@ -252,7 +275,7 @@ def submit_new_jobs():
   if args.test:
     job_list = [job_list[0]]
 
-  jf.jobs.extend(job_list)
+  jf.pickle[ "JOBS" ].extend(job_list)
   jf._save_jtd()
   print(">> {} jobs generated and saved.".format(len(job_list)))
 

@@ -56,9 +56,17 @@ print( ">> Using Folders: \n - " + "\n - ".join(condor_folders) )
 
 print( ">> Loading job data" )
 job_folders = []
+bkg_samples = []
+cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR" ]
+cuts = { variable: [] for variable in cut_variables }
+years = []
 for folder in condor_folders:
   jf = jt.JobFolder(folder)
-  if jf.jobs == None:
+  for variable in cut_variables: 
+    cuts[ variable ].append( jf.pickle[ "CUTS" ][ variable ] )
+  years.append( jf.pickle[ "YEAR" ] )
+  bkg_samples.append( jf.pickle[ "BACKGROUND" ] )
+  if jf.pickle[ "JOBS" ] == None:
     # Folder needs to be imported
     print( "[WARN] The folder {} has not been loaded by the job tracker.".format(folder) )
     choice = raw_input ("Import with default variables? (Y/n)")
@@ -70,6 +78,30 @@ for folder in condor_folders:
   job_folders.append(jf)
   print(">> Loaded {}".format(folder))
 print( "[OK ] All data loaded." )
+
+print( ">> Checking year consistency between folders..." )
+
+if len( set( years ) ) > 1: 
+  print( "[ERR] Exiting calculate.py, compacted folders have multiple years..." )
+  quit()
+
+print( ">> Checking background sample consistency between folders..." )
+
+quit_ = False
+for i, bkg_sample in enumerate( bkg_samples ):
+  if set( bkg_sample ) != set( bkg_samples[0] ):
+    print( "[WARN] Different collection of background samples in {}: {}...".format( condor_folders[i], set( bkg_samples[0] ).difference( bkg_sample ) ) ) 
+
+print( ">> Checking cut consistency between folders..." )
+
+quit_ = False
+for variable in cut_variables:
+  if len( set( cuts[ variable ] ) ) > 1: 
+    print( "[WARN] Inconsistent cut settings for {}: {}...".format( variable, set( cuts[ variable ] ) ) )  
+    quit_ = True
+if quit_ is True: 
+  print( "[ERR] Exiting calculate.py, cut conditions are not consistent..." )
+  quit()
 
 print( ">> Computing Importances..." )
 
@@ -132,14 +164,15 @@ if not sort_increasing:
 
 # Variable Importance File
 with open(os.path.join(ds_folder, "VariableImportanceResults_" + str(num_vars) + "vars.txt"), "w") as f:
-  f.write("Weight: {}\n".format(config.weightStr))
-  f.write("Cut: {}\n".format(config.cutStr))
+  f.write("Year:{}\n".format(years[0]))
+  f.write("Weight:{}\n".format(config.weightStr))
+  for variable in cut_variables:  f.write( "{}:{}\n".format( variable, cuts[ variable ][0] ) )
   f.write("Folders: \n - " + "\n - ".join(condor_folders) + "\n")
   f.write("Number of Variables: {}\n".format(num_vars))
   f.write("Date: {}\n".format(datetime.today().strftime("%Y-%m-%d")))
   f.write("\nImportance Calculation:")
   f.write("\nNormalization: {}".format(normalization))
-  f.write("\n{:<6} / {:<34} / {:<6} / {:<7} / {:<7} / {:<11} / {:<11}".format(
+  f.write("\n{:<6} / {:<34} / {:<6} / {:<8} / {:<7} / {:<7} / {:<11}".format(
     "Index",
     "Variable Name",
     "Freq.",
