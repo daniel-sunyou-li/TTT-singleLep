@@ -160,9 +160,9 @@ runSigs = True
 #        if 'TTJetsSemiLep' in hdampList[ind]: hdampList[ind]=hdampList[ind].replace('TTJetsSemiLep','TTJetsSemiLepInc')
 #for ind in range(len(ueList)):
 #        if 'TTJetsSemiLep' in ueList[ind]: ueList[ind]=ueList[ind].replace('TTJetsSemiLep','TTJetsSemiLepInc')
-# cutList = {'elPtCut':50,'muPtCut':50,'metCut':60,'mtCut':60,'jet1PtCut':0,'jet2PtCut':0,'jet3PtCut':0,'AK4HTCut':500}
-cutList = {'elPtCut':20,'muPtCut':20,'metCut':60,'mtCut':60,'jet1PtCut':0,'jet2PtCut':0,'jet3PtCut':0,'AK4HTCut':250}
-if year=='R16': 
+# cutList = {'elPtCut':50,'muPtCut':50,'metCut':60,'mtCut':60,'jet1PtCut':0,'jet2PtCut':0,'jet3PtCut':0,'AK4HTCut':cutList = {'elPtCut':20,'muPtCut':20,'metCut':100,'mtCut':100,'jet1PtCut':0,'jet2PtCut':0,'jet3PtCut':0,'AK4HTCut':600}
+cutList = {'elPtCut':20,'muPtCut':20,'metCut':30,'mtCut':0,'jet1PtCut':0,'jet2PtCut':0,'jet3PtCut':0,'AK4HTCut':350}
+if year=="R16":
 	cutList['elPtCut'] = 35
 	cutList['muPtCut'] = 26
 
@@ -405,11 +405,34 @@ plotList = {#discriminantName:(discriminantLJMETName, binning, xAxisLabel)
 	'thirdcsvb_bb_NBTagNBHad':('thirdcsvb_bb_NBTagNBHad',linspace(-2, 1.5, (51-1)*nbin_multiplier+1).tolist(),';DeepCSV(3rdDeepCSVJet) NBTagNBHad'),
   
   'DNN_4j_1to50':('DNN_4j_1to50',linspace(0,1,101).tolist(),';DNN^{4j}_{1to50}'),
+  'DNN_4j_1to20':('DNN_4j_1to20',linspace(0,1,101).tolist(),';DNN^{4j}_{1to20}'),
 
 	'XGB':('XGB',linspace(0, 1, 201).tolist(),';XGB'),
 	'XGB_RS':('XGB_RS',linspace(0, 1, 201).tolist(),';XGB_RS'),
-	
-	}
+
+  "DNN_4j_1to40_cut1":("DNN_4j_1to40_cut1",linspace(0,1,101).tolist(),";DNN^{4j}_{1to40}"),
+  "DNN_5j_1to40_cut18":("DNN_5j_1to40_cut18",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+  "DNN_5j_1to40_cut31":("DNN_5j_1to40_cut31",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+  "DNN_6j_1to40_cutMax":("DNN_6j_1to40_cutMax",linspace(0,1,101).tolist(),";DNN^{6j}_{1to40}"),
+  "DNN_4j_1to40_cut4T":("DNN_4j_1to40_cut4T",linspace(0,1,101).tolist(),";DNN^{4j}_{1to40}"),
+  "DNN_4j_1to40_cut2":("DNN_4j_1to40_cut2",linspace(0,1,101).tolist(),";DNN^{4j}_{1to40}"),
+  "DNN_5j_1to40_cut12":("DNN_5j_1to40_cut12",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+  "DNN_5j_1to40_cut29":("DNN_5j_1to40_cut29",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+  "DNN_5j_1to40_cut30":("DNN_5j_1to40_cut30",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+	"DNN_5j_1to40_cut32":("DNN_5j_1to40_cut32",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+	"DNN_6j_1to40_cut37":("DNN_6j_1to40_cut37",linspace(0,1,101).tolist(),";DNN^{6j}_{1to40}"),
+	"DNN_5j_1to40_cut39":("DNN_5j_1to40_cut39",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+	"DNN_5j_1to40_cut42":("DNN_5j_1to40_cut42",linspace(0,1,101).tolist(),";DNN^{5j}_{1to40}"),
+  "DNN_6j_1to40_cut43":("DNN_6j_1to40_cut43",linspace(0,1,101).tolist(),";DNN^{6j}_{1to40}"),
+  "DNN_6j_1to40_cut44":("DNN_6j_1to40_cut44",linspace(0,1,101).tolist(),";DNN^{6j}_{1to40}"),
+  "DNN_5j_1to30":("DNN_5j_1to30",linspace(0,1,51).tolist(),";DNN^{TTT}_{1to30}"),
+  "DNN_5j_1to40":("DNN_5j_1to40",linspace(0,1,51).tolist(),";DNN^{TTT}_{1to40}"),
+  "DNN_5j_1to50":("DNN_5j_1to50",linspace(0,1,51).tolist(),";DNN^{TTT}_{1to50}"),
+  "DNN_5j_1to76":("DNN_5j_1to76",linspace(0,1,51).tolist(),";DNN^{TTT}_{1to76}")
+}
+
+for S2B in ["1","2","5","10","20","30","35"]:
+  plotList[ "DNN_5j_1to30_S2B" + S2B ] = ("DNN_5j_1to30_S2B"+S2B,linspace(0,1,51).tolist(),";DNN^{TTT}_{1to30}")
 
 print "PLOTTING:",iPlot
 print "         LJMET Variable:",plotList[iPlot][0]

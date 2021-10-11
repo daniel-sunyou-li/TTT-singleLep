@@ -2,14 +2,16 @@ import os, time
 
 cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_2_13/src"
 
-step = 5 # steps range from 1 through 6
-postfixes = ["DNN250_C{}".format(num) for num in [18,19]]#[16,17,20,21]]
+step = 4 # steps range from 1 through 6
+#postfixes = ["DNN250_C{}".format(num) for num in [18,19]]#[16,17,20,21]]
 #postfixes = ["DNN500_C{}".format(num) for num in [16,17,18,19,20,21]]
 #postfixes = ["DNN500_C21"]
+#postfixes = ["DNN_2017_cutD_MET45"]
+#postfixes = ["distributions_2018"]
+#postfixes = ["APS_DPF"]
+postfixes = [ "S2B" ]
 years = ["17"] 
-variables = [
-  "DNN_4j_1to50"
-]
+variables = [ "DNN_5j_1to30_S2B" + num for num in ["1","2","5","10","20","30","35"] ]
 
 date = "02182021"
 #date = "10072020"
