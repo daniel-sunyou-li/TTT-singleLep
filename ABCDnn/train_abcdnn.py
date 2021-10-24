@@ -23,7 +23,9 @@ if args.hpo:
     if config.hyper[ "OPTIMIZE" ][ hp ][ i ] == "CAT": 
       space.append( Categorical( config.hyper[ "OPTIMIZE" ][ hp ][0], name = str(hp) ) ) )
     elif config.hyper[ "OPTIMIZE" ][ hp ][ i ] == "INT":
-      space.append( Integer( config.hyper[ "OPTIMIZE" ][ hp ][0][0]
+      space.append( Integer( config.hyper[ "OPTIMIZE" ][ hp ][0][0], config.hyper[ "OPTIMIZE" ][0][1], name = str(hp) ) )
+    elif config.hyper[ "OPTIMIZE" ][ hp ][ i ] == "REAL":
+      space.append( Real( config.hyper[ "OPTIMIZE" ][ hp ][0][0], config.hyper[ "OPTIMIZE" ][0][1], name = str(hp) ) )
       
                
                
