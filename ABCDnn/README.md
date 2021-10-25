@@ -3,6 +3,15 @@
 
 The `ABCDnn` method is intended to be run following the production of step3 samples where the DNN discriminator is added to the output `ntuples`.  Because it is only intended for use on ttbar samples, this step is run exclusively on the ttbar samples and the output ntuples will still be denoted as `step3_ABCDnn` to indicate that there is also the transformed distributions available.
 
+## Quick-Start Instructions
+### Google Colab (interactive)
+
+### FNAL LPC
+    cd nobackup/
+    
+    export SCRAM_ARCH=slc7_amd64
+
+
 ## About Neural Autoregressive Flows
 
 Each of the terms in 'Neural Autoregressive Flows' refers to:
