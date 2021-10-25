@@ -1,7 +1,8 @@
 import os
 import numpy as np
 
-data_path = os.path.join( os.getcw(), "Data" )
+data_path = os.path.join( os.getcwd(), "Data" )
+results_path = os.path.join( os.getcwd(), "Results" )
 
 variables = {
   "AK4HT": {
