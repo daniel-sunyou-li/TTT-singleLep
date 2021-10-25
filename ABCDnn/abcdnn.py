@@ -1,4 +1,5 @@
 # methods and classes used for constructing the ABCDnn module
+# last updated 10/25/2021 by Daniel Li
 
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -626,3 +627,449 @@ class ABCDnn(object):
 
     #fig.savefig(os.path.join(self.savedir, 'trainingperf.pdf'))
     pass  
+
+class ABCDnn_training(object):
+  def __init__( self ):
+    pass
+
+  def setup_events( self, rSource, rTarget, selection, variables, regions, mc_weight ):
+    # obtain the normalized data (plus others)
+    self.rSource = rSource        # (str) path to source ROOT file
+    self.rTarget = rTarget        # (str) path to target ROOT file
+    self.selection = selection    # (dict) event selection cuts
+    self.variables = variables    # (dict) variable limits and type
+    self.regions = regions        # (dict) control and signal regions
+    self.mc_weight = mc_weight    # (str) use xsec weights
+
+    rawinputs, rawinputsmc, rawmcweight, normedinputs, normedinputsmc, inputmeans, \
+      inputsigma, ncat_per_feature = prepdata( rSource, rTarget, 
+      selection, variables, mc_weight )
+
+    self.rawinputs = rawinputs                # unnormalized data tree after event selection
+    self.rawinputsmc = rawinputsmc            # unnormalized mc tree after event selection
+    self.rawmcweight = rawmcweight            # xsec weighted mc tree after event selection
+    self.normedinputs = normedinputs          # normalized data tree after event selection
+    self.normedinputsmc = normedinputsmc      # normalized mc tree after event selection
+    self.inputmeans = inputmeans              # mean of unnormalized data
+    self.inputsigma = inputsigma              # rms of unnormalized data
+
+    self.inputdim = len( list( variables.keys() ) ) - 2 # the total number of transformed variables
+    self.ncat_per_feature = ncat_per_feature[0:self.inputdim] # number of categories per categorical feature
+    self.conddim = self.normedinputs.shape[1] - self.inputdim # ?
+
+    # Data and MC in control region
+
+    self.CV_x = self.regions["X"]["Variable"] # First control variable name
+    self.CV_y = self.regions["Y"]["Variable"] # Second control variable name
+
+    # apply region selection per event
+    if regions[ "X" ][ "Inclusive" ]:
+      self.sig_select = ( self.rawinputs[ self.CV_x ] >= regions[ "X" ][ "Signal" ] )
+      self.sig_select_mc = ( self.rawinputsmc[ self.CV_x ] >= regions[ "X" ][ "Signal" ] )
+    else:
+      self.sig_select = ( self.rawinputs[ self.CV_x ] == regions[ "X" ][ "Signal" ] )
+      self.sig_select_mc = ( self.rawinputsmc[ self.CV_x ] == regions[ "X" ][ "Signal" ] )
+    if regions[ "Y" ][ "Inclusive" ]:
+      self.sig_select &= ( self.rawinputs[ self.CV_y ] >= regions[ "Y" ][ "Signal" ] )
+      self.sig_select_mc &= ( self.rawinputsmc[ self.CV_y ] >= regions[ "Y" ][ "Signal" ] )
+    else:
+      self.sig_select &= ( self.rawinputs[ self.CV_y ] == regions[ "Y" ][ "Signal" ] )
+      self.sig_select_mc &= ( self.rawinputsmc[ self.CV_y ] == regions[ "Y" ][ "Signal" ] )
+
+    self.bkg_select = ~self.sig_select
+    self.normedinputs_bkg = self.normedinputs[ self.bkg_select ]
+
+    self.bkg_select_mc = ~self.sig_select_mc
+    self.normedinputsmc_bkg = self.normedinputsmc[ self.bkg_select_mc ]
+
+    if self.rawmcweight is None:
+      self.bkgmcweight = None
+    else:
+      self.bkgmcweight = self.rawmcweight[ self.bkg_select_mc ]
+  
+    pass
+
+  def setup_model( self, 
+          nodes_cond = 8, hidden_cond = 1, nodes_trans = 8, minibatch = 64, lr = 5.0e-3,
+          depth = 1, activation = "swish", regularizer = "None", decay = 1e-1,
+          gap = 1000., beta1 = 0.9, beta2 = 0.999,
+          savedir = "/ABCDNN/", savefile = "abcdnn.pkl", mc_weight = None, 
+          retrain = False, seed = 100, permute = True, verbose = False
+        ):
+    self.nodes_cond = nodes_cond    # (int) number of nodes in conditional layer(s)
+    self.hidden_cond = hidden_cond  # (int) number of conditional layers
+    self.nodes_trans = nodes_trans  # (int) number of nodes in transformer layer
+    self.minibatch = minibatch      # (int) batch size for training
+    self.lr = lr                    # (float) learning rate for training
+    self.decay = decay              # (float) final learning rate multiplier
+    self.gap = gap                  # (float) the gap in epochs for learning rate step increment values
+    self.depth = depth              # (int) number of permutations in creating layers
+    self.beta1 = beta1              # (float) first moment decay rate for Adam
+    self.beta2 = beta2              # (float) second moment decay rate for Adam
+    self.regularizer = regularizer  # (str) use of L1, L2, L1+L2 or None for training regularizers
+    self.activation = activation    # (str) activation function for conditional layers
+    self.savedir = savedir          # (str) save directory for output results
+    self.savefile = savefile        # (str) save file name for output results
+    self.seed = seed                # (int) RNG seed
+    self.retrain = retrain          # (bool) start a new training or continue from where left-off
+    self.mc_weight = mc_weight      # (str) weight MC values according to xsec
+    self.permute = permute          # (bool) run random permutations of the conditional inputs
+
+    self.model = ABCDnn( 
+      inputdim_categorical_list = self.ncat_per_feature, 
+      inputdim = self.inputdim,
+      conddim = self.conddim,
+      nodes_cond = self.nodes_cond,
+      hidden_cond = self.hidden_cond,
+      nodes_trans = self.nodes_trans, 
+      minibatch = self.minibatch,
+      activation = self.activation,
+      regularizer = self.regularizer,
+      depth = self.depth, 
+      lr = self.lr,
+      decay = self.decay, 
+      gap = self.gap,
+      beta1 = self.beta1, 
+      beta2 = self.beta2,
+      retrain = self.retrain, 
+      savedir = self.savedir, 
+      savefile = self.savefile,
+      seed = self.seed, 
+      permute = self.permute, 
+      verbose = verbose
+    )
+
+    self.model.setrealdata( self.normedinputs_bkg, verbose = verbose )
+    self.model.setmcdata( self.normedinputsmc_bkg, eventweight = self.bkgmcweight, verbose = verbose )
+    pass
+
+  def train( self, steps = 10000, monitor = 1000, patience = 100, early_stopping = True, split = 0.25, display_loss = False, save_hp = False, hpo = False ):
+    self.model.train( steps = steps, monitor = monitor, patience = patience, split = split, early_stopping = early_stopping, hpo = hpo )
+    if display_loss: self.model.display_training()
+    if save_hp: self.model.savehyperparameters()
+    pass
+
+  def validate( self ):
+    self.model.checkpoint.restore( self.savedir )
+    self.normedinputsmc_sig = self.normedinputsmc[ self.sig_select_mc ]
+    self.n_mc_batches = int( self.normedinputsmc_sig.shape[0] / self.minibatch )
+    self.fakelist = []
+    for i in range( n_mc_batches ):
+      xin = self.normedinputsmc[ i * minibatch: ( i + 1 ) * minibatch, : ]
+      xgen = self.model.predict( xin )
+      self.fakelist.append( xgen )
+    self.fakedata = np.vstack( self.fakelist )
+    self.fakedata = self.fakedata * self.inputsigma[ :, :self.inputdim ] + self.inputmeans[ :, :self.inputdim ]
+
+    pass
+
+  def evaluate_regions( self, verbose = True ):
+    self.select = {
+        "DATA": {},
+        "MC": {}
+    }
+    self.count = {
+        "DATA": {},
+        "MC": {}
+    }
+    self.fakedata = []
+    self.rawdata = []
+    self.rawmc = []
+    self.mcweight = []
+    self.plottext = []
+    self.region = [ "X", "Y", "A", "C", "B", "D" ]
+
+    i = 0
+    for x in np.linspace( self.regions[ "X" ][ "Min" ], self.regions[ "X" ][ "Max" ], self.regions[ "X" ][ "Max" ] - self.regions[ "X" ][ "Min" ] + 1 ):
+      for y in np.linspace( self.regions[ "Y" ][ "Min" ], self.regions[ "Y" ][ "Max" ], self.regions[ "Y" ][ "Max" ] - self.regions[ "Y" ][ "Min" ] + 1 ):
+        if x == self.regions[ "X" ][ "Signal" ] and self.regions[ "X" ][ "Inclusive" ]:
+          self.select[ "DATA" ][ self.region[i] ] = ( self.rawinputs[ self.regions[ "X" ][ "Variable" ] ] >= x )
+          self.select[ "MC" ][ self.region[i] ] = ( self.rawinputsmc[ self.regions[ "X" ][ "Variable" ] ] >= x )
+        else: 
+          self.select[ "DATA" ][ self.region[i] ] = ( self.rawinputs[ self.regions[ "X" ][ "Variable" ] ] == x )
+          self.select[ "MC" ][ self.region[i] ] = ( self.rawinputsmc[ self.regions[ "X" ][ "Variable" ] ] == x )
+
+        if y == self.regions[ "Y" ][ "Signal" ] and self.regions[ "Y" ][ "Inclusive" ]:
+          self.select[ "DATA" ][ self.region[i] ] &= ( self.rawinputs[ self.regions[ "Y" ][ "Variable" ] ] >= y  )
+          self.select[ "MC" ][ self.region[i] ] &= ( self.rawinputsmc[ self.regions[ "Y" ][ "Variable" ] ] >= y )
+        else:
+          self.select[ "DATA" ][ self.region[i] ] &= ( self.rawinputs[ self.regions[ "Y" ][ "Variable" ] ] == y )
+          self.select[ "MC" ][ self.region[i] ] &= ( self.rawinputsmc[ self.regions[ "Y" ][ "Variable" ] ] == y )
+
+        self.count[ "DATA" ][ self.region[i] ] = np.count_nonzero( self.select[ "DATA" ][ self.region[i] ] )
+        self.count[ "MC" ][ self.region[i] ] = np.count_nonzero( self.select[ "MC" ][ self.region[i] ] )
+        x_eq = ">=" if ( self.regions[ "X" ][ "Inclusive" ] ) and ( x == self.regions[ "X" ][ "Max" ] ) else "=="
+        y_eq = ">=" if ( self.regions[ "Y" ][ "Inclusive" ] ) and ( y == self.regions[ "Y" ][ "Max" ] ) else "=="
+        if verbose:
+          print( "Region {} ({} {} {}, {} {} {}): MC = {}, DATA = {} ".format(
+              self.region[i], 
+              self.regions[ "X" ][ "Variable" ], x_eq, int( x ),
+              self.regions[ "Y" ][ "Variable" ], y_eq, int( y ),
+              int( self.count[ "MC" ][ self.region[i] ] ), int( self.count[ "DATA" ][ self.region[i] ] )
+          ) )
+
+        # text for plots
+        text = "$"
+        if self.regions[ "X" ][ "Inclusive" ] == True and x == self.regions[ "X" ][ "Max" ]:
+          text += "{}\geq {}, ".format( self.variables[ self.regions[ "X" ][ "Variable" ] ][ "latex" ], int(x) )
+        else:
+          text += "{}={}, ".format( self.variables[ self.regions[ "X" ][ "Variable" ] ][ "latex" ], int(x) )
+        
+        if self.regions[ "Y" ][ "Inclusive" ] == True and y == self.regions[ "Y" ][ "Max" ]:
+          text += "{}\geq {}".format( self.variables[ self.regions[ "Y" ][ "Variable" ] ][ "latex" ], int(y) )
+        else:
+          text += "{}={}".format( self.variables[ self.regions[ "Y" ][ "Variable" ] ][ "latex" ], int(y) )
+        text += "$"
+        self.plottext.append( text )
+      
+        # format the data in a plottable/saveable manner
+        input_data = self.normedinputs[ self.select[ "DATA" ][ self.region[i] ] ]
+        raw_data = self.rawinputs.loc[ self.select[ "DATA" ][ self.region[i] ] ]
+        self.rawdata.append( raw_data )
+
+        input_mc = self.normedinputsmc[ self.select[ "MC" ][ self.region[i] ] ]
+        raw_mc = self.rawinputsmc.loc[ self.select[ "MC" ][ self.region[i] ] ]
+        self.rawmc.append( raw_mc )
+
+        if self.rawmcweight is None:
+          mcweight = [1.] * input_mc.shape[0]
+        else:
+          mcweight = self.rawmcweight[ self.select[ "MC" ][ self.region[i] ] ].flatten()
+        self.mcweight.append( mcweight )
+
+        n_batches = int( input_mc.shape[0] / self.minibatch )
+        fake = []
+        for j in range( n_batches - 1 ):
+          xin = input_mc[ j * self.minibatch: ( j + 1 ) * self.minibatch:, : ]
+          xgen = self.model.model.predict( xin )
+          fake.append( xgen )
+        xin = input_mc[ ( n_batches - 1 ) * self.minibatch:, : ]
+        xgen = self.model.model.predict( xin )
+        fake.append( xgen )
+
+        this_fakedata = np.vstack( fake )
+        this_fakedata = this_fakedata * self.inputsigma[ :, :self.inputdim ] + self.inputmeans[ :, :self.inputdim ]
+        n_fakes = this_fakedata.shape[0]
+        this_fakedata = np.hstack( ( this_fakedata, 
+                                  np.array( [x] * n_fakes ).reshape( ( n_fakes, 1 ) ), 
+                                  np.array( [y] * n_fakes ).reshape( ( n_fakes, 1 ) ) 
+                                  ) )
+        self.fakedata.append( this_fakedata )
+
+        i += 1
+      
+    pass
+
+  def extended_ABCD( self ):
+    # compute the norm of the raw data
+    dA, dB, dC, dD, dX, dY = self.count[ "DATA" ][ "A" ], self.count[ "DATA" ][ "B" ], self.count[ "DATA" ][ "C" ], self.count[ "DATA" ][ "D" ], self.count[ "DATA" ][ "X" ], self.count[ "DATA" ][ "Y" ]
+    self.data_norm = dB * dX * dC**2 / ( dA**2 * dY )
+    self.sigma_data_norm = np.sqrt( 1/dB + 1/dX + 1/dY + 4/dC + 4/dA ) * self.data_norm
+    print( "Ext. ABCD Prediction: {:.2f} pm {:.2f}".format( self.data_norm, self.sigma_data_norm ) )
+    print( "True Count: {}".format( dD ) )
+    pass
+
+  def plot_ratio( self, 
+      plot_data = True, plot_mc = False, plot_cr = False, plot_sr = True, 
+      errorbars = True, normed = True, ratio = [ 0.25, 2.0 ], 
+      yscales = ["linear"], n_bins = 20, plot_ks = False, save = False
+    ):
+    vars = [ str( var ) for var in self.variables ]
+  
+    for yscale in yscales:
+      for var in self.variables:
+        i = 0
+        if self.variables[ var ][ "transform" ] == True:
+          for _fakedata, _rawdata, _rawmc, _mcweight, _plottext in zip( self.fakedata, self.rawdata, self.rawmc, self.mcweight, self.plottext ):
+            if not plot_cr and self.region[i] in [ "A", "B", "C", "X", "Y" ]: continue
+            if not plot_sr and self.region[i] == "D": continue
+            sNormed = "NORM" if normed else "UNNORM"
+            if plot_data:
+              plt.figure( figsize = ( 8, 8 ) )
+              axes = MplPlotter.ratio_plot( 
+                dict(
+                  x = _rawdata[ var ], bins = n_bins, label = "Raw Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, histtype = "marker"
+                ),
+                dict(
+                  x = _fakedata[ :, vars.index( var ) ], bins = n_bins, label = "Fake Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed
+                ),
+                ratio_range = ( ratio[0], ratio[1] )
+              )
+
+              ks_text = ""
+              if plot_ks:
+                D, p = stats.ks_2samp( _rawdata[ var ], _fakedata[ :, vars.index( var ) ] )
+                ks_text = "$p_{}={:.2e}$".format( "{KS}", p )
+
+              axes[0][0].set_yscale( yscale )
+              if normed: axes[0][0].set_ylabel( "Normalized Count", ha = "right", y = 1.0 )
+              else: axes[0][0].set_ylabel( "Count", ha = "right", y = 1.0 )
+              plt.xlabel( "${}$".format( self.variables[ var ][ "latex" ] ), ha = "right", x = 1.0 )
+
+              if self.region[i] == "D":
+                axes[0][0].set_title( "Data Signal Region {}: {} ({})".format( self.region[i], _plottext, ks_text ), ha = "right", x = 1.0 )
+              else:
+                axes[0][0].set_title( "Data Control Region {}: {} ({})".format( self.region[i], _plottext, ks_text ), ha = "right", x = 1.0 )
+              if save: plt.savefig( os.path.join( self.savedir, "{}_ratio_DATA_r{}_{}.pdf".format( str(var), self.region[i], sNormed ) ) )
+              axes[0][0].legend( loc = "best" )
+              plt.show()
+              plt.close()
+
+            if plot_mc:
+              plt.figure( figsize = ( 8, 8 ) )
+              axes = MplPlotter.ratio_plot(
+                dict(
+                  x = _rawmc[ var ], bins = n_bins, label = "MC",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, histtype = "marker"
+                ),
+                dict(
+                  x = _fakedata[ :, vars.index( var ) ], bins = n_bins, label = "Fake Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed
+                ),
+                ratio_range = ( ratio[0], ratio[1] )
+              )
+
+              ks_text = ""
+              if plot_ks:
+                D, p = stats.ks_2samp( _rawdata[ var ], _fakedata[ :, vars.index( var ) ] )
+                ks_text = "$p_{}={:.2e}$".format( "{KS}", p )
+
+              axes[0][0].set_yscale( yscale )
+              if normed: axes[0][0].set_ylabel( "Normalized Count", ha = "right", y = 1.0 )
+              else: axes[0][0].set_ylabel( "Count", ha = "right", y = 1.0 )
+              plt.xlabel( "${}$".format( self.variables[ var ][ "latex" ] ), ha = "right", x = 1.0 )
+              if self.region[i] == "D":
+                axes[0][0].set_title( "MC Signal Region {}: {} ({})".format( self.region[i], _plottext, ks_text ), ha = "right", x = 1.0 )
+              else:
+                axes[0][0].set_title( "MC Control Region {}: {} ({})".format( self.region[i], _plottext, ks_text ), ha = "right", x = 1.0 )
+              if save: plt.savefig( os.path.join( self.savedir, "{}_ratio_MC_r{}_{}.pdf".format( str(var), self.region[i], sNormed ) ) )
+              axes[0][0].legend( loc = "best" )
+              plt.show()
+
+            i += 1
+    pass
+
+  def plot_hist( self,
+      plot_data = True, plot_mc = False, plot_cr = False, plot_sr = True,
+      errorbars = True, normed = True,
+      yscales = [ "linear" ], n_bins = 20, save = False 
+    ):
+    vars = [ str( var ) for var in self.variables ]
+
+    for yscale in yscales:
+      for var in vars:
+        if self.variables[ var ][ "transform" ] == True:
+          i = 0
+          for _fakedata, _rawdata, _rawmc, _mcweight, _plottext in zip( self.fakedata, self.rawdata, self.rawmc, self.mcweight, self.plottext ):
+            if not plot_cr and self.region[i] in [ "A", "B", "C", "X", "Y" ]: continue
+            if not plot_sr and self.region[i] == "D": continue
+            sNormed = "NORM" if normed else "UNNORM"
+            plt.figure( figsize = ( 8, 8 ) )
+            if self.variables[ var ][ "transform" ] == True:
+              plt.figure()
+              MplPlotter.hist( 
+                  _rawdata[ var ], bins = n_bins, label = "Raw Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, histtype = "marker", alpha = 0.5
+              )
+              if self.mc_weight is None:
+                if plot_data: MplPlotter.hist(
+                  _fakedata[ :, vars.index( var ) ], bins = n_bins, label = "Fake Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, alpha = 0.5
+                )
+                if plot_mc: MplPlotter.hist(
+                  _rawmc[ var ], bins = n_bins, label = "MC",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, histtype = "step", alpha = 0.5
+                )
+              else:
+                if plot_data: MplPlotter.hist(
+                  _fakedata[ :, vars.index( var ) ], bins = n_bins, label = "Fake Data",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, alpha = 0.5, weights = _mcweight
+                )
+                if plot_mc: MplPlotter.hist(
+                  _rawmc[ var ], bins = n_bins, label = "MC",
+                  range = ( self.variables[ var ][ "limit" ][0], self.variables[ var ][ "limit" ][1] ),
+                  errorbars = errorbars, normed = normed, histtype = "step", alpha = 0.5, weights = _mcweight
+                )
+              plt.yscale( yscale )
+              if normed: plt.ylabel( "Normalized Count", ha = "right", y = 1.0 )
+              else: plt.ylabel( "Count", ha = "right", y = 1.0 )
+              plt.xlabel( "${}$".format( self.variables[ var ][ "latex" ] ), ha = "right", x = 1.0 )
+              plt.legend()
+              if self.region[i] == "D":
+                plt.title( "Signal Region {}: {}".format( self.region[i], _plottext ), ha = "right", x = 1.0 )
+              else:
+                plt.title( "Control Region {}: {}".format( self.region[i], _plottext ), ha = "right", x = 1.0 )
+              if save: plt.savefig( os.path.join( self.savedir, "{}_hist_r{}_e{}_{}_{}.pdf".format( str(var), self.region[i], sNormed, yscale.upper() ) ) )
+              plt.show()
+              plt.close()
+            i += 1
+
+  # plot the correlation between the fake data and raw mc for each variable
+  # the expectation is that there should be 
+  def plot_correlation( self, n_sample = 5000 ):
+    xmin = self.regions[ "X" ][ "Min" ]
+    xmax = self.regions[ "X" ][ "Max" ]
+    xlen = xmax - xmin + 1
+    ymin = self.regions[ "Y" ][ "Min" ]
+    ymax = self.regions[ "Y" ][ "Max" ]
+    ylen = ymax - ymin + 1
+    vars = [ str( var ) for var in self.variables ]
+    for var in vars:
+      if self.variables[ var ][ "transform" ] == True:
+        i = 0
+        fig, ax = plt.subplots( int( xlen ), int( ylen ), figsize = ( 8, 9 ) )
+        for xi, x in enumerate( np.linspace( xmin, xmax, xlen ) ):
+          for yi, y in enumerate( np.linspace( ymin, ymax, ylen ) ):
+            lower = self.variables[ var ][ "limit" ][0]
+            upper = self.variables[ var ][ "limit" ][1]
+            ax[ xi, yi ].plot( 
+                self.rawmc[i].iloc[ :n_sample, vars.index( var ) ], 
+                self.fakedata[i][ :n_sample, vars.index( var ) ], 
+                ",", markersize = 5
+                )
+            ax[ xi, yi ].set_xlim( lower, upper )
+            ax[ xi, yi ].set_ylim( lower, upper )
+            ax[ xi, yi ].set_xlabel( "MC", ha = "right", x = 1.0 )
+            ax[ xi, yi ].set_ylabel( "PREDICT DATA", ha = "right", y = 1.0 )
+            xVar = self.variables[ self.regions[ "X" ][ "Variable" ] ][ "latex" ]
+            yVar = self.variables[ self.regions[ "Y" ][ "Variable" ] ][ "latex" ]
+            ax[ xi, yi ].set_title( "Region {} $({},{})=({},{})$: ${}$".format(
+              self.region[i], xVar, yVar, int(x), int(y),
+              self.variables[ var ][ "latex" ]
+            ),
+            ha = "right", x = 1.0, fontsize = 10 )
+            ax[ xi, yi ].plot( [ lower, upper ], [ lower, upper ], "r--" )
+            ax[ xi, yi ].grid()
+
+            i += 1
+        fig.tight_layout()
+        fig.show()
+    pass 
+  
+  def save_root( self, tree_name = "mytree", file_name = "data.root" ):
+    self.save_data = {}
+    self.branch = {}
+    self.fake_data_all = np.vstack( self.fakedata )
+    vars = [ str( var ) for var in self.variables ]
+    for i, var in enumerate( vars ):
+      self.save_data[ var ] = self.fake_data_all[ :, i ]
+    self.mcweight_all = np.concatenate( self.mcweight )
+    self.save_data[ "weight" ] = self.mcweight_all
+    for key, data in self.save_data.items():
+      self.branch[ key ] = data.dtype
+    tree = uproot.newtree( branches = self.branch )
+    with uproot.recreate( file_name ) as f:
+      f[ tree_name ] = tree
+      f[ tree_name ].extend( self.save_data )
+    pass
+  
