@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from skopt.space import Real, Integer, Categorical
 
 data_path = os.path.join( os.getcw(), "Data" )
 
@@ -103,9 +104,12 @@ hyper = {
   }
 }
        
-
-
-
-
-
-
+space = []
+if args.hpo:
+  for hp in hyper[ "OPTIMIZE" ]:
+    if hyper[ "OPTIMIZE" ][ hp ][ i ] == "CAT": 
+      space.append( Categorical( hyper[ "OPTIMIZE" ][ hp ][0], name = str(hp) ) ) )
+    elif config.hyper[ "OPTIMIZE" ][ hp ][ i ] == "INT":
+      space.append( Integer( hyper[ "OPTIMIZE" ][ hp ][0][0], hyper[ "OPTIMIZE" ][0][1], name = str(hp) ) )
+    elif config.hyper[ "OPTIMIZE" ][ hp ][ i ] == "REAL":
+      space.append( Real( hyper[ "OPTIMIZE" ][ hp ][0][0], hyper[ "OPTIMIZE" ][0][1], name = str(hp) ) )
