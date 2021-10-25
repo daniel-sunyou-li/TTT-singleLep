@@ -84,6 +84,15 @@ params = {
     "MONITOR": 1000,
     "SHOWLOSS": True,
     "SAVEHP": True
+  },
+  "PLOT": {
+    "RATIO": [ 0.25, 2.0 ], # y limits for the ratio plot
+    "YSCALES": [ "log" ],   # which y-scale plots to produce
+    "NBINS": 20,            # histogram x-bins
+    "ERRORBARS": True,      # include errorbars on hist
+    "NORMED": True,         # normalize histogram counts/density
+    "SAVE": False,          # save the plots as png
+    "PLOT_KS": True,        # include the KS p-value in plots
   }
 }
         
