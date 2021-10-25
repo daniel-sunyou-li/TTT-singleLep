@@ -9,8 +9,6 @@ from tensorflow.keras.optimizers.schedules import LearningRateSchedule
 import numpy as np
 import os, uproot, pickle
 from scipy import stats
-from skopt.utils import use_named_args
-from skopt import gp_minimize
 from sklearn.model_selection import train_test_split
 
 def invsigmoid( x ):
