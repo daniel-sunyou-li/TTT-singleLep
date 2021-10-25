@@ -59,16 +59,23 @@ params = {
     "TARGET": os.path.join( data_path, "singleLep_2017_data.root" ),
     "MCWEIGHT": None
   },
-  "MODEL": {
-    "NDENSE": 64,
-    "MINIBATCH": 64,
-    "LR": 1.0e-5,
-    "GAP": 1000,
-    "NAFDIM": 30,
-    "DEPTH": 3,
+  "MODEL": { # parameters for setting up the NAF model
+    "NODES_COND": 16,
+    "HIDDEN_COND": 3,
+    "NODES_TRANS": 8,
+    "LRATE": 1.0e-5,
+    "DECAY": 1e-1,
+    "GAP": 1000.,
+    "DEPTH": 2,
+    "REGULARIZER": "None",
+    "ACTIVATION": "softplus",
+    "BETA1": 0.90,
+    "BETA2": 0.90,
+    "MINIBATCH": 105,
     "RETRAIN": True,
-    "SEED": 101,
-    "SAVEDIR": "./Results/"
+    "SEED": 101 if use_randSeed.value else np.random.randint( 100000 ),
+    "SAVEDIR": "./Results/",
+    "VERBOSE": False   
   },
   "TRAIN": {
     "EPOCHS": 15000,
