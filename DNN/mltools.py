@@ -7,7 +7,7 @@ os.environ["KERAS_BACKEND"] = "tensorflow"
 
 from keras.models import Sequential
 from keras.models import load_model
-from keras.layers.core import Dense, Dropout
+from keras.layers.core import Input, Dense, Dropout
 from keras.layers import BatchNormalization
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -229,13 +229,8 @@ class HyperParameterModel(MLTrainingInstance):
 
   def build_model(self, input_size="auto"):
     self.model = Sequential()
-    self.model.add( Dense(
-      self.parameters[ "initial_nodes" ],
-      input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
-      kernel_initializer = "he_normal",
-      #kernel_initializer = "glorot_uniform",
-      kernel_regularizer="l2",
-      activation=self.parameters[ "activation_function" ]
+    self.model.add( Input(
+      shape = ( len(self.parameters["variables"]), ) if input_size == "auto" else ( input_size, )
     ) )
     self.model.add( BatchNormalization() )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
