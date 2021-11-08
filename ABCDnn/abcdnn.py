@@ -267,6 +267,9 @@ def prepdata( rSource, rTarget, selection, variables, mc_weight = None ):
   zero_key = list( selection.keys() )[0]
   mc_select = ( mc_df[ zero_key ][ zero_key ] >= selection[ zero_key ] )
   data_select = ( data_df[ zero_key ][ zero_key ] >= selection[ zero_key ] )
+  
+  mc_dfs = tree_mc.pandas.df( vars )
+  data_dfs = tree_data.pandas.dfs( vars )
   for var in selection.keys():
     if var != zero_key:
       mc_select &= ( mc_df[ var ][ var ] >= selection[ var ] )
@@ -274,23 +277,23 @@ def prepdata( rSource, rTarget, selection, variables, mc_weight = None ):
 
   # do not consider cross section weight. The weight of the resut file is filled with 1.
   if mc_weight == None:
-    inputrawmc = tree_mc.pandas.df( vars )[ mc_select ]
+    inputrawmc = mc_dfs[ mc_select ]
     inputrawmcweight = None
 
   # The weight of the resut file is filled with 'xsecWeight'
   if mc_weight == "weight":
-    inputrawmc = tree_mc.pandas.df( vars )[ mc_select ]
+    inputrawmc = mc_dfs[ mc_select ]
     inputrawmcweight = tree_mc.pandas.df( [ 'xsecWeight' ] )[ mc_select ].to_numpy( dtype=np.float32 )
   
   # duplicate source samples according to the cross section. The weight of the resut file is filled with 1.
   # may take too long if input sample is the combined one with several samples that has different cross section.
   if mc_weight == "unweight":
-    inputrawmc = unweight(tree_mc.pandas.df( vars + ['xsecWeight'])[ mc_select ]).drop( columns=['xsecWeight'] )
+    inputrawmc = unweight( tree_mc.pandas.df( vars + ['xsecWeight'] )[ mc_select ]).drop( columns=['xsecWeight'] )
     inputrawmcweight = None
   
   inputsmc_enc = _onehotencoder.encode( inputrawmc.to_numpy( dtype=np.float32 ) )
 
-  inputrawdata = tree_data.pandas.df( vars )[ data_select ]
+  inputrawdata = data_dfs[ data_select ]
   inputrawdata_np = inputrawdata.to_numpy( dtype=np.float32 )  
   inputrawdata_enc = _onehotencoder.encode( inputrawdata_np )
 
@@ -500,30 +503,31 @@ class ABCDnn(object):
     weight_b = self.mceventweight[mcnextbatchidx]
     return target_b, source_b, weight_b
   
-  def get_next_batch(self, split, size=None, cond=True):
+  def get_next_batch( self, split, size=None ):
     """Return minibatch from random ordered numpy data
     """
     if size is None:
-      size = int( self.minibatch * ( split ** -1 ) )
+      size = int( self.minibatch * ( ( 1. - split ) ** -1 ) )
 
     # reset counter if no more entries left for current batch
     if self.datacounter + size >= self.ntotalevents:
-      self.datacounter = 0
+      self.datacounter = self.datacounter + size - self.ntotalevents
       self.randorder = np.random.permutation( self.numpydata.shape[0] )
-
-    if self.mcdatacounter + size >= self.mcntotalevents:
-      self.mcdatacounter = 0
-      self.mcrandorder = np.random.permutation( self.mcnumpydata.shape[0] )
 
     batchbegin = self.datacounter
 
-    if not cond:
-      batchend = batchbegin + size
-      target = self.numpydata[ self.randorder[ batchbegin:batchend ], 0:: ]
-    else:
-      nextconditional = self.numpydata[ self.randorder[batchbegin], self.inputdim: ]
-      target_b, source_b, weight_b = self.find_condmatch( nextconditional )
+    nextconditional = self.numpydata[ self.randorder[batchbegin], self.inputdim: ]
+    target_b, source_b, weight_b = self.find_condmatch( nextconditional )
 
+    while len( target_b ) != len( source_b ):
+      self.datacounter += size
+      if self.datacounter >= self.ntotalevents:
+        self.datacounter = self.datacounter - self.ntotalevents
+        self.randorder = np.random.permutation( self.numpy.shape[0] )
+      batchbegin = self.datacounter
+      nextconditional = self.numpydata[ self.randorder[ batchbegin ], self.inputdim: ]
+      target_b, source_b, weight_b = self.find_condmatch( size, nextconditional )
+    
     self.datacounter += size
     self.this_source = source_b
     self.this_target = target_b
