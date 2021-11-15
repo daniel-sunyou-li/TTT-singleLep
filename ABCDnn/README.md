@@ -10,6 +10,8 @@ The `ABCDnn` method is intended to be run following the production of step3 samp
     cd nobackup/
     
     export SCRAM_ARCH=slc7_amd64
+    
+    pip install --user "tensorflow-probability<0.9"
 
 
 ## About Neural Autoregressive Flows
