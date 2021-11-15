@@ -20,13 +20,13 @@ variables = {
   "NJets_JetSubCalc": {
     "CATEGORICAL": True,
     "TRANSFORM": False,
-    "LIMIT": [0,16],
+    "LIMIT": [0,10],
     "LATEX": "N_j"
   },
   "NJetsCSV_MultiLepCalc": {
     "CATEGORICAL": True,
     "TRANSFORM": False,
-    "LIMIT": [0,6],
+    "LIMIT": [0,3],
     "LATEX": "N_b"
   }
 }
@@ -39,14 +39,14 @@ selection = {
 regions = {
   "X": {
     "VARIABLE": "NJets_JetSubCalc",
-    "INCLUSIVE": True,
+    "INCLUSIVE": False,
     "MIN": 6,
     "MAX": 8,
     "SIGNAL": 8
   },
   "Y": {
     "VARIABLE": "NJetsCSV_MultiLepCalc",
-    "INCLUSIVE": True,
+    "INCLUSIVE": False,
     "MIN": 2,
     "MAX": 3,
     "SIGNAL": 3
@@ -70,10 +70,10 @@ params = {
     "REGULARIZER": "None",
     "ACTIVATION": "softplus",
     "BETA1": 0.90,
-    "BETA2": 0.90,
+    "BETA2": 0.99,
     "MINIBATCH": 105,
     "RETRAIN": True,
-    "SEED": 101 if use_randSeed.value else np.random.randint( 100000 ),
+    "SEED": 101, # this can be overridden when running train_abcdnn.py
     "SAVEDIR": "./Results/",
     "VERBOSE": False   
   },
@@ -99,7 +99,7 @@ params = {
 hyper = {
   "OPTIMIZE": {
     "NODES_COND": ( [8,16,32,64,128], "CAT" ),
-    "HIDDEN_COND": ( [1,4] ), "INT" ),
+    "HIDDEN_COND": ( [1,4], "INT" ),
     "NODES_TRANS": ( [1,8,16,32,64,128], "CAT" ),
     "LRATE": ( [1e-5,1e-4,1e-3,1e-2,1e-1], "CAT" ),
     "DECAY": ( [1,1e-1,1e-2,1e-3], "CAT" ),

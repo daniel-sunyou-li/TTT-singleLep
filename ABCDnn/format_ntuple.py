@@ -26,7 +26,8 @@ target_lumi = {
 BR = {
   "Hadronic": 0.457,
   "Semilep": 0.438,
-  "2L2nu": 0.105
+  "2L2nu": 0.105,
+  "None": 0
 }
 num_MC = {
   "2016": 1,
@@ -53,7 +54,7 @@ class ToyTree:
     
     self.selection = { # edit these accordingly
       "NJets_JetSubCalc": { "VALUE": [ 4 ], "CONDITION": [ ">=" ] },
-      "NJetsCSV_MultiLepCalc": { "VALUE": [ 2 ], "CONDITION": [ ">=" ] },
+      "NJetsCSV_MultiLepCalc": { "VALUE": [ 1 ], "CONDITION": [ ">=" ] },
       "corr_met_MultiLepCalc": { "VALUE": [ 30. ], "CONDITION": [ ">" ] },
       "MT_lepMet": { "VALUE": [ 0 ], "CONDITION": [ ">" ] },
       "minDR_lepJet": { "VALUE": [ 0.4 ], "CONDITION": [ ">" ] },
