@@ -87,7 +87,7 @@ rFile_in = ROOT.TFile.Open( "{}".format( args.source ) )
 rTree_in = rFile_in.Get( "ljmet" )
 branches_in = [ branch.GetName() for branch in rTree_in.GetListOfBranches() ]
 
-rFile_out = ROOT.TFile( args.source.replace( "hadd.root", "abcdnn.root" ),  "RECREATE" )
+rFile_out = ROOT.TFile( args.source.replace( "hadd.root", "abcdnn.root" ).split("/")[-1],  "RECREATE" )
 rFile_out.cd()
 rTree_out = rTree_in.CloneTree(0)
 

@@ -59,11 +59,15 @@ def voms_init():
 
 def create_tar():
   tarDir = os.getcwd()
-  if "ABCDnn.tgz" in os.listdir( os.getcwd() ): os.system( "rm ABCDnn.tgz" ) 
-  os.system( "tar -C {} -zcvf ABCDnn.tgz --exclude=\"{}\" {}".format(
-      os.getcwd()[:-(len("ABCDnn"))],
-      "Data/*",
-      "ABCDnn/"
+  if "CMSSW946_ttt.tgz" in os.listdir( os.getcwd() ): os.system( "rm ABCDnn.tgz" ) 
+  os.system( "tar -C ~/nobackup/TTT-singleLep/ -zcvf ABCDnn.tgz --exclude\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" {}".format(
+      "ABCDnn/Data/*",
+      "DNN/*",
+      "FWLJMET/*",
+      "LJMet-Slimmer-3tops/*",
+      "singleLepAnalyzer/*",
+      "*.tgz",
+      "CMSSW_9_4_6_patch1/"
     )
   )
   print( ">> Transferring ABCDnn.tgz to EOS" )
@@ -76,7 +80,7 @@ def condor_job( fileName, condorDir, sampleDir, logDir, tag ):
   dict = {
     "FILENAME"  : fileName,            
     "CONDORDIR" : condorDir,           
-    "OUTPUTDIR" : sampleDir,   
+    "SAMPLEDIR" : sampleDir,   
     "TAG"       : tag,        
     "LOGDIR"    : logDir,              
     "EOSNAME"   : config.eosUserName,
