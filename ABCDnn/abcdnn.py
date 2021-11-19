@@ -10,6 +10,7 @@ import numpy as np
 import os, uproot, pickle
 from scipy import stats
 from sklearn.model_selection import train_test_split
+from json import dumps as write_json
 
 def invsigmoid( x ):
 # inverse sigmoid function for transformer
@@ -116,7 +117,6 @@ class OneHotEncoder_int( object ):
   def __init__( self, categorical_features, lowerlimit = None, upperlimit = None ):
     self.iscategorical = categorical_features
     self.ncolumns = len(categorical_features)
-    self.ncats = 0
     self.categories_per_feature = []
 
     self.ncatgroups = 0
@@ -141,7 +141,6 @@ class OneHotEncoder_int( object ):
 
     lowerlimitapp = np.maximum( categoricalinputdata, self.lowerlimit )
     limitapp = np.minimum( lowerlimitapp, self.upperlimit )
-    
     return limitapp
 
   def encode( self, inputdata ):
@@ -153,7 +152,6 @@ class OneHotEncoder_int( object ):
         if iscat:
           ncats = int( self.upperlimit[icol] - self.lowerlimit[icol] + 1 )
           self.categories_per_feature.append( ncats )
-          self.ncats += ncats 
         else:
           self.categories_per_feature.append( 0 )
       self.categories_fixed = True
@@ -168,9 +166,6 @@ class OneHotEncoder_int( object ):
         arraylist.append( inputdata[:,icol].reshape( ( inputdata.shape[0], 1 ) ) )
     encoded = np.concatenate( tuple( arraylist ), axis = 1 ).astype( np.float32 )
     return encoded
-
-  def encodedcategories( self ):
-    return self.ncats
 
   def transform( self, inputdata ):
     return self.encode( inputdata )
@@ -227,7 +222,6 @@ def unweight(pddata):
   datatoexpand = pddata[selrows].sort_values(by=['xsecWeight']) # sort selected entries by xsec weight
   nselected = datatoexpand.shape[0] 
   idx = 0
-  print(nselected)
   while idx < nselected-1: # loop through all selected entries
     thisweight = datatoexpand.iloc[idx]['xsecWeight']
     multfactor = int(thisweight//minweight)
@@ -236,7 +230,6 @@ def unweight(pddata):
     nmatches = matches.shape[0]
     pddata = pddata.append([matches]*multfactor)
     idx += nmatches
-    print(idx)
   return pddata
   
 def prepdata( rSource, rTarget, selection, variables, mc_weight = None ):
@@ -249,9 +242,10 @@ def prepdata( rSource, rTarget, selection, variables, mc_weight = None ):
   # set up one-hot encoder
   vars = [ str( var ) for var in sorted( list( variables.keys() ) ) ]
   categorical = [ variables[ var ][ "CATEGORICAL" ] for var in sorted( list( variables.keys() ) ) ]
-  upperlimit  = [ variables[ var ][ "LIMIT" ][1] for var in sorted( list(variables.keys() ) ) ]
-
-  _onehotencoder = OneHotEncoder_int( categorical, upperlimit = upperlimit )
+  upperlimit  = [ variables[ var ][ "LIMIT" ][1] for var in sorted( list( variables.keys() ) ) ]
+  lowerlimit  = [ varaibels[ var ][ "LIMIT" ][0] for var in sorted( list( variables.keys() ) ) ]
+  
+  _onehotencoder = OneHotEncoder_int( categorical, lowerlimit = lowerlimit, upperlimit = upperlimit )
 
   # read MC and data
   mcf = uproot.open( rSource )
@@ -324,7 +318,7 @@ def prepdata( rSource, rTarget, selection, variables, mc_weight = None ):
   inputsigma = np.hstack( sigmalist )
 
   normedinputs_data = ( inputrawdata_enc - inputmeans ) / inputsigma        # normed Data
-  normedinputs_mc = ( inputsmc_enc - inputmeans ) / inputsigma              # normed MC
+  normedinputs_mc = ( inputsmc_enc - inputmeans ) / inputsigma              # normed MC  
   
   return inputrawdata, inputrawmc, inputrawmcweight, normedinputs_data, normedinputs_mc, inputmeans, inputsigma, ncat_per_feature
   
@@ -335,7 +329,7 @@ class ABCDnn(object):
                nodes_trans, minibatch, activation, regularizer,
                depth, lr, gap, conddim, beta1, beta2, decay,
                retrain, savedir, savefile, 
-               seed, permute, verbose ):
+               seed, permute, verbose, model_tag ):
     self.inputdim_categorical_list = inputdim_categorical_list
     self.inputdim = inputdim
     self.inputdimcat = int( np.sum( inputdim_categorical_list ) )
@@ -361,6 +355,7 @@ class ABCDnn(object):
     self.seed = seed 
     self.permute = permute
     self.verbose = verbose
+    self.model_tag = model_tag
     self.minloss = 0
     self.setup()
 
@@ -406,7 +401,7 @@ class ABCDnn(object):
   def category_sorted(self, numpydata, verbose ):
     categoricals, categorical_cats, unique_counts = np.unique( numpydata[:, self.inputdimreal:], axis=0, return_inverse = True, return_counts = True)
     if verbose: 
-      print( "Data has {} unique  categorical features. The counts in categories are".format( categoricals ) )
+      print( "Data has {} unique categorical features. The counts in categories are".format( categoricals ) )
       print( unique_counts )
 
     # store indices separately for easy access later
@@ -440,26 +435,33 @@ class ABCDnn(object):
     self.categoricals_mc, self.categorical_mc_indices_grouped = self.category_sorted( self.mcnumpydata, verbose )
     pass
 
-  def savehyperparameters(self):
+  def savehyperparameters(self, means, sigmas ):
     """Write hyper parameters into file
     """
+    means_list = [ str( mean ) for mean in means[0] ]
+    sigmas_list = [ str( sigma ) for sigma in sigmas[0] ]
     params = {
-      "inputdim": self.inputdim, 
-      "conddim": self.conddim, 
-      "lr": self.lr,
-      "decay": self.decay, 
-      "gap": self.gap, 
-      "nodes_cond": self.nodes_cond, 
-      "hidden_cond": self.hidden_cond, 
-      "nodes_trans": self.nodes_trans, 
-      "beta1": self.beta1, 
-      "beta2": self.beta2, 
-      "minibatch": self.minibatch,
-      "activation": self.activation,
-      "regularizer": self.regularizer,
-      "depth": self.depth  
+      "INPUTDIM": self.inputdim,
+      "CONDDIM": self.conddim,
+      "NODES_COND": self.nodes_cond, 
+      "HIDDEN_COND": self.hidden_cond, 
+      "NODES_TRANS": self.nodes_trans,
+      "LRATE": self.lr, 
+      "DECAY": self.decay, 
+      "GAP": self.gap,
+      "DEPTH": self.depth,
+      "REGULARIZER": self.regularizer,
+      "ACTIVATION": self.activation,
+      "BETA1": self.beta1, 
+      "BETA2": self.beta2, 
+      "MINIBATCH": self.minibatch,
+      "INPUTMEANS": means_list,
+      "INPUTSIGMAS": sigmas_list
     }
-    pickle.dump( params, open( os.path.join( self.savedir, "hyperparams.pkl" ), "wb" ) )
+    
+    with open( os.path.join( self.savedir, "hyperparams.json" ), "w" ) as f:
+      f.write( write_json( params, indent = 2 ) )
+    #pickle.dump( params, open( os.path.join( self.savedir, "hyperparams.pkl" ), "wb" ) )
 
   def monitor( self, step, glossv_trn, glossv_val, mmdloss_trn, mmdloss_val  ):
     self.monitor_record.append( [ 
@@ -577,6 +579,7 @@ class ABCDnn(object):
     impatience = 0      # don't edit
     stop_train = False  # don't edit
     self.minepoch = 0
+    save_counter = 0
     for i in range( steps ):
       source, target, batchweight = self.get_next_batch( split = split )
       glossv_trn, glossv_val, mmdloss_trn, mmdloss_val  = self.train_step( source, target, split, batchweight )
@@ -585,10 +588,14 @@ class ABCDnn(object):
       if i == 0: self.minloss = mmdloss_val
       else: 
         if mmdloss_val.numpy() < self.minloss.numpy(): 
-          self.minloss = mmdloss_val
           self.minepoch = i
           impatience = 0
-          if not hpo: self.checkpointmgr.save()
+          if not hpo:
+            if save_counter > 10 or mmdloss_val < 0.5*self.minloss:
+              save_counter = 0
+              self.checkpointmgr.save()
+              self.model.save_weights( "./Results/{}".format( self.model_tag ) )
+          self.minloss = mmdloss_val
         elif impatience > patience:
           print( ">> Early stopping after {} epochs without improvement in loss (min loss = {:.2e})".format( i, self.minloss ) )
           stop_train = True
@@ -607,6 +614,7 @@ class ABCDnn(object):
           mmdloss_trn, mmdloss_val
         )
       self.checkpoint.global_step.assign_add(1) # increment counter
+      save_counter += 1
       if stop_train: break
     print( ">> Minimum loss (validation) of {:.3e} on epoch {}".format( self.minloss, self.minepoch ) )
     self.save_training_monitor()
@@ -698,7 +706,7 @@ class ABCDnn_training(object):
           depth = 1, activation = "swish", regularizer = "None", decay = 1e-1,
           gap = 1000., beta1 = 0.9, beta2 = 0.999,
           savedir = "/ABCDNN/", savefile = "abcdnn.pkl", mc_weight = None, 
-          retrain = False, seed = 100, permute = True, verbose = False
+          retrain = False, seed = 100, permute = True, model_tag = "best_model", verbose = False
         ):
     self.nodes_cond = nodes_cond    # (int) number of nodes in conditional layer(s)
     self.hidden_cond = hidden_cond  # (int) number of conditional layers
@@ -718,6 +726,7 @@ class ABCDnn_training(object):
     self.retrain = retrain          # (bool) start a new training or continue from where left-off
     self.mc_weight = mc_weight      # (str) weight MC values according to xsec
     self.permute = permute          # (bool) run random permutations of the conditional inputs
+    self.model_tag = model_tag
 
     self.model = ABCDnn( 
       inputdim_categorical_list = self.ncat_per_feature, 
@@ -740,6 +749,7 @@ class ABCDnn_training(object):
       savefile = self.savefile,
       seed = self.seed, 
       permute = self.permute, 
+      model_tag = self.model_tag,
       verbose = verbose
     )
 
@@ -750,7 +760,7 @@ class ABCDnn_training(object):
   def train( self, steps = 10000, monitor = 1000, patience = 100, early_stopping = True, split = 0.25, display_loss = False, save_hp = False, hpo = False ):
     self.model.train( steps = steps, monitor = monitor, patience = patience, split = split, early_stopping = early_stopping, hpo = hpo )
     #if display_loss: self.model.display_training()
-    if save_hp: self.model.savehyperparameters()
+    if save_hp: self.model.savehyperparameters( self.inputmeans, self.inputsigma )
     pass
 
   def validate( self ):

@@ -8,7 +8,7 @@ variables = {
   "AK4HT": {
     "CATEGORICAL": False,
     "TRANSFORM": True,
-    "LIMIT": [0.,3000.],
+    "LIMIT": [0.,5000.],
     "LATEX": "H_T\ \mathrm{(GeV)}"
   },
   "DNN_5j_1to30_S2B5": {
@@ -20,13 +20,13 @@ variables = {
   "NJets_JetSubCalc": {
     "CATEGORICAL": True,
     "TRANSFORM": False,
-    "LIMIT": [0,10],
+    "LIMIT": [6,10],
     "LATEX": "N_j"
   },
   "NJetsCSV_MultiLepCalc": {
     "CATEGORICAL": True,
     "TRANSFORM": False,
-    "LIMIT": [0,3],
+    "LIMIT": [2,3],
     "LATEX": "N_b"
   }
 }
@@ -78,10 +78,10 @@ params = {
     "VERBOSE": False   
   },
   "TRAIN": {
-    "EPOCHS": 15000,
-    "PATIENCE": 5000,
+    "EPOCHS": 1000,
+    "PATIENCE": 1000,
     "SPLIT": 0.25,
-    "MONITOR": 1000,
+    "MONITOR": 100,
     "SHOWLOSS": True,
     "SAVEHP": True
   },
@@ -111,11 +111,45 @@ hyper = {
     "BETA2": ( [0.5,0.75,0.90,0.99,0.999], "CAT" )
   },
   "PARAMS": {
-    "PATIENCE": 2000,
-    "EPOCHS": 10000,
+    "PATIENCE": 5000,
+    "EPOCHS": 5000,
     "N_RANDOM": 20,
     "N_CALLS": 30,
-    "MINIBATCH": 105,
+    "MINIBATCH": 128,
     "VERBOSE": True
   }
+}
+
+samples_apply = {
+  "2017": [
+    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root",
+    #"TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root" 
+  ]
 }
