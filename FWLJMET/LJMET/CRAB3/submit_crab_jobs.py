@@ -30,11 +30,11 @@ def submit_crab_jobs( group, sample_dict ):
 
 if __name__ == '__main__':
   if args.test:
-    submit_crab_jobs( "TEST", samples.groups )
+    submit_crab_jobs( "TEST",   samples.groups )
   else:
-    submit_crab_jobs( "QCD", sample.groups )
-    submit_crab_jobs( "EQK", sample.groups )
-    submit_crab_jobs( "TOP", sample.groups )
-    submit_crab_jobs( "TTbar",  sample.groups )
-    submit_crab_jobs( "SIG", sample.groups )
-    submit_crab_jobs( "DATA", sample.groups )
+    submit_crab_jobs( "QCD",    sample.groups )
+    submit_crab_jobs( "EQK",    sample.groups )
+    submit_crab_jobs( "TOP",    sample.groups )
+    submit_crab_jobs( "TTBAR",  sample.groups )
+    submit_crab_jobs( "SIGNAL", sample.groups )
+    submit_crab_jobs( "DATA",   sample.groups )
