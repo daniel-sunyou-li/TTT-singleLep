@@ -8,12 +8,11 @@ relBase = os.environ['CMSSW_BASE']
 home = os.environ['HOME']
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--finalState",action="store")
-parser.add_argument("--year",action="store")
-parser.add_argument("--nominalTreeOnly",action="store_true")
-parser.add_argument("--brux",action="store_true")
-parser.add_argument("--outfolder",action="store",default="FWLJMET_crab_output")
-option = parser.parse_args()
+parser.add_argument( "-y", "--year", default = "17" )
+parser.add_argument( "-n", "--nominal", action = "store_true" )
+parser.add_argument( "-b", "--brux", action = "store_true" )
+parser.add_argument( "-o", "--outfolder", default = "FWLJMET_crab_output" )
+args = parser.parse_args()
 
 if option.year not in [ "16", "17", "18" ]: 
 	print( "Invalid '--year' argument: {}.  Use: 16, 17, 18".format( option.year ) )
