@@ -1,34 +1,40 @@
-import os, argparse, imp
+import os, sys, argparse, imp
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--finalState",action="store")
-parser.add_argument("--year",action="store")
-option = parser.parse_args()
+parser.add_argument( "-y", "--year", action = "store", help = "Options = [16, 16APV, 17, 18]" )
+parser.add_argument( "-t", "--test", action = "store_true" )
+args = parser.parse_args()
 
-#Sample list file
-sampleListPath = "sample_list_" + option.finalState + option.year + ".py"
-sample = imp.load_source("Sample",sampleListPath,open(sampleListPath,"r"))
+if args.test:
+  print( ">> [OPT] Submitting test job..." )
 
-home = os.environ['HOME']
-CRABCONFIG_DIR      = 'crabConfigs_'+option.finalState+option.year
-#CRABCONFIG_DIR      = home+'/nobackup/FWLJMET102X_crabConfigs_'+option.finalState+option.year #JH: crab stuff in nobackup
+if args.year not in [ "16", "16APV", "17", "18" ]: 
+  sys.exit( "[ERR] Invalid --year option used, choose from: [ 16, 16APV, 17, 18 ]. Exiting..." )
+  
+sampleListPath = "sampleUL{}.py".format( args.year )
+samples = imp.load_source( "Sample", sampleListPath, open( sampleListPath, "r" ) )
 
-def submit_multiple_crab_jobs(sample_dict):
+crabConfigDir = os.path.join( os.getcwd(), "/crabConfigs{}/".format( args.year ) )
 
-	for dataset in sample_dict:
+def submit_crab_jobs( group, sample_dict ):
 
-		print 'Submitting ',dataset,':',sample_dict[dataset]
+	for dataset in sample_dict[ group ]:
 
-		crab_cfg = CRABCONFIG_DIR+'/crab_FWLJMET_cfg_'+dataset+'.py'
+		print( ">> Submitting from {}: {}".format( group, dataset ) )
 
-		#os.system('echo crab submit '+crab_cfg)
-		os.system('crab submit '+crab_cfg)
+		crabConfig = os.path.join( crabConfigDir, "crab_config_{}.py".format( dataset ) )
+
+		os.system( "echo crab submit {}".format( crabConfig ) )
+		os.system( "crab submit {}".format( crabConfig ) )
 
 
 if __name__ == '__main__':
-
-	submit_multiple_crab_jobs( sample.bkgdict[ option.year ] )
-	submit_multiple_crab_jobs( sample.bkghtdict[ option.year ] )
-	submit_multiple_crab_jobs( sample.ttbarbkgdict[ option.year ] )
-	submit_multiple_crab_jobs( sample.signaldict[ option.year ] )
-	submit_multiple_crab_jobs( sample.datadict[ option.year ] )
+  if args.test:
+    submit_crab_jobs( "TEST", samples.groups )
+  else:
+    submit_crab_jobs( "QCD", sample.groups )
+    submit_crab_jobs( "EQK", sample.groups )
+    submit_crab_jobs( "TOP", sample.groups )
+    submit_crab_jobs( "TT",  sample.groups )
+    submit_crab_jobs( "SIG", sample.groups )
+    submit_crab_jobs( "DAT", sample.groups )
