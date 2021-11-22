@@ -35,6 +35,6 @@ if __name__ == '__main__':
     submit_crab_jobs( "QCD", sample.groups )
     submit_crab_jobs( "EQK", sample.groups )
     submit_crab_jobs( "TOP", sample.groups )
-    submit_crab_jobs( "TT",  sample.groups )
+    submit_crab_jobs( "TTbar",  sample.groups )
     submit_crab_jobs( "SIG", sample.groups )
-    submit_crab_jobs( "DAT", sample.groups )
+    submit_crab_jobs( "DATA", sample.groups )
