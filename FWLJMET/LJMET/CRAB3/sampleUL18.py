@@ -1,3 +1,4 @@
+# still need to update
 datadict = { 
   "SingleElectronRun2018A": "/EGamma/Run2018A-UL2018_MiniAODv2-v1/MINIAOD",
   "SingleElectronRun2018B": "/EGamma/Run2018B-UL2018_MiniAODv2-v1/MINIAOD",
