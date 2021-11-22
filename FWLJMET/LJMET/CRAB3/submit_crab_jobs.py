@@ -33,7 +33,8 @@ if __name__ == '__main__':
     submit_crab_jobs( "TEST",   samples.groups )
   else:
     submit_crab_jobs( "QCD",    sample.groups )
-    submit_crab_jobs( "EQK",    sample.groups )
+    submit_crab_jobs( "EWK",    sample.groups )
+    submit_crab_jobs( "EWKHT",  sample.groups )
     submit_crab_jobs( "TOP",    sample.groups )
     submit_crab_jobs( "TTBAR",  sample.groups )
     submit_crab_jobs( "SIGNAL", sample.groups )
