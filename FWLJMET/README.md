@@ -68,6 +68,15 @@ Continue setting up HOT tagger (part 2):
     mkdir -p CMSSW_10_6_19/src/TopTagger/TopTagger/data
     getTaggerCfg.sh -o -n -t DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0 -d CMSSW_10_6_19/src/TopTagger/TopTagger/data
     
-To run LJMET:
+To run LJMET interactively:
 
-    cmsRun LJMet/runFWLJMet_singleLep.py
+    cmsRun LJMet/runFWLJMet_singleLep.py era=2017
+    
+To run LJMET through CRAB3:
+
+    source /cvmfs/cms.cern.ch/crab3/crab.sh
+    crab submit --dryrun crab_FWLJMET_cfg.py
+    python create_crab_config_template.py --finalState singleLep --year 2017 
+    python submit_crab.py --finalState singleLep --year 2017
+    
+Optionally, can include the argument `--nominal` to only run the nominal tree.
