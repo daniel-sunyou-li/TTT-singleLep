@@ -4,8 +4,8 @@ datadict = {
   "SingleElectronRun2018C": "/EGamma/Run2018C-UL2018_MiniAODv2-v1/MINIAOD",
   "SingleElectronRun2018D": "/EGamma/Run2018D-UL2018_MiniAODv2-v2/MINIAOD",
   
-  "SingleMuonRun2018A": "/SingleMuon/Run2018A-UL2018_MiniAODv2-v2/MINIAOD",
-  "SingleMuonRun2018B": "/SingleMuon/Run2018B-UL2018_MiniAODv2-v1/MINIAOD",
+  "SingleMuonRun2018A": "/SingleMuon/Run2018A-UL2018_MiniAODv2-v3/MINIAOD",
+  "SingleMuonRun2018B": "/SingleMuon/Run2018B-UL2018_MiniAODv2-v2/MINIAOD",
   "SingleMuonRun2018C": "/SingleMuon/Run2018C-UL2018_MiniAODv2-v2/MINIAOD",
   "SingleMuonRun2018D": "/SingleMuon/Run2018D-UL2018_MiniAODv2-v3/MINIAOD",
   
@@ -16,11 +16,12 @@ datadict = {
 }
 
 MINIAODv1 = "RunIISummer20UL18MiniAOD-106X_upgrade2018_realistic_v11_L1v1-v2/MINIAODSIM"
-MINIAODv2 = "RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM"
+MINIAODv2v1 = "RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM"
+MINIAODv2v2 = "RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM"
 
 # not sure where trigdictmc is referenced or how it is used 
 trigdictmc = {
-  "TTTo2L2Nu": "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2
+  "TTTo2L2Nu": "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v1
 }
 
 signaldict = {
