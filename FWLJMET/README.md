@@ -67,3 +67,7 @@ Continue setting up HOT tagger (part 2):
     cmsenv
     mkdir -p CMSSW_10_6_19/src/TopTagger/TopTagger/data
     getTaggerCfg.sh -o -n -t DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0 -d CMSSW_10_6_19/src/TopTagger/TopTagger/data
+    
+To run LJMET:
+
+    cmsRun LJMet/runFWLJMet_singleLep.py
