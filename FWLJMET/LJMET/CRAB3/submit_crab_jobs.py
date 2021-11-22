@@ -17,15 +17,12 @@ samples = imp.load_source( "Sample", sampleListPath, open( sampleListPath, "r" )
 crabConfigDir = os.path.join( os.getcwd(), "/crabConfigs{}/".format( args.year ) )
 
 def submit_crab_jobs( group, sample_dict ):
+  for dataset in sample_dict[ group ]:
+    print( ">> Submitting from {}: {}".format( group, dataset ) )
+    crabConfig = os.path.join( crabConfigDir, "crab_config_{}.py".format( dataset ) )
 
-	for dataset in sample_dict[ group ]:
-
-		print( ">> Submitting from {}: {}".format( group, dataset ) )
-
-		crabConfig = os.path.join( crabConfigDir, "crab_config_{}.py".format( dataset ) )
-
-		os.system( "echo crab submit {}".format( crabConfig ) )
-		os.system( "crab submit {}".format( crabConfig ) )
+    os.system( "echo crab submit {}".format( crabConfig ) )
+    os.system( "crab submit {}".format( crabConfig ) )
 
 
 if __name__ == '__main__':
