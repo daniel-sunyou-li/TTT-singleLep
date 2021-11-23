@@ -1,15 +1,15 @@
 import FWCore.ParameterSet.Config as cms
 import os
 
-relBase = os.environ['CMSSW_BASE']
-
 ## PARSE ARGUMENTS
 from FWCore.ParameterSet.VarParsing import VarParsing
-options = VarParsing('analysis')
-options.register('isMC', '', VarParsing.multiplicity.singleton, VarParsing.varType.bool, 'Is MC')
-options.register('isTTbar', '', VarParsing.multiplicity.singleton, VarParsing.varType.bool, 'Is TTbar')
-options.register('isVLQsignal', '', VarParsing.multiplicity.singleton, VarParsing.varType.bool, 'Is VLQ Signal')
-options.register('doGenHT','', VarParsing.multiplicity.singleton, VarParsing.varType.bool, 'Do Gen HT')
+options = VarParsing( "analysis" )
+options.register( "maxEvents", 1000, VarParsing.multiplicity.singleton, VarParsing.varType.int, "Max Events" )
+options.register( "isTest", "", VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
+options.register( "nominal", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Nominal only" )
+options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
+options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
+options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
 
 ## SET DEFAULT VALUES
 options.isMC = True
@@ -17,67 +17,73 @@ options.isTTbar = False
 options.isVLQsignal = False
 options.doGenHT = False
 options.inputFiles = [
-    'root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL18MiniAOD/TTWW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v2/120000/080B251D-55EE-FA45-84B2-30F71386262C.root'
-    ]
-options.maxEvents = 1000
+    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+]
 options.parseArguments()
 
-isMC= options.isMC
+maxEvents = options.maxEvents
+isTest = options.isTest
+isMC = options.isMC
 isTTbar = options.isTTbar
 isVLQsignal = options.isVLQsignal
 doGenHT = options.doGenHT
 
-#Check arguments
-print options
+# Check arguments
+print( ">> Options used: \n{}".format( options ) )
 
 ## LJMET
-process = cms.Process("LJMET")
+process = cms.Process( "LJMET" )
 
 ## MessageLogger
-process.load("FWCore.MessageService.MessageLogger_cfi")
+process.load( "FWCore.MessageService.MessageLogger_cfi" )
 process.MessageLogger.cerr.FwkReport.reportEvery = 20
 
 ## Options and Output Report
-process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
+process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool( False ) )
 
-## Check memory and timing - TURN OFF when not testing!
+## Check memory and timing - TURN ON when testing!
 import FWCore.ParameterSet.Config as cms
-def customise(process):
+def customise( process ):
+  # Adding SimpleMemoryCheck service:
+  process.SimpleMemoryCheck = cms.Service(
+    "SimpleMemoryCheck",
+    ignoreTotal = cms.untracked.int32(1),
+    oncePerEventMode = cms.untracked.bool(True)
+  )
+  # Adding Timing service:
+  process.Timing = cms.Service( "Timing" )
 
-    #Adding SimpleMemoryCheck service:
-    process.SimpleMemoryCheck=cms.Service("SimpleMemoryCheck",
-                                          ignoreTotal=cms.untracked.int32(1),
-                                          oncePerEventMode=cms.untracked.bool(True))
-    #Adding Timing service:
-    process.Timing=cms.Service("Timing")
-    
-    #Add these 3 lines to put back the summary for timing information at the end of the logfile
-    #(needed for TimeReport report)
-    if hasattr(process,'options'):
-        process.options.wantSummary = cms.untracked.bool(True)
-    else:
-        process.options = cms.untracked.PSet(
-            wantSummary = cms.untracked.bool(True)
-        )
-        
-    return(process)
-#customise(process)
+  # Add these 3 lines to put back the summary for timing information at the end of the logfile
+  # (needed for TimeReport report)
+  if hasattr( process, "options" ):
+    process.options.wantSummary = cms.untracked.bool(True)
+  else:
+    process.options = cms.untracked.PSet(
+      wantSummary = cms.untracked.bool(True)
+    )
+
+  return( process )
+if isTest: customise( process )
 
 ## Multithreading option
-process.options.numberOfThreads=cms.untracked.uint32(4)
-process.options.numberOfStreams=cms.untracked.uint32(0)
+process.options.numberOfThreads = cms.untracked.uint32(4)
+process.options.numberOfStreams = cms.untracked.uint32(0)
 
-## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
-
-process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring(cms.untracked.vstring(options.inputFiles),
-    )
+## Maximum Number of Events
+process.maxEvents = cms.untracked.PSet( 
+  input = cms.untracked.int32( maxEvents ) 
 )
 
-OUTFILENAME = "DATASET" #This could be better !
-process.TFileService = cms.Service("TFileService", fileName = cms.string(OUTFILENAME+'.root'))
+process.source = cms.Source(
+  "PoolSource",
+  fileNames = cms.untracked.vstring( cms.untracked.vstring( options.inputFiles ) )
+)
 
+outFileName = "DATASET" # This could be better !
+process.TFileService = cms.Service(
+  "TFileService",
+  fileName = cms.string( outFileName + ".root" )
+)
 
 ## Output Module Configuration (expects a path 'p')
 # process.out = cms.OutputModule("PoolOutputModule",
@@ -87,100 +93,92 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(OUTFILE
 #                                )
 
 
-################################
-## MC Weights Analyzer
-################################
+# MC Weights Analyzer
 process.mcweightanalyzer = cms.EDAnalyzer(
     "WeightAnalyzer",
-    overrideLHEweight = cms.bool(isVLQsignal),
-    basePDFname = cms.string("NNPDF31_nnlo_as_0118_nf_4"),
-    newPDFname = cms.string("NNPDF31_nnlo_as_0118_nf_4_mc_hessian"),
-    )
+    basePDFname = cms.string( "NNPDF31_nnlo_as_0118_nf_4" ),
+    newPDFname = cms.string( "NNPDF31_nnlo_as_0118_nf_4_mc_hessian" ),
+)
 
-################################
-## Trigger filter
-################################
+# Trigger filter
 import HLTrigger.HLTfilters.hltHighLevel_cfi as hlt
 # accept if any path succeeds (explicit)
 process.filter_any_explicit = hlt.hltHighLevel.clone(
-    HLTPaths = [
-                        'HLT_Ele35_WPTight_Gsf_v*',
-                        'HLT_Ele38_WPTight_Gsf_v*',
-                        'HLT_Ele15_IsoVVVL_PFHT450_v*',
-                        'HLT_Ele50_IsoVVVL_PFHT450_v*',
-                        'HLT_Ele15_IsoVVVL_PFHT600_v*',
+  HLTPaths = [
+    'HLT_Ele35_WPTight_Gsf_v*',
+    'HLT_Ele38_WPTight_Gsf_v*',
+    'HLT_Ele15_IsoVVVL_PFHT450_v*',
+    'HLT_Ele50_IsoVVVL_PFHT450_v*',
+    'HLT_Ele15_IsoVVVL_PFHT600_v*',
 
-                        'HLT_Mu50_v*',
-                        'HLT_Mu15_IsoVVVL_PFHT450_v*',
-                        'HLT_Mu50_IsoVVVL_PFHT450_v*',
-                        'HLT_Mu15_IsoVVVL_PFHT600_v*'
-    ],
-    throw = False
-    )
+    'HLT_Mu50_v*',
+    'HLT_Mu15_IsoVVVL_PFHT450_v*',
+    'HLT_Mu50_IsoVVVL_PFHT450_v*',
+    'HLT_Mu15_IsoVVVL_PFHT600_v*'
+  ],
+  throw = False
+)
 
-
-################################
-## For updateJetCollection
-################################
+# For updateJetCollection
 from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
-patAlgosToolsTask = getPatAlgosToolsTask(process)
+patAlgosToolsTask = getPatAlgosToolsTask( process )
 # process.outpath = cms.EndPath(process.out, patAlgosToolsTask)
 
-
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
-process.load("Configuration.Geometry.GeometryRecoDB_cff")
-process.load("Configuration.StandardSequences.Services_cff")
-process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+process.load( "Configuration.Geometry.GeometryRecoDB_cff" )
+process.load( "Configuration.StandardSequences.Services_cff" )
+process.load( "Configuration.StandardSequences.MagneticField_cff" )
+process.load( "Configuration.StandardSequences.FrontierConditions_GlobalTag_cff" )
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mc2017_realistic_v8', '')
-if isMC == False: process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v35')
-print 'Using global tag', process.GlobalTag.globaltag
-
-
+process.GlobalTag = GlobalTag( process.GlobalTag, "106X_mc2017_realistic_v8", "" )
+if not isMC: process.GlobalTag = GlobalTag( process.GlobalTag, "106X_dataRun2_v35" )
+print( ">> Using global tag: {}".format( process.GlobalTag.globaltag )
 
 ################################################
 ## Produce new slimmedElectrons with V2 IDs - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
 ################################################
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-setupEgammaPostRecoSeq(process,
-                       runVID=True,
-                       era='2017-UL')
+setupEgammaPostRecoSeq(
+  process,
+  runVID = True,
+  era = "2017-UL"
+)
 
 ################################
 ## Rerun the ecalBadCalibFilter
 ################################
-process.load('RecoMET.METFilters.ecalBadCalibFilter_cfi')
+"""
+process.load( "RecoMET.METFilters.ecalBadCalibFilter_cfi" )
 
 baddetEcallist = cms.vuint32(
-    [872439604,872422825,872420274,872423218,
-     872423215,872416066,872435036,872439336,
-     872420273,872436907,872420147,872439731,
-     872436657,872420397,872439732,872439339,
-     872439603,872422436,872439861,872437051,
-     872437052,872420649,872421950,872437185,
-     872422564,872421566,872421695,872421955,
-     872421567,872437184,872421951,872421694,
-     872437056,872437057,872437313,872438182,
-     872438951,872439990,872439864,872439609,
-     872437181,872437182,872437053,872436794,
-     872436667,872436536,872421541,872421413,
-     872421414,872421031,872423083,872421439]
+  [
+    872439604,872422825,872420274,872423218,
+    872423215,872416066,872435036,872439336,
+    872420273,872436907,872420147,872439731,
+    872436657,872420397,872439732,872439339,
+    872439603,872422436,872439861,872437051,
+    872437052,872420649,872421950,872437185,
+    872422564,872421566,872421695,872421955,
+    872421567,872437184,872421951,872421694,
+    872437056,872437057,872437313,872438182,
+    872438951,872439990,872439864,872439609,
+    872437181,872437182,872437053,872436794,
+    872436667,872436536,872421541,872421413,
+    872421414,872421031,872423083,872421439
+  ]
 )
 
 process.ecalBadCalibReducedMINIAODFilter = cms.EDFilter(
-    "EcalBadCalibFilter",
-    EcalRecHitSource = cms.InputTag("reducedEgamma:reducedEERecHits"),
-    ecalMinEt        = cms.double(50.),
-    baddetEcal    = baddetEcallist,
-    taggingMode = cms.bool(True),
-    debug = cms.bool(False)
+  "EcalBadCalibFilter",
+  EcalRecHitSource = cms.InputTag( "reducedEgamma:reducedEERecHits" ),
+  ecalMinEt        = cms.double(50.),
+  baddetEcal       = baddetEcallist,
+  taggingMode      = cms.bool(True),
+  debug            = cms.bool(False)
 )
+"""
 
-
-################################
 ## Produce DeepAK8 jet tags
-################################
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import pfDeepBoostedJetTags, pfMassDecorrelatedDeepBoostedJetTags
 from RecoBTag.ONNXRuntime.Parameters.DeepBoostedJet.V02.pfDeepBoostedJetPreprocessParams_cfi import pfDeepBoostedJetPreprocessParams as pfDeepBoostedJetPreprocessParamsV02
@@ -189,36 +187,40 @@ pfDeepBoostedJetTags.preprocessParams = pfDeepBoostedJetPreprocessParamsV02
 pfMassDecorrelatedDeepBoostedJetTags.preprocessParams = pfMassDecorrelatedDeepBoostedJetPreprocessParamsV02
 
 updateJetCollection(
-   process,
-   jetSource = cms.InputTag('slimmedJetsAK8'),
-   pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-   svSource = cms.InputTag('slimmedSecondaryVertices'),
-   rParam = 0.8,
-   jetCorrections = ('AK8PFPuppi', cms.vstring(['L2Relative', 'L3Absolute']), 'None'),
-   btagDiscriminators = ['pfCombinedInclusiveSecondaryVertexV2BJetTags',
-                         'pfDeepBoostedJetTags:probTbcq', 'pfDeepBoostedJetTags:probTbqq',
-                         'pfDeepBoostedJetTags:probWcq', 'pfDeepBoostedJetTags:probWqq',
-                         'pfDeepBoostedJetTags:probZbb', 'pfDeepBoostedJetTags:probZcc', 'pfDeepBoostedJetTags:probZqq',
-                         'pfDeepBoostedJetTags:probHbb', 'pfDeepBoostedJetTags:probHcc', 'pfDeepBoostedJetTags:probHqqqq',
-                         'pfDeepBoostedJetTags:probQCDbb', 'pfDeepBoostedJetTags:probQCDcc',
-                         'pfDeepBoostedJetTags:probQCDb', 'pfDeepBoostedJetTags:probQCDc',
-                         'pfDeepBoostedJetTags:probQCDothers',
-                         'pfDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:WvsQCD',
-                         'pfDeepBoostedDiscriminatorsJetTags:ZvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:ZbbvsQCD',
-                         'pfDeepBoostedDiscriminatorsJetTags:HbbvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:H4qvsQCD',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probTbcq', 'pfMassDecorrelatedDeepBoostedJetTags:probTbqq',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probWcq', 'pfMassDecorrelatedDeepBoostedJetTags:probWqq',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probZbb', 'pfMassDecorrelatedDeepBoostedJetTags:probZcc', 'pfMassDecorrelatedDeepBoostedJetTags:probZqq',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probHbb', 'pfMassDecorrelatedDeepBoostedJetTags:probHcc', 'pfMassDecorrelatedDeepBoostedJetTags:probHqqqq',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probQCDbb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDcc',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probQCDb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDc',
-                         'pfMassDecorrelatedDeepBoostedJetTags:probQCDothers',
-                         'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:WvsQCD',
-                         'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHbbvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHccvsQCD',
-                         'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:bbvsLight', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ccvsLight'],
-   postfix = 'AK8Puppi',
-   printWarning = False
-   )
+  process,
+  jetSource = cms.InputTag( "slimmedJetsAK8" ),
+  pvSource = cms.InputTag( "offlineSlimmedPrimaryVertices" ),
+  svSource = cms.InputTag( "slimmedSecondaryVertices" ),
+  rParam = 0.8,
+  jetCorrections = ( 
+    "AK8PFPuppi", 
+    cms.vstring( [ "L2Relative", "L3Absolute" ] ), 
+    "None"
+  ),
+  btagDiscriminators = [
+    'pfCombinedInclusiveSecondaryVertexV2BJetTags',
+    'pfDeepBoostedJetTags:probTbcq', 'pfDeepBoostedJetTags:probTbqq',
+    'pfDeepBoostedJetTags:probWcq', 'pfDeepBoostedJetTags:probWqq',
+    'pfDeepBoostedJetTags:probZbb', 'pfDeepBoostedJetTags:probZcc', 'pfDeepBoostedJetTags:probZqq',
+    'pfDeepBoostedJetTags:probHbb', 'pfDeepBoostedJetTags:probHcc', 'pfDeepBoostedJetTags:probHqqqq',
+    'pfDeepBoostedJetTags:probQCDbb', 'pfDeepBoostedJetTags:probQCDcc', 'pfDeepBoostedJetTags:probQCDb', 'pfDeepBoostedJetTags:probQCDc', 'pfDeepBoostedJetTags:probQCDothers',
+    'pfDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:WvsQCD',
+    'pfDeepBoostedDiscriminatorsJetTags:ZvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:ZbbvsQCD',
+    'pfDeepBoostedDiscriminatorsJetTags:HbbvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:H4qvsQCD',
+    'pfMassDecorrelatedDeepBoostedJetTags:probTbcq', 'pfMassDecorrelatedDeepBoostedJetTags:probTbqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probWcq', 'pfMassDecorrelatedDeepBoostedJetTags:probWqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probZbb', 'pfMassDecorrelatedDeepBoostedJetTags:probZcc', 'pfMassDecorrelatedDeepBoostedJetTags:probZqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probHbb', 'pfMassDecorrelatedDeepBoostedJetTags:probHcc', 'pfMassDecorrelatedDeepBoostedJetTags:probHqqqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDbb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDcc',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDc',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDothers',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:WvsQCD',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHbbvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHccvsQCD',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:bbvsLight', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ccvsLight'
+  ],
+  postfix = "AK8Puppi",
+  printWarning = False
+)
 
 ################################################################################################
 #### Establish references between PATified fat jets and subjets using the BoostedJetMerger
@@ -337,7 +339,7 @@ DataL3JetParAK8          = dirDATA + "Summer19UL17_RunB_V5_DATA_L3Absolute_AK8PF
 DataResJetParAK8         = dirDATA + "Summer19UL17_RunB_V5_DATA_L2L3Residual_AK8PFPuppi.txt'
 
 ## El MVA ID
-UseElIDV1_ = False #False means using ElIDV2
+UseElIDV1_ = False # False means using ElIDV2
 
 ## TriggerPaths (for ljmet): 
 hlt_path_el  = cms.vstring(
