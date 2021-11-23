@@ -15,12 +15,16 @@ parser.add_argument( "-o", "--outfolder", default = "FWLJMET_crab_output" )
 args = parser.parse_args()
 
 if option.year not in [ "16", "17", "18" ]: 
-	print( "Invalid '--year' argument: {}.  Use: 16, 17, 18".format( option.year ) )
-	sys.exit()
+  print( "[ERR] Invalid '--year' argument: {}.  Use: 16, 17, 18".format( option.year ) )
+  sys.exit()
+	
+if not os.path.exists( args.outfolder ):
+  print( ">> Creating new directory for CRAB outputs..." )
+  os.system( "mkdir -p {}".format( args.outfolder ) )
 
 #Sample list file
 sampleListPath = "sampleUL{}.py".format( option.year )
-sample = imp.load_source("Sample",sampleListPath,open(sampleListPath,"r"))[ option.year ]
+sample = imp.load_source( "Sample", sampleListPath, open( sampleListPath, "r" ) )
 
 ####################
 ### SET YOUR STRINGS
