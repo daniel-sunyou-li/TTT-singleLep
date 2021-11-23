@@ -1,11 +1,4 @@
 import os, sys, argparse, imp
-import datetime
-CTIME = datetime.datetime.now()
-DATESTR = '%i_%i_%i'%( CTIME.year, CTIME.month, CTIME.day )
-
-USERNAME = os.environ['USER']
-CMSSWBASE = os.environ['CMSSW_BASE']
-HOME = os.environ['HOME']
 
 parser = argparse.ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17" )
