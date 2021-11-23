@@ -14,8 +14,8 @@ parser.add_argument( "-b", "--brux", action = "store_true" )
 parser.add_argument( "-o", "--outfolder", default = "FWLJMET_crab_output" )
 args = parser.parse_args()
 
-if option.year not in [ "16", "17", "18" ]: 
-  print( "[ERR] Invalid '--year' argument: {}.  Use: 16, 17, 18".format( option.year ) )
+if args.year not in [ "16", "17", "18" ]: 
+  print( "[ERR] Invalid '--year' argument: {}.  Use: 16, 17, 18".format( args.year ) )
   sys.exit()
 	
 if not os.path.exists( args.outfolder ):
@@ -23,22 +23,23 @@ if not os.path.exists( args.outfolder ):
   os.system( "mkdir -p {}".format( args.outfolder ) )
 
 #Sample list file
-sampleListPath = "sampleUL{}.py".format( option.year )
+sampleListPath = "sampleUL{}.py".format( args.year )
 sample = imp.load_source( "Sample", sampleListPath, open( sampleListPath, "r" ) )
 
 ####################
 ### SET YOUR STRINGS
 ####################
 #cmsRun config
-runScript = option.finalState+option.year if option.nominalTreeOnly else option.finalState+option.year+'_multipleTree'
-
-CMSRUNCONFIG        = '../runFWLJMet_'+runScript+'.py'
+configFile = "../runFWLJMetUL{}_singleTree.py".format( args.year ) if args.nominal else "../runFWLJMetUL{}_multipleTree.py".format( args.year )
 
 #folder to save the created crab configs
-CRABCONFIG_DIR      = 'crabConfigs_'+option.finalState+option.year
+crabConfigDir = "crabConfigsUL{}".format( args.year ) 
+if not os.path.exists( crabConfigDir ):
+  print( ">> Creating new directory for CRAB configs..." )
+  os.system( "mkdir -p {}".format( crabConfigDir ) )
 
 #the crab cfg template to copy from
-CRABCONFIG_TEMPLATE = 'crab_FWLJMET_cfg_template.py'
+CRABCONFIG_TEMPLATE = 'config_template.py'
 
 #crab request name
 REQNAME             = option.finalState+option.year
