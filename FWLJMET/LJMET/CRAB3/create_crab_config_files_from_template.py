@@ -1,7 +1,7 @@
 import os, sys, argparse, imp
 import datetime
-cTime=datetime.datetime.now()
-date_str='%i_%i_%i'%(cTime.year,cTime.month,cTime.day)
+cTime = datetime.datetime.now()
+date_str = '%i_%i_%i'%( cTime.year, cTime.month, cTime.day )
 
 userName = os.environ['USER']
 relBase = os.environ['CMSSW_BASE']
