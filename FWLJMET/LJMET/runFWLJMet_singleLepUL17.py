@@ -107,14 +107,39 @@ process.filter_any_explicit = hlt.hltHighLevel.clone(
   HLTPaths = [
     'HLT_Ele35_WPTight_Gsf_v*',
     'HLT_Ele38_WPTight_Gsf_v*',
+    "HLT_Ele40_WPTight_Gsf_v*",
+    'HLT_Ele28_eta2p1_WPTight_Gsf_HT150_v*',
+    'HLT_Ele15_IsoVVVL_PFHT450_PFMET50_v*',
     'HLT_Ele15_IsoVVVL_PFHT450_v*',
     'HLT_Ele50_IsoVVVL_PFHT450_v*',
     'HLT_Ele15_IsoVVVL_PFHT600_v*',
+    'HLT_Ele50_CaloIdVT_GsfTrkIdT_PFJet165_v*',
+    'HLT_Ele115_CaloIdVT_GsfTrkIdT_v*',
+    
+    'HLT_Ele32_WPTight_Gsf_v*',
+    'HLT_Ele32_WPTight_Gsf_L1DoubleEG_v*',
+    'HLT_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned_v*',
 
+    'HLT_IsoMu24_v*',
+    'HLT_IsoMu24_eta2p1_v*',
+    'HLT_IsoMu27_v*',
+    'HLT_IsoMu30_v*',
     'HLT_Mu50_v*',
+    'HLT_TkMu50_v*',
+    'HLT_Mu55_v*',
+    'HLT_Mu15_IsoVVVL_PFHT450_PFMET50_v*',
     'HLT_Mu15_IsoVVVL_PFHT450_v*',
     'HLT_Mu50_IsoVVVL_PFHT450_v*',
-    'HLT_Mu15_IsoVVVL_PFHT600_v*'
+    'HLT_Mu15_IsoVVVL_PFHT600_v*',
+
+    'HLT_IsoTkMu24_v*',
+    'HLT_Mu15_IsoVVVL_PFHT450_CaloBTagCSV_4p5_v*', # Muon+HT
+
+    'HLT_PFHT380_SixJet32_DoubleBTagCSV_p075_v*', # only data
+    'HLT_PFHT380_SixPFJet32_DoublePFBTagDeepCSV_2p2_v*', # only MC
+    'HLT_PFHT380_SixPFJet32_DoublePFBTagCSV_2p2_v*',
+    'HLT_PFHT400_SixPFJet32_DoublePFBTagDeepCSV_2p94_v*',
+    'HLT_PFHT400_SixJet30_DoubleBTagCSV_p056_v*'
   ],
   throw = False
 )
@@ -135,19 +160,19 @@ if not isMC: process.GlobalTag = GlobalTag( process.GlobalTag, "106X_dataRun2_v3
 print( ">> Using global tag: {}".format( process.GlobalTag.globaltag )
 
 ################################################
-## Produce new slimmedElectrons with V2 IDs - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2
+## Produce new slimmedElectrons with V2 IDs - https://twiki.cern.ch/twiki/bin/view/CMS/EgammaPostRecoRecipes
 ################################################
+# also necessary for overriding a bug in ECAL-Tracker momentum combination when applying scale and smearing
 from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
 setupEgammaPostRecoSeq(
   process,
-  runVID = True,
+  runVID = True, # run V2 IDs
   era = "2017-UL"
 )
 
 ################################
 ## Rerun the ecalBadCalibFilter
 ################################
-"""
 process.load( "RecoMET.METFilters.ecalBadCalibFilter_cfi" )
 
 baddetEcallist = cms.vuint32(
@@ -176,7 +201,6 @@ process.ecalBadCalibReducedMINIAODFilter = cms.EDFilter(
   taggingMode      = cms.bool(True),
   debug            = cms.bool(False)
 )
-"""
 
 ## Produce DeepAK8 jet tags
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
@@ -225,44 +249,46 @@ updateJetCollection(
 ################################################################################################
 #### Establish references between PATified fat jets and subjets using the BoostedJetMerger
 ################################################################################################
-process.updatedJetsAK8PuppiSoftDropPacked = cms.EDProducer("BoostedJetMerger",
-                                                           jetSrc=cms.InputTag('selectedUpdatedPatJetsAK8Puppi'),
-                                                           subjetSrc=cms.InputTag('slimmedJetsAK8PFPuppiSoftDropPacked','SubJets')
-                                                           )
+process.updatedJetsAK8PuppiSoftDropPacked = cms.EDProducer(
+  "BoostedJetMerger",
+  jetSrc = cms.InputTag('selectedUpdatedPatJetsAK8Puppi'),                                                      
+  subjetSrc = cms.InputTag('slimmedJetsAK8PFPuppiSoftDropPacked','SubJets')
+)
+      
 ################################
 #### Pack fat jets with subjets
 ################################
-process.packedJetsAK8Puppi = cms.EDProducer("JetSubstructurePacker",
-                                            jetSrc=cms.InputTag('selectedUpdatedPatJetsAK8Puppi'),
-                                            distMax = cms.double(0.8),
-                                            fixDaughters = cms.bool(False),
-                                            algoTags = cms.VInputTag(cms.InputTag("updatedJetsAK8PuppiSoftDropPacked")),
-                                            algoLabels =cms.vstring('SoftDropPuppi')
+process.packedJetsAK8Puppi = cms.EDProducer(
+  "JetSubstructurePacker",
+  jetSrc = cms.InputTag('selectedUpdatedPatJetsAK8Puppi'),
+  distMax = cms.double(0.8),
+  fixDaughters = cms.bool(False),
+  algoTags = cms.VInputTag(cms.InputTag("updatedJetsAK8PuppiSoftDropPacked")),
+  algoLabels =c ms.vstring('SoftDropPuppi')
 )
-
 
 ##############################################
 ### run QGTagger code again to calculate jet axis1  (HOT Tagger) - https://github.com/susy2015/TopTagger/tree/master/TopTagger#instructions-for-saving-tagger-results-to-nanoaod-with-cmssw_9_4_11
 ### Add DeepFlavour tags for AK4
 ##############################################
 updateJetCollection(
-    process,
-    jetSource = cms.InputTag('slimmedJets'),
-    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
-    svSource = cms.InputTag('slimmedSecondaryVertices'),
-    jetCorrection = ( 'AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None' ),
-    btagDiscriminators = [
-        'pfDeepFlavourJetTags:probb',
-        'pfDeepFlavourJetTags:probbb',
-        'pfDeepFlavourJetTags:problepb',
-        'pfDeepFlavourJetTags:probc',
-        'pfDeepFlavourJetTags:probuds',
-        'pfDeepFlavourJetTags:probg'
-    ],
-    printwarning = False
+  process,
+  jetSource = cms.InputTag('slimmedJets'),
+  pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
+  svSource = cms.InputTag('slimmedSecondaryVertices'),
+  jetCorrection = ( 'AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None' ),
+  btagDiscriminators = [
+    'pfDeepFlavourJetTags:probb',
+    'pfDeepFlavourJetTags:probbb',
+    'pfDeepFlavourJetTags:problepb',
+    'pfDeepFlavourJetTags:probc',
+    'pfDeepFlavourJetTags:probuds',
+    'pfDeepFlavourJetTags:probg'
+  ],
+  printwarning = False
 )
 process.load('RecoJets.JetProducers.QGTagger_cfi')
-# patAlgosToolsTask.add(process.QGTagger)
+patAlgosToolsTask.add( process.QGTagger )
 process.QGTagger.srcJets = cms.InputTag('slimmedJets')
 process.updatedPatJets.userData.userFloats.src += ['QGTagger:ptD','QGTagger:axis1','QGTagger:axis2']
 process.updatedPatJets.userData.userInts.src += ['QGTagger:mult']
@@ -273,12 +299,13 @@ process.updatedPatJets.userData.userInts.src += ['QGTagger:mult']
 ################################
 from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
 process.prefiringweight = l1ECALPrefiringWeightProducer.clone(
-    TheJets = cms.InputTag("tightAK4Jets"),
-    L1Maps = cms.string("L1PrefiringMaps.root"),
-    DataEra = cms.string("UL2017BtoF"),
-    UseJetEMPt = cms.bool(False),
-    PrefiringRateSystematicUncty = cms.double(0.2),
-    SkipWarnings = False)
+  TheJets = cms.InputTag("tightAK4Jets"),
+  L1Maps = cms.string("L1PrefiringMaps.root"),
+  DataEra = cms.string("UL2017BtoF"),
+  UseJetEMPt = cms.bool(False),
+  PrefiringRateSystematicUncty = cms.double(0.2),
+  SkipWarnings = False
+)
 
 ################################
 ## Apply Jet ID to AK4 and AK8
