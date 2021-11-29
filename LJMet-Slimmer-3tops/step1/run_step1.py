@@ -1,5 +1,6 @@
 import os,shutil,datetime,time
 import getpass
+import config
 from argparse import ArgumentParser
 from ROOT import *
 from XRootD import client
@@ -15,40 +16,48 @@ args = parser.parse_args()
 
 start_time = time.time()
 
-lpcUserName = "dsunyou"
+lpcUserName = config.lpcUserName
 
 #IO directories must be full paths
 if args.year not in [ "2016", "2017", "2018" ]: sys.exit( "[ERR] Invalid year option. Use: 2016, 2017, 2018" )
 shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
-
 finalStateYear = "singleLep{}".format( args.year )
-inputDir =  "/eos/uscms/store/user/{}/FWLJMET106X_1lep{}UL_3t/".format( lpcUserName, args.year )
+runDir = os.getcwd()
+inputDir =  inputDir[ args.year ]
+inputLoc = "lpc" if inputDir.startswith( "/isilon/hadoop/" ) else "brux"
+inDir = "/eos/uscms/" if inputLoc == "lpc" else inputDir 
+
 outputDir = {
-  shift: "/eos/uscms/store/user/{}/FWLJMET106X_1lep{}UL_3t_{}_step1/{}/".format( lpcUserName, args.year, args.tag, shift ) for shift in shifts
+  shift: os.path.join( config.outputPath, "/FWLJMET106X_1lep{}UL_3t_{}_step1/{}/".format( lpcUserName, args.year, args.tag, shift ) ) for shift in shifts
 }
+outDir = config.outDir
+
 condorDir = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/logs_UL{}_{}/".format( args.year, args.tag )
 
-inputLoc='lpc'
-if inputDir.startswith('/isilon/hadoop/'): inputLoc='brux'
 
-csvFilename='DeepCSV_94XSF_V5_B_F.csv'
-deepJetFilename='DeepFlavour_94XSF_V4_B_F.csv'
-if Year==2018: 
-  csvFilename='DeepCSV_102XSF_V2.csv'
-  deepJetFilename='DeepJet_102XSF_V2.csv'
-if Year==2016: 
-  csvFilename='DeepCSV_2016LegacySF_V1.csv'
-  deepJetFilename='DeepJet_2016LegacySF_V1.csv'
-runDir=os.getcwd()
-inDir=inputDir[10:]
-if inputLoc=='brux': inDir=inputDir
-outDir=outputDir[10:]
+deepCSV_SF = {
+  "2016": "",
+  "2017": "DeepCSV_106XUL17SF_WPonly_V2p1.csv",
+  "2018": "DeepCSV_106XUL18SF_WPonly.csv"
+}
 
-gROOT.ProcessLine('.x compileStep1.C')
+deepJet_SF = {
+  "2016": "",
+  "2017": "DeepJet_106XUL17SF_WPonly_V2p1.csv",
+  "2018": "DeepJet_106XUL18SF_WPonly.csv"
+}
 
-print 'Starting submission'
-count=0
+# Start processing
+gROOT.ProcessLine( ".x compileStep1.C" )
+
+print( ">> Starting step1 submission..." )
+
+count = 0
+
+dirList = {
+  
+}
 
 dirList16 = [
 #Samples to run in /isilon/hadoop/store/group/bruxljm/FWLJMET102X_1lep2016_Jan2021/
