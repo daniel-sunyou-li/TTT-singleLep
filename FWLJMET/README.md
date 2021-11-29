@@ -24,7 +24,7 @@ Add the Axis1 information manually using:
 
     git cms-addpkg RecoJets/JetProducers
     
-Replace `RecoJets/JetProducers/plugins/QCTagger.cc` with [this file](https://github.com/jingyuluo/QG_SA/blob/master/QGTagger.cc).  And in `RecoJets/JetProducers/plugins/QCTagger.h` replace the line:
+Replace `RecoJets/JetProducers/plugins/QCTagger.cc` with [this file](https://github.com/jingyuluo/QG_SA/blob/master/QGTagger.cc).  And in `RecoJets/JetProducers/interface/QCTagger.h` replace the line:
 
     std::tuple<int, float, float> calcVariables
     
