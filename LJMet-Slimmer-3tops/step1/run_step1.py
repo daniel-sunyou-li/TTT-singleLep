@@ -1,24 +1,34 @@
 import os,shutil,datetime,time
 import getpass
+from argparse import ArgumentParser
 from ROOT import *
 from XRootD import client
 xrdClient = client.FileSystem("root://brux11.hep.brown.edu:1094/")
 execfile("/uscms_data/d3/jmanagan/EOSSafeUtils.py")
 
+parser = ArgumentParser()
+parser.add_argument( "-y", "--year", default = "2017" )
+parser.add_argument( "-s", "--systematics", action = "store_true" )
+parser.add_argument( "-t", "--tag", default = "test" )
+parser.add_argument( "-f", "--filesPerJob", default = "30" )
+args = parser.parse_args()
+
 start_time = time.time()
 
-#IO directories must be full paths
+lpcUserName = "dsunyou"
 
-Year = 2018
-finalStateYear = 'singleLep'+str(Year)
-#inputDir='/isilon/hadoop/store/group/bruxljm/FWLJMET102X_1lep'+str(Year)+'_Jan2021/' # 2016
-#inputDir='/eos/uscms/store/user/lpcljm/FWLJMET_crab_output/' #Extended signal and filtered hDamp/UE sample location for 2017 and 2018
-inputDir='/eos/uscms/store/user/lpcljm/FWLJMET102X_1lep'+str(Year)+'_Oct2019/' # 2017 and 2018 on lpc
-#inputDir='/isilon/hadoop/store/group/bruxljm/FWLJMET102X_1lep'+str(Year)+'_Oct2019/' # 2018 on brux
-outputDir='/eos/uscms/store/user/ssagir/FWLJMET102X_1lep'+str(Year)+'_Oct2019_4t_032721_step1/nominal/'
-condorDir='/uscms_data/d3/ssagir/FWLJMET102X_1lep'+str(Year)+'_Oct2019_4t_032721_step1/'
-shifts = [] #['JECup','JECdown','JERup','JERdown']
-nFilesPerJob=30
+#IO directories must be full paths
+if args.year not in [ "2016", "2017", "2018" ]: sys.exit( "[ERR] Invalid year option. Use: 2016, 2017, 2018" )
+shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
+filesPerJob = int( args.filesPerJob )
+
+finalStateYear = "singleLep{}".format( args.year )
+inputDir =  "/eos/uscms/store/user/{}/FWLJMET106X_1lep{}UL_3t/".format( lpcUserName, args.year )
+outputDir = {
+  shift: "/eos/uscms/store/user/{}/FWLJMET106X_1lep{}UL_3t_{}_step1/{}/".format( lpcUserName, args.year, args.tag, shift ) for shift in shifts
+}
+condorDir = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/logs_UL{}_{}/".format( args.year, args.tag )
+
 inputLoc='lpc'
 if inputDir.startswith('/isilon/hadoop/'): inputLoc='brux'
 
@@ -320,7 +330,7 @@ for sample in dirList:
                 basefilename = '_'.join(basefilename)
                 print "Running path:",pathsuffix,"\tBase filenames:",basefilename
 
-                for i in range(0,len(rootfiles),nFilesPerJob):
+                for i in range(0,len(rootfiles),filesPerJob):
                     count+=1
                     tmpcount += 1
 
