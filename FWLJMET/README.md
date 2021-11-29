@@ -68,6 +68,7 @@ Continue setting up HOT tagger (part 2):
     mkdir -p CMSSW_10_6_19/src/TopTagger/TopTagger/data
     cd TopTagger/TopTagger/scripts/
     ./getTaggerCfg.sh -o -n -t DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0 -d ../data
+    cd ~/CMSSW_10_6_19/src/TTT-singleLep/FWLJMET/LJMET/
     
 To run LJMET interactively:
 
