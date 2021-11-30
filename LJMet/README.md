@@ -54,14 +54,14 @@ Update the pre-firing map for UL17 (from the [L1ECALPrefiring Twiki](https://twi
     
 Compile everything:
 
-    cd -
+    cd ../../..
     scram b
     
 Continue setting up HOT tagger (part 2):
 
-    cd CMSSW_10_6_19/src
+    cd FWLJMET/
     cmsenv
-    mkdir -p CMSSW_10_6_19/src/TopTagger/TopTagger/data
+    mkdir -p /TopTagger/TopTagger/data
     cd TopTagger/TopTagger/scripts/
     ./getTaggerCfg.sh -o -n -t DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0 -d ../data
     cd ~/CMSSW_10_6_19/src/TTT-singleLep/FWLJMET/LJMET/
