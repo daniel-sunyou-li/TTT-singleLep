@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-n", "--nominal", action = "store_true" )
-parser.add_argument( "-b", "--brux", action = "store_true" )
+parser.add_argument( "-b", "--brux", action = "store_true", help = "Store on brux or lpc" )
 parser.add_argument( "-o", "--outfolder", default = "FWLJMET_crab_output" )
 args = parser.parse_args()
 
@@ -28,7 +28,7 @@ sample = imp.load_source( "sampleUL{}".format( args.year ), sampleListPath, open
 ### SET YOUR STRINGS
 ####################
 #cmsRun config
-runTemplate = "../runFWLJMetUL{}_singleTree.py".format( args.year ) if args.nominal else "../runFWLJMetUL{}_multipleTree.py".format( args.year )
+runTemplate = "../runFWLJMet_cfg.py"
 
 #folder to save the created crab configs
 configDir = "crabConfigsUL{}".format( args.year ) 
