@@ -7,5 +7,30 @@ inputDir = {
 outputPath = "/eos/uscms/store/user/{}/".format( lpcUserName )
 outDir = "/eos/uscms/"
 
-condorPath = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/".format( userName )
-                                                             
+condorPath = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/".format( lpcUserName )
+
+samples = {
+  "2016": {
+    "LPC": [
+    
+    ],
+    "BRUX": [
+    ]
+  },
+  "2017": {
+    "LPC": [
+    
+    ],
+    "BRUX": [
+      
+    ]
+  },
+  "2018": {
+    "LPC": [
+      
+    ],
+    "BRUX": [
+      
+    ]
+  }
+}
