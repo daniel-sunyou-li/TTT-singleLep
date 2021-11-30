@@ -33,8 +33,7 @@ outputDir = {
 }
 outDir = config.outDir
 
-condorDir = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/logs_UL{}_{}/".format( args.year, args.tag )
-
+condorDir = os.path.join( config.condorPath, "/logs_UL{}_{}/".format( args.year, args.tag ) )
 
 deepCSV_SF = {
   "2016": "",
@@ -49,7 +48,7 @@ deepJet_SF = {
 }
 
 # Start processing
-gROOT.ProcessLine( ".x compileStep1.C" )
+gROOT.ProcessLine( ".x compile_Step1.C" )
 
 print( ">> Starting step1 submission..." )
 
