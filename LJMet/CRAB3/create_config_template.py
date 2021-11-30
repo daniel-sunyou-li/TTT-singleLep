@@ -28,7 +28,7 @@ sample = imp.load_source( "sampleUL{}".format( args.year ), sampleListPath, open
 ### SET YOUR STRINGS
 ####################
 #cmsRun config
-runTemplate = "../runFWLJMet_cfg.py"
+runTemplate = "../runFWLJMetUL{}_template.py".format( args.year )
 
 #folder to save the created crab configs
 configDir = "crabConfigsUL{}".format( args.year ) 
