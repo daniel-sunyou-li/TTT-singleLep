@@ -36,10 +36,6 @@ For the EGamma post-reco MVA values use:
 
     git cms-merge-topic cms-egamma:EgammaPostRecoTools
     
-Copy `lwtnn` so that BestCalc will compile:
-
-    cp -r ~jmanagan/nobackup/CMSSW_9_4_12/src/lwtnn .
-    
 Finally, check-out `FWLJMET`:
 
     git clone -b UL https://github.com/daniel-sunyou-li/TTT-singleLep.git
