@@ -12,7 +12,7 @@ Author: Michael Segala
 Contact: michael.segala@gmail.com
 Updated: Ulrich Heintz 12/23/2011
 Updated: Gena Kukartsev 10/30/2012 
-Updated: Daniel Li 09/07/2021
+Updated: Daniel Li 11/29/2021
 v 1.2
 Comments (09/07/2021):
 - Updated to use deepJet instead of deepCSV for b-tagging
@@ -20,7 +20,7 @@ Comments (09/07/2021):
 *************************************************************/
 
 
-#include "FWLJMET/LJMet/interface/BTagSFUtil.h"
+#include "FWLJMET/LJMET/interface/BTagSFUtil.h"
 
 
 
@@ -85,11 +85,11 @@ void BTagSFUtil::Initialize(const edm::ParameterSet& iConfig){
 
     // Set Subjet WPs manually since we need DeepCSV instead of DeepJet
     if(btagOP == "LOOSE"){	      
-      if (year == 2016) bdisc_sj = 0.2217; # need to update for UL
+      if (year == 2016) bdisc_sj = 0.2217; // need to update for UL
       else if(year == 2017) bdisc_sj = 0.1355;
       else bdisc_sj = 0.1241; # need to update
     }else{ // medium, only loose & medium for subjets
-      if (year == 2016) bdisc_sj = 0.6321; # need to update
+      if (year == 2016) bdisc_sj = 0.6321; // need to update
       else if(year == 2017) bdisc_sj = 0.4506;
       else bdisc_sj = 0.4184; # need to update
     }

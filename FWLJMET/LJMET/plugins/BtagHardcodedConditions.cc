@@ -14,7 +14,7 @@
 
 
 #include <cmath>
-#include "FWLJMET/LJMet/interface/BtagHardcodedConditions.h"
+#include "FWLJMET/LJMET/interface/BtagHardcodedConditions.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
 using namespace std;

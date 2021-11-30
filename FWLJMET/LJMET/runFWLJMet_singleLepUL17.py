@@ -4,20 +4,22 @@ import os
 ## PARSE ARGUMENTS
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing( "analysis" )
-options.register( "maxEvents", 1000, VarParsing.multiplicity.singleton, VarParsing.varType.int, "Max Events" )
 options.register( "isTest", "", VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
 options.register( "systematics", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Include systematics" )
 options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
 options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
 options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
+options.register( "era", "", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
 
 ## SET DEFAULT VALUES
 options.isMC = True
 options.isTTbar = False
-options.isVLQsignal = False
 options.doGenHT = False
+options.maxEvents = -1
+options.era = "2017"
 options.inputFiles = [
-    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+    #"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL17MiniAOD/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v1/20000/06C1E8F8-2ADC-4645-943D-AD569FA4D727.root"
 ]
 options.parseArguments()
 
@@ -26,8 +28,8 @@ maxEvents = options.maxEvents
 isTest = options.isTest
 isMC = options.isMC
 isTTbar = options.isTTbar
-isVLQsignal = options.isVLQsignal
 doGenHT = options.doGenHT
+era = options.era
 
 # Check arguments
 print( ">> Options used: \n{}".format( options ) )
@@ -222,7 +224,7 @@ updateJetCollection(
     cms.vstring( [ "L2Relative", "L3Absolute" ] ), 
     "None"
   ),
-  btagDiscriminators = _pdfDeepBoostedJetTagsAll,
+  btagDiscriminators = _pfDeepBoostedJetTagsAll,
   postfix = "AK8Puppi",
   printWarning = False
 )
@@ -253,7 +255,7 @@ updateJetCollection(
   jetSource = cms.InputTag('slimmedJets'),
   pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
   svSource = cms.InputTag('slimmedSecondaryVertices'),
-  jetCorrection = ( 'AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None' ),
+  jetCorrections = ( 'AK4PFchs', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute']), 'None' ),
   btagDiscriminators = [
     'pfDeepFlavourJetTags:probb',
     'pfDeepFlavourJetTags:probbb',
@@ -262,7 +264,7 @@ updateJetCollection(
     'pfDeepFlavourJetTags:probuds',
     'pfDeepFlavourJetTags:probg'
   ],
-  printwarning = False
+  printWarning = False
 )
 process.load('RecoJets.JetProducers.QGTagger_cfi')
 patAlgosToolsTask.add( process.QGTagger )
@@ -306,8 +308,10 @@ process.tightPackedJetsAK8Puppi = cms.EDFilter(
 MET_filt_flag_tag = "TriggerResults::PAT" if isMC else "TriggerResults::RECO"
 
 jetDir = {
-  key: os.path.join( "FWLJMET/LJMET/data/", "Summer19UL17_{}".format( key ) ) for key in [ "MC", "DATA" ] 
+  key: os.path.join( "TTT-singleLep/FWLJMET/LJMET/data/", "Summer19UL17_{}".format( key ) ) for key in [ "MC", "DATA" ] 
 }
+
+for key in jetDir: print( ">> Using JEC/JER MC SF in {}".format( jetDir[key] ) )
     
 ## For Jet corrections
 doNewJEC                 = True
@@ -374,8 +378,8 @@ hlt_path_mu = cms.vstring(
   'HLT_Mu15_IsoVVVL_PFHT450_CaloBTagCSV_4p5_v', # Muon+HT
 )
 
-
 #Selector/Calc config
+print( ">> Setting up MultiLepSelector configuration..." )
 MultiLepSelector_cfg = cms.PSet(
   debug  = cms.bool(False),
   isMc  = cms.bool(isMC),
@@ -503,8 +507,8 @@ MultiLepSelector_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('FWLJMET/LJMet/data/wp_deepJet_106XUL17_v3.csv')
-  DeepCSVSubjetfile        = cms.FileInPath('FWLJMET/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   MistagUncertUp           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -521,9 +525,9 @@ else:
   MultiLepSelector_cfg.mctrigger_path_mu = cms.vstring('')
   MultiLepSelector_cfg.trigger_path_el = hlt_path_el
   MultiLepSelector_cfg.trigger_path_mu = hlt_path_mu
-
-  
+ 
 # MultiLep Calculator Config 
+print( ">> Setting up MultiLepCalculator configuration..." )
 MultiLepCalc_cfg = cms.PSet(
   debug                  = cms.bool(False),
   isMc                   = cms.bool(isMC),
@@ -589,8 +593,8 @@ MultiLepCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('FWLJMET/LJMet/data/wp_deepJet_106XUL17_v3.csv'),
-  DeepCSVSubjetfile        = cms.FileInPath('FWLJMET/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   MistagUncertUp           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -598,14 +602,15 @@ MultiLepCalc_cfg = cms.PSet(
 
 )
 
-  # JetSub Calculator Configuration
+# JetSub Calculator Configuration
+print( ">> Setting up JetSubCalc configuration..." )
 JetSubCalc_cfg = cms.PSet(
   debug        = cms.bool(False),
   isMc         = cms.bool(isMC),
   genParticles       = cms.InputTag("prunedGenParticles"),
   kappa              = cms.double(0.5), #for Jet Charge calculation
   killHF             = cms.bool(False),
-  puppiCorrPath      = cms.FileInPath('FWLJMET/LJMet/data/PuppiSoftdropMassCorr/weights/puppiCorr.root'),
+  puppiCorrPath      = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/PuppiSoftdropMassCorr/weights/puppiCorr.root'),
 
   rhoJetsInputTag          = cms.InputTag("fixedGridRhoFastjetAll"), #this is for electron. Why is it different compared to muon?
 
@@ -639,8 +644,8 @@ JetSubCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('FWLJMET/LJMet/data/wp_deepJet_106XUL17_v3.csv'),
-  DeepCSVSubjetfile        = cms.FileInPath('FWLJMET/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/FWLJMET/LJMET/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   MistagUncertUp           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -666,6 +671,7 @@ HOTTaggerCalc_cfg = cms.PSet(
 )
 
 ## nominal
+print( ">> Setting up nominal LJMET EDAnalyzer..." )
 process.ljmet = cms.EDAnalyzer(
   "LJMet",
   debug         = cms.bool(False),
@@ -870,7 +876,7 @@ if systematics:
 ################################################
 
 # Configure a path and endpath to run the producer and output modules
-
+print( ">> Configurating path and endpath to run producer and output modules" )
 # ----------------------- GenHFHadronMatcher -----------------                                                
 if (isTTbar):
   process.load("PhysicsTools.JetMCAlgos.GenHFHadronMatcher_cff")
@@ -922,25 +928,41 @@ if (isTTbar):
     process.ljmet_JERdown #(ntuplizer) 
   )
 
-elif(isMC):
-  process.p = cms.Path(
-    process.mcweightanalyzer *
-    process.filter_any_explicit *
-    #process.fullPatMetSequenceModifiedMET *
-    process.egammaPostRecoSeq *
-    process.updatedJetsAK8PuppiSoftDropPacked *
-    process.packedJetsAK8Puppi *
-    process.QGTagger *
-    process.tightAK4Jets * 
-    process.tightPackedJetsAK8Puppi *
-    process.prefiringweight *
-    process.ecalBadCalibReducedMINIAODFilter *
-    process.ljmet *#(ntuplizer) 
-    process.ljmet_JECup *#(ntuplizer) 
-    process.ljmet_JECdown *#(ntuplizer) 
-    process.ljmet_JERup *#(ntuplizer) 
-    process.ljmet_JERdown #(ntuplizer) 
-  )
+elif isMC:
+  if systematics:
+    process.p = cms.Path(
+      process.mcweightanalyzer *
+      process.filter_any_explicit *
+      #process.fullPatMetSequenceModifiedMET *
+      process.egammaPostRecoSeq *
+      process.updatedJetsAK8PuppiSoftDropPacked *
+      process.packedJetsAK8Puppi *
+      process.QGTagger *
+      process.tightAK4Jets * 
+      process.tightPackedJetsAK8Puppi *
+      process.prefiringweight *
+      process.ecalBadCalibReducedMINIAODFilter *
+      process.ljmet *#(ntuplizer) 
+      process.ljmet_JECup *#(ntuplizer) 
+      process.ljmet_JECdown *#(ntuplizer) 
+      process.ljmet_JERup *#(ntuplizer) 
+      process.ljmet_JERdown #(ntuplizer) 
+    )
+  else:
+    print( ">> Defining nominal process path" )
+    process.p = cms.Path(
+      process.mcweightanalyzer *
+      process.filter_any_explicit *
+      process.egammaPostRecoSeq *
+      process.updatedJetsAK8PuppiSoftDropPacked *
+      process.packedJetsAK8Puppi *
+      process.QGTagger *
+      process.tightAK4Jets *
+      process.tightPackedJetsAK8Puppi *
+      process.prefiringweight *
+      process.ecalBadCalibReducedMINIAODFilter *
+      process.ljmet #(ntuplizer) 
+    )
 else: #Data 
   process.p = cms.Path(
     process.filter_any_explicit *
