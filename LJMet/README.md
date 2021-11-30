@@ -37,10 +37,9 @@ For the EGamma post-reco MVA values use:
 
     git cms-merge-topic cms-egamma:EgammaPostRecoTools
     
-Finally, check-out `FWLJMET`:
+Finally, check-out `LJMET`:
 
     git clone -b UL https://github.com/daniel-sunyou-li/TTT-singleLep.git
-    cd TTT-singleLep/FWLJMET/
     
 Update the pre-firing map for UL17 (from the [L1ECALPrefiring Twiki](https://twiki.cern.ch/twiki/bin/viewauth/CMS/L1ECALPrefiringWeightRecipe)):
 
@@ -50,7 +49,7 @@ Update the pre-firing map for UL17 (from the [L1ECALPrefiring Twiki](https://twi
     
 `JetSubCalc` uses `PUPPI` mass corrections:
 
-    cd CMSSW_10_6_19/src/FWLJMET/LJMet/data/
+    cd ../../../TTT-singleLep/LJMet/data/ 
     git clone https://github.com/thaarres/PuppiSoftdropMassCorr
     
 Compile everything:
