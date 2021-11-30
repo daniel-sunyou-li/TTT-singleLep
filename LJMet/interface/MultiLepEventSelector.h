@@ -15,7 +15,6 @@
 
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
-#include "DataFormats/PatCandidates/interface/Jet.h"
 
 #include "TTT-singleLep/LJMet/interface/MiniIsolation.h"
 

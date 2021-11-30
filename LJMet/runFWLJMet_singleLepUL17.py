@@ -18,8 +18,8 @@ options.doGenHT = False
 options.maxEvents = -1
 options.era = "2017"
 options.inputFiles = [
-    #"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
-    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL17MiniAOD/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v1/20000/06C1E8F8-2ADC-4645-943D-AD569FA4D727.root"
+    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+    #"root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL17MiniAOD/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v1/20000/06C1E8F8-2ADC-4645-943D-AD569FA4D727.root"
 ]
 options.parseArguments()
 
@@ -225,7 +225,28 @@ updateJetCollection(
     cms.vstring( [ "L2Relative", "L3Absolute" ] ), 
     "None"
   ),
-  btagDiscriminators = _pfDeepBoostedJetTagsAll,
+  btagDiscriminators = [
+    'pfCombinedInclusiveSecondaryVertexV2BJetTags',
+    'pfDeepBoostedJetTags:probTbcq', 'pfDeepBoostedJetTags:probTbqq',
+    'pfDeepBoostedJetTags:probWcq', 'pfDeepBoostedJetTags:probWqq',
+    'pfDeepBoostedJetTags:probZbb', 'pfDeepBoostedJetTags:probZcc', 'pfDeepBoostedJetTags:probZqq',
+    'pfDeepBoostedJetTags:probHbb', 'pfDeepBoostedJetTags:probHcc', 'pfDeepBoostedJetTags:probHqqqq',
+    'pfDeepBoostedJetTags:probQCDbb', 'pfDeepBoostedJetTags:probQCDcc',
+    'pfDeepBoostedJetTags:probQCDb', 'pfDeepBoostedJetTags:probQCDc',
+    'pfDeepBoostedJetTags:probQCDothers',
+    'pfDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:WvsQCD',
+    'pfDeepBoostedDiscriminatorsJetTags:ZvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:ZbbvsQCD',
+    'pfDeepBoostedDiscriminatorsJetTags:HbbvsQCD', 'pfDeepBoostedDiscriminatorsJetTags:H4qvsQCD',
+    'pfMassDecorrelatedDeepBoostedJetTags:probTbcq', 'pfMassDecorrelatedDeepBoostedJetTags:probTbqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probWcq', 'pfMassDecorrelatedDeepBoostedJetTags:probWqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probZbb', 'pfMassDecorrelatedDeepBoostedJetTags:probZcc', 'pfMassDecorrelatedDeepBoostedJetTags:probZqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probHbb', 'pfMassDecorrelatedDeepBoostedJetTags:probHcc', 'pfMassDecorrelatedDeepBoostedJetTags:probHqqqq',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDbb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDcc',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDb', 'pfMassDecorrelatedDeepBoostedJetTags:probQCDc',
+    'pfMassDecorrelatedDeepBoostedJetTags:probQCDothers',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:TvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:WvsQCD',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHbbvsQCD', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ZHccvsQCD',
+    'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:bbvsLight', 'pfMassDecorrelatedDeepBoostedDiscriminatorsJetTags:ccvsLight'],
   postfix = "AK8Puppi",
   printWarning = False
 )
@@ -379,6 +400,8 @@ hlt_path_mu = cms.vstring(
   'HLT_Mu15_IsoVVVL_PFHT450_CaloBTagCSV_4p5_v', # Muon+HT
 )
 
+hlt_path_hadronic = cms.vstring( "" )
+
 #Selector/Calc config
 print( ">> Setting up MultiLepSelector configuration..." )
 MultiLepSelector_cfg = cms.PSet(
@@ -487,6 +510,7 @@ MultiLepSelector_cfg = cms.PSet(
   JEC_txtfile              = cms.FileInPath(JEC_txtfile),
   JERSF_txtfile            = cms.FileInPath(JERSF_txtfile),
   JER_txtfile              = cms.FileInPath(JER_txtfile),
+  JERAK8_txtfile           = cms.FileInPath(JERAK8_txtfile),
   MCL1JetPar               = cms.FileInPath(MCL1JetPar),
   MCL2JetPar               = cms.FileInPath(MCL2JetPar),
   MCL3JetPar               = cms.FileInPath(MCL3JetPar),
@@ -508,7 +532,7 @@ MultiLepSelector_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -519,13 +543,17 @@ MultiLepSelector_cfg = cms.PSet(
 if isMC:
   MultiLepSelector_cfg.mctrigger_path_el = hlt_path_el
   MultiLepSelector_cfg.mctrigger_path_mu = hlt_path_mu
+  MultiLepSelector_cfg.mctrigger_path_hadronic = hlt_path_hadronic
   MultiLepSelector_cfg.trigger_path_el = cms.vstring('')
   MultiLepSelector_cfg.trigger_path_mu = cms.vstring('')
+  MultiLepSelector_cfg.trigger_path_hadronic = cms.vstring('')
 else:
   MultiLepSelector_cfg.mctrigger_path_el = cms.vstring('')
   MultiLepSelector_cfg.mctrigger_path_mu = cms.vstring('')
+  MultiLepSelector_cfg.mctrigger_path_hadronic = cms.vstring('')
   MultiLepSelector_cfg.trigger_path_el = hlt_path_el
   MultiLepSelector_cfg.trigger_path_mu = hlt_path_mu
+  MultiLepSelector_cfg.trigger_path_hadronic = hlt_path_hadronic
  
 # MultiLep Calculator Config 
 print( ">> Setting up MultiLepCalculator configuration..." )
@@ -594,7 +622,7 @@ MultiLepCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -645,7 +673,7 @@ JetSubCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/wp_deepJet_106XUL17_v3.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -666,7 +694,7 @@ HOTTaggerCalc_cfg = cms.PSet(
   CvsBCJetTags     = cms.string('pfCombinedCvsBJetTags'),
   CvsLCJetTags     = cms.string('pfCombinedCvsLJetTags'),
   bTagKeyString    = cms.string('pfCombinedInclusiveSecondaryVertexV2BJetTags'),
-  taggerCfgFile    = cms.FileInPath( os.getcwd() + '/../TopTagger/TopTagger/data/TopTaggerCfg-DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0/TopTagger.cfg'),
+  taggerCfgFile    = cms.FileInPath( 'TopTagger/TopTagger/data/TopTaggerCfg-DeepResolved_DeepCSV_GR_noDisc_Release_v1.0.0/TopTagger.cfg'),
   discriminatorCut = cms.double(0.5),
   saveAllTopCandidates = cms.bool(False)
 )

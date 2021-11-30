@@ -85,15 +85,15 @@ void BTagSFUtil::Initialize(const edm::ParameterSet& iConfig){
 
     // Set Subjet WPs manually since we need DeepCSV instead of DeepJet
     if(btagOP == "LOOSE"){	      
-      if (year == 2016) bdisc_sj = 0.2217; // need to update for UL
+      if (year == 2016) bdisc_sj = 0.2217; 
       else if(year == 2017) bdisc_sj = 0.1355;
-      else bdisc_sj = 0.1241; // need to update
-    }else{ // medium, only loose & medium for subjets
-      if (year == 2016) bdisc_sj = 0.6321; // need to update
+      else bdisc_sj = 0.1241;
+    }else{ 
+      if (year == 2016) bdisc_sj = 0.6321; 
       else if(year == 2017) bdisc_sj = 0.4506;
-      else bdisc_sj = 0.4184; // need to update
+      else bdisc_sj = 0.4184; 
     }
-
+    std::cout << mLegend << "b-tag check: subJet " <<btagOP<<" > " << bdisc_sj<< std::endl;
 }
 
 void BTagSFUtil::SetSeed( int seed ) {
