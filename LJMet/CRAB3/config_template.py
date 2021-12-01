@@ -1,4 +1,4 @@
-# last updated 11/23/2021 by Daniel Li
+# last updated 11/30/2021 by Daniel Li
 import os
 from WMCore.Configuration import Configuration
 config = Configuration()
@@ -17,7 +17,7 @@ isTTbar        = ISTTBAR
 # general
 config.section_( "General" )
 config.General.requestName = "{}_{}".format( request, logFolder )
-config.General.workArea = "crabSubmitLogs/{}/".format( request ) # might want to change this to not be hard-coded
+config.General.workArea = "crab_submit_logs/{}/".format( request ) # might want to change this to not be hard-coded
 config.General.transferLogs = True
 config.General.transferOutputs = True
 
@@ -56,9 +56,8 @@ else:
 config.Data.inputDBS = "global"
 config.Data.ignoreLocality = False
 config.Data.publication = False
-# This string is used to construct the output dataset name : /store/user/lpcljm/<outputFolder>/<inpuDataset>/<requestName>/<someCRABgeneratedNumber>/<someCRABgeneratedNumber>/
 config.Data.outputDatasetTag = request
-config.Data.outLFNDirBase = "OUTPATH{}".format( outputFolder )
+config.Data.outLFNDirBase = os.path.join( "OUTPATH", outputFolder )
 
 # site
 config.section_( "Site" )

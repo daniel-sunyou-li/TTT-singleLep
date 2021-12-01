@@ -31,7 +31,7 @@ groups = {
     "TTWW": "/TTWW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
     "TTZZ": "/TTZZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
     # "TTWH": "/TTWH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1, # in-progress
-    "TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2,
+    "TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
     # "TTZH": "/TTZH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1, # submitted
     "TTHH": "/TTHH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
     "TTToSemiLepton_HT500Njet9": "/TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2
@@ -49,7 +49,7 @@ groups = {
     # "ST_t_top": "/ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/" + MINIAODv1,
     "ST_s_top": "/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v1,
     # "ST_s_antitop": "/ST_s-channel_antitop_leptonDecays_13TeV-PSweights_powheg-pythia8/" + MINIAODv2 
-  }
+  },
   "EWK": {
     "WW": "/WW_TuneCP5_13TeV-pythia8/" + MINIAODv2v1,
     "WZ": "/WZ_TuneCP5_13TeV-pythia8/" + MINIAODv2v1,

@@ -7,7 +7,7 @@ parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-n", "--nominal", action = "store_true" )
 parser.add_argument( "-b", "--brux", action = "store_true", help = "Store on brux or lpc" )
-parser.add_argument( "-o", "--outfolder", default = "FWLJMET_crab_output" )
+parser.add_argument( "-o", "--outfolder", default = "default" )
 args = parser.parse_args()
 
 if args.test: print( "[OPT] Running in test mode. Only producing one template..." )
@@ -15,10 +15,12 @@ if args.test: print( "[OPT] Running in test mode. Only producing one template...
 if args.year not in [ "16", "16APV", "17", "18" ]: 
   print( "[ERR] Invalid '--year' argument: {}.  Use: 16, 17, 18".format( args.year ) )
   sys.exit()
-	
+
 if not os.path.exists( args.outfolder ):
   print( ">> Creating new directory for CRAB outputs..." )
-  os.system( "mkdir -p {}".format( args.outfolder ) )
+  outfolder = args.outfolder
+  if args.outfolder == "default": outfolder = "crab_output_UL{}".format( args.year ) 
+  os.system( "mkdir -p {}".format( outfolder ) )
 
 #Sample list file
 sampleListPath = "sampleUL{}.py".format( args.year )
@@ -31,7 +33,7 @@ sample = imp.load_source( "sampleUL{}".format( args.year ), sampleListPath, open
 runTemplate = "../runFWLJMetUL{}_template.py".format( args.year )
 
 #folder to save the created crab configs
-configDir = "crabConfigsUL{}".format( args.year ) 
+configDir = "crab_configs_UL{}".format( args.year ) 
 if not os.path.exists( configDir ):
   print( ">> Creating new directory for CRAB configs..." )
   os.system( "mkdir -vp {}".format( configDir ) )
@@ -69,13 +71,13 @@ def create_config_template( sample_dict, **kwargs ):
   for sample_key in sample_dict:
     print( ">> Creating template for {}...".format( sample_key ) )
     configName = "config_{}.py".format( sample_key )
-    configPath = os.path.join( configDir, fileName )
+    configPath = os.path.join( configDir, configName )
     runName = "runFWLJMetUL{}_{}.py".format( args.year, sample_key )
     runPath = os.path.join( configDir, runName )
 
     #copy template file to new directory
-    os.system( "cp -v {} {}".format( configTemplate, configPath ) )
-    os.system( "cp -v {} {}".format( runTemplate, runPath ) )
+    os.system( "cp {} {}".format( configTemplate, configPath ) )
+    os.system( "cp {} {}".format( runTemplate, runPath ) )
 
     #replace strings in new crab file
     os.system( "sed -i 's|CMSRUNCONFIG|{}|g' {}".format( runPath, configPath ) )
@@ -86,22 +88,20 @@ def create_config_template( sample_dict, **kwargs ):
     os.system( "sed -i 's|JSONFORDATA|{}|g' {}".format( jsonData, configPath ) )
     os.system( "sed -i 's|ISMC|{}|g' {}".format( kwargs["ISMC"], configPath ) )
     os.system( "sed -i 's|ISTTBAR|{}|g' {}".format( kwargs["ISTTBAR"], configPath ) )
-    os.system( "sed -i 's|ISVLQSIGNAL|{}|g' {}".format( "False", configPath ) ) # VLQ not used in TTT
+    os.system( "sed -i 's|OUTPATH|{}|g' {}".format( outPath, configPath ) )
+    os.system( "sed -i 's|STORESITE|{}|g' {}".format( storeSite, configPath ) )
 
     #replace strings in new cmsRun file
     if "EGamma" in sample_key or "Single" in sample_key:
       os.system( "sed -i 's|DATASET|{}|g' {}".format( sample_key, runPath ) )
-    elif "ext" in dataset:
+    elif "ext" in sample_key:
       extcode = sample_key[ sample_key.find("ext"): ]
       os.system( "sed -i 's|DATASET|{}-{}|g' {}".format( sample_dict[ sample_key ].split('/')[1], extcode, runPath ) )
     else:
       os.system( "sed -i 's|DATASET|{}|g' {}".format( sample_dict[ sample_key ].split('/')[1], runPath ) )
     os.system( "sed -i 's|ISMC|{}|g' {}".format( kwargs["ISMC"], runPath ) )
-    os.system( "sed -i 's|ISVLQSIGNAL|{}|g' {}".format( "False", runPath ) )	
     os.system( "sed -i 's|ISTTBAR|{}|g' {}".format( kwargs["ISTTBAR"], runPath ) )
     os.system( "sed -i 's|DOGENHT|{}|g' {}".format( kwargs["DOGENHT"], runPath ) )
-    os.system( "sed -i 's|OUTPATH|{}|g' {}".format( outPath, runPath ) )
-    os.system( "sed -i 's|STORESITE|{}|g' {}".format( storeSite, runPath ) )
 
 if __name__ == "__main__":
   if args.test:
