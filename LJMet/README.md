@@ -71,9 +71,16 @@ To run LJMET interactively:
     
 To run LJMET through CRAB3:
 
-    source /cvmfs/cms.cern.ch/crab3/crab.sh
-    crab submit --dryrun crab_FWLJMET_cfg.py
-    python create_crab_config_template.py --finalState singleLep --year 2017 
-    python submit_crab.py --finalState singleLep --year 2017
+    source /cvmfs/cms.cern.ch/crab3/crab.csh
+    source /cvmfs/cms.cern.ch/cmsset_default.csh
+    cmsenv
     
-Optionally, can include the argument `--nominal` to only run the nominal tree.
+Test the config using a dryrun before mass submission:
+
+    crab submit --dryrun crab_FWLJMET_cfg.py
+    
+For mass submission:
+    
+    python create_config_template.py -y 2017 
+    python submit_crab.py -y 2017
+    
