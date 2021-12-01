@@ -9,27 +9,24 @@ options.register( "systematics", False, VarParsing.multiplicity.singleton, VarPa
 options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
 options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
 options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
-options.register( "era", "", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
 
 ## SET DEFAULT VALUES
-options.isMC = True
-options.isTTbar = False
-options.doGenHT = False
-options.maxEvents = -1
-options.era = "2017"
+options.isTest = ISTEST
+options.isMC = ISMC
+options.isTTbar = ISTTBAR
+options.doGenHT = DOGENHT
+options.maxEvents = MAXEVENTS
 options.inputFiles = [
     "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
-    #"root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL17MiniAOD/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v1/20000/06C1E8F8-2ADC-4645-943D-AD569FA4D727.root"
 ]
 options.parseArguments()
 
+isTest = options.isTest
 systematics = options.systematics
 maxEvents = options.maxEvents
-isTest = options.isTest
 isMC = options.isMC
 isTTbar = options.isTTbar
 doGenHT = options.doGenHT
-era = options.era
 
 # Check arguments
 print( ">> Options used: \n{}".format( options ) )
