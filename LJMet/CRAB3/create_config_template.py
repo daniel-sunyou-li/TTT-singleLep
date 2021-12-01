@@ -102,6 +102,9 @@ def create_config_template( sample_dict, **kwargs ):
     os.system( "sed -i 's|ISMC|{}|g' {}".format( kwargs["ISMC"], runPath ) )
     os.system( "sed -i 's|ISTTBAR|{}|g' {}".format( kwargs["ISTTBAR"], runPath ) )
     os.system( "sed -i 's|DOGENHT|{}|g' {}".format( kwargs["DOGENHT"], runPath ) )
+    os.system( "sed -i 's|ISTEST|{}|g' {}".format( kwargs["ISTEST"], runPath ) )
+    os.system( "sed -i 's|MAXEVENTS|{}|g' {}".format( kwargs["MAXEVENTS"], runPath ) )
+    
 
 if __name__ == "__main__":
   if args.test:
@@ -109,54 +112,70 @@ if __name__ == "__main__":
       sample.groups[ "TEST" ], # TTTW
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "True",
+      MAXEVENTS = "100"
     )
   else:
     create_config_template(
       sample.groups[ "SIGNAL" ], # TTTW and TTTJ
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "DATA" ], # SingleElectron and SingleMuon
       ISMC = "False",
       ISTTBAR = "False",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "TTBAR" ], # Semileptonic, Hadronic, 2L2Nu
       ISMC = "True",
       ISTTBAR = "True",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "TOP" ], # Single Top and Rare Top Processes
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "EWK" ], # VV
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "False"
+      DOGENHT = "False",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "EWKHT" ], # DY and WJets
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "True"
+      DOGENHT = "True",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
     
     create_config_template(
       sample.groups[ "QCDHT" ], # QCD
       ISMC = "True",
       ISTTBAR = "False",
-      DOGENHT = "True"
+      DOGENHT = "True",
+      ISTEST = "False",
+      MAXEVENTS = "-1"
     )
