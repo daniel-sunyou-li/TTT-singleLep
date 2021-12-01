@@ -1,12 +1,13 @@
-lpcUserName = "dsunyou"
+eosUserName = "dali"
+date = "12012021"
 
 inputDir = {
-  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep{}_3t/".format( lpcUserName, year ) for year in ["2016","2017","2018"]
+  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, date ) for year in [ "16","17","18" ]
 }
 
-outputPath = "/store/user/{}/".format( lpcUserName )
+outputPath = "/store/user/{}/".format( eosUserName )
 
-condorPath = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/".format( lpcUserName )
+step1Path = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/".format( eosUserName )
 
 samples = {
   "2016": {
