@@ -8,7 +8,7 @@ xrdClient = client.FileSystem("root://brux11.hep.brown.edu:1094/")
 execfile("/uscms_data/d3/jmanagan/EOSSafeUtils.py")
 
 parser = ArgumentParser()
-parser.add_argument( "-y", "--year", default = "2017" )
+parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-s", "--systematics", action = "store_true" )
 parser.add_argument( "-t", "--tag", default = "test" )
 parser.add_argument( "-f", "--filesPerJob", default = "30" )
@@ -19,31 +19,31 @@ start_time = time.time()
 lpcUserName = config.lpcUserName
 
 #IO directories must be full paths
-if args.year not in [ "2016", "2017", "2018" ]: sys.exit( "[ERR] Invalid year option. Use: 2016, 2017, 2018" )
+if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. Use: 16, 17, 18" )
 shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
 finalStateYear = "singleLep{}".format( args.year )
 runDir = os.getcwd()
 inputDir =  inputDir[ args.year ]
-inputLoc = "LPC" if inputDir.startswith( "/isilon/hadoop/" ) else "BRUX"
+inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
 inDir = "/eos/uscms/" if inputLoc == "lpc" else inputDir 
 
 outputDir = {
-  shift: os.path.join( config.outputPath, "/FWLJMET106X_1lep{}UL_3t_{}_step1/{}/".format( args.year, args.tag, shift ) ) for shift in shifts
+  shift: os.path.join( config.outputPath, "/FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, args.tag, shift ) ) for shift in shifts
 }
 
-condorDir = os.path.join( config.condorPath, "/logs_UL{}_{}/".format( args.year, args.tag ) )
+condorDir = os.path.join( config.step1Path, "/logs_UL{}_{}/".format( args.year, args.tag ) )
 
 deepCSV_SF = {
-  "2016": "",
-  "2017": "DeepCSV_106XUL17SF_WPonly_V2p1.csv",
-  "2018": "DeepCSV_106XUL18SF_WPonly.csv"
+  "16": "",
+  "17": "DeepCSV_106XUL17SF_WPonly_V2p1.csv",
+  "18": "DeepCSV_106XUL18SF_WPonly.csv"
 }
 
 deepJet_SF = {
-  "2016": "",
-  "2017": "DeepJet_106XUL17SF_WPonly_V2p1.csv",
-  "2018": "DeepJet_106XUL18SF_WPonly.csv"
+  "16": "",
+  "17": "DeepJet_106XUL17SF_WPonly_V2p1.csv",
+  "18": "DeepJet_106XUL18SF_WPonly.csv"
 }
 
 # Start processing
@@ -53,7 +53,7 @@ print( ">> Starting step1 submission..." )
 
 job_count = 0
 
-samples = config.samples[ args.year ][ inputLoc ]
+samples = config.samples[ "20{}".format( args.year ) ][ inputLoc ]
 
 # loop through samples and submit job
 for sample in samples:
@@ -80,26 +80,26 @@ for sample in samples:
       os.system( "eos root://cmseos.fnal.gov/ mkdir -p {}".format( os.path.join( outputDir[ shift ], step1_sample ) ) )
     os.system( "mkdir -p {}".format( os.path.join( condorDir, step1_sample ) ) )
     
-    runList = EOSlistdir( "{}/{}/singleLep{}/".format( inputDir, sample, args.year ) )
-    if inputLoc == "BRUX":
-      status, dirList = xrdClient.dirlist( "{}/{}/singleLep{}/".foramt( inputDir, sample, args.year ) )
+    runList = EOSlistdir( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
+    if inputLoc == "BRUX": 
+      status, dirList = xrdClient.dirlist( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
       runList = [ item.name for item in dirList ]
               
     print( ">> Running {} CRAB directories...".format( len(runList) ) )
 
     for run in runList:
-      if args.year == "2018":
+      if args.year == "18":
         if ( sample == "EGamma" and run == "191031_131344" ) or ( sample == "SingleMuon" and run == "191031_131820" ): continue
       if inputLoc == "LPC":
-        numList = EOSlistdir( "{}/{}/singleLep{}/{}/".format( inputDir, sample, args.year, run )
+        numList = EOSlistdir( "{}/{}/UL{}/{}/".format( inputDir, sample, args.year, run ) )
       elif inputLoc == "BRUX":
         status, dirList = xrdClient.dirlist( "{}/{}/singleLep{}/{}".format( inputDir, sample, args.year, run ) )
         numList = [ item.name for item in dirList ]
 
       for num in numList:
-          numPath = "{}/{}/singleLepton{}/{}/{}".format( inputDir, sample, args.year, run, num )
+          numPath = "{}/{}/UL{}/{}/{}".format( inputDir, sample, args.year, run, num )
           pathSuffix = numPath.split("/")[-3:]
-          pathSuffix = "/".join( pathsuffix )
+          pathSuffix = "/".join( pathSuffix )
 
           if inputLoc == "LPC":
             rootFiles = EOSlist_root_files( numPath )
@@ -115,33 +115,34 @@ for sample in samples:
             fs_count += 1
             #  if fs_count > 1: continue
 
-            segment1 = ( rootFiles[i].split('.')[0]).split('_')[-1] ## 1-1
-            segment2 = ( rootF iles[i].split('.')[0]).split('_')[-2] ## SingleElectronRun2017C
+            segment1 = ( rootFiles[i].split(".")[0]).split("_")[-1] ## gets the num
+            segment2 = ( rootFiles[i].split(".")[0]).split("_")[-2] ## SingleElectronRun2017C
+            segments = rootFiles[i].split(".")[0].split("_")                       
 
             if isData:    # need unique IDs across eras
-              idList = segment2[-1]+segment1+' '
+              idList = "{}{} ".format( segments[-2][-1], segments[-1] )
               for j in range( i + 1, i + nFilesPerJob ):
                 if j >= len(rootFiles): continue
                 idParts = ( rootFiles[j].split('.')[0] ).split('_')[-2:]
-                idList += idParts[0][-1] + idParts[1] + " "
-            elif 'ext' in segment2:     # WON'T WORK in FWLJMET 052219, but ok since no samples need it
-                idlist = segment2[-4:]+segment1+' '
-                for j in range(i+1,i+nFilesPerJob):
-                    if j >= len(rootfiles): continue
-                    idparts = (rootfiles[j].split('.')[0]).split('_')[-2:]
-                    idlist += idparts[0][-4:]+idparts[1]+' '
+                idList += "{}{} ".format( idPars[0][-1], idParts[1] )
+            elif "ext" in segments[-2]:     # WON'T WORK in FWLJMET 052219, but ok since no samples need it
+              idList = "{}{} ".format( segments[-2][-4:], segements[-1] )
+              for j in range( i + 1, i + nFilesPerJob ):
+                if j >= len(rootfiles): continue
+                idParts = ( rootfiles[j].split('.')[0] ).split('_')[-2:]
+                idList += "{}{} ".format( idParts[0][-4:], idparts[1] )
             else:
-              idList = segment1 + " "
+              idList = "{} ".format( segments[-1] )
               for j in range( i + 1, i + nFilesPerJob ):
                 if j >= len( rootFiles ): continue
-                idlist += ( rootFiles[j].split('.')[0]).split('_')[-1]+' '
+                idList += "{} ".format( rootFiles[j].split(".")[0].split("_")[-1] )
 
-            idlist = idlist.strip()
+            idList = idList.strip()
             #remove the problematic 2018 fwljmet jobs
-            if Year==2018 and sample=='ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8':
+            if Year == "18" and sample == "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8":
               problematicIDs = ['1048','1177','1217','1412','1413','1414','1415','1416','1417','1418','1419','1429','1441','1664','1883']
               for id_ in problematicIDs:
-                idlist = idlist.replace(id_,'').replace('  ',' ')
+                idList = idList.replace( id_, "" ).replace( "  ", " " )
             print( ">> Running IDs: {}".format( idList ) )
 
             jobParams = {
@@ -149,10 +150,10 @@ for sample in samples:
               'SAMPLE':sample, 
               'INPATHSUFFIX':pathSuffix, 
               'INPUTDIR':inputDir, 
-              'FILENAME':basefilename, 
-              'OUTFILENAME':outsample, 
+              'FILENAME':baseFilename, 
+              'OUTFILENAME':outSample, 
               'OUTPUTDIR':outDir, 
-              'LIST':idlist, 
+              'LIST':idList, 
               'ID':fs_count, 
               'YEAR':Year, 
               'CSVFILE':csvFilename, 
@@ -175,7 +176,7 @@ Notification = Never
 Arguments = "%(FILENAME)s %(OUTFILENAME)s %(INPUTDIR)s/%(SAMPLE)s/%(INPATHSUFFIX)s %(OUTPUTDIR)s/%(OUTFILENAME)s '%(LIST)s' %(ID)s %(YEAR)s"
 Queue 1"""%dict)
             jdf.close()
-            os.chdir('%s/%s'%(condorDir,outsample))
+            os.chdir('%s/%s'%( condorDir, outSample ) )
             os.system('condor_submit %(OUTFILENAME)s_%(ID)s.job'%dict)
             os.system('sleep 0.5')                                
             os.chdir('%s'%(runDir))
