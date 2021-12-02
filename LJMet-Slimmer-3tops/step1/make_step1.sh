@@ -13,7 +13,7 @@ Year=${7}
 scratch=${PWD}
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
-export SCRAM_ARCH=slc6_amd64_gcc700
+export SCRAM_ARCH=slc7_amd64_gcc700
 scramv1 project CMSSW CMSSW_10_2_10
 cd CMSSW_10_2_10
 eval `scramv1 runtime -sh`
@@ -22,7 +22,7 @@ cd -
 echo "setting macroDir to PWD"
 macroDir=${PWD}
 export PATH=$PATH:$macroDir
-root -l -b -q compileStep1.C
+root -l -b -q compile_step1.C
 
 XRDpath=root://cmseos.fnal.gov/$inputDir
 if [[ $inputDir == /isilon/hadoop/* ]] ;
@@ -33,18 +33,18 @@ fi
 echo "Running step1 over list: ${idlist}"
 rm filelist
 for iFile in $idlist; do
-    inFile=${iFile}
-    if [[ $iFile == ext* ]] ;
-    then
-	inFile=${iFile:4}
-    elif [[ $iFile == [ABCDEFWXYZ]* ]] ;
-    then
-	inFile=${iFile:1}
-    fi
+	inFile=${iFile}
+	if [[ $iFile == ext* ]] ;
+	then
+		inFile=${iFile:4}
+	elif [[ $iFile == [ABCDEFWXYZ]* ]] ;
+	then
+		inFile=${iFile:1}
+	fi
 
-    echo "adding ${outfilename}_${iFile}.root to the list by reading ${infilename}_${inFile}"
-    echo  $XRDpath/${infilename}_${inFile}.root,${outfilename}_${iFile}.root>> filelist
-    # root -l -b -q makeStep1.C\(\"$macroDir\",\"$XRDpath/${infilename}_${inFile}.root\",\"${outfilename}_${iFile}.root\",${Year}\)
+	echo ">> Adding ${outfilename}_${iFile}.root to the list by reading ${infilename}_${inFile}"
+	echo  $XRDpath/${infilename}_${inFile}.root,${outfilename}_${iFile}.root>> filelist
+	# root -l -b -q makeStep1.C\(\"$macroDir\",\"$XRDpath/${infilename}_${inFile}.root\",\"${outfilename}_${iFile}.root\",${Year}\)
 done
 
 # root -l -b -q makeStep1.C\(\"$macroDir\",\"filelist\",${Year}\)
