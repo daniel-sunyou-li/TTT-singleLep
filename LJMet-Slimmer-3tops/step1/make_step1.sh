@@ -47,7 +47,8 @@ for iFile in $idlist; do
   # root -l -b -q makeStep1.C\(\"$macroDir\",\"$XRDpath/${infilename}_${inFile}.root\",\"${outfilename}_${iFile}.root\",${Year}\)
 done
 
-# root -l -b -q makeStep1.C\(\"$macroDir\",\"filelist\",${Year}\)
+root -l -b -q -g make_step1.C\(\"$macroDir\",\"filelist\",${Year}\)
+
 echo gROOT-\>LoadMacro\(\"make_step1.C++\"\)\; make_step1\(\"$macroDir\",\"filelist\",${Year}\)\; | root -b -l
 
 echo ">> ROOT Files:"
