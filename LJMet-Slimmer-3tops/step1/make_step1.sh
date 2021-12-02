@@ -48,7 +48,7 @@ for iFile in $idlist; do
 done
 
 # root -l -b -q makeStep1.C\(\"$macroDir\",\"filelist\",${Year}\)
-echo gROOT-\>LoadMacro\(\"makeStep1.C++\"\)\; makeStep1\(\"$macroDir\",\"filelist\",${Year}\)\; | root -b -l
+echo gROOT-\>LoadMacro\(\"make_step1.C++\"\)\; make_step1\(\"$macroDir\",\"filelist\",${Year}\)\; | root -b -l
 
 echo ">> ROOT Files:"
 ls -l *.root
