@@ -11,10 +11,8 @@ step1Path = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-si
 
 samples = {
   "2016": {
+    "TEST": [ "TTTW_TuneCUETP8M2T4_13TeV-madgraph-pythia8" ],
     "LPC": [
-    
-    ],
-    "BRUX": [
       'DYJetsToLL_M-50_HT-1200to2500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8',
       'DYJetsToLL_M-50_HT-200to400_TuneCUETP8M1_13TeV-madgraphMLM-pythia8',
       'DYJetsToLL_M-50_HT-2500toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8',
@@ -78,9 +76,13 @@ samples = {
       'ZZ_TuneCUETP8M1_13TeV-pythia8',
       'ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8',
       'ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8',
+    ],
+    "BRUX": [
+    
     ]
   },
   "2017": {
+    "TEST": [ "TTTW_TuneCP5_13TeV-madgraph-pythia8" ],
     "LPC": [
       'DYJetsToLL_M-50_HT-1200to2500_TuneCP5_13TeV-madgraphMLM-pythia8',
       'DYJetsToLL_M-50_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8',
@@ -152,6 +154,7 @@ samples = {
     ]
   },
   "2018": {
+    "TEST": [ "TTTW_TuneCP5_13TeV-madgraph-pythia8" ],
     "LPC": [
       'DYJetsToLL_M-50_HT-1200to2500_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8',
       'DYJetsToLL_M-50_HT-200to400_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8',
