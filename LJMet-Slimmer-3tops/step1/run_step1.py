@@ -5,18 +5,17 @@ from argparse import ArgumentParser
 from ROOT import *
 from XRootD import client
 xrdClient = client.FileSystem("root://brux11.hep.brown.edu:1094/")
-execfile("/uscms_data/d3/jmanagan/EOSSafeUtils.py")
+execfile("../EOSSafeUtils.py")
 
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-s", "--systematics", action = "store_true" )
-parser.add_argument( "-t", "--tag", default = "test" )
+parser.add_argument( "-p", "--postfix", default = "test" )
+parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-f", "--filesPerJob", default = "30" )
 args = parser.parse_args()
 
 start_time = time.time()
-
-lpcUserName = config.lpcUserName
 
 #IO directories must be full paths
 if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. Use: 16, 17, 18" )
@@ -29,21 +28,21 @@ inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
 inDir = "/eos/uscms/" if inputLoc == "lpc" else inputDir 
 
 outputDir = {
-  shift: os.path.join( config.outputPath, "/FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, args.tag, shift ) ) for shift in shifts
+  shift: os.path.join( config.outputPath, "/FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, args.postfix, shift ) ) for shift in shifts
 }
 
-condorDir = os.path.join( config.step1Path, "/logs_UL{}_{}/".format( args.year, args.tag ) )
+condorDir = os.path.join( config.step1Path, "/logs_UL{}_{}/".format( args.year, args.postfix ) )
 
 deepCSV_SF = {
-  "16": "",
-  "17": "DeepCSV_106XUL17SF_WPonly_V2p1.csv",
-  "18": "DeepCSV_106XUL18SF_WPonly.csv"
+  "16": "DeepCSV_106XUL16.csv",
+  "17": "DeepCSV_106XUL17SF_V2p1.csv",
+  "18": "DeepCSV_106XUL18SF_V1p1.csv"
 }
 
 deepJet_SF = {
-  "16": "",
-  "17": "DeepJet_106XUL17SF_WPonly_V2p1.csv",
-  "18": "DeepJet_106XUL18SF_WPonly.csv"
+  "16": "DeepJet_106XUL16.csv",
+  "17": "DeepJet_106XUL17SF_V2p1.csv",
+  "18": "DeepJet_106XUL18SF_V1p1.csv"
 }
 
 # Start processing
@@ -53,7 +52,7 @@ print( ">> Starting step1 submission..." )
 
 job_count = 0
 
-samples = config.samples[ "20{}".format( args.year ) ][ inputLoc ]
+samples = [ "20{}".format( args.year ) ][ "TEST" ] else config.samples[ "20{}".format( args.year ) ][ inputLoc ]
 
 # loop through samples and submit job
 for sample in samples:
@@ -146,18 +145,18 @@ for sample in samples:
             print( ">> Running IDs: {}".format( idList ) )
 
             jobParams = {
-              'RUNDIR':runDir, 
-              'SAMPLE':sample, 
-              'INPATHSUFFIX':pathSuffix, 
-              'INPUTDIR':inputDir, 
-              'FILENAME':baseFilename, 
-              'OUTFILENAME':outSample, 
-              'OUTPUTDIR':outDir, 
-              'LIST':idList, 
-              'ID':fs_count, 
-              'YEAR':Year, 
-              'CSVFILE':csvFilename, 
-              'DEEPJETFILE':deepJetFilename
+              'RUNDIR': os.getcwd(), 
+              'SAMPLE': sample, 
+              'INPATHSUFFIX': pathSuffix, 
+              'INPUTDIR': inputDir, 
+              'FILENAME': baseFilename, 
+              'OUTFILENAME': outSample, 
+              'OUTPUTDIR': outDir, 
+              'LIST': idList, 
+              'ID': fs_count, 
+              'YEAR': args.year, 
+              'DEEPCSV': deepCSV[ args.year ], 
+              'DEEPJET':deepJet[ args.year ]
             }
             jdfName = "{}/{}/{}_{}.job".format( condorDir, jobParams["OUTFILENAME"], jobParams["OUTFILENAME"], jobParams["ID"] )
             print( ">> Storing job information in {}".format( jdfName ) )
@@ -165,10 +164,10 @@ for sample in samples:
             jdf.write(
 """use_x509userproxy = true
 universe = vanilla
-Executable = %(RUNDIR)s/makeStep1.sh
+Executable = %(RUNDIR)s/make_step1.sh
 Should_Transfer_Files = YES
 WhenToTransferOutput = ON_EXIT
-Transfer_Input_Files = %(RUNDIR)s/compileStep1.C, %(RUNDIR)s/makeStep1.C, %(RUNDIR)s/step1.cc, %(RUNDIR)s/step1.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(CSVFILE)s, %(RUNDIR)s/%(DEEPJETFILE)s
+Transfer_Input_Files = %(RUNDIR)s/compile_step1.C, %(RUNDIR)s/make_step1.C, %(RUNDIR)s/step1.cc, %(RUNDIR)s/step1.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(DEEPCSV)s, %(RUNDIR)s/%(DEEPJET)s
 Output = %(OUTFILENAME)s_%(ID)s.out
 Error = %(OUTFILENAME)s_%(ID)s.err
 Log = %(OUTFILENAME)s_%(ID)s.log
