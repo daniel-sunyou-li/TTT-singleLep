@@ -18,6 +18,7 @@ args = parser.parse_args()
 start_time = time.time()
 
 #IO directories must be full paths
+if args.test: print( "[OPT] Running in test mode. Only submitting one sample: TTTW" )
 if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. Use: 16, 17, 18" )
 shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
