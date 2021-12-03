@@ -9,7 +9,7 @@ inputDir=${3}
 outputDir=${4}
 idlist=${5}
 ID=${6}
-Year=${7}
+Year=20${7}
 scratch=${PWD}
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
