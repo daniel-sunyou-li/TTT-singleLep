@@ -7,7 +7,7 @@ MINIAODv2v2 = "RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
 
 groups = {
   "TEST": {
-    "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
+    "TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
   },
   "DATA": {
     "SingleElectronRun2017B": "/SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD",
@@ -23,8 +23,8 @@ groups = {
     "SingleMuonRun2017F": "/SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD"
   },
   "SIGNAL": {
-    "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2,
-    "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
+    "TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2,
+    "TTTJ": "/TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
   },
   "TTBAR": {
     "TTTT": "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v2,

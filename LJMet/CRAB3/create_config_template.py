@@ -8,6 +8,7 @@ parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-n", "--nominal", action = "store_true" )
 parser.add_argument( "-b", "--brux", action = "store_true", help = "Store on brux or lpc" )
 parser.add_argument( "-o", "--outfolder", default = "default" )
+parser.add_argument( "-p", "--postfix", default = "test" )
 args = parser.parse_args()
 
 if args.test: print( "[OPT] Running in test mode. Only producing one template..." )
@@ -16,11 +17,10 @@ if args.year not in [ "16", "16APV", "17", "18" ]:
   print( "[ERR] Invalid '--year' argument: {}.  Use: 16, 17, 18".format( args.year ) )
   sys.exit()
 
+outFolder = args.outfolder
 if not os.path.exists( args.outfolder ):
   print( ">> Creating new directory for CRAB outputs..." )
-  outfolder = args.outfolder
-  if args.outfolder == "default": outfolder = "crab_output_UL{}".format( args.year ) 
-  os.system( "mkdir -p {}".format( outfolder ) )
+  if args.outfolder == "default": outFolder = "FWLJMET106XUL_1lep20{}_3t_{}/".format( args.year, args.postfix ) 
 
 #Sample list file
 sampleListPath = "sampleUL{}.py".format( args.year )
@@ -33,7 +33,7 @@ sample = imp.load_source( "sampleUL{}".format( args.year ), sampleListPath, open
 runTemplate = "../runFWLJMetUL{}_template.py".format( args.year )
 
 #folder to save the created crab configs
-configDir = "crab_configs_UL{}".format( args.year ) 
+configDir = "crab_configs/UL{}".format( args.year ) 
 if not os.path.exists( configDir ):
   print( ">> Creating new directory for CRAB configs..." )
   os.system( "mkdir -vp {}".format( configDir ) )
@@ -43,9 +43,6 @@ configTemplate = "config_template.py"
 
 #crab request name
 request = "UL" + args.year
-
-#eos out folder
-outFolder = args.outfolder
 
 # JSON for Data
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/DCUserPage
@@ -61,11 +58,12 @@ jsonData = {
 }
 
 if args.brux:
-	outPath = "/store/group/bruxljm/"
-	storeSite = "T3_US_Brown"
+  outPath = "/store/group/bruxljm/"
+  storeSite = "T3_US_Brown"
 else:
-	outPath = "/store/group/lpcljm/"
-	storeSite = "T3_US_FNALLPC"
+  #outPath = "/store/group/lpcljm/"
+  outPath = "/store/user/dali/"
+  storeSite = "T3_US_FNALLPC"
 
 def create_config_template( sample_dict, **kwargs ):
   for sample_key in sample_dict:
@@ -85,7 +83,7 @@ def create_config_template( sample_dict, **kwargs ):
     os.system( "sed -i 's|REQNAME|{}|g' {}".format( request, configPath ) )
     os.system( "sed -i 's|OUTFOLDER|{}|g' {}".format( outFolder, configPath ) )
     os.system( "sed -i 's|LOGFOLDER|{}|g' {}".format( sample_key, configPath ) )
-    os.system( "sed -i 's|JSONFORDATA|{}|g' {}".format( jsonData, configPath ) )
+    os.system( "sed -i 's|JSONFORDATA|{}|g' {}".format( jsonData[ args.year ], configPath ) )
     os.system( "sed -i 's|ISMC|{}|g' {}".format( kwargs["ISMC"], configPath ) )
     os.system( "sed -i 's|ISTTBAR|{}|g' {}".format( kwargs["ISTTBAR"], configPath ) )
     os.system( "sed -i 's|OUTPATH|{}|g' {}".format( outPath, configPath ) )

@@ -11,7 +11,6 @@ outputFolder   = "OUTFOLDER"
 logFolder      = "LOGFOLDER" # this will be the sample key name
 jsonData       = "JSONFORDATA"
 isMC           = ISMC
-isVLQsignal    = ISVLQSIGNAL
 isTTbar        = ISTTBAR
 
 # general
@@ -27,7 +26,6 @@ config.JobType.pluginName = "Analysis"
 config.JobType.psetName = runConfig
 
 # cmsRun params
-config.JobType.pyCfgParams = [ "dataset=" + dataset ]
 if isMC:
   config.JobType.pyCfgParams = [ "isMC=True" ]
 else:
@@ -47,12 +45,13 @@ config.section_("Data")
 config.Data.inputDataset = dataset
 config.Data.allowNonValidInputDataset = True
 if isMC:
-  config.Data.splitting = 'FileBased' # "LumiBased", "Automatic"
+  config.Data.splitting = "FileBased" # "FileBaed", "LumiBased", "Automatic"
   config.Data.unitsPerJob = 1 # 2 if LumiBased # 1440 = 24 hours
 else:
-	config.Data.splitting = "Automatic"
-	config.Data.unitsPerJob = 720 # 24 hours
-	config.Data.lumiMask = jsonData
+  config.Data.splitting = "Automatic"
+  config.Data.unitsPerJob = 720 # 24 hours
+  config.Data.lumiMask = jsonData
+
 config.Data.inputDBS = "global"
 config.Data.ignoreLocality = False
 config.Data.publication = False

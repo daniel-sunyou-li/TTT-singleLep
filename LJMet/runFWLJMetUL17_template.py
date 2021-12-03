@@ -17,7 +17,7 @@ options.isTTbar = ISTTBAR
 options.doGenHT = DOGENHT
 options.maxEvents = MAXEVENTS
 options.inputFiles = [
-    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAOD/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v3/270000/056C0DD9-6A0B-E14F-B424-9C6DE439A711.root"
 ]
 options.parseArguments()
 
@@ -205,7 +205,7 @@ process.ecalBadCalibReducedMINIAODFilter = cms.EDFilter(
 
 ## Produce DeepAK8 jet tags
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
-from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import pfDeepBoostedJetTags, pfMassDecorrelatedDeepBoostedJetTags, _pfDeepBoostedJetTagsAll
+from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import pfDeepBoostedJetTags, pfMassDecorrelatedDeepBoostedJetTags
 from RecoBTag.ONNXRuntime.Parameters.DeepBoostedJet.V02.pfDeepBoostedJetPreprocessParams_cfi import pfDeepBoostedJetPreprocessParams as pfDeepBoostedJetPreprocessParamsV02
 from RecoBTag.ONNXRuntime.Parameters.DeepBoostedJet.V02.pfMassDecorrelatedDeepBoostedJetPreprocessParams_cfi import pfMassDecorrelatedDeepBoostedJetPreprocessParams as pfMassDecorrelatedDeepBoostedJetPreprocessParamsV02
 pfDeepBoostedJetTags.preprocessParams = pfDeepBoostedJetPreprocessParamsV02
@@ -944,7 +944,7 @@ if (isTTbar):
     process.QGTagger *
     process.tightAK4Jets *
     process.tightPackedJetsAK8Puppi *
-    process.prefiringweight *
+    #process.prefiringweight *
     process.ecalBadCalibReducedMINIAODFilter *
     process.ttbarcat *
     process.ljmet * #(ntuplizer) 

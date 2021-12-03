@@ -18,7 +18,7 @@ options.doGenHT = False
 options.maxEvents = -1
 options.era = "2017"
 options.inputFiles = [
-    "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL7MiniAODv2/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/2530000/8F56C3DB-7CDC-3046-9AEA-7BED8620A384.root"
+"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAOD/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v3/270000/056C0DD9-6A0B-E14F-B424-9C6DE439A711.root"
     #"root://cmsxrootd.fnal.gov//store/mc/RunIISummer19UL17MiniAOD/ChargedHiggs_HplusTB_HplusToTB_M-500_TuneCP5_13TeV_amcatnlo_pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v1/20000/06C1E8F8-2ADC-4645-943D-AD569FA4D727.root"
 ]
 options.parseArguments()
