@@ -5,10 +5,10 @@ import os, sys, argparse, imp
 parser = argparse.ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-t", "--test", action = "store_true" )
-parser.add_argument( "-n", "--nominal", action = "store_true" )
 parser.add_argument( "-b", "--brux", action = "store_true", help = "Store on brux or lpc" )
 parser.add_argument( "-o", "--outfolder", default = "default" )
 parser.add_argument( "-p", "--postfix", default = "test" )
+parser.add_argument( "-s", "--systematics", action = "store_true" )
 args = parser.parse_args()
 
 if args.test: print( "[OPT] Running in test mode. Only producing one template..." )
@@ -102,7 +102,7 @@ def create_config_template( sample_dict, **kwargs ):
     os.system( "sed -i 's|DOGENHT|{}|g' {}".format( kwargs["DOGENHT"], runPath ) )
     os.system( "sed -i 's|ISTEST|{}|g' {}".format( kwargs["ISTEST"], runPath ) )
     os.system( "sed -i 's|MAXEVENTS|{}|g' {}".format( kwargs["MAXEVENTS"], runPath ) )
-    
+    os.system( "sed -i 's|SYSTEMATICS|{}|g' {}".format( kwargs["SYSTEMATICS"], runPath ) )    
 
 if __name__ == "__main__":
   if args.test:
@@ -112,7 +112,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "False",
       ISTEST = "True",
-      MAXEVENTS = "100"
+      MAXEVENTS = "100",
+      SYSTEMATICS = "False"
     )
   else:
     create_config_template(
@@ -121,7 +122,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "False",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )
     
     create_config_template(
@@ -130,7 +132,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "False",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )
     
     create_config_template(
@@ -139,7 +142,8 @@ if __name__ == "__main__":
       ISTTBAR = "True",
       DOGENHT = "False",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "True" if args.systematics else "False"
     )
     
     create_config_template(
@@ -148,7 +152,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "False",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )
     
     create_config_template(
@@ -157,7 +162,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "False",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )
     
     create_config_template(
@@ -166,7 +172,8 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "True",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )
     
     create_config_template(
@@ -175,5 +182,6 @@ if __name__ == "__main__":
       ISTTBAR = "False",
       DOGENHT = "True",
       ISTEST = "False",
-      MAXEVENTS = "-1"
+      MAXEVENTS = "-1",
+      SYSTEMATICS = "False"
     )

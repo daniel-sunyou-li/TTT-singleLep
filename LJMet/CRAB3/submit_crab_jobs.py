@@ -4,6 +4,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument( "-y", "--year", action = "store", help = "Options = [16, 16APV, 17, 18]" )
 parser.add_argument( "-c", "--configDir", required = True )
 parser.add_argument( "-g", "--group", default = "TEST" ) 
+parser.add_argument( "-s", "--systematics", action = "store" )
 args = parser.parse_args()
 
 if args.group not in [ "TEST", "ALL", "SIGNAL", "DATA", "QCD", "EWK", "EWKHT", "TOP", "TTBAR" ]:
@@ -21,6 +22,7 @@ crabConfigDir = args.configDir
 
 def submit_crab_jobs( group, sample_dict ):
   for dataset in sample_dict[ group ]:
+    if not args.systematics and ( "up" in dataset.lower() or "dn" in dataset.lower() ): continue
     print( ">> Submitting from {}: {}".format( group, dataset ) )
     crabConfig = os.path.join( crabConfigDir, "config_{}.py".format( dataset ) )
 

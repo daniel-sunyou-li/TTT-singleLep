@@ -27,14 +27,14 @@ groups = {
     "TTTJ": "/TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
   },
   "TTBAR": {
-    "TTTT": "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v2,
-    "TTWW": "/TTWW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    "TTZZ": "/TTZZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    # "TTWH": "/TTWH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1, # in-progress
-    "TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    # "TTZH": "/TTZH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1, # submitted
-    "TTHH": "/TTHH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
-    "TTToSemiLepton_HT500Njet9": "/TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2
+    #"TTTT": "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v2,
+    #"TTWW": "/TTWW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"TTZZ": "/TTZZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"TTWH": "/TTWH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    #"TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"TTZH": "/TTZH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    #"TTHH": "/TTHH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    #"TTToSemiLepton_HT500Njet9": "/TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2
   },
   "TOP": {
     "TTWl": "/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2v1,
@@ -45,8 +45,8 @@ groups = {
     "TTHnonbb": "/ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2, 
     "ST_tW_antitop": "/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2,  
     "ST_tW_top": "/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2, 
-    # "ST_t_antitop": "/ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/" + MINIAODv1,
-    # "ST_t_top": "/ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8/" + MINIAODv1,
+    "ST_t_antitop": "/ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8/" + MINIAODv2v1,
+    # "ST_t_top": "/ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv1,
     "ST_s_top": "/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v1,
     # "ST_s_antitop": "/ST_s-channel_antitop_leptonDecays_13TeV-PSweights_powheg-pythia8/" + MINIAODv2 
   },
@@ -61,14 +61,14 @@ groups = {
 
 for DYM_HT in [ "200to400", "400to600", "600to800", "800to1200", "1200to2500", "2500toInf" ]: 
   groups[ "EWKHT" ][ "DYM50HT" + DYM_HT ] = "/DYJetsToLL_M-50_HT-{}_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8/{}".format( DYM_HT, MINIAODv2v1 )
-for WJets_HT in [ "200To400", "400To600", "600To800", "1200To2500", "2500ToInf" ]: # "800To1200" in-progres 
+for WJets_HT in [ "200To400", "400To600", "600To800", "800To1200", "1200To2500", "2500ToInf" ]: # in-progres 
   groups[ "EWKHT" ][ "WJetsHT" + WJets_HT ] = "/WJetsToLNu_HT-{}_13TeV-madgraphMLM-pythia8/{}".format( WJets_HT, MINIAODv2v1 )
 for QCD_HT in [ "200to300", "300to500", "500to700", "700to1000", "1500to2000" ]: # "1000to1500", "2000toInf" in-progress
   groups[ "QCDHT" ][ "QCDHT" + QCD_HT ] = "/QCD_HT{}_TuneCP5_PSWeights_13TeV-madgraph-pythia8/{}".format( QCD_HT, MINIAODv2v1 )
 
 # add systematic shift ttbar samples
 shift_key = {
-  "TuneCP5_erdON": "",
+  "TuneCP5": "",
   "TuneCP5up": "UEUP",
   "TuneCP5down": "UEDN",
   "hdampUP_TuneCP5": "HDUP",
@@ -77,7 +77,8 @@ shift_key = {
 
 for tt in [ "SemiLeptonic", "Hadronic", "2L2Nu" ]:
   for shift in shift_key:
-    groups[ "TTBAR" ][ tt + shift_key[shift] ] = "TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v1 )
+    if tt == "Hadronic": groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v2 )
+    #else: groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v1 )
     
 # not sure where trigdictmc is referenced or how it is used 
 #trigdictmc = {

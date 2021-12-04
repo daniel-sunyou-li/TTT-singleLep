@@ -16,6 +16,7 @@ options.isMC = ISMC
 options.isTTbar = ISTTBAR
 options.doGenHT = DOGENHT
 options.maxEvents = MAXEVENTS
+options.systematics = SYSTEMATICS
 options.inputFiles = [
 "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAOD/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v3/270000/056C0DD9-6A0B-E14F-B424-9C6DE439A711.root"
 ]
@@ -934,25 +935,42 @@ if (isTTbar):
     * process.categorizeGenTtbar  ## return already a categorization id for tt                  
   )
 
-  process.p = cms.Path(
-    process.mcweightanalyzer *
-    process.filter_any_explicit *
-    #process.fullPatMetSequenceModifiedMET *
-    process.egammaPostRecoSeq *
-    process.updatedJetsAK8PuppiSoftDropPacked *
-    process.packedJetsAK8Puppi *
-    process.QGTagger *
-    process.tightAK4Jets *
-    process.tightPackedJetsAK8Puppi *
-    #process.prefiringweight *
-    process.ecalBadCalibReducedMINIAODFilter *
-    process.ttbarcat *
-    process.ljmet * #(ntuplizer) 
-    process.ljmet_JECup * #(ntuplizer) 
-    process.ljmet_JECdown * #(ntuplizer) 
-    process.ljmet_JERup * #(ntuplizer) 
-    process.ljmet_JERdown #(ntuplizer) 
-  )
+  if systematics:
+    process.p = cms.Path(
+      process.mcweightanalyzer *
+      process.filter_any_explicit *
+      #process.fullPatMetSequenceModifiedMET *
+      process.egammaPostRecoSeq *
+      process.updatedJetsAK8PuppiSoftDropPacked *
+      process.packedJetsAK8Puppi *
+      process.QGTagger *
+      process.tightAK4Jets *
+      process.tightPackedJetsAK8Puppi *
+      #process.prefiringweight *
+      process.ecalBadCalibReducedMINIAODFilter *
+      process.ttbarcat *
+      process.ljmet * #(ntuplizer) 
+      process.ljmet_JECup * #(ntuplizer) 
+      process.ljmet_JECdown * #(ntuplizer) 
+      process.ljmet_JERup * #(ntuplizer) 
+      process.ljmet_JERdown #(ntuplizer) 
+    )
+  else:
+    process.p = cms.Path(
+      process.mcweightanalyzer *
+      process.filter_any_explicit *
+      #process.fullPatMetSequenceModifiedMET *
+      process.egammaPostRecoSeq *
+      process.updatedJetsAK8PuppiSoftDropPacked *
+      process.packedJetsAK8Puppi *
+      process.QGTagger *
+      process.tightAK4Jets *
+      process.tightPackedJetsAK8Puppi *
+      #process.prefiringweight *
+      process.ecalBadCalibReducedMINIAODFilter *
+      process.ttbarcat *
+      process.ljmet #(ntuplizer)
+    )
 
 elif isMC:
   if systematics:

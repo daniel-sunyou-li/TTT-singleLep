@@ -6,6 +6,7 @@ parser.add_argument( "-y", "--year", required = True )
 parser.add_argument( "-r", "--resubmit", action = "store_true" )
 parser.add_argument( "-k", "--kill", action = "store_true" )
 parser.add_argument( "-g", "--group", required = True )
+parser.add_argument( "-s", "--systematics", action = "store_true" )
 parser.add_argument( "-v", "--verbose", action = "store_true" )
 args = parser.parse_args()
 
@@ -17,6 +18,7 @@ samples = imp.load_source( "Samples", "sampleUL{}.py".format( args.year ), open(
 
 def check_crab_jobs( group, samples_dict ):
   for sample in samples_dict[ group ]:
+    if not args.systematics and ( "up" in sample.lower() or "dn" in sample.lower() ): continue
     if args.resubmit:
       print( ">> Resubmitting {}: {}".format( group, sample ) )
       os.system( "crab resubmit {}".format( os.path.join( args.folder, "crab_UL{}_{}".format( args.year, sample ) ) ) )
