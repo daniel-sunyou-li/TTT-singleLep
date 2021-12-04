@@ -53,7 +53,7 @@ print( ">> Starting step1 submission..." )
 
 job_count = 0
 
-samples = [ "20{}".format( args.year ) ][ "TEST" ] else config.samples[ "20{}".format( args.year ) ][ inputLoc ]
+samples = [ "20{}".format( args.year ) ][ "TEST" ] if args.test else config.samples[ "20{}".format( args.year ) ][ inputLoc ]
 
 # loop through samples and submit job
 for sample in samples:
