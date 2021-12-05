@@ -17,7 +17,7 @@
 #include "vector"
 #include "TLorentzVector.h"
 #include "Davismt2.h"
-#include "S2HardcodedConditions.h"
+#include "HardcodedConditions.h"
 
 class step2 {
 public :
@@ -27,12 +27,12 @@ public :
    Int_t           fCurrent; //!current Tree number in a TChain
 
    //Load Scale Factors
-   S2HardcodedConditions hardcodedConditions;
+   HardcodedConditions hardcodedConditions;
 
    // Fixed size dimensions of array or collections stored in the TTree if any.
    Int_t           isTraining;
    Bool_t          isTTbar;
-   Bool_t          isTTTT;   
+   Bool_t          isTTTX;   
    Float_t         xsecEff; //this is the weight actually!! so (Lumi * xsec)/nEvents, but keeping the naming the same to be consistent with TMVA setup
    Int_t	   Year;
 
@@ -726,7 +726,7 @@ public :
 step2::step2(TString inputFileName, TString outputFileName)// : inputTree(0), inputFile(0), outputFile(0) 
 {   //weight branches to be used in the BDT training, xsecEff is the weight
 
-   hardcodedConditions = S2HardcodedConditions();
+   hardcodedConditions = HardcodedConditions();
 
    // TT bkg divided into TTToSemiLep, TTToHadronic, TT high mass appear below
 
@@ -761,33 +761,15 @@ step2::step2(TString inputFileName, TString outputFileName)// : inputTree(0), in
        else if (inputFileName.Contains("TTTT_TuneCP5_13TeV-amcatnlo-pythia8")) xsecEff = 0.000815849917354; 
    }
 
-//// Samples no longer in use
-////   //TTToSemiLep
-////   if (inputFileName.Contains("TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700")) xsecEff = 0.137784841012;
-////   else if (inputFileName.Contains("TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt1000toInf")) xsecEff = 0.0309363357165;
-////   else if (inputFileName.Contains("TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt700to1000")) xsecEff = 0.0514566653858;
-////
-////   //TTToHadronic
-////   else if (inputFileName.Contains("TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700")) xsecEff =  0.121490806141;
-////   else if (inputFileName.Contains("TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt1000toInf")) xsecEff = 0.030031985381;
-////   else if (inputFileName.Contains("TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt700to1000")) xsecEff = 0.0490022856079;
-////
-////   //TTTo2l2nu
-////   else if (inputFileName.Contains("TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700")) xsecEff = 0.0525799344238;
-////   else if (inputFileName.Contains("TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt1000toInf")) xsecEff = 0.0226832371713;
-////   else if (inputFileName.Contains("TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt700to1000")) xsecEff = 0.0320566270444;
-////   //TT high mass 
-////   else if (inputFileName.Contains("TT_Mtt-1000toInf_TuneCP5_PSweights_13TeV-powheg-pythia8")) xsecEff = 0.0294081434678;
-////   else if (inputFileName.Contains("TT_Mtt-700to1000_TuneCP5_13TeV-powheg-pythia8")) xsecEff = 0.0473629131251;
-   
    //For everything else, just have this branch be dummy at the moment, 1 will do nothing
    else xsecEff = 1.0;
    cout << " xsecEff " << xsecEff << endl;
    isTTbar = false;
-   isTTTT = false;
+   isTTTX = false;
    if (inputFileName.Contains("TT_")) isTTbar = true;      
    else if (inputFileName.Contains("TTTo")) isTTbar = true;      
-   else if (inputFileName.Contains("TTTT")) isTTTT = true;         
+   else if (inputFileName.Contains("TTTW")) isTTTX = true;   
+   else if (inputFileName.Contains("TTTJ")) isTTTX = true;      
 
    isSTs = inputFileName.Contains("ST_s-channel");
    isSTt = inputFileName.Contains("ST_t-channel");
@@ -804,18 +786,6 @@ step2::step2(TString inputFileName, TString outputFileName)// : inputTree(0), in
    isTTCC_HT500Njet9 = (inputFileName.Contains("_ttcc") && inputFileName.Contains("TTToSemiLepton_HT500Njet9_"));
    isTTLF_HT500Njet9 = (inputFileName.Contains("_ttjj") && inputFileName.Contains("TTToSemiLepton_HT500Njet9_"));
 
-// if parameter tree is not specified (or zero), connect the file
-// used to generate this class and read the Tree.
-//    if (tree == 0) {
-//       TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root");
-//       if (!f || !f->IsOpen()) {
-//          f = new TFile("TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root");
-//       }
-//       f->GetObject("ljmet",tree);
-// 
-//    } 
-
-//   inputFile=new TFile(inputFileName);
   if(!(inputFile=TFile::Open(inputFileName))){
     std::cout<<"WARNING! File doesn't exist! Exiting" << std::endl;
     exit(1);

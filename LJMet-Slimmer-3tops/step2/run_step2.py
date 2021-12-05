@@ -1,10 +1,16 @@
-import os,sys,shutil,datetime,time
+import os, sys, shutil, datetime, time
 import getpass
-from ROOT import *
+from argparse import ArugmentParser
 
 start_time = time.time()
-shift = sys.argv[1]
-year = 2017
+
+parser = ArgumentParser()
+parser.add_argument( "-y", "--year", default = "17", help = "Year options: [16,17,18]" )
+parser.add_argument( "-t", "--test", action = "store_true" )
+parser.add_argument( "-s", "--systematics", action = "store_true" )
+args = parser.parse_args()
+
+from ROOT import *
 
 #IO directories must be full paths
 foldnum = '-1'

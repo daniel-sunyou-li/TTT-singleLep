@@ -1,8 +1,8 @@
 #include "step2.cc"
 #include "Davismt2.cc"
-#include "S2HardcodedConditions.cc"
+#include "HardcodedConditions.cc"
 
-void makeStep2(TString macroDir, TString inputFile, TString outputFile){
+void make_step2(TString macroDir, TString inputFile, TString outputFile){
 
   gROOT->SetMacroPath(macroDir);
 
