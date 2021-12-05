@@ -5,7 +5,7 @@
 #include<string>
 using namespace std;
 
-void makeStep1(TString macroDir, TString inputFile, TString outputFile, Int_t Year){
+void make_step1(TString macroDir, TString inputFile, TString outputFile, Int_t Year){
 
   gROOT->SetMacroPath(macroDir);
 
@@ -34,7 +34,7 @@ void makeStep1(TString macroDir, TString inputFile, TString outputFile, Int_t Ye
     }
 }
 
-void makeStep1(TString macroDir, string filelist, Int_t Year){
+void make_step1(TString macroDir, string filelist, Int_t Year){
 
   gROOT->SetMacroPath(macroDir);
 
@@ -56,8 +56,8 @@ void makeStep1(TString macroDir, string filelist, Int_t Year){
     }
     myfile.close();
 
-    std::string btagcsvfile("DeepCSV_106XUL17SF.csv");
-    std::string btagdjcsvfile("DeepJet_106XUL17SF.csv");
+    std::string btagcsvfile("DeepCSV_106XUL17SF_V2p1.csv");
+    std::string btagdjcsvfile("DeepJet_106XUL17SF_V2p1.csv");
     cout << ">> CSV reshaping file: " << btagcsvfile << endl;
     cout << ">> Deep Jet reshaping file: "<<btagdjcsvfile<< endl;
     auto calib = new const BTagCalibrationForLJMet("DeepCSV", btagcsvfile); 

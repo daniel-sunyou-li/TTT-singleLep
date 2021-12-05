@@ -1,4 +1,5 @@
-# still need to update
+# Last updated 12/5/2021 by Daniel Li
+
 datadict = { 
   "SingleElectronRun2018A": "/EGamma/Run2018A-UL2018_MiniAODv2-v1/MINIAOD",
   "SingleElectronRun2018B": "/EGamma/Run2018B-UL2018_MiniAODv2-v1/MINIAOD",
@@ -16,7 +17,6 @@ datadict = {
   "JetHTRun2018D": "/JetHT/Run2018D-UL2018_MiniAODv2-v1/MINIAOD"
 }
 
-MINIAODv1 = "RunIISummer20UL18MiniAOD-106X_upgrade2018_realistic_v11_L1v1-v2/MINIAODSIM"
 MINIAODv2v1 = "RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM"
 MINIAODv2v2 = "RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM"
 
@@ -26,13 +26,13 @@ trigdictmc = {
 }
 
 signaldict = {
-  # "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1 # in-progress
-  # "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv1 # in-progress
+  "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2 # in-progress
+  "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2 # in-progress
 }
 
 bkgdict = {
-  "TTWl": "/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2,
-  "TTWq": "/TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2,
+  "TTWl": "/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2v1,
+  "TTWq": "/TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2v1,
   # "TTZM1to10": "/TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2, # unsubmitted
   "TTZM10": "/TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv1, # MINIAODv2 in-progress
   # "TTHbb": "/ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv1, # in-progress

@@ -30,6 +30,7 @@ public:
     double GetMuonTriggerVlqXSF(double pt, double eta, int year = 2017);
     float GetNjetSF(int njet, int year, std::string variation, bool isTT);
     float GetTtHfSF(bool isTT, bool isTTHF, bool isTTLF);
+    float GetCSVRenormSF(int year, int isE, int njet, std::string sampleType);
 
     void GetBtaggingSF(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM", int jetHFlav = 5, int year = 2017);
     void GetBtaggingEff(double pt, double *eff, std::string tagger="CSVM", int jetHFlav = 5, int year = 2017);

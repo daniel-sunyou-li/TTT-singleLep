@@ -80,12 +80,12 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   // btagCalibration initialization -csv reshaping
   if (calib == NULL)
   {
-    std::string btagcsvfile( "DeepCSV_106XUL17SF_V2p1.csv" );
+    std::string btagcsvfile( "data/DeepCSV_106XUL17SF_V2p1.csv" );
     if ( Year == 2018 ) {
-      btagcsvfile = "DeepCSV_106XUL18SF_V1p1.csv"; 
+      btagcsvfile = "data/DeepCSV_106XUL18SF_V1p1.csv"; 
     }
 	  if ( Year == 2016 ) {
-      btagcsvfile = "DeepCSV_106XUL16SF.csv"; 
+      btagcsvfile = "data/DeepCSV_106XUL16SF.csv"; 
     }
     cout << ">> CSV reshaping file: " << btagcsvfile << endl;
     calib = new const BTagCalibrationForLJMet( "DeepCSV", btagcsvfile ); 
@@ -93,12 +93,12 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
 
   if ( calib_dj == NULL )
   {
-    std::string btagdjcsvfile( "DeepJet_106XUL17SF_V2p1.csv" );
+    std::string btagdjcsvfile( "data/DeepJet_106XUL17SF_V2p1.csv" );
     if ( Year == 2018 ) {
-      btagdjcsvfile( "DeepJet_106XUL18SF_V1p1.csv" ); 
+      btagdjcsvfile = "data/DeepJet_106XUL18SF_V1p1.csv"; 
     }
     if ( Year == 2016 ) {
-      btagdjcsvfile( "DeepJet_106XUL16SF.csv" ) 
+      btagdjcsvfile = "data/DeepJet_106XUL16SF.csv"; 
     }
     cout << ">> DeepJet reshaping file: " << btagdjcsvfile << endl;
     calib_dj = new const BTagCalibrationForLJMet( "DeepJet", btagdjcsvfile );

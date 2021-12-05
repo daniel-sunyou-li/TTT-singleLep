@@ -69,16 +69,16 @@ for QCD_HT in [ "200to300", "300to500", "500to700", "700to1000", "1500to2000" ]:
 # add systematic shift ttbar samples
 shift_key = {
   "TuneCP5": "",
-  "TuneCP5up": "UEUP",
-  "TuneCP5down": "UEDN",
-  "hdampUP_TuneCP5": "HDUP",
-  "hdampDOWN_TuneCP5": "HDDN"
+  "TuneCP5up": "_UEUP",
+  "TuneCP5down": "_UEDN",
+  "hdampUP_TuneCP5": "_HDUP",
+  "hdampDOWN_TuneCP5": "_HDDN"
 }
 
 for tt in [ "SemiLeptonic", "Hadronic", "2L2Nu" ]:
   for shift in shift_key:
     if tt == "Hadronic": groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v2 )
-    #else: groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v1 )
+    else: groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v1 )
     
 # not sure where trigdictmc is referenced or how it is used 
 #trigdictmc = {
