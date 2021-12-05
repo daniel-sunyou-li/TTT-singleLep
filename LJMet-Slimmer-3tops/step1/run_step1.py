@@ -29,7 +29,7 @@ inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
 inDir = "/eos/uscms/" if inputLoc == "LPC" else inputDir 
 
 outputDir = {
-  shift: os.path.join( config.outputPath, "/FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, postfix, shift ) ) for shift in shifts
+  shift: os.path.join( config.outputPath, "FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, postfix, shift ) ) for shift in shifts
 }
 
 condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
