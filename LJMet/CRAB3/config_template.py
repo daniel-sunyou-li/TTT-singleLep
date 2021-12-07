@@ -49,7 +49,7 @@ if isMC:
   config.Data.unitsPerJob = 1 # 2 if LumiBased # 1440 = 24 hours
 else:
   config.Data.splitting = "Automatic"
-  config.Data.unitsPerJob = 720 # 24 hours
+  config.Data.unitsPerJob = 720 # 12 hours
   config.Data.lumiMask = jsonData
 
 config.Data.inputDBS = "global"

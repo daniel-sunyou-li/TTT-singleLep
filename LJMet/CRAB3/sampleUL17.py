@@ -27,14 +27,14 @@ groups = {
     "TTTJ": "/TTTJ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
   },
   "TTBAR": {
-    #"TTTT": "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v2,
-    #"TTWW": "/TTWW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"TTZZ": "/TTZZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"TTWH": "/TTWH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
-    #"TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"TTZH": "/TTZH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
-    #"TTHH": "/TTHH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
-    #"TTToSemiLepton_HT500Njet9": "/TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2
+    "TTTT": "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/" + MINIAODv2v2,
+    "TTWW": "/TTWW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    "TTZZ": "/TTZZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    "TTWH": "/TTWH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    "TTWZ": "/TTWZ_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    "TTZH": "/TTZH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    "TTHH": "/TTHH_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2, 
+    "TTToSemiLepton_HT500Njet9": "/TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v2
   },
   "TOP": {
     "TTWl": "/TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8/" + MINIAODv2v1,
