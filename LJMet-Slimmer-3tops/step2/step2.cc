@@ -19,7 +19,7 @@
 #include "TROOT.h"
 #include "Davismt2.h"
 #include <bits/stdc++.h> 
-#include "S2HardcodedConditions.h"
+#include "HardcodedConditions.h"
 
 using namespace std;
 
@@ -1616,9 +1616,29 @@ void step2::Loop()
 
 /////////////////////////////////////////////////////////////////////////////////
 
+      b_btagDeepJet2DWeight->Fill();	 
+      b_btagDeepJet2DWeight_Pt120->Fill();
+      b_btagDeepJet2DWeight_HTnj->Fill();
+      b_btagDeepJet2DWeight_HTnj_HFup->Fill();       
+      b_btagDeepJet2DWeight_HTnj_HFdn->Fill();      
+      b_btagDeepJet2DWeight_HTnj_LFup->Fill();      
+      b_btagDeepJet2DWeight_HTnj_LFdn->Fill();      
+      b_btagDeepJet2DWeight_HTnj_jesup->Fill();     
+      b_btagDeepJet2DWeight_HTnj_jesdn->Fill();     
+      b_btagDeepJet2DWeight_HTnj_hfstats1up->Fill();
+      b_btagDeepJet2DWeight_HTnj_hfstats1dn->Fill();
+      b_btagDeepJet2DWeight_HTnj_hfstats2up->Fill();
+      b_btagDeepJet2DWeight_HTnj_hfstats2dn->Fill();
+      b_btagDeepJet2DWeight_HTnj_cferr1up->Fill();  
+      b_btagDeepJet2DWeight_HTnj_cferr1dn->Fill();  
+      b_btagDeepJet2DWeight_HTnj_cferr2up->Fill();  
+      b_btagDeepJet2DWeight_HTnj_cferr2dn->Fill();  
+      b_btagDeepJet2DWeight_HTnj_lfstats1up->Fill();
+      b_btagDeepJet2DWeight_HTnj_lfstats1dn->Fill();
+      b_btagDeepJet2DWeight_HTnj_lfstats2up->Fill();
+      b_btagDeepJet2DWeight_HTnj_lfstats2dn->Fill();
 
       b_btagCSV2DWeight_HTnj->Fill();
-      b_btagDeepJet2DWeight_HTnj->Fill(); 	  
       b_isTraining->Fill();
       b_xsecEff->Fill();
       b_deltaR_minBB->Fill();

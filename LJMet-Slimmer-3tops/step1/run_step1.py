@@ -1,4 +1,4 @@
-import os,shutil,datetime,time
+import os,shutil,time
 import getpass
 import config
 from argparse import ArgumentParser
@@ -14,7 +14,7 @@ args = parser.parse_args()
 from ROOT import *
 
 xrdClient = client.FileSystem("root://brux11.hep.brown.edu:1094/")
-execfile("../EOSSafeUtils.py")
+execfile( "../EOSSafeUtils.py" )
 
 start_time = time.time()
 
@@ -23,13 +23,13 @@ if args.test: print( "[OPT] Running in test mode. Only submitting one sample: TT
 if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. Use: 16, 17, 18" )
 shifts = [ "nominal" ] if not args.systematics else [ "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
-postfix = config.date
+postfix = config.postfix
 inputDir = config.inputDir[ args.year ]
 inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
 inDir = "/eos/uscms/" if inputLoc == "LPC" else inputDir 
 
 outputDir = {
-  shift: os.path.join( config.outputPath, "FWLJMET106XUL_1lep20{}_3t_{}_step1/{}/".format( args.year, postfix, shift ) ) for shift in shifts
+  shift: os.path.join( config.outputDir[args.year ], shift ) for shift in shifts
 }
 
 condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
@@ -111,7 +111,6 @@ for sample in samples:
           print( ">> Running path: {}\t Base filename: {}".format( pathSuffix, baseFilename ) )
 
           for i in range( 0, len(rootFiles), filesPerJob ):
-            job_count += 1
             fs_count += 1
             #  if fs_count > 1: continue
 
@@ -156,7 +155,8 @@ for sample in samples:
                 'ID': fs_count, 
                 'YEAR': args.year, 
                 'DEEPCSV': deepCSV_SF[ args.year ], 
-                'DEEPJET':deepJet_SF[ args.year ]
+                'DEEPJET':deepJet_SF[ args.year ],
+                "SYSTEMATICS": "true" if args.systematics else "false"
               }
               jdfName = "{}{}/{}_{}.job".format( condorDir, shift, jobParams["OUTFILENAME"], jobParams["ID"] )
               print( ">> Storing job information in {}".format( jdfName ) )
@@ -173,12 +173,13 @@ Output = %(OUTFILENAME)s_%(ID)s.out
 Error = %(OUTFILENAME)s_%(ID)s.err
 Log = %(OUTFILENAME)s_%(ID)s.log
 Notification = Never
-Arguments = "%(FILENAME)s %(OUTFILENAME)s %(INPUTDIR)s/%(SAMPLE)s/%(INPATHSUFFIX)s %(OUTPUTDIR)s/%(OUTFILENAME)s '%(LIST)s' %(ID)s %(YEAR)s"
+Arguments = "%(FILENAME)s %(OUTFILENAME)s %(INPUTDIR)s/%(SAMPLE)s/%(INPATHSUFFIX)s %(OUTPUTDIR)s/%(OUTFILENAME)s '%(LIST)s' %(ID)s %(YEAR)s %(SYSTEMATICS)s"
 Queue 1"""%jobParams)
               jdf.close()
               os.chdir( os.path.join( condorDir, shift ) )
               os.system( "condor_submit {}".format( jdfName.split("/")[-1] ) )
               os.system( "sleep 0.5" )                                
               os.chdir( jobParams["RUNDIR"] )
+              job_count += 1
                                                  
 print( "[DONE] {} jobs submitted in {:.2f} minutes".format( job_count, round( time.time() - start_time, 2 ) / 60. ) )

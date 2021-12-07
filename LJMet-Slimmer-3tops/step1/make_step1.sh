@@ -10,6 +10,7 @@ outputDir=${4}
 idlist=${5}
 ID=${6}
 Year=20${7}
+systematics=${8}
 scratch=${PWD}
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
@@ -44,12 +45,9 @@ for iFile in $idlist; do
 
   echo ">> Adding ${outfilename}_${iFile}.root to the list by reading ${infilename}_${inFile}"
   echo  $XRDpath/${infilename}_${inFile}.root,${outfilename}_${iFile}.root>> filelist
-  # root -l -b -q makeStep1.C\(\"$macroDir\",\"$XRDpath/${infilename}_${inFile}.root\",\"${outfilename}_${iFile}.root\",${Year}\)
 done
 
-root -l -b -q -g make_step1.C\(\"$macroDir\",\"filelist\",${Year}\)
-
-echo gROOT-\>LoadMacro\(\"make_step1.C++\"\)\; make_step1\(\"$macroDir\",\"filelist\",${Year}\)\; | root -b -l
+root -l -b -q -g make_step1.C\(\"$macroDir\",\"filelist\",\"${systematics}\",${Year}\)
 
 echo ">> ROOT Files:"
 ls -l *.root
@@ -58,17 +56,22 @@ ls -l *.root
 
 NOM="nominal"
 echo ">> xrdcp output for condor"
-for SHIFT in nominal JECup JECdown JERup JERdown
-  do
-  haddFile=${outfilename}_${ID}${SHIFT}_hadd.root
-  hadd ${haddFile} *${SHIFT}.root
+
+shifts=(nominal)
+if $systematics == true;
+then shifts=(nominal JECup JECdown JERup JERdown)
+fi
+
+for shift in ${shifts[@]}; do
+  haddFile=${outfilename}_${ID}${shift}_hadd.root
+  hadd ${haddFile} *${shift}.root
   if [[ $outputDir == /pnfs/iihe/* ]] ;
   then # for qsub jobs
-    echo ">> gfal-copy -f file://$TMPDIR/${haddFile} srm://maite.iihe.ac.be:8443/pnfs/iihe/cms/store/user/$USER/${outputDir//$NOM/$SHIFT}/${haddFile//${SHIFT}_hadd/}"
-    gfal-copy -f file://$TMPDIR/${haddFile} srm://maite.iihe.ac.be:8443/${outputDir//$NOM/$SHIFT}/${haddFile//${SHIFT}_hadd/} 2>&1
+    echo ">> gfal-copy -f file://$TMPDIR/${haddFile} srm://maite.iihe.ac.be:8443/pnfs/iihe/cms/store/user/$USER/${outputDir//$NOM/$shift}/${haddFile//${shift}_hadd/}"
+    gfal-copy -f file://$TMPDIR/${haddFile} srm://maite.iihe.ac.be:8443/${outputDir//$NOM/$shift}/${haddFile//${shift}_hadd/} 2>&1
   else # for condor jobs on lpc
-    echo ">> xrdcp -f ${haddFile} root://cmseos.fnal.gov/${outputDir//$NOM/$SHIFT}/${haddFile//${SHIFT}_hadd/}"
-    xrdcp -f ${haddFile} root://cmseos.fnal.gov/${outputDir//$NOM/$SHIFT}/${haddFile//${SHIFT}_hadd/} 2>&1
+    echo ">> xrdcp -f ${haddFile} root://cmseos.fnal.gov/${outputDir//$NOM/$shift}/${haddFile//${shift}_hadd/}"
+    xrdcp -f ${haddFile} root://cmseos.fnal.gov/${outputDir//$NOM/$shift}/${haddFile//${shift}_hadd/} 2>&1
   fi
 
   XRDEXIT=$?
@@ -77,9 +80,9 @@ for SHIFT in nominal JECup JECdown JERup JERdown
     echo "[ERR] Exit code $XRDEXIT, failure in xrdcp (or gfal-copy)"
     exit $XRDEXIT
   fi
-  rm *${SHIFT}.root
+  rm *${shift}.root
   rm ${haddFile}
-  if [[ $haddFile == Single* || $haddFile == EGamma*  || $haddFile == JetHT* ]]; then break; fi;
+  if [[ $haddFile == Single* || $haddFile == EGamma* ]]; then break; fi;
 done
 
 echo "[DONE]"

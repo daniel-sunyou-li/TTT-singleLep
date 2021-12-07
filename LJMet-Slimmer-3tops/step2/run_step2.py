@@ -1,5 +1,6 @@
-import os, sys, shutil, datetime, time
+import os, sys, shutil, time
 import getpass
+import config
 from argparse import ArugmentParser
 
 start_time = time.time()
@@ -12,60 +13,78 @@ args = parser.parse_args()
 
 from ROOT import *
 
-#IO directories must be full paths
-foldnum = '-1'
-relbase   = '/home/dli50/TTT_1lep/CMSSW_10_2_13/'
-#inputDir  = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_02162021_step1hadds/'+shift+'/'
-#inputDir  = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2016_Feb2020_4t_080420_step1hadds/'+shift+'/'
-inputDir = '/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep{}_Oct2019_4t_02182021_step1hadds/{}/'.format( year, shift )
-# outputDir = '/mnt/hadoop/users/jlee/TTTT/LJMet94X_1lepTT_022219_step2/'+shift+'/'
-#outputDir = '/mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_Oct2019_4t_03062021_step2/'+shift+'/'
-outputDir = '/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep{}_Oct2019_3t_02182021_step2/{}/'.format( year, shift ) 
-runDir=os.getcwd()
-gROOT.ProcessLine('.x compileStep2.C')
+if args.year not in [ "16", "17", "18": ]: sys.exit( "[ERR] Invalid year option used. Choose from: 16, 17, 18" )
+shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 
-cTime=datetime.datetime.now()
-date='%i_%i_%i_%i_%i_%i'%(cTime.year,cTime.month,cTime.day,cTime.hour,cTime.minute,cTime.second)
+relBase = config.relBase
+runDir = os.getcwd()
+inputDir = {
+  shift: os.path.join( config.inputPath[ args.year ], shift ) for shift in shifts
+}
+outputDir = {
+  shift: os.path.join( config.outputDir[ args.year ], shift ) for shift in shifts
+}
+condorDir = {
+  shift: os.path.join( runDir, "logs_UL{}_{}/{}".format( args.year, config.postfix, shift ) ) for shift in shifts
+}
 
-condorDir=runDir+'/'+outputDir.split('/')[-3]+'_condorLogs/'+shift+'/'
-print 'Starting submission'
-count=0
+for shift in shifts:
+  os.system( "eos root://cmseos.fnal.gov mkdir -p {}".format( outputDir[ shift ] ) )
+  os.system( "mkdir -p {}".format( condorDir[ shift ] ) )
 
-rootfiles = os.popen('ls '+inputDir)
-os.system('mkdir -p '+outputDir)
-os.system('mkdir -p '+condorDir)
+gROOT.ProcessLine( ".x compile_step2.C" )
 
-for file in rootfiles:
-    if 'root' not in file: continue
-    if file in os.popen("ls " + outputDir): continue
-#    if 'TTTT' in file: continue
-#    if 'TTTo' in file: continue
-    rawname = file[:-6]
-    count+=1
-    dict={'RUNDIR':runDir, 'CONDORDIR':condorDir, 'INPUTDIR':inputDir, 'FILENAME':rawname, 'CMSSWBASE':relbase, 'OUTPUTDIR':outputDir}
-    jdfName=condorDir+'/%(FILENAME)s.job'%dict
-    jdf=open(jdfName,'w')
+print( ">> Starting step2 Condor submission..." )
+
+step1Files = {
+  shift: EOSListdir( inputDir[ shift ] ) for shift in shifts 
+}
+
+step2Files = {
+  shift: EOSListdir( outputDir[ shift ] ) for shift in shifts
+}
+
+jobCount = 0
+for shift in shifts:
+  if args.test:
+    if shift != "nominal": continue
+  for rootFile in step1Files[ shift ]:
+    if args.test: 
+      if "TTTW" not in rootFile: continue
+    if not rootFile.endswith( ".root" ): continue
+    if rootFile in step2Files[ shift ]: continue # skip finished step2 files
+    
+    jobParams = {
+      "RUNDIR": runDir, 
+      "CONDORDIR": condorDir[ shift ], 
+      "INPUTDIR": inputDir[ shift ], 
+      "FILENAME": rootFile.split( "." )[0], 
+      "CMSSWBASE": relBase, 
+      "OUTPUTDIR": outputDir[ shift ]
+    }
+    jdfName = os.path.join( condorDir[ shift ], rootFile.split( "." )[0] ) + ".job"
+    jdf = open( jdfName, "w" )
     jdf.write(
 """universe = vanilla
-Executable = %(RUNDIR)s/makeStep2.sh
+Executable = %(RUNDIR)s/make_step2.sh
 Should_Transfer_Files = YES
 WhenToTransferOutput = ON_EXIT
 request_memory = 4096
-Transfer_Input_Files = %(RUNDIR)s/HT_njets_SF_4tops_dcsv_djet.root, %(RUNDIR)s/S2HardcodedConditions.cc, %(RUNDIR)s/S2HardcodedConditions.h, %(RUNDIR)s/makeStep2.C, %(RUNDIR)s/step2.cc, %(RUNDIR)s/step2.h, %(RUNDIR)s/step2_cc.d, %(RUNDIR)s/step2_cc.so, %(RUNDIR)s/Davismt2.cc, %(RUNDIR)s/Davismt2.h, %(RUNDIR)s/Davismt2_cc.d, %(RUNDIR)s/Davismt2_cc.so
+Transfer_Input_Files = %(RUNDIR)s/HT_njets_SF_3t.root, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/make_step2.C, %(RUNDIR)s/step2.cc, %(RUNDIR)s/step2.h, %(RUNDIR)s/step2_cc.d, %(RUNDIR)s/step2_cc.so, %(RUNDIR)s/Davismt2.cc, %(RUNDIR)s/Davismt2.h, %(RUNDIR)s/Davismt2_cc.d, %(RUNDIR)s/Davismt2_cc.so
 Output = %(FILENAME)s.out
 Error = %(FILENAME)s.err
 Log = %(FILENAME)s.log
-JobBatchName = step2_dli50
+JobBatchName = step2_3t
 Notification = Never
 Arguments = %(FILENAME)s.root %(FILENAME)s.root %(INPUTDIR)s %(OUTPUTDIR)s
 Queue 1"""%dict)
     jdf.close()
-    os.chdir('%s/'%(condorDir))
-    print( "Submitting %(FILENAME)s"%dict )
-    os.system('condor_submit %(FILENAME)s.job'%dict)
-    os.system('sleep 0.5')                                
-    os.chdir('%s'%(runDir))
-    print count, "jobs submitted!!!"
-    break 
+    os.chdir( condorDir[ shift ] )
+    print( ">> Submitting {}: {}".format( shift, rootFile.split( "." )[0] ) )
+    os.system( "condor_submit {}.job".format( rootFile.split( "." )[0] ) )
+    os.system( "sleep 0.5" )                                 
+    os.chdir( runDir )
+    jobCount += 1
 
-print("--- %s minutes ---" % (round(time.time() - start_time, 2)/60))
+   
+print( "[DONE] {} job(s) submitted after {:.2f} minutes".format( jobCount, round( time.time() - start_time, 2 ) / 60. ) )

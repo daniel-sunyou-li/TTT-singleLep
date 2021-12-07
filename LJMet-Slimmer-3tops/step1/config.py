@@ -1,13 +1,20 @@
 eosUserName = "dali"
-date = "12012021"
+postfix = "test"
+years = [ "16", "17", "18" ]
 
 inputDir = {
-  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, date ) for year in [ "16","17","18" ]
+  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix ) for year in years
+}
+
+step1Dir = {
+  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( eosUserName, year, postfix ) for year in years
+}
+
+haddDir = {
+  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1hadds".format( eosUserName, year, postfix ) for year in years
 }
 
 outputPath = "/store/user/{}/".format( eosUserName )
-
-step1Path = "/uscms_data/home/{}/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/LJMet-Slimmer-3tops/step1/".format( eosUserName )
 
 samples = {
   "2016": {
