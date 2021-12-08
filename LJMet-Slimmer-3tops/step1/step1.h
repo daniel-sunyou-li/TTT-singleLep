@@ -469,6 +469,10 @@ public :
    vector<double>  *theJetEta_JetSubCalc;
    vector<double>  *theJetPhi_JetSubCalc;
    vector<double>  *theJetPt_JetSubCalc;
+   vector<double>  *topBestGenEnergy_HOTTaggerCalc;
+   vector<double>  *topBestGenEta_HOTTaggerCalc;
+   vector<double>  *topBestGenPhi_HOTaggerCalc;
+   vector<double>  *topBestGenPt_HOTTaggerCalc;
    vector<double>  *topDRmax_HOTTaggerCalc;
    vector<double>  *topDThetaMax_HOTTaggerCalc;
    vector<double>  *topDThetaMin_HOTTaggerCalc;
@@ -644,6 +648,10 @@ public :
    TBranch        *b_theJetEta_JetSubCalc;   //!
    TBranch        *b_theJetPhi_JetSubCalc;   //!
    TBranch        *b_theJetPt_JetSubCalc;   //!
+   TBranch        *b_topBestGenEnergy_HOTTaggerCalc;  //!
+   TBranch        *b_topBestGenEta_HOTTaggerCalc;  //!
+   TBranch        *b_topBestGenPhi_HOTTaggerCalc; //!
+   TBranch        *b_topBestGenPt_HOTTaggerCalc; //!
    TBranch        *b_topDRmax_HOTTaggerCalc;   //!
    TBranch        *b_topDThetaMax_HOTTaggerCalc;   //!
    TBranch        *b_topDThetaMin_HOTTaggerCalc;   //!
@@ -923,6 +931,10 @@ void step1::Init(TTree *tree)
    theJetEta_JetSubCalc = 0;
    theJetPhi_JetSubCalc = 0;
    theJetPt_JetSubCalc = 0;
+   topBestGenEnergy_HOTTaggerCalc = 0;
+   topBestGenEta_HOTTaggerCalc = 0;
+   topBestGenPhi_HOTTaggerCalc = 0;
+   topBestGenPt_HOTTaggerCalc = 0;
    topDRmax_HOTTaggerCalc = 0;
    topDThetaMax_HOTTaggerCalc = 0;
    topDThetaMin_HOTTaggerCalc = 0;
