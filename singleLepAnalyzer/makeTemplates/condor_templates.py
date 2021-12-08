@@ -47,9 +47,9 @@ os.chdir( outputPath )
 nJobs = 0
 for variable in args.variable:
   print( ">> Generating templates for {}".format( variable ) )
-	for category in categories:
-		if utils.skip( category ): continue 
-		categoryTag = "{}_nHOT{}_nT{}_nW{}_nB{}_nJ{}".format( 
+  for category in categories:
+    if utils.skip( category ): continue 
+    categoryTag = "{}_nHOT{}_nT{}_nW{}_nB{}_nJ{}".format( 
       category[0],
       category[1],
       category[2],
@@ -57,16 +57,17 @@ for variable in args.variable:
       category[4],
       category[5]
     )
-		if (int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0])) > int(cat[5][0]):
-			print( "[WARN] {} is not topologically possible, skipping...".format( catDir ) )
-			continue
-		if (int(cat[5][0])==5) and ( ( int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0]) ) > 3 ): 
-			print( "[WARN] {} has too few signal yield, skipping...".format( catDir ) )
-			continue
-		if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir {}".format( os.path.join( outputPath, categoryTag ) ) )
-		os.chdir( categoryTag )
-	
-		jobParams = {
+    if (int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0])) > int(cat[5][0]):
+      print( "[WARN] {} is not topologically possible, skipping...".format( catDir ) )
+      continue
+    if (int(cat[5][0])==5) and ( ( int(cat[1][0])+int(cat[2][0])+int(cat[3][0])+int(cat[4][0]) ) > 3 ): 
+      print( "[WARN] {} has too few signal yield, skipping...".format( catDir ) )
+      continue
+      
+    if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir {}".format( os.path.join( outputPath, categoryTag ) ) )
+    os.chdir( categoryTag )
+
+    jobParams = {
       "OUTPUTPATH": outputPath,
       "VARIABLE": variable,
       "REGION": args.region,
@@ -79,10 +80,11 @@ for variable in args.variable:
       "NB": category[4],
       "NJ": category[5],
       "INPUTDIR": args.inputdir,
-			"EXEDIR": thisDir}
-	
-		jdf = open( "condor_{}.job".format( variable ), "w" )
-		jdf.write(
+      "EXEDIR": thisDir
+    }
+
+    jdf = open( "condor_{}.job".format( variable ), "w" )
+    jdf.write(
 """universe = vanilla
 Executable = %(OUTPUTPATH)s/condor_templates.sh
 Should_Transfer_Files = YES
@@ -94,10 +96,11 @@ Log = condor_%(VARIABLE)s.log
 JobBatchName = SLA_step1_3t
 Notification = Error
 Arguments = %(OUTPUTPATH)s %(VARIABLE)s %(REGION)s %(CATEGORIZE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s
-Queue 1"""%job_params)
-		jdf.close()
-		os.system( "condor_submit condor_{}.job".format( variable ) )
-		os.chdir( ".." )
-		nJobs += 1
+Queue 1"""%job_params
+    )
+    jdf.close()
+    os.system( "condor_submit condor_{}.job".format( variable ) )
+    os.chdir( ".." )
+    nJobs += 1
 
 print( "[DONE] Total jobs submitted: {}".format( nJobs ) )
