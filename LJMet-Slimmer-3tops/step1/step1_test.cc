@@ -1,5 +1,5 @@
-#define step1_cxx
-#include "step1.h"
+#define step1_test_cxx
+#include "step1_test.h"
 #include <fstream>
 #include <iostream>     // std::cout
 #include <algorithm>    // std::sort
