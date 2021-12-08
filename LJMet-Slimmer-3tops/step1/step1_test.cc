@@ -82,7 +82,7 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   // btagCalibration initialization -csv reshaping
   if (calib == NULL)
   {
-    std::string btagcsvfile("DeepCSV_106XUL17SF.csv");
+    std::string btagcsvfile("data/DeepCSV_106XUL17SF_V2p1.csv");
     if (Year== 2018) {
       btagcsvfile = "DeepCSV_102XSF_V2.csv"; 
     }
@@ -92,7 +92,7 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
 
   if (calib_dj == NULL)
   {
-    std::string btagdjcsvfile("DeepJet_106XUL17SF.csv");
+    std::string btagdjcsvfile("data/DeepJet_106XUL17SF_V2p1.csv");
     cout<< "DeepJet reshaping file: "<<btagdjcsvfile<<endl;
     calib_dj = new const BTagCalibrationForLJMet("DeepJet", btagdjcsvfile);
   }
@@ -702,14 +702,14 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
 
    // basic cuts
    float metCut=20;
-   float htCut=0;
+   float htCut=350;
    int   nAK8jetsCut=0;
-   float lepPtCut=25.0;
-   float elEtaCut=2.4;
-   float muEtaCut=2.4;
-   int   njetsCut=4;
+   float lepPtCut=15.0;
+   float elEtaCut=2.1;
+   float muEtaCut=2.1;
+   int   njetsCut=5;
    int   nbjetsCut=0; // events with # of b-tags <nbjetsCut (incl. btag shifts) are removed!
-   float jetPtCut=40;
+   float jetPtCut=30;
    float jetEtaCut=2.4;
    float ak8EtaCut=2.4;
    float ak8PtCut=200;
