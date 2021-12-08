@@ -5,8 +5,8 @@
 // found on file: /eos/uscms/store/user/lpcljm/FWLJMET102X_1lep2017_052219/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/singleLep2017/190614_213007/0000/TTTT_TuneCP5_13TeV-amcatnlo-pythia8_1.root
 //////////////////////////////////////////////////////////
 
-#ifndef step1_h
-#define step1_h
+#ifndef step1_test_h
+#define step1_test_h
 
 #include <iostream>
 #include <TROOT.h>
@@ -24,7 +24,7 @@ enum shift:char;
 
 using namespace std;
 
-class step1 {
+class step1_test {
 public :
    TTree          *inputTree;   //!pointer to the analyzed TTree or TChain
    TFile          *inputFile, *outputFile;
@@ -1286,8 +1286,8 @@ public :
    TBranch        *b_vsSelTriggersHad_MultiLepCalc;   //!
    TBranch        *b_vsSelTriggersMu_MultiLepCalc;   //!
  
-   step1(TString inputFileName, TString outputFileName, Int_t Year_);
-   virtual ~step1();
+   step1_test(TString inputFileName, TString outputFileName, Int_t Year_);
+   virtual ~step1_test();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -1301,8 +1301,8 @@ public :
 
 #endif
 
-#ifdef step1_cxx
-step1::step1(TString inputFileName, TString outputFileName, Int_t Year_) : inputTree(0), inputFile(0), outputFile(0) 
+#ifdef step1_test_cxx
+step1_test::step1_test(TString inputFileName, TString outputFileName, Int_t Year_) : inputTree(0), inputFile(0), outputFile(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -1401,19 +1401,19 @@ step1::step1(TString inputFileName, TString outputFileName, Int_t Year_) : input
   //  Init(inputTree);
 }
 
-step1::~step1()
+step1_test::~step1_test()
 {
    if (!inputTree) return;
    delete inputTree->GetCurrentFile();
 }
 
-Int_t step1::GetEntry(Long64_t entry)
+Int_t step1_test::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!inputTree) return 0;
    return inputTree->GetEntry(entry);
 }
-Long64_t step1::LoadTree(Long64_t entry)
+Long64_t step1_test::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!inputTree) return -5;
@@ -1426,7 +1426,7 @@ Long64_t step1::LoadTree(Long64_t entry)
    return centry;
 }
 
-void step1::Init(TTree *tree)
+void step1_test::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -2291,7 +2291,7 @@ void step1::Init(TTree *tree)
    Notify();
 }
 
-Bool_t step1::Notify()
+Bool_t step1_test::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -2302,14 +2302,14 @@ Bool_t step1::Notify()
    return kTRUE;
 }
 
-void step1::Show(Long64_t entry)
+void step1_test::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!inputTree) return;
    inputTree->Show(entry);
 }
-Int_t step1::Cut(Long64_t entry)
+Int_t step1_test::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
@@ -2317,4 +2317,4 @@ Int_t step1::Cut(Long64_t entry)
    return 1;
 }
 
-#endif // #ifdef step1_cxx
+#endif // #ifdef step1_test_cxx

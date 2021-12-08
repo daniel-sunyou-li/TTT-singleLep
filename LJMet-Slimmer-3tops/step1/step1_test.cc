@@ -30,7 +30,7 @@ TRandom3 Rand;
 const double MTOP  = 173.5;
 const double MW    = 80.4; 
 
-bool step1::applySF(bool& isTagged, float tag_SF, float tag_eff){
+bool step1_test::applySF(bool& isTagged, float tag_SF, float tag_eff){
   
   bool newTag = isTagged;
   if (tag_SF == 1) return newTag; //no correction needed 
@@ -62,7 +62,7 @@ bool step1::applySF(bool& isTagged, float tag_SF, float tag_eff){
 // -------------------------------------
 // Function- SAVE Histograms from ljmet
 //--------------------------------------
-void step1::saveHistograms() 
+void step1_test::saveHistograms() 
 { 
 TH1D* numhist = (TH1D*)inputFile->Get("mcweightanalyzer/NumTrueHist");
 TH1D* wgthist = (TH1D*)inputFile->Get("mcweightanalyzer/weightHist");
@@ -77,7 +77,7 @@ wgthist->Write();
 // MAIN EVENT LOOP
 // ----------------------------------------------------------------------------
 
-void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationForLJMet* calib = NULL, const BTagCalibrationForLJMet* calib_dj = NULL)
+void step1_test::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationForLJMet* calib = NULL, const BTagCalibrationForLJMet* calib_dj = NULL)
 {
   // btagCalibration initialization -csv reshaping
   if (calib == NULL)

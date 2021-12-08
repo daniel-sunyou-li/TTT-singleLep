@@ -29,14 +29,12 @@ LjmetFactory::LjmetFactory(): theSelector(0)
     this->Register(new MultiLepEventSelector(), "MultiLepSelector");
     this->Register(new TTbarTagProbeEventSelector(), "TTbarTagProbeSelector");
 
-//    this->Register(new CommonCalc(), "CommonCalc");
+    this->Register(new CommonCalc(), "CommonCalc");
     this->Register(new MultiLepCalc(), "MultiLepCalc");
     this->Register(new JetSubCalc(), "JetSubCalc");
-//    this->Register(new TpTpCalc(), "TpTpCalc");
     this->Register(new TTbarMassCalc(), "TTbarMassCalc");
     this->Register(new DeepAK8Calc(), "DeepAK8Calc");
     this->Register(new HOTTaggerCalc(), "HOTTaggerCalc");
-//    this->Register(new BestCalc(), "BestCalc");
 
     this->Register(new DummyCalc(), "DummyCalc");
     this->Register(new DummyEventSelector(), "DummySelector");

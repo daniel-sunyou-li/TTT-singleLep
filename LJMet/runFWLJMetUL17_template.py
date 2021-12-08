@@ -946,7 +946,7 @@ if (isTTbar):
       process.QGTagger *
       process.tightAK4Jets *
       process.tightPackedJetsAK8Puppi *
-      #process.prefiringweight *
+      process.prefiringweight *
       process.ecalBadCalibReducedMINIAODFilter *
       process.ttbarcat *
       process.ljmet * #(ntuplizer) 
@@ -966,7 +966,7 @@ if (isTTbar):
       process.QGTagger *
       process.tightAK4Jets *
       process.tightPackedJetsAK8Puppi *
-      #process.prefiringweight *
+      process.prefiringweight *
       process.ecalBadCalibReducedMINIAODFilter *
       process.ttbarcat *
       process.ljmet #(ntuplizer)
@@ -1022,9 +1022,3 @@ else: #Data
 
 process.p.associate(patAlgosToolsTask)
 
-
-# process.ep = cms.EndPath(process.out)
-# process.ep = cms.EndPath(process.out,patAlgosToolsTask)
-# process.scedule = cms.Schedule(
-#     process.p,
-#     process.outpath)

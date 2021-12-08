@@ -16,7 +16,7 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, string 
   gSystem->AddIncludePath(incl);
 
   if ( inputFile.Contains("Run2017") || inputFile.Contains("Run2018") || inputFile.Contains("Single") || inputFile.Contains("Double") || inputFile.Contains("MuonEG") || inputFile.Contains("EGamma") ){ 
-    step1 t( inputFile, outputFile.ReplaceAll(".root","nominal.root"), Year );
+    step1_test t( inputFile, outputFile.ReplaceAll(".root","nominal.root"), Year );
       t.Loop("ljmet", "ljmet"); 
   } 
   else {
@@ -29,7 +29,7 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, string 
           tName.Append("_"); 
           tName.Append(shifts[i]); 
         }
-        step1 t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year ); 
+        step1_test t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year ); 
         t.saveHistograms();
         t.Loop(tName, "ljmet");
         outputFile.ReplaceAll(shifts[i],".root"); //Change outputFile back to its original name.
