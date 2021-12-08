@@ -47,7 +47,7 @@ for iFile in $idlist; do
   echo  $XRDpath/${infilename}_${inFile}.root,${outfilename}_${iFile}.root>> filelist
 done
 
-root -l -b -q -g make_step1.C\(\"$macroDir\",\"filelist\",\"${systematics}\",${Year}\)
+root -l -b -q -g make_step1.C\(\"$macroDir\",\"filelist\",\"$systematics\",${Year}\)
 
 echo ">> ROOT Files:"
 ls -l *.root
