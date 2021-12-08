@@ -58,7 +58,6 @@ public :
    Bool_t          outTTLF=false;
    Int_t           SigMass=-1;
    Int_t           Year=2017;
-   TString         Era="";
    TString         sample_="";
    std::string     sample="";
    
