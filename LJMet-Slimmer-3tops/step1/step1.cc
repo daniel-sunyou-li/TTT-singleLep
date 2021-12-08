@@ -155,7 +155,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   inputTree->SetBranchStatus("event_CommonCalc",1);
   inputTree->SetBranchStatus("run_CommonCalc",1);
   inputTree->SetBranchStatus("lumi_CommonCalc",1);
-  //inputTree->SetBranchStatus("nPV_MultiLepCalc",1);
   inputTree->SetBranchStatus("nTrueInteractions_MultiLepCalc",1);
   inputTree->SetBranchStatus("MCWeight_MultiLepCalc",1);
   inputTree->SetBranchStatus("evtWeightsMC_MultiLepCalc",1);
@@ -245,54 +244,35 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   inputTree->SetBranchStatus("genJetEtaNoClean_MultiLepCalc",1);
   inputTree->SetBranchStatus("genJetPhiNoClean_MultiLepCalc",1);
   inputTree->SetBranchStatus("genJetEnergyNoClean_MultiLepCalc",1);
+  inputTree->SetBranchStatus("genTtbarIdCategory_TTbarMassCalc",1);
+  inputTree->SetBranchStatus("genTtbarId_TTbarMassCalc",1);
 
-  //JetSubCalc
-  inputTree->SetBranchStatus("theJetHFlav_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetPFlav_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetPt_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetEta_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetPhi_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetEnergy_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetDeepFlavB_JetSubCalc",1);
-  // inputTree->SetBranchStatus("theJetDeepCSVb_JetSubCalc",1);
-  // inputTree->SetBranchStatus("theJetDeepCSVbb_JetSubCalc",1);
-  // inputTree->SetBranchStatus("theJetDeepCSVc_JetSubCalc",1);
-  // inputTree->SetBranchStatus("theJetDeepCSVudsg_JetSubCalc",1);
-  inputTree->SetBranchStatus("AK4JetDeepCSVb_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetDeepCSVbb_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetDeepCSVc_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetDeepCSVudsg_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavb_MultiLepCalc", 1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavbb_MultiLepCalc", 1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavc_MultiLepCalc", 1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavg_MultiLepCalc", 1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavlepb_MultiLepCalc", 1);
-  inputTree->SetBranchStatus("AK4JetDeepFlavuds_MultiLepCalc", 1);
-
-  inputTree->SetBranchStatus("AK4JetBTag_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetBTag_bSFdn_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetBTag_bSFup_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetBTag_lSFdn_MultiLepCalc",1);
-  inputTree->SetBranchStatus("AK4JetBTag_lSFup_MultiLepCalc",1);
-  inputTree->SetBranchStatus("theJetAK8DoubleB_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetBTag_bSFup_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetBTag_bSFdn_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetBTag_lSFup_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetBTag_lSFdn_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetBTag_JetSubCalc",1);
+  // JetSubCalc -- AK8 Subjet
+  inputTree->SetBranchStatus("theJetAK8SDSubjetNDeepCSVMSF_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetAK8SDSubjetNDeepCSVL_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetAK8SDSubjetHFlav_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetAK8SDSubjetIndex_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetAK8SDSubjetSize_JetSubCalc",1);
+  
+  // JetSubCalc -- AK8
   inputTree->SetBranchStatus("theJetAK8Pt_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8Eta_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8Phi_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8Mass_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8Energy_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetAK8DoubleB_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8NjettinessTau1_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8NjettinessTau2_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8NjettinessTau3_JetSubCalc",1);
+	
+  // JetSubCalc -- AK8 CHS
   inputTree->SetBranchStatus("theJetAK8CHSTau1_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8CHSTau2_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8CHSTau3_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8CHSPrunedMass_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8CHSSoftDropMass_JetSubCalc",1);
+  
+  // JetSubCalc -- AK8 Softdrop
   inputTree->SetBranchStatus("theJetAK8SoftDropRaw_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8SoftDropCorr_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8SoftDrop_JetSubCalc",1);
@@ -300,12 +280,44 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   inputTree->SetBranchStatus("theJetAK8SoftDrop_JMSdn_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8SoftDrop_JMRup_JetSubCalc",1);
   inputTree->SetBranchStatus("theJetAK8SoftDrop_JMRdn_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetAK8SDSubjetNDeepCSVMSF_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetAK8SDSubjetNDeepCSVL_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetAK8SDSubjetHFlav_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetAK8SDSubjetIndex_JetSubCalc",1);
-  inputTree->SetBranchStatus("theJetAK8SDSubjetSize_JetSubCalc",1);
+  
+  // JetSubCalc -- BTag
+  inputTree->SetBranchStatus("theJetBTag_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetBTag_bSFup_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetBTag_bSFdn_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetBTag_lSFup_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetBTag_lSFdn_JetSubCalc",1);
+  
+  // JetSubCalc -- theJet
+  inputTree->SetBranchStatus("theJetHFlav_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetPFlav_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetEnergy_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetEta_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetPhi_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetPt_JetSubCalc",1);
+  inputTree->SetBranchStatus("theJetDeepFlavB_JetSubCalc",1);
   inputTree->SetBranchStatus("maxProb_JetSubCalc",1);
+  
+  // AK4Jet -- DeepCSV
+  inputTree->SetBranchStatus("AK4JetDeepCSVb_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetDeepCSVbb_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetDeepCSVc_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetDeepCSVudsg_MultiLepCalc",1);
+  
+  // AK4Jet -- DeepFlav
+  inputTree->SetBranchStatus("AK4JetDeepFlavb_MultiLepCalc", 1);
+  inputTree->SetBranchStatus("AK4JetDeepFlavbb_MultiLepCalc", 1);
+  inputTree->SetBranchStatus("AK4JetDeepFlavc_MultiLepCalc", 1);
+  inputTree->SetBranchStatus("AK4JetDeepFlavg_MultiLepCalc", 1);
+  inputTree->SetBranchStatus("AK4JetDeepFlavlepb_MultiLepCalc", 1);
+  inputTree->SetBranchStatus("AK4JetDeepFlavuds_MultiLepCalc", 1);
+
+  // AK4Jet -- BTag
+  inputTree->SetBranchStatus("AK4JetBTag_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetBTag_bSFdn_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetBTag_bSFup_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetBTag_lSFdn_MultiLepCalc",1);
+  inputTree->SetBranchStatus("AK4JetBTag_lSFup_MultiLepCalc",1);
 
   //top
   inputTree->SetBranchStatus("ttbarMass_TTbarMassCalc",1);
@@ -322,9 +334,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   inputTree->SetBranchStatus("allTopsPt_TTbarMassCalc",1);
   inputTree->SetBranchStatus("allTopsID_TTbarMassCalc",1);
   inputTree->SetBranchStatus("allTopsStatus_TTbarMassCalc",1);
-
-  inputTree->SetBranchStatus("genTtbarIdCategory_TTbarMassCalc",1);
-  inputTree->SetBranchStatus("genTtbarId_TTbarMassCalc",1);
 
   //top W
   inputTree->SetBranchStatus("topWEnergy_TTbarMassCalc",1);
