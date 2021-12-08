@@ -2,7 +2,7 @@ eosUserName = "dali"
 postfix = "test"
 years = [ "16", "17", "18" ]
 
-inputDir = {
+ljmetDir = {
   year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix ) for year in years
 }
 

@@ -430,7 +430,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   outputTree->Branch("triggerSF",&triggerSF,"triggerSF/F");
   outputTree->Branch("triggerHadSF",&triggerHadSF,"triggerHadSF/F");
   outputTree->Branch("triggerXSF",&triggerXSF,"triggerXSF/F");
-  outputTree->Branch("triggerVlqXSF",&triggerVlqXSF,"triggerVlqXSF/F");
   outputTree->Branch("isoSF",&isoSF,"isoSF/F");
   outputTree->Branch("btagCSVWeight",&btagCSVWeight,"btagCSVWeight/F");
   outputTree->Branch("btagCSVWeight_HFup",&btagCSVWeight_HFup,"btagCSVWeight_HFup/F");
@@ -518,7 +517,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   outputTree->Branch("theJetPhi_JetSubCalc",&theJetPhi_JetSubCalc);
   outputTree->Branch("theJetEnergy_JetSubCalc",&theJetEnergy_JetSubCalc);
   outputTree->Branch("theJetDeepFlavB_JetSubCalc", &theJetDeepFlavB_JetSubCalc);
-  outputTree->Branch("theJetIndex_JetSubCalc_PtOrdered", &theJetIndex_JetSubCalc_PtOrdered);
   outputTree->Branch("theJetPt_JetSubCalc_PtOrdered",&theJetPt_JetSubCalc_PtOrdered);
   outputTree->Branch("theJetEta_JetSubCalc_PtOrdered",&theJetEta_JetSubCalc_PtOrdered);
   outputTree->Branch("theJetPhi_JetSubCalc_PtOrdered",&theJetPhi_JetSubCalc_PtOrdered);
@@ -794,20 +792,15 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   // ----------------------------------------------------------------------------
 
   cout << "RUN CONFIG: YEAR = " << Year << endl;
-  cout << "Era = " << Era << endl;
   cout << "isMC = " << isMC << ", isSig = " << isSig << ", SigMass = " << SigMass << endl;
   cout << "isHad =" << isHad << ", isSE =" << isSE << ", isSM =" << isSM << endl;
-  cout << "isTTTT = " << isTTTT << ", isXX = " << isXX << ", isTpTp = " << isTpTp << ", isBpBp = " << isBpBp << endl;
+  cout << "isTTTT = " << isTTTT << ", isTTTX = " << isTTTX << endl;
   cout << "For W's: isTT = " << isTT << ", isSTt = " << isSTt << ", isSTtW = " << isSTtW << endl;
   cout << "For jets & PDF: isTOP = " << isTOP << ", isMadgraphBkg = " << isMadgraphBkg << endl;
-  cout << "For HOTTagger Efficiencies: isTTV = " << isTTV << ", isTTHbb = " << isTTHbb << ", isTTHnonbb = " << isTTHnonbb << ", isTTTX = " << isTTTX << endl;
+  cout << "For HOTTagger Efficiencies: isTTV = " << isTTV << ", isTTHbb = " << isTTHbb << ", isTTHnonbb = " << isTTHnonbb << endl;
   cout << "isTTVV = " << isTTVV << ", isST = " << isST << ", isTTToSemiLeptonHT500Njet9 = " << isTTToSemiLeptonHT500Njet9 << endl;
   cout << "Pileup sample key: " << sample << std::endl;
   cout << "b-tagging working points: " << btagWPdjet << "(DeepJet)" << btagWPdcsv << "(DeepCSV)" << std::endl;
-  cout << "isTTincMtt0to700: " << isTTincMtt0to700 << endl;
-  cout << "isTTincMtt0to1000: " << isTTincMtt0to1000 << endl;
-  cout << "isTTincMtt700to1000: " << isTTincMtt700to1000 << endl;
-  cout << "isTTincMtt1000toInf: " << isTTincMtt1000toInf << endl;
   cout << "isTTSemilepIncHT0Njet0: " << isTTSemilepIncHT0Njet0 << endl;
   cout << "isTTSemilepIncHT500Njet9: " << isTTSemilepIncHT500Njet9 << endl;
   cout << "outTTLF: " << outTTLF << endl;
@@ -1247,7 +1240,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
     triggerSF = 1.0;
     triggerHadSF = 1.0;
     triggerXSF = 1.0;
-    triggerVlqXSF = 1.0;
     isoSF = 1.0;
     std::vector<std::string> eltriggersX;
     std::vector<std::string> mutriggersX;
@@ -1334,7 +1326,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
         triggerSF = hardcodedConditions.GetElectronTriggerSF(leppt, lepeta, Year);
         triggerHadSF = hardcodedConditions.GetIsEHadronTriggerSF(NJets_JetSubCalc, AK4HT, Year);
         triggerXSF = hardcodedConditions.GetElectronTriggerXSF(leppt, lepeta, Year);
-        triggerVlqXSF = hardcodedConditions.GetElectronTriggerVlqXSF(leppt, lepeta, Year);
       }
       if(isMuon){
         for(unsigned int itrig=0; itrig < vsSelMCTriggersMu_MultiLepCalc->size(); itrig++){
@@ -1352,7 +1343,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
         triggerSF = hardcodedConditions.GetMuonTriggerSF(leppt, lepeta, Year);
         triggerHadSF = hardcodedConditions.GetIsMHadronTriggerSF(NJets_JetSubCalc, AK4HT, Year);
         triggerXSF = hardcodedConditions.GetMuonTriggerXSF(leppt, lepeta, Year);
-        triggerVlqXSF = hardcodedConditions.GetMuonTriggerVlqXSF(leppt, lepeta, Year);
       }
       if (MCLepPastTrigger == 1 || MCHadPastTrigger == 1){
         MCPastTrigger = 1;
@@ -1504,7 +1494,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
     // ----------------------------------------------------------------------------
 
     std::sort( jetptindpair.begin(), jetptindpair.end(), comparepair );
-    theJetIndex_JetSubCalc_PtOrdered.clear();
     theJetPt_JetSubCalc_PtOrdered.clear();
     theJetEta_JetSubCalc_PtOrdered.clear();
     theJetPhi_JetSubCalc_PtOrdered.clear();
@@ -1536,7 +1525,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
     AK4JetBTag_lSFup_MultiLepCalc_PtOrdered.clear();
     AK4JetBTag_lSFdn_MultiLepCalc_PtOrdered.clear();
     for(unsigned int ijet=0; ijet < jetptindpair.size(); ijet++){
-      theJetIndex_JetSubCalc_PtOrdered.push_back(jetptindpair[ijet].second);
       theJetPt_JetSubCalc_PtOrdered.push_back(theJetPt_JetSubCalc->at(jetptindpair[ijet].second));
       theJetEta_JetSubCalc_PtOrdered.push_back(theJetEta_JetSubCalc->at(jetptindpair[ijet].second));
       theJetPhi_JetSubCalc_PtOrdered.push_back(theJetPhi_JetSubCalc->at(jetptindpair[ijet].second));
@@ -2051,7 +2039,6 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
           hardcodedConditions.GetTtaggingSF(matchedPt, &tau32SF, &tau32SFup, &tau32SFdn, Year);
           // Use matched T to find the efficiency -- EWK/QCD will almost never pass here (use ttbar eff when they do)
             if(isTTTT) {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "tttt");}
-            else if(isXX) {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "x53x53",SigMass);}		
             else if(isTT) {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "ttbar");}
             else {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "singletop");}
         }
@@ -2096,9 +2083,7 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
         if(isWmatched && matchedPt >= 175 && massSD > 65 && massSD < 105 && theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200){	    
           hardcodedConditions.GetWtaggingSF(theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet), &tau21SF, &tau21SFup, &tau21SFdn, &tau21ptSFup, &tau21ptSFdn, Year);
           // Use matched W to find the efficiency -- EWK/QCD will almost never pass here (use ttbar eff when they do)
-          if(isXX) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "x53x53",SigMass);}
-          else if(isTpTp) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "TpTp",SigMass);}
-          else if(isBpBp) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "BpBp",SigMass);}
+          if(isTTTX) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "tttx");}
           else if(isTTTT) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "tttt");}
           else if(isTT) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "ttbar");}
           else if(isSTt) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "singletopt");}

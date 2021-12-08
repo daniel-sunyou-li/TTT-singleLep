@@ -24,12 +24,12 @@ if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. 
 shifts = [ "nominal" ] if not args.systematics else [ "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
 postfix = config.postfix
-inputDir = config.inputDir[ args.year ]
+inputDir = config.ljmetDir[ args.year ]
 inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
 inDir = "/eos/uscms/" if inputLoc == "LPC" else inputDir 
 
 outputDir = {
-  shift: os.path.join( config.outputDir[args.year ], shift ) for shift in shifts
+  shift: os.path.join( config.step1Dir[ args.year ], shift ) for shift in shifts
 }
 
 condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
