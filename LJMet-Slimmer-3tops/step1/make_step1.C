@@ -5,7 +5,7 @@
 #include<string>
 using namespace std;
 
-void make_step1(TString macroDir, TString inputFile, TString outputFile, bool systematics, Int_t Year){
+void make_step1(TString macroDir, TString inputFile, TString outputFile, string systematics, Int_t Year){
 
   gROOT->SetMacroPath(macroDir);
 
@@ -20,9 +20,9 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, bool sy
       t.Loop("ljmet", "ljmet"); 
   } 
   else {
-    if( systematics == true ){
-      vector<TString> shifts = { "JECup", "JECdown", "JERup", "JERdown" };
-      for ( size_t i =0; i < shifts.size(); ++i) {
+    vector<TString> shifts = { "nominal" };
+    if( systematics == "true" ) vector<TString> shifts = { "JECup", "JECdown", "JERup", "JERdown" };
+    for ( size_t i =0; i < shifts.size(); ++i) {
         cout << endl << ">> Running shift " << shifts[i] << endl;
         TString tName = "ljmet";
         if( !shifts[i].Contains("nominal") ){ 
@@ -33,12 +33,12 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, bool sy
         t.saveHistograms();
         t.Loop(tName, "ljmet");
         outputFile.ReplaceAll(shifts[i],".root"); //Change outputFile back to its original name.
-      }
     }
   }
 }
 
-void make_step1(TString macroDir, string filelist, bool systematics, Int_t Year){
+
+void make_step1(TString macroDir, string filelist, string systematics, Int_t Year){
 
   gROOT->SetMacroPath(macroDir);
 
@@ -72,7 +72,7 @@ void make_step1(TString macroDir, string filelist, bool systematics, Int_t Year)
         t.Loop( "ljmet", "ljmet", calib, dj_calib );
       } else {
         vector<TString> shifts = { "nominal" }; 
-        if( systematics == true ) shifts = { "nominal", "JECup", "JECdown", "JERup", "JERdown" };
+        if( systematics == "true" ) shifts = { "nominal", "JECup", "JECdown", "JERup", "JERdown" };
         for( size_t i = 0; i<shifts.size(); ++i ){
           cout << endl << ">> Running shift " << shifts[i] << endl;
           TString tName = "ljmet";
