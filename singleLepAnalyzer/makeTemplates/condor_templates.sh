@@ -1,28 +1,39 @@
 #!/bin/bash
 
 condorDir=$PWD
-cmsswBase=$1
+runDir=${1}
+inputDir=${2}
+cmsswDir=${3}
+year=${4}
+variable=${5}
+region=${6}
+categorize=${7}
+lepton=${8}
+nhot=${9}
+nT=${10}
+nW=${11}
+nB=${12}
+nJ=${13}
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 
-# cd $theDir
-# eval `scramv1 runtime -sh`
-
-cd /home/eusai/4t/CMSSW_10_2_16_UL/src
+cd $cmsswDir
 eval `scramv1 runtime -sh`
 
-cd $theDir
+cd $runDir
 
 pwd
-python -u hists.py $condorDir \
-  --iPlot=${2} \
-  --region=${3} \
-  --isCategorized=${4} \
-  --year=${5} \
-  --isEM=${6} \
-  --nhott=${7} \
-  --nttag=${8} \
-  --nWtag=${9} \
-  --nbtag=${10} \
-  --njets=${11} \
-  --step1dir=${12} \
+python -u hists.py \
+  -v $variable \
+  -r $region \
+  -c $categorize \
+  -y $year \
+  -l $lepton \
+  -nh $nhot \
+  -nt $nT \
+  -nw $nW \
+  -nb $nB \
+  -nj $nJ \
+  -i $inputDir \
+  -d $condorDir \
+  -w $cmsswDir
