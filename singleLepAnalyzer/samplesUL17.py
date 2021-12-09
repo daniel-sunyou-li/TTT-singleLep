@@ -8,7 +8,7 @@ samples = {
   "SIGNAL": {
     'TTTJ':'TTTJ_TuneCP5_13TeV-madgraph-pythia8',
     'TTTW':'TTTW_TuneCP5_13TeV-madgraph-pythia8',
-  }
+  },
   "BACKGROUND": {
     'tttt':'TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8',
     'WW':'WW_TuneCP5_13TeV-pythia8',
