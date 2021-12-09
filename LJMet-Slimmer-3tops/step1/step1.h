@@ -297,8 +297,8 @@ public :
    vector<int>     NresolvedTops5pFake_shifts;
    vector<int>     NresolvedTops10pFake_shifts;
 
-   float	   btagCSVWeight;
-   float 	   btagCSVWeight_HFup;
+   float	          btagCSVWeight;
+   float 	       btagCSVWeight_HFup;
    float           btagCSVWeight_HFdn;
    float           btagCSVWeight_LFup;
    float           btagCSVWeight_LFdn;
