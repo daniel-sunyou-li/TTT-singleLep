@@ -12,11 +12,12 @@ logFolder      = "LOGFOLDER" # this will be the sample key name
 jsonData       = "JSONFORDATA"
 isMC           = ISMC
 isTTbar        = ISTTBAR
+postfix        = "POSTFIX"
 
 # general
 config.section_( "General" )
 config.General.requestName = "{}_{}".format( request, logFolder )
-config.General.workArea = "crab_submit_logs/{}/".format( request ) # might want to change this to not be hard-coded
+config.General.workArea = "crab_submit_logs/{}/{}/".format( postfix, request ) # might want to change this to not be hard-coded
 config.General.transferLogs = True
 config.General.transferOutputs = True
 

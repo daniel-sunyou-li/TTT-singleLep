@@ -1,4 +1,4 @@
-#include "step1_test.cc"
+#include "step1.cc"
 #include "BTagCalibForLJMet.cpp"
 #include "HardcodedConditions.cc"
 #include<vector>
@@ -16,7 +16,7 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, string 
   gSystem->AddIncludePath(incl);
 
   if ( inputFile.Contains("Run2017") || inputFile.Contains("Run2018") || inputFile.Contains("Single") || inputFile.Contains("Double") || inputFile.Contains("MuonEG") || inputFile.Contains("EGamma") ){ 
-    step1_test t( inputFile, outputFile.ReplaceAll(".root","nominal.root"), Year );
+    step1 t( inputFile, outputFile.ReplaceAll(".root","nominal.root"), Year );
       t.Loop("ljmet", "ljmet"); 
   } 
   else {
@@ -29,7 +29,7 @@ void make_step1(TString macroDir, TString inputFile, TString outputFile, string 
           tName.Append("_"); 
           tName.Append(shifts[i]); 
         }
-        step1_test t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year ); 
+        step1 t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year ); 
         t.saveHistograms();
         t.Loop(tName, "ljmet");
         outputFile.ReplaceAll(shifts[i],".root"); //Change outputFile back to its original name.
@@ -68,7 +68,7 @@ void make_step1(TString macroDir, string filelist, string systematics, Int_t Yea
       TString inputFile( f.first );
       TString outputFile( f.second );
       if( inputFile.Contains("Run2017") || inputFile.Contains("Run2018") || inputFile.Contains("Single") || inputFile.Contains("Double") || inputFile.Contains("MuonEG") || inputFile.Contains("EGamma") ){ 
-        step1_test t( inputFile, outputFile.ReplaceAll( ".root", "nominal.root" ), Year );
+        step1 t( inputFile, outputFile.ReplaceAll( ".root", "nominal.root" ), Year );
         t.Loop( "ljmet", "ljmet", calib, dj_calib );
       } else {
         vector<TString> shifts = { "nominal" }; 
@@ -80,7 +80,7 @@ void make_step1(TString macroDir, string filelist, string systematics, Int_t Yea
             tName.Append("_"); 
             tName.Append(shifts[i]);
           }
-          step1_test t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year); 
+          step1 t( inputFile, outputFile.ReplaceAll( ".root",shifts[i].Append(".root") ), Year); 
           t.saveHistograms();
           t.Loop( tName, "ljmet", calib, dj_calib );
           outputFile.ReplaceAll(shifts[i],".root"); 

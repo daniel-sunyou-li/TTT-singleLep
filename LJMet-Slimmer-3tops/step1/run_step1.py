@@ -49,7 +49,6 @@ deepJet_SF = {
 
 # Start processing
 gROOT.ProcessLine( ".x compile_step1.C" )
-
 print( ">> Starting step1 submission..." )
 
 job_count = 0
@@ -167,7 +166,7 @@ universe = vanilla
 Executable = %(RUNDIR)s/make_step1.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-Transfer_Input_Files = %(RUNDIR)s/compile_step1.C, %(RUNDIR)s/make_step1.C, %(RUNDIR)s/step1_test.cc, %(RUNDIR)s/step1_test.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(DEEPCSV)s, %(RUNDIR)s/%(DEEPJET)s
+Transfer_Input_Files = %(RUNDIR)s/compile_step1.C, %(RUNDIR)s/make_step1.C, %(RUNDIR)s/step1.cc, %(RUNDIR)s/step1.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(DEEPCSV)s, %(RUNDIR)s/%(DEEPJET)s
 request_memory = 4096
 Output = %(OUTFILENAME)s_%(ID)s.out
 Error = %(OUTFILENAME)s_%(ID)s.err

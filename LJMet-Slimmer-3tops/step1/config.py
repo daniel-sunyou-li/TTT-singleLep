@@ -1,5 +1,5 @@
 eosUserName = "dali"
-postfix = "test"
+postfix = "Winter2021"
 years = [ "16", "17", "18" ]
 
 ljmetDir = {

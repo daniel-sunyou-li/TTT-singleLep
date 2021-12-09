@@ -33,7 +33,7 @@ sample = imp.load_source( "sampleUL{}".format( args.year ), sampleListPath, open
 runTemplate = "../runFWLJMetUL{}_template.py".format( args.year )
 
 #folder to save the created crab configs
-configDir = "crab_configs/UL{}".format( args.year ) 
+configDir = "crab_configs/{}/UL{}".format( args.postfix, args.year ) 
 if not os.path.exists( configDir ):
   print( ">> Creating new directory for CRAB configs..." )
   os.system( "mkdir -vp {}".format( configDir ) )
@@ -88,6 +88,7 @@ def create_config_template( sample_dict, **kwargs ):
     os.system( "sed -i 's|ISTTBAR|{}|g' {}".format( kwargs["ISTTBAR"], configPath ) )
     os.system( "sed -i 's|OUTPATH|{}|g' {}".format( outPath, configPath ) )
     os.system( "sed -i 's|STORESITE|{}|g' {}".format( storeSite, configPath ) )
+    os.system( "sed -i 's|POSTFIX|{}|g' {}".format( args.postfix, configPath ) )
 
     #replace strings in new cmsRun file
     if "EGamma" in sample_key or "Single" in sample_key:

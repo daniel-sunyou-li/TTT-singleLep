@@ -58,6 +58,7 @@ public :
    Bool_t          outTTLF=false;
    Int_t           SigMass=-1;
    Int_t           Year=2017;
+   TString         Era="";
    TString         sample_="";
    std::string     sample="";
    
@@ -126,7 +127,6 @@ public :
    Float_t         leptonEta_MultiLepCalc;
    Float_t         leptonPhi_MultiLepCalc;
    Float_t         leptonEnergy_MultiLepCalc;
-   vector<double>  *topBestGenPt_HOTTaggerCalc;
    Float_t         leptonMVAValue_MultiLepCalc;
    Float_t         leptonMiniIso_MultiLepCalc;
    Float_t         leptonRelIso_MultiLepCalc;
@@ -152,7 +152,7 @@ public :
    vector<int>     theJetAK8SDSubjetIndex_JetSubCalc_PtOrdered;
    vector<int>     theJetAK8SDSubjetSize_JetSubCalc_PtOrdered;
    vector<int>     NJetsCSVwithSF_JetSubCalc_shifts;
-   vector<int>  theJetIndex_JetSubCalc_PtOrdered;
+   vector<int>     theJetIndex_JetSubCalc_PtOrdered;
    vector<double>  theJetPt_JetSubCalc_PtOrdered;
    vector<double>  theJetEta_JetSubCalc_PtOrdered;
    vector<double>  theJetPhi_JetSubCalc_PtOrdered;
@@ -471,7 +471,7 @@ public :
    vector<double>  *theJetPt_JetSubCalc;
    vector<double>  *topBestGenEnergy_HOTTaggerCalc;
    vector<double>  *topBestGenEta_HOTTaggerCalc;
-   vector<double>  *topBestGenPhi_HOTaggerCalc;
+   vector<double>  *topBestGenPhi_HOTTaggerCalc;
    vector<double>  *topBestGenPt_HOTTaggerCalc;
    vector<double>  *topDRmax_HOTTaggerCalc;
    vector<double>  *topDThetaMax_HOTTaggerCalc;
