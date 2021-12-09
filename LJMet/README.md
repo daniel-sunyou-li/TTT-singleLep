@@ -81,6 +81,6 @@ Test the config using a dryrun before mass submission:
     
 For mass submission:
     
-    python create_config_template.py -y 2017 
-    python submit_crab.py -y 2017
+    python create_config_template.py --year 17 [--postfix] [--test] [--systematics]
+    python submit_crab_jobs.py --configDir crab_configs/test/UL17/ --year 17 --group TEST  
     
