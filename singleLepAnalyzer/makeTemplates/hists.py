@@ -1,11 +1,33 @@
 #!/usr/bin/python
 
-import os,sys,time,math,datetime,pickle,itertools,getopt
-from ROOT import TH1D,gROOT,TFile,TTree
-from numpy import linspace
-parent = os.path.dirname(os.getcwd())
-thisdir= os.path.dirname(os.getcwd()+'/')
-sys.path.append(thisdir)
+import os, sys, time, math, datetime, pickle, itertools, getopt
+import numpy as np
+from argparse import ArgumentParser
+
+sys.path.append( os.path.dirname( os.getcwd() ) )
+
+import ROOT
+import weights
+import analyze
+import samples
+import utils
+
+parser = ArgumentParser()
+parser.add_argument( "-v", "--variable" )
+parser.add_argument( "-r", "--region" )
+parser.add_argument( "-c", "--categorize", action = "store_true" )
+parser.add_argument( "-y", "--year" )
+parser.add_argument( "-l", "--lepton" )
+parser.add_argument( "-nh", "--nhot" )
+parser.add_argument( "-nt", "--nt" )
+parser.add_argument( "-nw", "--nw" )
+parser.add_argument( "-nb", "--nb" )
+parser.add_argument( "-nj", "--nj" )
+parser.add_argument( "-i", "--inputDir" )
+parser.add_argument( "-d", "--condorDir" )
+parser.add_argument( "-w", "--cmsswDir" )
+args = parser.parse_args()
+
 from weights import *
 from analyze import *
 from samples import *
@@ -21,8 +43,10 @@ where <shape> is for example "JECUp". hadder.py can be used to prepare input fil
 --Check the set of cuts in "analyze.py"
 """
 
-gROOT.SetBatch(1)
+ROOT.gROOT.SetBatch(1)
 start_time = time.time()
+
+
 
 year = 'R17'
 iPlot = 'HT' #choose a discriminant from plotList below!
