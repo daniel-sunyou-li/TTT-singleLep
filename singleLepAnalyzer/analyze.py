@@ -2,87 +2,88 @@
 
 from ROOT import TH1D, TH2D, TTree, TFile
 from array import array
-import varsList
+import config, samples
 
-def analyze( rootTree, process, doAllSys, doPDF, iPlot, plotDetails, catStr, systList, year, verbose ):
-  plotTreeName = plotDetails[0]
-  xbins = array("d", plotDetails[1])
-  xAxisLabel = plotDetails[2]
-  process_weights = varsList.weights[ str(year) ]
+# rTree is an instance of ROOT.TFile().Get( "ljmet" )
+# year is a str = 16/17/18
+# process is a str key for the sample name
+# variable is a str key for the variable being binned
+# shifts is a bool to use JEC/JER
+# ue is a bool to use samples with Underlying Event shifts
+# hdamp is a bool to use samples with HDAMP shifts
+# pdf is a bool to use Parton Density Function systematics
+# category is a dict with the jet multiplicity bin and lepton ID
 
-  lumiStr = str( varsList.targetLumi / 1000. ).replace(".","p") + "fb" # 1/fb  
+def analyze( rTree, year, process, variable, systematics, pdf, category, verbose ):
+  variableName = config.plot_params[ variable ][0]
+  histBins = array( "d", config.plot_params[ variable ][1] )
+  xLabel = config.plot_params[ variable ][2]
+
+  print( ">> Processing {} for {}, {}".format( variable, year, process ) )
+  print( ">> Lepton: {}".format( category[ "LEPTON" ] ) )
+  print( ">> # HOT jets: {}".format( category[ "NHOT" ] ) )
+  print( ">> # t jets: {}".format( category[ "NT" ] ) )
+  print( ">> # W jets: {}".format( category[ "NW" ] ) )
+  print( ">> # b jets: {}".format( category[ "NB" ] ) )
+  print( ">> # jets: {}".format( category[ "NJ" ] ) )
+  
+  lumiStr = str( config.lumi[ year ] / 1000. ).replace(".","p") + "fb" # 1/fb  
+  
+  # define the base cuts
   weights = {
-    "Nominal": "3" if process.lower().startswith( "ttjets" ) else "1"
+    "NOMINAL": "3" if process.startswith( "TTTo" ) else "1",
+    "PROCESS": samples.weights[ process ]
   }
+  if "Data" not in process: weights[ "NOMINAL" ] += " * {} * {}".format( config.mc_weight, weights[ "PROCESS" ] )
   cuts = {
-    "Base": varsList.cutStr	
+    "BASE": config.base_cut,
+    "NOMINAL": config.base_cut
   }
 	
-  # define the categories
-  isEM  = catStr.split("_")[0][2:]
-  nhott = catStr.split("_")[1][4:]
-  nttag = catStr.split("_")[2][2:]
-  nWtag = catStr.split("_")[3][2:]
-  nbtag = catStr.split("_")[4][2:]
-  njets = catStr.split("_")[5][2:]
-	
-  if process.lower().startswith("ttjetssemilepnjet0"): cuts[ "Base" ] += " && (isHTgt500Njetge9 == 0)"
-  if process.lower().startswith("ttjetssemilepnjet9"): cuts[ "Base" ] += " && (isHTgt500Njetge9 == 1)"
-  if process.lower().startswith("ttjets"): cuts[ "Base" ] += " && (isTraining == 3)"
-	
-  print( ">> Processing {} for {}, {}".format( iPlot, year, process ) )
-  print( ">> Lepton: {}".format( isEM ) )
-  print( ">> # HOT jets: {}".format( nhott ) )
-  print( ">> # t jets: {}".format( nttag ) )
-  print( ">> # W jets: {}".format( nWtag ) )
-  print( ">> # b jets: {}".format( nbtag ) )
-  print( ">> # jets: {}".format( njets ) )
-	
-  # modify weights
+  # modify weights for systematic shifts
 	
   if "Data" not in process:
-    weights[ "Nominal" ] += " * triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc "
-    weights[ "Nominal" ] += " * ( MCWeight_MultiLepCalc / abs(MCWeight_MultiLepCalc) ) * {}".format( process_weights[process] )
-    weights[ "NoNjet" ] = weights[ "Nominal" ]
-    weights[ "trigger" ] = { "Up": weights[ "Nominal" ].replace("triggerXSF","(triggerXSF+triggerXSFUncert)"),
-                             "Down": weights[ "Nominal" ].replace("triggerXSF","(triggerXSF-triggerXSFUncert)") }
-    weights[ "pileup" ] = { "Up": weights[ "Nominal" ].replace("pileupWeight","pileupWeightUp"),
-                            "Down": weights[ "Nominal" ].replace("pileupWeight","pileupWeightDown") }
-    weights[ "prefire" ] = { "Up": weights[ "Nominal" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
-                             "Down": weights[ "Nominal" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDn_CommonCalc") }
-    weights[ "muRFcorrd" ] = { "Up": "renormWeights[5] * {}".format( weights[ "Nominal" ] ),
-                               "Down": "renormWeights[3] * {}".format( weights[ "Nominal" ] ) }
-    weights[ "muR" ] = { "Up": "renormWeights[4] * {}".format( weights[ "Nominal" ] ),
-                         "Down":  "renormWeights[2] * {}".format( weights[ "Nominal" ] ) }
-    weights[ "muF" ] = { "Up": "renormWeights[1] * {}".format( weights[ "Nominal" ] ),
-                         "Down": "renormWeights[0] * {}".format( weights[ "Nominal" ] ) }
-    weights[ "isr" ] = { "Up": "renormPSWeights[0] * {}".format( weights[ "Nominal" ] ),
-                         "Down": "renormPSWeights[2] * {}".format( weights[ "Nominal" ] ) }
-    weights[ "fsr" ] = { "Up": "renormPSWeights[1] * {}".format( weights[ "Nominal" ] ),
-                         "Down": "renormPSWeights[3] * {}".format( weights[ "Nominal" ] ) }
-    weights[ "toppt" ] = { "Up": "({}) * {}".format( "1" if "ttjets" in process.lower() else "topPtWeight13TeV", weights[ "Nominal" ] ),
-                           "Down": "(1/{}) * {}".format( "1" if "ttjets" in process.lower() else "topPtWeight13TeV", weights[ "Nominal" ] ) }
-    weights[ "njet" ] = { "Up": weights[ "Nominal" ],
-                          "Down": weights[ "Nominal" ] }
-    weights[ "njetsf" ] = { "Up": weights[ "Nominal" ],
-                            "Down": weights[ "Nominal" ] }
-    weights[ "CSVshapelf" ] = { "Up": weights[ "Nominal" ].replace("btagCSVWeight","btagCSVWeight_LFup"),
-                                "Down": weights[ "Nominal" ].replace("btagCSVWeight","btagCSVWeight_LFdn") }
-    weights[ "CSVshapehf" ] = { "Up": weights[ "Nominal" ].replace("btagCSVWeight","btagCSVWeight_HFup"),
-                                "Down": weights[ "Nominal" ].replace("btagCSVWeight","btagCSVWeight_HFdn") }
+    weights[ "NOMINAL" ] += " * {} * {}".format( config.mc_weight, weights[ "PROCESS" ] )
+    weights[ "TRIGGER" ] = { "UP":   weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
+                             "DOWN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
+    weights[ "PILEUP" ] = { "UP":   weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
+                            "DOWN": weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
+    weights[ "PREFIRE" ] = { "UP":   weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
+                             "DOWN": weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDn_CommonCalc") }
+    weights[ "MURFCORRD" ] = { "UP":   "renormWeights[5] * {}".format( weights[ "NOMINAL" ] ),
+                               "DOWN": "renormWeights[3] * {}".format( weights[ "NOMINAL" ] ) }
+    weights[ "MUR" ] = { "UP":   "renormWeights[4] * {}".format( weights[ "NOMINAL" ] ),
+                         "DOWN": "renormWeights[2] * {}".format( weights[ "NOMINAL" ] ) }
+    weights[ "MUF" ] = { "UP":   "renormWeights[1] * {}".format( weights[ "NOMINAL" ] ),
+                         "DOWN": "renormWeights[0] * {}".format( weights[ "NOMINAL" ] ) }
+    weights[ "ISR" ] = { "UP":   "renormPSWeights[0] * {}".format( weights[ "NOMINAL" ] ),
+                         "DOWN": "renormPSWeights[2] * {}".format( weights[ "NOMINAL" ] ) }
+    weights[ "FSR" ] = { "UP":   "renormPSWeights[1] * {}".format( weights[ "NOMINAL" ] ),
+                         "DOWN": "renormPSWeights[3] * {}".format( weights[ "NOMINAL" ] ) }
+    weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", weights[ "NOMINAL" ] ),
+                           "DOWN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", weights[ "NOMINAL" ] ) }
+    weights[ "NJET" ] = { "UP":   weights[ "NOMINAL" ],
+                          "DOWN": weights[ "NOMINAL" ] }
+    weights[ "NJETSF" ] = { "UP":   weights[ "NOMINAL" ],
+                            "DOWN": weights[ "NOMINAL" ] }
+    weights[ "CSVSHAPELF" ] = { "UP":   weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_LFup" ),
+                                "DOWN": weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_LFdn" ) }
+    weights[ "CSVSHAPEHF" ] = { "UP":   weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_HFup" ),
+                                "DOWN": weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_HFdn" ) }
 		
   # modify cuts
-  isEMCut  = " && isElectron==1" if isEM == "E" else " && isMuon==1"
-  nhottCut = " && NresolvedTops1pFake {}= {}".format( ">" if "p" in nhott else "=", nhott[:-1] if "p" in nhott else nhott )
-  nttagCut = " && NJetsTtagged {}= {}".format( ">" if "p" in nttag else "=", nttag[:-1] if "p" in nttag else nttag )
-  nWtagCut = " && NJetsWtagged {}= {}".format( ">" if "p" in nWtag else "=", nWtag[:-1] if "p" in nWtag else nWtag )
-  nbtagCut = " && NJetsCSVwithSF_MultiLepCalc {}= {}".format( ">" if "p" in nbtag else "=", nbtag[:-1] if "p" in nbtag else nbtag )
-  njetsCut = " && NJets_JetSubCalc {}= {}".format( ">" if "p" in njets else "=", njets[:-1] if "p" in njets else njets )
+  if "TTToSemiLepton" in process: cuts[ "NOMINAL" ] += " && isHTgt500Njetge9 == {}".format( "1" if "HT500" in process else "0" )
+  if "TTTo" in process: cuts[ "Base" ] += " && isTraining == 3"
+  
+  cuts[ "LEPTON" ] = " && isElectron==1" if category[ "LEPTON" ] == "E" else " && isMuon==1"
+  cuts[ "NHOT" ] = " && NresolvedTops1pFake{}={}".format( ">" if "p" in category[ "NHOT" ] else "=", category[ "NHOT" ][:-1] if "p" in category[ "NHOT" ] else category[ "NHOT" ] )
+  cuts[ "NT" ] = " && NJetsTtagged{}={}".format( ">" if "p" in category[ "NT" ] else "=", category[ "NT" ][:-1] if "p" in category[ "NT" ] else category[ "NT" ] )
+  cuts[ "NW" ] = " && NJetsWtagged{}={}".format( ">" if "p" in category[ "NW" ] else "=", category[ "NW" ][:-1] if "p" in category[ "NW" ] else category[ "NW" ] )
+  cuts[ "NB" ] = " && NJetsCSV_JetSubCalc{}={}".format( ">" if "p" in category[ "NB" ] else "=", category[ "NB" ][:-1] if "p" in category[ "NB" ] else category[ "NB" ] )
+  cuts[ "NJ" ] = " && NJets_JetSubCalc{}={}".format( ">" if "p" in category[ "NJ" ] else "=", category[ "NJ" ][:-1] if "p" in category[ "NJ" ] else category[ "NJ" ] )
  
-  if nbtag == "0" and "minmlb" in iPlot.lower():
-    originalLJMETName = plotTreeName
-    plotTreeName = "minMleppJet"
-    
+  
+  
   cuts[ "Nominal" ] = cuts[ "Base" ] + isEMcut + nhotCut + nttagCut + nWtagCut + nbtagCut + njetsCut
     
   # modify the cuts for shifts
@@ -111,6 +112,10 @@ def analyze( rootTree, process, doAllSys, doPDF, iPlot, plotDetails, catStr, sys
   cuts[ "hotclosure" ] = { "Up": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[4]"),
                            "Down": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[5]") }
 	
+    if nbtag == "0" and "minmlb" in iPlot.lower():
+    originalLJMETName = plotTreeName
+    plotTreeName = "minMleppJet"
+    
   # declare histograms
   hists = {}
   with "{}_{}_{}_{}".format( iPlot, lumiStr, catStr, process ) as key:
