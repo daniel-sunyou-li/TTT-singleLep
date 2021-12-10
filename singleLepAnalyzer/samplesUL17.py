@@ -69,8 +69,6 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
       elif tt == "SemiLepton":
         if str( shift ) == "TuneCP5":
           samples[ "BACKGROUND" ][ "TTTo{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
-        else: 
-          samples[ str( shift )[1:3] ][ "TTTo{}HT500tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
       else:
         if str( shift ) == "TuneCP5":
           samples[ "BACKGROUND" ][ "TTTo{}tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
