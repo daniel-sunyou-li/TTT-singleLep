@@ -61,19 +61,19 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
     for fs in [ "1b", "2b", "bb", "cc", "jj" ]:
       if tt == "SemiLeptonic":
         if str( shift ) == "TuneCP5":
-          samples[ "BACKGROUND" ][ "TT{}tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
-          samples[ "BACKGROUND" ][ "TT{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia_HT500Njet9_tt{}".format( tt, shift, fs )
+          samples[ "BACKGROUND" ][ "TTTo{}tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ "BACKGROUND" ][ "TTTo{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia_HT500Njet9_tt{}".format( tt, shift, fs )
         else:
-          samples[ str( shift )[1:3] ][ "TT{}tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
-          samples[ str( shift )[1:3] ][ "TT{}HT500tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT500Njet9_tt{}".format( tt, shift, fs )
+          samples[ str( shift )[1:3] ][ "TTTo{}tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ str( shift )[1:3] ][ "TTTo{}HT500tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT500Njet9_tt{}".format( tt, shift, fs )
       elif tt == "SemiLepton":
         if str( shift ) == "TuneCP5":
-          samples[ "BACKGROUND" ][ "TT{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ "BACKGROUND" ][ "TTTo{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
         else: 
-          samples[ str( shift )[1:3] ][ "TT{}HT500tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ str( shift )[1:3] ][ "TTTo{}HT500tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
       else:
         if str( shift ) == "TuneCP5":
-          samples[ "BACKGROUND" ][ "TT{}tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ "BACKGROUND" ][ "TTTo{}tt{}".format( tt, fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
         else:
-          samples[ str( shift )[1:3] ][ "TT{}tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+          samples[ str( shift )[1:3] ][ "TTTo{}tt{}{}".format( tt, fs, shifts[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
 
