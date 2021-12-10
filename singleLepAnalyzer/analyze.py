@@ -82,43 +82,41 @@ def analyze( rTree, year, process, variable, systematics, pdf, category, verbose
   cuts[ "NB" ] = " && NJetsCSV_JetSubCalc{}={}".format( ">" if "p" in category[ "NB" ] else "=", category[ "NB" ][:-1] if "p" in category[ "NB" ] else category[ "NB" ] )
   cuts[ "NJ" ] = " && NJets_JetSubCalc{}={}".format( ">" if "p" in category[ "NJ" ] else "=", category[ "NJ" ][:-1] if "p" in category[ "NJ" ] else category[ "NJ" ] )
  
-  
-  
-  cuts[ "Nominal" ] = cuts[ "Base" ] + isEMcut + nhotCut + nttagCut + nWtagCut + nbtagCut + njetsCut
+  cuts[ "NOMINAL" ] += cuts[ "LEPTON" ] + cuts[ "NHOT" ] + cuts[ "NT" ] + cuts[ "NW" ] + cuts[ "NB" ] + cuts[ "NJ" ]
     
   # modify the cuts for shifts
-  cuts[ "btag" ] = { "Up": cuts[ "Nominal" ].replace("NJetsCSVwithSF_MultiLepCalc","NJetsCSVwithSF_MultiLepCalc_bSFup"),
-                     "Down": cuts[ "Nominal" ].replace("NJetsCSVwithSF_MultiLepCalc","NJetsCSVwithSF_MultiLepCalc_bSFdn") }
-  cuts[ "mistag" ] = { "Up": cuts[ "Nominal" ].replace("NJetsCSVwithSF_MultiLepCalc","NJetsCSVwithSF_MultiLepCalc_lSFup"),
-                       "Down": cuts[ "Nominal" ].replace("NJetsCSVwithSF_MultiLepCalc","NJetsCSVwithSF_MultiLepCalc_lSFdn") }
-  cuts[ "tau21" ] = { "Up": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[0]"),
-                      "Down": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[1]") }
-  cuts[ "jmsW" ] = { "Up": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[2]"),
-                     "Down": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[3]") }
-  cuts[ "jmrW" ] = { "Up": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[4]"),
-                     "Down": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[5]") }
-  cuts[ "tau21pt" ] = { "Up": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[6]"),
-                        "Down": cuts[ "Nominal" ].replace("NJetsWtagged","NJetsWtagged_shifts[7]") }
-  cuts[ "tau32" ] = { "Up": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[0]"),
-                      "Down": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[1]") }
-  cuts[ "jmst" ] = { "Up": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[2]"),
-                     "Down": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[3]") }
-  cuts[ "jmrt" ] = { "Up": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[4]"),
-                     "Down": cuts[ "Nominal" ].replace("NJetsTtagged","NJetsTtagged_shifts[5]") }
-  cuts[ "hotstat" ] = { "Up": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[0]"),
-                        "Down": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[1]") }
-  cuts[ "hotcspur" ] = { "Up": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[2]"),
-                         "Down": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[3]") }
-  cuts[ "hotclosure" ] = { "Up": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[4]"),
-                           "Down": cuts[ "Nominal" ].replace("NresolvedTops1pFake","NresolvedTops1pFake_shifts[5]") }
+  cuts[ "BTAG" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsCSVwithSF_MultiLepCalc", "NJetsCSVwithSF_MultiLepCalc_bSFup" ),
+                     "DOWN": cuts[ "NOMINAL" ].replace( "NJetsCSVwithSF_MultiLepCalc", "NJetsCSVwithSF_MultiLepCalc_bSFdn" ) }
+  cuts[ "MISTAG" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsCSVwithSF_MultiLepCalc", "NJetsCSVwithSF_MultiLepCalc_lSFup" ),
+                       "DOWN": cuts[ "NOMINAL" ].replace( "NJetsCSVwithSF_MultiLepCalc", "NJetsCSVwithSF_MultiLepCalc_lSFdn" ) }
+  cuts[ "TAU21" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[0]" ),
+                      "DOWN": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[1]" ) }
+  cuts[ "JMSW" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[2]" ),
+                     "DOWN": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[3]" ) }
+  cuts[ "JMRW" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[4]" ),
+                     "DOWN": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[5]" ) }
+  cuts[ "TAU21PT" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[6]" ),
+                        "DOWN": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[7]" ) }
+  cuts[ "TAU32" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[0]" ),
+                      "DOWN": cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[1]" ) }
+  cuts[ "JMST" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[2]" ),
+                     "DOWN": cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[3]" ) }
+  cuts[ "JMRT" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[4]" ),
+                     "DOWN": cuts[ "NOMINAL" ].replace( "NJetsTtagged", "NJetsTtagged_shifts[5]" ) }
+  cuts[ "HOTSTAT" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[0]" ),
+                        "DOWN": cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[1]" ) }
+  cuts[ "HOTCSPUR" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[2]" ),
+                         "DOWN": cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[3]" ) }
+  cuts[ "HOTCLOSURE" ] = { "UP":   cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[4]" ),
+                           "DOWN": cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[5]" ) }
 	
-    if nbtag == "0" and "minmlb" in iPlot.lower():
-    originalLJMETName = plotTreeName
-    plotTreeName = "minMleppJet"
+  if nbtag == "0" and "minmlb" in iPlot.lower():
+  originalLJMETName = plotTreeName
+  plotTreeName = "minMleppJet"
     
   # declare histograms
   hists = {}
-  with "{}_{}_{}_{}".format( iPlot, lumiStr, catStr, process ) as key:
+  with "{}_{}_{}_{}".format( variable, lumiStr, catStr, process ) as key:
     hists[ key ] = TH1D( key, xAxisLabel, len(xbins) - 1, xbinS )
   if doAllSys:
     for syst in systList:
