@@ -8,13 +8,11 @@ import config, samples
 # year is a str = 16/17/18
 # process is a str key for the sample name
 # variable is a str key for the variable being binned
-# shifts is a bool to use JEC/JER
-# ue is a bool to use samples with Underlying Event shifts
-# hdamp is a bool to use samples with HDAMP shifts
-# pdf is a bool to use Parton Density Function systematics
+# doSYST is a bool to process full list of systematics
+# doPDF is a bool to use Parton Density Function systematics
 # category is a dict with the jet multiplicity bin and lepton ID
 
-def analyze( rTree, year, process, variable, systematics, pdf, category, verbose ):
+def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   variableName = config.plot_params[ variable ][0]
   histBins = array( "d", config.plot_params[ variable ][1] )
   xLabel = config.plot_params[ variable ][2]
@@ -26,8 +24,6 @@ def analyze( rTree, year, process, variable, systematics, pdf, category, verbose
   print( ">> # W jets: {}".format( category[ "NW" ] ) )
   print( ">> # b jets: {}".format( category[ "NB" ] ) )
   print( ">> # jets: {}".format( category[ "NJ" ] ) )
-  
-  lumiStr = str( config.lumi[ year ] / 1000. ).replace(".","p") + "fb" # 1/fb  
   
   # define the base cuts
   weights = {
@@ -116,60 +112,102 @@ def analyze( rTree, year, process, variable, systematics, pdf, category, verbose
     
   # declare histograms
   hists = {}
-  with "{}_{}_{}_{}".format( variable, lumiStr, catStr, process ) as key:
-    hists[ key ] = TH1D( key, xAxisLabel, len(xbins) - 1, xbinS )
-  if doAllSys:
-    for syst in systList:
-      for dir in [ "Up","Down" ]:
-        with "{}_{}_{}_{}".format( iPlot+syst+dir, lumiStr, catStr, process ) as key:
-          hists[ key ] = TH1D( key, xAxisLabel, len(xbins) - 1, xbins )
+  lumiStr = str( config.lumi[ year ] / 1000. ).replace(".","p") + "fb" # 1/fb  
+  categoryTag = "is{}nJ{}nB{}nT{}nH{}nW{}".format( 
+    category[ "LEPTON" ], category[ "NJ" ], category[ "NB" ],
+    category[ "NT" ], category[ "NHOT" ], category[ "NW" ] 
+  )
+  histTag = "{}_{}_{}_{}".format( variable, lumiStr, categoryTag, process )
+  hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
+  if doSYST:
+    for syst in config.systematics:
+      for shift in [ "UP", "DOWN" ]:
+        histTag = "{}_{}_{}_{}".format( variable + syst.upper() + shift, lumiStr, categoryTag, process )
+        hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
-    for i in range(100):
-      with "{}pdf{}_{}_{}_{}".format( iPlot, i, lumiStr, catStr, process ) as key:
-        hists[ key ] = TH1D( key, xAxisLabel, len(xbins) - 1, xbins )
+    for i in range( config.pdf_range ):
+      histTag = "{}PDF{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
+      hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
 				
   # Sumw2() tells the hist to also store the sum of squares of weights
-  for key in hists: hists[ key ].Sumw2()
+  for histTag in hists: hists[ histTag ].Sumw2()
 		
   # draw histograms
-  rootTree[process].Draw( "{} >> {}_{}_{}_{}".format(plotTreeName,iPlot,lumiStr,catStr,process), "{} * ( {} )".format( weights[ "Nominal" ], cuts[ "Nominal" ] ), "GOFF" )
+  rTree[ process ].Draw( 
+    "{} >> {}_{}_{}_{}".format( variableName, variable ,lumiStr, categoryTag, process ), 
+    "{} * ( {} )".format( weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
+    "GOFF" )
   if verbose: print("[OK ] Finished drawing nominal histogram" )
 
-  if doAllSys:
-    for syst in systList:
-      for dir in [ "Up", "Down" ]:
-        with "{}_{}_{}_{}".format( iPlot + syst + dir, lumiStr, catStr, process ) as key:
-          if syst in [ "pileup", "prefire", "muRFcorrd", "muR", "muF", "isr", "fsr", "njet", "njetsf", "CSVshapelf", "CSVshapehf" ]:
-            rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ syst ][ dir ], cuts[ "Nominal" ] ), "GOFF" )
-          # hot-tagging plots
-          if ( syst in [ "hotstat", "hotcspur", "hotclosure" ] ) and ( nhott != "0p" ):
-            rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-          # t-tagging plots
-          if ( syst in [ "tau32", "jmst", "jmrt" ] ) and ( nttag != "0p" ):
-            if "ttagged" in plotTreeName.lower() or "tjet" in plotTreeName.lower():
-              shift_indx = 2*np.argwhere( np.array([ "tau32", "jmst", "jmrt" ]) == syst )[0,0] + np.argwhere( np.array([ "Up", "Down" ]) == dir )[0,0]
-              rootTree[ process ].Draw( "{}_shifts[{}] >> {}".format( plotTreeName, shift_indx, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-            else: rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-          # W-tagging plots
-          if ( syst in [ "tau21", "jmsW", "jmrW", "tau21pt" ] ) and ( nWtag != "0p" ):
-            if "wtagged" in plotTreeName.lower() or "wjet" in plotTreeName.lower():
-              shift_indx = 2*np.argwhere( np.array([ "tau21", "jmsW", "jmrW", "tau21pt" ]) == syst )[0,0] + np.argwhere( np.array([ "Up", "Down" ]) == dir )[0,0]
-              rootTree[ process ].Draw( "{}_shifts[{}] >> {}".format( plotTreeName, shift_indx, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-            else: rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-          # b-tagging plots
-          if ( syst in [ "btag", "mistag" ] ) and ( nbtag != "0p" ):
-            if "csvwithsf" in plotTreeName.lower() or "htag" in plotTreeName.lower() or "mleppb" in plotTreeName.lower() or "bjetlead" in plotTreeName.lower() or "minmlb" in plotTreeName.lower():
-              if syst == "btag": rootTree[ process ].Draw( "{}_bSF{} >> {}".format( plotTreeName, dir.lower(), key ), "{} * ({})".format( weights[ "Nominal" ], cut[ syst ][ dir ] ), "GOFF" )
-              if syst == "mistag": rootTree[ process ].Draw( "{}_lSF{} >> {}".format( plotTreeName, dir.lower(), key ), "{} * ({})".format( weights[ "Nominal" ], cut[ syst ][ dir ] ), "GOFF" )
-            else: rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ syst ][ dir ] ), "GOFF" )
-          # process jec and jer
-          if ( syst in [ "jec", "jer" ] ) and rootTree[ process + syst + dir ]: rootTree.Draw( "{} >> {}".format( plotTreeName, key ), "{} * ({})".format( weights[ "Nominal" ], cuts[ "Nominal" ] ), "GOFF" )
-    print( "[OK ] Finished drawing systematic histograms" )
+  if doSYST:
+    for syst in config.systematics:
+      for shift in [ "UP", "DOWN" ]:
+        histTag = "{}_{}_{}_{}".format( variable + syst.upper() + shift, lumiStr, categoryTag, process )
+        if syst.upper() in [ "PILEUP", "PREFIRE", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
+          rTree[ process ].Draw( 
+            "{} >> {}".format( variableName, histTag ), 
+            "{} * ({})".format( weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ), 
+            "GOFF" )
+        # hot-tagging plots
+        if ( syst.upper() in [ "HOTSTAT", "HOTCSPUR", "HOTCLOSURE" ] ) and ( category[ "NHOT" ] != "0p" ):
+          rTree[ process ].Draw( 
+            "{} >> {}".format( variableName, histTag ), 
+            "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+            "GOFF" )
+        # t-tagging plots
+        if ( syst.upper() in [ "TAU32", "JMST", "JMRT" ] ) and ( category[ "NT" ] != "0p" ):
+          if "ttagged" in variableName.lower() or "tjet" in variableName.lower():
+            shift_indx = 2*np.argwhere( np.array([ "TAU32", "JMST", "JMRT" ]) == syst.upper() )[0,0] + np.argwhere( np.array([ "UP", "DOWN" ]) == shift )[0,0]
+            rTree[ process ].Draw( 
+              "{}_shifts[{}] >> {}".format( variableName, shift_indx, histTag ), 
+              "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+              "GOFF" )
+          else: 
+            rTree[ process ].Draw( 
+              "{} >> {}".format( variableName, histTag ), 
+              "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+              "GOFF" )
+        # W-tagging plots
+        if ( syst in [ "TAU21", "JMSW", "JMRW", "TAU21PT" ] ) and ( category[ "NW" ] != "0p" ):
+          if "wtagged" in variableName.lower() or "wjet" in variableName.lower():
+            shift_indx = 2*np.argwhere( np.array([ "TAU21", "JMSW", "JMRW", "TAU21PT" ]) == syst.upper() )[0,0] + np.argwhere( np.array([ "UP", "DOWN" ]) == shift )[0,0]
+            rTree[ process ].Draw( 
+              "{}_shifts[{}] >> {}".format( variableName, shift_indx, histTag ), 
+              "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+              "GOFF" )
+          else: rTree[ process ].Draw( 
+            "{} >> {}".format( variableName, histTag ), 
+            "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+            "GOFF" )
+        # b-tagging plots
+        if ( syst.upper() in [ "BTAG", "MISTAG" ] ) and ( category[ "NB" ] != "0p" ):
+          if "csvwithsf" in variableName.lower() or "htag" in variableName.lower() or "mleppb" in variableName.lower() or "bjetlead" in variableName.lower() or "minmlb" in variableName.lower():
+            if syst.upper() == "BTAG": rTree[ process ].Draw( 
+              "{}_bSF{} >> {}".format( variableName, shift.lower(), histTag ), 
+              "{} * ({})".format( weights[ "NOMINAL" ], cut[ syst.upper() ][ shift ] ), 
+              "GOFF" )
+            if syst.upper() == "MISTAG": rTree[ process ].Draw( 
+              "{}_lSF{} >> {}".format( variableName, shift.lower(), histTag ), 
+              "{} * ({})".format( weights[ "NOMINAL" ], cut[ syst.upper() ][ shift ] ), 
+              "GOFF" )
+          else: rTree[ process ].Draw( 
+            "{} >> {}".format( variableName, histTag ), 
+            "{} * ({})".format( weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+            "GOFF" )
+        # process jec and jer
+        if ( syst in [ "JEC", "JER" ] ) and rTree[ process + syst.upper() + shift.upper() ]: rTree.Draw( 
+          "{} >> {}".format( variableName, histTag ), 
+          "{} * ({})".format( weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
+          "GOFF" )
+  print( "[OK ] Finished drawing systematic histograms" )
 	
   if doPDF:
-    for i in range(100):
-      with "{}pdf{}_{}_{}_{}".format( iPlot, i, lumiStr, catStr, process ) as key:
-        rootTree[ process ].Draw( "{} >> {}".format( plotTreeName, key ), "pdfWeights[{}] * {} * ({})".format( i, weights[ "Nominal" ], cuts[ "Nominal" ] ), "GOFF" )
+    for i in range( config.pdf_range ):
+      histTag = "{}pdf{}_{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
+      rTree[ process ].Draw( 
+        "{} >> {}".format(variableName, histTag ), 
+        "pdfWeights[{}] * {} * ({})".format( i, weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
+        "GOFF" )
     print( "[OK ] Finished drawing PDF histograms" )
 							
   for key in hists: hists[ key ].SetDirectory(0)
