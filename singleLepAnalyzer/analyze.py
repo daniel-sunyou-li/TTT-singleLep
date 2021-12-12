@@ -25,20 +25,15 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   print( ">> # b jets: {}".format( category[ "NB" ] ) )
   print( ">> # jets: {}".format( category[ "NJ" ] ) )
   
-  # define the base cuts
+  # modify weights
   weights = {
-    "NOMINAL": "3" if process.startswith( "TTTo" ) else "1",
-    "PROCESS": samples.weights[ process ]
+    "NOMINAL": "3" if process.startswith( "TTTo" ) else "1", # weights only applied to MC
+    "PROCESS": samples.weights[ process ] # weight specific to physics process and adjusted to target luminosity
   }
-  if "Data" not in process: weights[ "NOMINAL" ] += " * {} * {}".format( config.mc_weight, weights[ "PROCESS" ] )
-  cuts = {
-    "BASE": config.base_cut,
-    "NOMINAL": config.base_cut
-  }
+  if "data" not in process.lower(): 
+    weights[ "NOMINAL" ] += " * {} * {}".format( config.mc_weight, weights[ "PROCESS" ] )
 	
-  # modify weights for systematic shifts
-	
-  if "Data" not in process:
+  if "data" not in process.lower():
     weights[ "NOMINAL" ] += " * {} * {}".format( config.mc_weight, weights[ "PROCESS" ] )
     weights[ "TRIGGER" ] = { "UP":   weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
                              "DOWN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
@@ -62,11 +57,11 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
                           "DOWN": weights[ "NOMINAL" ] }
     weights[ "NJETSF" ] = { "UP":   weights[ "NOMINAL" ],
                             "DOWN": weights[ "NOMINAL" ] }
-    weights[ "CSVSHAPELF" ] = { "UP":   weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_LFup" ),
-                                "DOWN": weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_LFdn" ) }
-    weights[ "CSVSHAPEHF" ] = { "UP":   weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_HFup" ),
-                                "DOWN": weights[ "NOMINAL" ].replace( "btagCSVWeight", "btagCSVWeight_HFdn" ) }
-		
+    # deep jet related systematics
+    for syst in [ "LF", "lfstats1", "lfstats2", "HF", "hfstats1", "hfstats2", "cferr1", "cferr2", "jes" ]:
+      for shift in [ "up", "dn" ]:
+        weights[ syst.upper() ][ shift.upper() ] = weights[ "NOMINAL" ].replace( "btagDeepJetWeight", "btagDeepJetWeight_" + syst + shift ).replace( "btagDeepJet2DWeight_HTnj", "btagDeepJet2DWeight_HTnj_" + syst + shift )
+  
   # modify cuts
   if "TTToSemiLepton" in process: cuts[ "NOMINAL" ] += " && isHTgt500Njetge9 == {}".format( "1" if "HT500" in process else "0" )
   if "TTTo" in process: cuts[ "Base" ] += " && isTraining == 3"
