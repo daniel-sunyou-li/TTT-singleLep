@@ -86,8 +86,8 @@ systematics = [
   "hotclosure",
   "njet",
   "njetsf",
-  "CSVshapelf",
-  "CSVshapehf"
+  "lfstats",
+  "hfstats"
 ]
 
 pdf_range = 100
