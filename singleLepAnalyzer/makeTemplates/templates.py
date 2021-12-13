@@ -1,19 +1,23 @@
 #!/usr/bin/python
 
-import os,sys,time,math,datetime,pickle,itertools,fnmatch
-from ROOT import gROOT,TFile,TH1F,Double
+import os, sys, json, time, math, datetime, pickle, itertools
+from argparse import ArgumentParser
+import numpy as np
 from array import array
-parent = os.path.dirname(os.getcwd())
-sys.path.append(parent)
-#from weights import *
-from modSyst import *
-from utils import *
+import utils, samples
+
+parent = os.path.dirname( os.getcwd() )
+sys.path.append( parent )
+
+parser = ArgumentParser()
+parser.add_argument( "-y", "--year",   required = True )
+args = parser.parse_args()
+
+from ROOT import gROOT, TFile, TH1F
 
 gROOT.SetBatch(1)
 start_time = time.time()
 
-year=sys.argv[1]
-saveKey = ''#'_ttH'
 cutString = ''#'lep30_MET100_NJets4_DR1_1jet250_2jet50'
 theDir = 'templates_'+year+'_'+sys.argv[2]
 outDir = os.getcwd()+'/'+theDir+'/'+cutString
