@@ -57,13 +57,21 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
   if( njets_idx > 6 ) njets_idx = 6;
   
   if( sampleType == "tttw" ){
-    return hscale_tttw[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
+    return hscale_tttw[ sysType ]->GetBinContent( hscale_tttw[ sysType ]->FindBin( njets_idx, HT ) );
   }
-
+  
+  if( sampleType == "tttj" ){
+    return hscale_tttj[ sysType ]->GetBinContent( hscale_tttw[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
+  
+  if( sampleType == "tttt" ){
+    return hscale_tttt[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
+  
   if( sampleType == "ttjj" ){
     return hscale_ttjj[ sysType ]->GetBinContent( hscale_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
   }  
-
+   
   if( sampleType == "ttcc" ){
     return hscale_ttcc[ sysType ]->GetBinContent( hscale_ttcc[ sysType ]->FindBin( njets_idx, HT ) );
   }
@@ -94,16 +102,3 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
 
   return 1.0;  
 } 
-
-
-
-
-
-
-
-
-
-
-
-
-
