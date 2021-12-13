@@ -29,34 +29,34 @@ TLorentzVector Wlv;
 
 
 void Trijet(
-vector<TLorentzVector> &v_trijet, 
-vector<double> &v_DCSV_trijet, 
-vector<TLorentzVector> &v_allJets, 
-vector<double> &v_DCSV_allJets,
+  vector<TLorentzVector> &v_trijet, 
+  vector<double> &v_DCSV_trijet, 
+  vector<TLorentzVector> &v_allJets, 
+  vector<double> &v_DCSV_allJets,
 
-vector<TLorentzVector>& v_GD_Trijets,                    
-vector<TLorentzVector>& v_GD_jets,                     
-vector<double>& v_GD_DCSV_jets,                          
+  vector<TLorentzVector>& v_GD_Trijets,                    
+  vector<TLorentzVector>& v_GD_jets,                     
+  vector<double>& v_GD_DCSV_jets,                          
 
-vector<TLorentzVector>& v_BD_Trijets,                   
-vector<TLorentzVector>& v_BD_jets,                       
-vector<double>& v_BD_DCSV_jets,                            
+  vector<TLorentzVector>& v_BD_Trijets,                   
+  vector<TLorentzVector>& v_BD_jets,                       
+  vector<double>& v_BD_DCSV_jets,                            
 
-vector<double>* topPt_TTbarMassCalc,
+  vector<double>* topPt_TTbarMassCalc,
 
-vector<int>* topWID_TTbarMassCalc,
-vector<double>* topWPt_TTbarMassCalc,
-vector<double>* topWEta_TTbarMassCalc,
-vector<double>* topWPhi_TTbarMassCalc,
-vector<double>* topWEnergy_TTbarMassCalc,
+  vector<int>* topWID_TTbarMassCalc,
+  vector<double>* topWPt_TTbarMassCalc,
+  vector<double>* topWEta_TTbarMassCalc,
+  vector<double>* topWPhi_TTbarMassCalc,
+  vector<double>* topWEnergy_TTbarMassCalc,
 
-vector<double>* topbPt_TTbarMassCalc,
-vector<double>* topbEta_TTbarMassCalc,
-vector<double>* topbPhi_TTbarMassCalc,
-vector<double>* topbEnergy_TTbarMassCalc, 
+  vector<double>* topbPt_TTbarMassCalc,
+  vector<double>* topbEta_TTbarMassCalc,
+  vector<double>* topbPhi_TTbarMassCalc,
+  vector<double>* topbEnergy_TTbarMassCalc, 
 
-int& num_GD_trijet,
-int& num_BD_trijet
+  int& num_GD_trijet,
+  int& num_BD_trijet
 ){
     std::string bitmask(3,1);
     bitmask.resize(v_allJets.size(),0);

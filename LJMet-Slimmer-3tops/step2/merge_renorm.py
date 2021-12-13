@@ -12,15 +12,16 @@ import ROOT
 from ROOT import TFile, TCanvas, TH1F 
 from ROOT import gStyle
 
-
-fout = TFile( "HT_njets_SF_3t_UL{}.root".format( args.year ), "RECREATE" )
+foutName = "HT_njets_SF_3t_UL{}_sys.root".format( args.year )
+fout = TFile( foutName, "RECREATE" )
 
 TFiles = {}
 print( ">> Combining renormalization files: " )
 
 for file in args.files:
-  print( "  - {}".format( file ) )
-  TFiles[ file.split("_")[1] ] = TFile( file )
+  if "weights" in file.lower():
+    print( "  - {}".format( file ) )
+    TFiles[ file.split("_")[1] ] = TFile( file )
 
 sys_postfix = ["", "_HFup", "_HFdn", "_LFup", "_LFdn", "_jesup", "_jesdn", "_hfstats1up", "_hfstats1dn", "_hfstats2up", "_hfstats2dn", "_cferr1up", 
         "_cferr1dn", "_cferr2up", "_cferr2dn", "_lfstats1up", "_lfstats1dn", "_lfstats2up", "_lfstats2dn"]
@@ -35,6 +36,8 @@ hscale = { key: {} for key in TFiles }
 for key in hscale:
   for systematic in systematics:
     hscale[ key ][ systematic ] = TFiles[ key ].Get( "h2D_scale{}".format( systematic ) ).Clone()
-    fout.WriteTObject( hscale[ key ], "hscale_{}{}".format( key, systematic ) )
+    print( ">> Adding hscale_{}{}...".format( key, systematic ) )
+    fout.WriteTObject( hscale[ key ][ systematic ], "hscale_{}{}".format( key, systematic ) )
 
 fout.Close()
+os.system( "mv {} renorm/".format( foutName ) )

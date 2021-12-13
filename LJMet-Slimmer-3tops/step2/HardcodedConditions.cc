@@ -1,6 +1,4 @@
 #define HardcodedConditions_cxx
-      print("eos root://cmseos.fnal.gov mkdir -p {}".format( os.path.join( outputDir[ shift ], step1_sample ) )  )
-
 #include <cmath>
 #include "HardcodedConditions.h"
 #include <unordered_map>

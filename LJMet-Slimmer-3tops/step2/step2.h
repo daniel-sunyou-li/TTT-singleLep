@@ -2,7 +2,6 @@
 // This class has been automatically generated on
 // Sun Nov  3 14:28:48 2019 by ROOT version 6.12/07
 // from TTree ljmet/ljmet
-// found on file: /mnt/hadoop/store/group/bruxljm/FWLJMET102X_1lep2017_4t_081019_step1hadds/nominal/TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root
 //////////////////////////////////////////////////////////
 
 #ifndef step2_h
