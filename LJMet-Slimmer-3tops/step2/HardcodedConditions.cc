@@ -10,20 +10,19 @@ HardcodedConditions::HardcodedConditions() {}
 
 HardcodedConditions::HardcodedConditions( Int_t year ) {
 
-   TString sfFileName( "renorm/HT_njets_SF_3t_UL17_sys.root" );
-   
-   if( year == 2018 ){
-     sfFileName = "renorm/HT_njets_SF_3t_UL18_sys.root";
-   }
-   else if( year == 2016 ){
-     sfFileName = "renorm/HT_njets_SF_3t_UL16_sys.root";
-   }
+  TString sfFileName( "renorm/HT_njets_SF_3t_UL17_sys.root" );
+  if( year == 2018 ){
+    sfFileName = "renorm/HT_njets_SF_3t_UL18_sys.root"; 
+  }
+  else if( year == 2016 ){
+    sfFileName = "renorm/HT_njets_SF_3t_UL16_sys.root"; 
+  }
 
-   cout << ">> Reading scale factor file: " << sfFileName << endl;
-   if( !( tfile_HTNJ_SF = TFile::Open( sfFileName ) ) ){
-     std::cout << "[WARN] File does not exist. Exiting..." << std::endl;
-     exit(1);
-   }
+  cout << ">> Reading scale factor file: " << sfFileName << endl;
+  if( !( tfile_HTNJ_SF = TFile::Open( sfFileName ) ) ){
+    std::cout << "[WARN] File does not exist. Exiting..." << std::endl;
+    exit(1);  
+  }
 
   std::string SYSs[19] = { "", "_HFup", "_HFdn", "_LFup", "_LFdn", "_jesup", "_jesdn", "_hfstats1up", "_hfstats1dn", "_hfstats2up", "_hfstats2dn", "_cferr1up", "_cferr1dn", "_cferr2up", "_cferr2dn", "_lfstats1up", "_lfstats1dn", "_lfstats2up", "_lfstats2dn" };  
   for( size_t i = 0; i < 9; i++ ){
@@ -55,27 +54,27 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
   if( sampleType == "" ) return 1.0;
   int njets_idx = njets;
   if( njets_idx > 6 ) njets_idx = 6;
-  
+
   if( sampleType == "tttw" ){
     return hscale_tttw[ sysType ]->GetBinContent( hscale_tttw[ sysType ]->FindBin( njets_idx, HT ) );
   }
-  
+
   if( sampleType == "tttj" ){
     return hscale_tttj[ sysType ]->GetBinContent( hscale_tttw[ sysType ]->FindBin( njets_idx, HT ) );
   }  
-  
+
   if( sampleType == "tttt" ){
     return hscale_tttt[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
   }  
-  
+
   if( sampleType == "ttjj" ){
     return hscale_ttjj[ sysType ]->GetBinContent( hscale_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
   }  
-   
+
   if( sampleType == "ttcc" ){
     return hscale_ttcc[ sysType ]->GetBinContent( hscale_ttcc[ sysType ]->FindBin( njets_idx, HT ) );
   }
-  
+
   if( sampleType == "ttbb" ){
     return hscale_ttbb[ sysType ]->GetBinContent( hscale_ttbb[ sysType ]->FindBin( njets_idx, HT ) );
   }  
@@ -87,18 +86,48 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
   if( sampleType == "STs" ){
     return hscale_STs[ sysType ]->GetBinContent( hscale_STs[ sysType ]->FindBin( njets_idx, HT ) );
   } 
- 
+
   if( sampleType == "STt" ){
     return hscale_STt[ sysType ]->GetBinContent( hscale_STt[ sysType ]->FindBin( njets_idx, HT ) );
   }
-  
+
   if( sampleType == "STtW" ){
     return hscale_STtW[ sysType ]->GetBinContent( hscale_STtW[ sysType ]->FindBin( njets_idx, HT ) );
   }
-  
+
   if( sampleType == "WJets" ){
     return hscale_WJets[ sysType ]->GetBinContent( hscale_WJets[ sysType ]->FindBin( njets_idx, HT ) );
   }
 
   return 1.0;  
 } 
+
+float HardcodedConditions::GetCrossSectionEfficiency( std::string inputFileName ){
+  if inputFileName.Contains( "1lep2016" ){
+    return 1.0; // hasn't been implemented yet 
+  }
+  else if inputFileName.Contains( "1lep2017" ){
+    if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT0Njet0" ) ) return 1;
+    else if( inputFileName.Contains( "TTToSemiLepton_HT500Njet9_TuneCP5" ) ) return 1;
+    else if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT500Njet9" ) ) return 1;
+    else if( inputFileName.Contains( "TTToHadronic_TuneCP5" ) ) return 1;
+    else if( inputFileName.Contains( "TTTo2L2Nu_TuneCP5" ) ) return 1;
+    else if( inputFileName.Contains( "TTTT" ) ) return 1;
+    else if( inputFileName.Contains( "TTTW" ) ) return 1;
+    else if( inputFileName.Contains( "TTTJ" ) ) return 1;
+    else return 1;
+  }
+  else if inputFileName.Contains( "1lep2018" ){
+    return 1.0; // hasn't been implemented yet 
+  }
+  else return 1.0;
+}
+
+  
+  
+  
+  
+  
+  
+  
+  
