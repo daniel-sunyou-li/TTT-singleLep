@@ -3,12 +3,13 @@ import sys, os
 import numpy as np
 import argparse
 import array
-from ROOT import TFile, TTree
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--file", default="", help="The path to the analysis tree")
-parser.add_argument("-l", "--label", default="", help="The name of the output file")
+parser.add_argument("-f", "--file", default="", help = "The path to the analysis tree")
+parser.add_argument("-l", "--label", default="", help = "The name of the output file")
 args = parser.parse_args()
+
+from ROOT import TFile, TTree
 
 if not os.path.exists( "renorm" ): os.system( "mkdir -v renorm" )
 
@@ -22,7 +23,7 @@ fout = ROOT.TFile( "Weights_{}_extended_HT_cuts_sys.root".format( args.label ), 
 
 systematics = []
 for shift in [ "up", "dn" ]:
-  for systematic in [ "HF", "LF", "jes", "hfstats1", "hfstats2", "lfstats1dn", "lfstats2", "cferr1", "cferr2" ]:
+  for systematic in [ "HF", "LF", "jes", "hfstats1", "hfstats2", "lfstats1", "lfstats2", "cferr1", "cferr2" ]:
     systematics.append( systematic + shift )
 h2D = { "origin": {}, "weight": {}, "scale": {} }
 
@@ -36,18 +37,18 @@ for systematic in systematics:
   h2D[ "weight" ][ systematic ] = ROOT.TH2F( "h2D_weight_{}".format( systematic ), "h2D_{}".format( systematic ), limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
   h2D[ "weight" ][ systematic ].Sumw2()
 
-ttree = tfile = tfile.Get( "ljmet" )
+ttree = tfile.Get( "ljmet" )
 
-ttree.SetBranchStatus("*", 0)
-ttree.SetBranchStatus("NJets_JetSubCalc*", 1)
-ttree.SetBranchStatus("theJetPt_JetSubCalc_PtOrdered*", 1)
-ttree.SetBranchStatus("AK4HT*", 1)
-ttree.SetBranchStatus("btagDeepJetWeight*", 1)
-ttree.SetBranchStatus("leptonPt_MultiLepCalc*", 1)
-ttree.SetBranchStatus("isElectron*", 1)
-ttree.SetBranchStatus("isMuon*", 1)
-ttree.SetBranchStatus("corr_met_MultiLepCalc*", 1)
-ttree.SetBranchStatus("MCPastTrigger*", 1)
+#ttree.SetBranchStatus("*", 0)
+#ttree.SetBranchStatus("NJets_JetSubCalc*", 1)
+#ttree.SetBranchStatus("theJetPt_JetSubCalc_PtOrdered*", 1)
+#ttree.SetBranchStatus("AK4HT*", 1)
+#ttree.SetBranchStatus("btagDeepJetWeight*", 1)
+#ttree.SetBranchStatus("leptonPt_MultiLepCalc*", 1)
+#ttree.SetBranchStatus("isElectron*", 1)
+#ttree.SetBranchStatus("isMuon*", 1)
+#ttree.SetBranchStatus("corr_met_MultiLepCalc*", 1)
+#ttree.SetBranchStatus("MCPastTrigger*", 1)
 
 nEvents = ttree.GetEntries()
 
@@ -66,7 +67,7 @@ for i in range( nEvents ):
   for systematic in systematics:
     h2D[ "weight" ][ systematic ].Fill( njet, HT, getattr( ttree, "btagDeepJetWeight_{}".format( systematic ) ) )
 
-  if i in np.linspace( 0, nEvents, 11 ): print( ">> Finished processing {}% ({}/{}) events".format( float( i / nEvents ), i, nEvents ) )
+  if i in np.linspace( 0, nEvents, 11 ).round(): print( ">> Finished processing {}% ({}/{}) events".format( 100.* float( i ) / float ( nEvents ), i, nEvents ) )
 
 h2D[ "scale" ][ "nominal" ] = h2D[ "origin" ][ "nominal" ].Clone()
 h2D[ "scale" ][ "nominal" ].SetTitle( "h2D_scale" )

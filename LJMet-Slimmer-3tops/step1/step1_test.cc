@@ -2447,7 +2447,7 @@ djetWgt_cferr2up(1.0), djetWgt_cferr2dn(1.0), djetWgt_lfstats1up(1.0), djetWgt_l
       
       //std::cout<<"yes 2"<<std::endl;
       //ME-PS
-      if(isSig && !isSig && !isTTTT){
+      if(isSig && !isTTTT && !isTTTX){
 	pdfNewNominalWeight = NewPDFweights_MultiLepCalc->at(0);
 	// SEEMS TO APPLY TO ALL B2G MG+PYTHIA SIGNALS. NNLO 4-FLAVOR PDF
 	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
@@ -2479,6 +2479,7 @@ djetWgt_cferr2up(1.0), djetWgt_cferr2dn(1.0), djetWgt_lfstats1up(1.0), djetWgt_l
 	  }
 	}
       }
+     
       else if(isMadgraphBkg){
 	// SEEMS TO APPLY TO OTHER MG+PYTHIA BACKGROUNDS. LEADING ORDER 5-FLAVOR PDF
 	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){

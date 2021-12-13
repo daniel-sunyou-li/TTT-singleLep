@@ -4,27 +4,23 @@ import os
 ## PARSE ARGUMENTS
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing( "analysis" )
-options.register( "isTest", "", VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
+options.register( "isTest", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
 options.register( "systematics", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Include systematics" )
 options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
 options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
 options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
-options.register( "era", "", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
+options.register( "era", "2017", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
 
 ## SET DEFAULT VALUES
-options.isMC = True
-options.isTTbar = False
-options.doGenHT = False
 options.maxEvents = -1
-options.era = "2017"
 options.inputFiles = [
 "root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAOD/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v3/270000/056C0DD9-6A0B-E14F-B424-9C6DE439A711.root"
 ]
 options.parseArguments()
 
 systematics = options.systematics
-maxEvents = options.maxEvents
 isTest = options.isTest
+maxEvents = options.maxEvents if not isTest else 10
 isMC = options.isMC
 isTTbar = options.isTTbar
 doGenHT = options.doGenHT
@@ -531,7 +527,7 @@ MultiLepSelector_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -621,7 +617,7 @@ MultiLepCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -672,7 +668,7 @@ JetSubCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly_V2p1.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.

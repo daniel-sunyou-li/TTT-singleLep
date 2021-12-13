@@ -9,6 +9,7 @@ parser.add_argument( "-y", "--year", default = "17" )
 parser.add_argument( "-s", "--systematics", action = "store_true" )
 parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-f", "--filesPerJob", default = "30" )
+parser.add_argument( "-r", "--resubmit", default = "" )
 args = parser.parse_args()
 
 from ROOT import *
@@ -37,13 +38,13 @@ for shift in shifts: os.system( "mkdir -p {}".format( os.path.join( condorDir, s
 
 deepCSV_SF = {
   "16": "data/DeepCSV_106XUL16.csv",
-  "17": "data/DeepCSV_106XUL17SF_V2p1.csv",
+  "17": "data/DeepCSV_106XUL17SF.csv",
   "18": "data/DeepCSV_106XUL18SF_V1p1.csv"
 }
 
 deepJet_SF = {
   "16": "data/DeepJet_106XUL16.csv",
-  "17": "data/DeepJet_106XUL17SF_V2p1.csv",
+  "17": "data/DeepJet_106XUL17SF.csv",
   "18": "data/DeepJet_106XUL18SF_V1p1.csv"
 }
 
@@ -166,7 +167,7 @@ universe = vanilla
 Executable = %(RUNDIR)s/make_step1.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-Transfer_Input_Files = %(RUNDIR)s/compile_step1.C, %(RUNDIR)s/make_step1.C, %(RUNDIR)s/step1.cc, %(RUNDIR)s/step1.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(DEEPCSV)s, %(RUNDIR)s/%(DEEPJET)s
+Transfer_Input_Files = %(RUNDIR)s/compile_step1.C, %(RUNDIR)s/make_step1.C, %(RUNDIR)s/step1_test.cc, %(RUNDIR)s/step1_test.h, %(RUNDIR)s/HardcodedConditions.cc, %(RUNDIR)s/HardcodedConditions.h, %(RUNDIR)s/BTagCalibForLJMet.cpp, %(RUNDIR)s/BTagCalibForLJMet.h, %(RUNDIR)s/%(DEEPCSV)s, %(RUNDIR)s/%(DEEPJET)s
 request_memory = 4096
 Output = %(OUTFILENAME)s_%(ID)s.out
 Error = %(OUTFILENAME)s_%(ID)s.err

@@ -4,7 +4,7 @@ import math
 
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17", help = "Options: 16,17,18" )
-parser.add_arguemnt( "files", nargs = "+", required = True, help = "Files to combine" )
+parser.add_argument( "files", nargs = "+", default = [], help = "Files to combine" )
 args = parser.parse_args()
 
 sys.path.append('/anaconda2/envs/fireworks/lib')

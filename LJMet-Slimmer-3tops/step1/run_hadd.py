@@ -44,48 +44,48 @@ for shift in shifts:
     else:
       outList = [ "none" ]
 
-  for outLabel in outList:
-    outSample = sample if outLabel == "none" else "{}_{}".format( sample, outLabel )
+    for outLabel in outList:
+      outSample = sample if outLabel == "none" else "{}_{}".format( sample, outLabel )
     
-    step1Files = EOSlist_root_files( os.path.join( step1Dir[ shift ], outSample ) )
+      step1Files = EOSlist_root_files( os.path.join( step1Dir[ shift ], outSample ) )
    
-    print( ">> Hadd'ing {}: {} files".format( outSample, len( step1Files ) ) )
+      print( ">> Hadd'ing {}: {} files".format( outSample, len( step1Files ) ) )
     
-    filesPerHadd = int( args.filesPerHadd )
-    if "TTToSemiLeptonic" in outSample and outLabel == "HT0Njet0_ttjj": filesPerHadd = 45
-    elif "WJetsToLNu_HT-1200To2500" in outSample: filesPerHadd = 120
-    elif "WJetsToLNu_HT-2500ToInf" in outSample: filesPerHadd = 13
-    if "down" in outSample.lower() or "up" in outSample.lower(): filesPerHadd = 900
+      filesPerHadd = int( args.filesPerHadd )
+      if "TTToSemiLeptonic" in outSample and outLabel == "HT0Njet0_ttjj": filesPerHadd = 45
+      elif "WJetsToLNu_HT-1200To2500" in outSample: filesPerHadd = 120
+      elif "WJetsToLNu_HT-2500ToInf" in outSample: filesPerHadd = 13
+      if "down" in outSample.lower() or "up" in outSample.lower(): filesPerHadd = 900
 
-    singleFile = " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[shift], outSample, step1Files[-1] )
-    multipleFiles = filesPerHadd * singleFile
-    lengthCheck = len( "hadd -f root://cmseos.fnal.gov/{}/{}_hadd.root {}".format( haddDir[shift], outSample, multipleFiles ) )
-    if lengthCheck > 126000:
-      overflow = lengthCheck - 126000
-      nRemove = math.ceil( overflow / len( singleFile ) )
-      filesPerHadd = int( filesPerHadd - nRemove )
-      print( "[WARN] Length estimate reduced from {} by {} via removing {} files for {} hadd'd files".format( lengthCheck, overflow, nRemove, filesPerHadd ) )
+      singleFile = " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[shift], outSample, step1Files[-1] )
+      multipleFiles = filesPerHadd * singleFile
+      lengthCheck = len( "hadd -f root://cmseos.fnal.gov/{}/{}_hadd.root {}".format( haddDir[shift], outSample, multipleFiles ) )
+      if lengthCheck > 126000:
+        overflow = lengthCheck - 126000
+        nRemove = math.ceil( overflow / len( singleFile ) )
+        filesPerHadd = int( filesPerHadd - nRemove )
+        print( "[WARN] Length estimate reduced from {} by {} via removing {} files for {} hadd'd files".format( lengthCheck, overflow, nRemove, filesPerHadd ) )
 
-    haddCommand = ""
-    if len( step1Files ) < filesPerHadd:
-      haddCommand = "hadd -f root://cmseos.fnal.gov/{}/{}_hadd.root ".format( haddDir[shift], outSample )
-      for step1 in step1Files: haddCommand += " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[shift], outSample, step1 )
-      print( ">> Length of {} hadd command: {}".format( outSample, len( haddCommand ) ) )
-      subprocess.call( haddCommand, shell = True )
-
-      if bool( EOSisfile( "{}/{}_hadd.root".format( haddDir[shift], outSample ) ) ) != True:
-        print( haddCommand )
-    else:
-      for i in range( int( math.ceil( len( step1Files ) / float( filesPerHadd ) ) ) ):
-        haddCommand = "hadd -f root://cmseos.fnal.gov/{}/{}_{}_hadd.root ".format( haddDir[ shift ], outSample, i + 1 )
- 
-        begin = i * filesPerHadd
-        end = ( i + 1 ) * filesPerHadd
-        if end > len( step1Files ): end = len( step1Files )
-        for j in range( begin, end ):
-          haddCommand += " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[ shift ], outSample, step1Files[j] )
+      haddCommand = ""
+      if len( step1Files ) < filesPerHadd:
+        haddCommand = "hadd -f root://cmseos.fnal.gov/{}/{}_hadd.root ".format( haddDir[shift], outSample )
+        for step1 in step1Files: haddCommand += " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[shift], outSample, step1 )
+        print( ">> Length of {} hadd command: {}".format( outSample, len( haddCommand ) ) )
         subprocess.call( haddCommand, shell = True )
+
+        if bool( EOSisfile( "{}/{}_hadd.root".format( haddDir[shift], outSample ) ) ) != True:
+          print( haddCommand )
+      else:
+        for i in range( int( math.ceil( len( step1Files ) / float( filesPerHadd ) ) ) ):
+          haddCommand = "hadd -f root://cmseos.fnal.gov/{}/{}_{}_hadd.root ".format( haddDir[ shift ], outSample, i + 1 )
+ 
+          begin = i * filesPerHadd
+          end = ( i + 1 ) * filesPerHadd
+          if end > len( step1Files ): end = len( step1Files )
+          for j in range( begin, end ):
+            haddCommand += " root://cmseos.fnal.gov/{}/{}/{}".format( step1Dir[ shift ], outSample, step1Files[j] )
+          subprocess.call( haddCommand, shell = True )
         
-        if not bool( EOSisfile( "{}/{}_{}_hadd.root".format( haddDir[ shift ], outSample, i + 1 ) ) ): print( haddCommand )
+          if not bool( EOSisfile( "{}/{}_{}_hadd.root".format( haddDir[ shift ], outSample, i + 1 ) ) ): print( haddCommand )
 
 print( "[DONE] Finished hadd'ing samples in {:.2f} minutes.".format( round( time.time() - start_time, 2 ) / 60 ) )

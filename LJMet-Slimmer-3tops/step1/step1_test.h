@@ -1308,12 +1308,13 @@ step1_test::step1_test(TString inputFileName, TString outputFileName, Int_t Year
 // used to generate this class and read the Tree.
 
   Year = Year_;
-  isSig  = (inputFileName.Contains("TTTT_Tune") || inputFileName.Contains("prime") || inputFileName.Contains("X53") || inputFileName.Contains("ChargedHiggs_Hplus"));
+  isSig  = ( inputFileName.Contains( "TTTW_Tune" ) || inputFileName.Contains( "TTTJ_Tune" ) );
   if(isSig){
     if(inputFileName.Contains("Tprime")) isTpTp = true;
     else if(inputFileName.Contains("Bprime")) isBpBp = true;
     else if(inputFileName.Contains("X53")) isXX = true;
     else if(inputFileName.Contains("TTTT_Tune")) isTTTT = true;
+    else if(inputFileName.Contains("TTTW_Tune") || inputFileName.Contains("TTTJ_Tune")) isTTTX = true;
 
     if(inputFileName.Contains("_M-700")) SigMass = 0; 
     else if(inputFileName.Contains("_M-800")) SigMass = 1;
@@ -1354,7 +1355,7 @@ step1_test::step1_test(TString inputFileName, TString outputFileName, Int_t Year
   isTTV = (inputFileName.Contains("TTZTo") || inputFileName.Contains("TTWJetsTo"));
   isTTHbb = inputFileName.Contains("ttHTobb_");
   isTTHnonbb = inputFileName.Contains("ttHToNonbb_");
-  isTTTX = (inputFileName.Contains("TTTJ_Tune") || inputFileName.Contains("TTTW_Tune"));
+  isTTTT = (inputFileName.Contains("TTTT_Tune") );
   isTTVV = (inputFileName.Contains("TTHH_Tune") || inputFileName.Contains("TTWH_Tune") || inputFileName.Contains("TTWW_Tune") || inputFileName.Contains("TTWZ_Tune") || inputFileName.Contains("TTZH_Tune") || inputFileName.Contains("TTZZ_Tune"));
   isVV = (inputFileName.Contains("WW_") || inputFileName.Contains("WZ_") || inputFileName.Contains("ZZ_"));
   isMC = !(inputFileName.Contains("Single") || inputFileName.Contains("Data18") || inputFileName.Contains("JetHTRun20"));
