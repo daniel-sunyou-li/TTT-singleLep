@@ -58,531 +58,566 @@ void Trijet(
   int& num_GD_trijet,
   int& num_BD_trijet
 ){
-    std::string bitmask(3,1);
-    bitmask.resize(v_allJets.size(),0);
-    std::vector<double> v_deltalR; 
+  std::string bitmask(3,1);
+  bitmask.resize( v_allJets.size(), 0 );
+  std::vector<double> v_deltalR; 
 
-    TLorentzVector tempGenTop;
-    TLorentzVector tempGenTopWd1, tempGenTopWd2;    
-    TLorentzVector tempGenTopb;
-    int idx_minDR = -10;
-           
-    do {
-        v_trijet.clear();
-        v_DCSV_trijet.clear();
+  TLorentzVector tempGenTop;
+  TLorentzVector tempGenTopWd1, tempGenTopWd2;    
+  TLorentzVector tempGenTopb;
+  int idx_minDR = -10;
 
-        for(unsigned int njet = 0; njet < v_allJets.size(); ++njet){
-            if(bitmask[njet]) {
-                v_trijet.push_back(v_allJets[njet]);
-                v_DCSV_trijet.push_back(v_DCSV_allJets[njet]);
-            } 
-        }
-        bitset<9> tempbit9set;        
-        std::vector<bitset<9>> v_bit9set;
-        std::vector<Double_t> v_flipDeltaR;
+  do {
+    v_trijet.clear();
+    v_DCSV_trijet.clear();
 
-        v_bit9set.clear();
-        v_flipDeltaR.clear();
-        
-        int matchedTopIdx = 0;        
-        for(unsigned int njet = 0; njet < 3; ++njet){
-            v_deltalR.clear();
-            tempbit9set.reset();                
-            for(unsigned int nTop = 0; nTop < topPt_TTbarMassCalc->size(); nTop++){
-                if(abs(topWID_TTbarMassCalc->at(nTop*2)) > 6 || abs(topWID_TTbarMassCalc->at(nTop*2+1)) > 6){ 
-                    continue; 
-                }
-                tempGenTopWd1.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(nTop*2),topWEta_TTbarMassCalc->at(nTop*2),topWPhi_TTbarMassCalc->at(nTop*2),topWEnergy_TTbarMassCalc->at(nTop*2));	
-                tempGenTopWd2.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(nTop*2+1),topWEta_TTbarMassCalc->at(nTop*2+1),topWPhi_TTbarMassCalc->at(nTop*2+1),topWEnergy_TTbarMassCalc->at(nTop*2+1));	        
-                tempGenTopb.SetPtEtaPhiE(topbPt_TTbarMassCalc->at(nTop),topbEta_TTbarMassCalc->at(nTop),topbPhi_TTbarMassCalc->at(nTop),topbEnergy_TTbarMassCalc->at(nTop));
-                v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopWd1));                                                            
-                v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopWd2));                                                            
-                v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopb));
-            }
-            idx_minDR = std::distance(v_deltalR.begin(), std::min_element(v_deltalR.begin(), v_deltalR.end()));
-            if(v_deltalR[idx_minDR]<0.5){
-                tempbit9set.flip(idx_minDR);
-            }
-            v_flipDeltaR.push_back(v_deltalR[idx_minDR]);
-            v_bit9set.push_back(tempbit9set);
-        }
-        bitset<9> bit9set;        
-        bit9set = (v_bit9set[0]|v_bit9set[1])|v_bit9set[2];             ///////////////// a complete bitset for a trijet /////////////////                 
-        if(bit9set.test(0)*bit9set.test(1)*bit9set.test(2) || bit9set.test(3)*bit9set.test(4)*bit9set.test(5) || bit9set.test(6)*bit9set.test(7)*bit9set.test(8)){
-            v_GD_Trijets.push_back(v_trijet[0]+v_trijet[1]+v_trijet[2]);
-            v_GD_jets.push_back(v_trijet[0]);
-            v_GD_jets.push_back(v_trijet[1]);
-            v_GD_jets.push_back(v_trijet[2]);
-            v_GD_DCSV_jets.push_back(v_DCSV_trijet[0]);                        
-            v_GD_DCSV_jets.push_back(v_DCSV_trijet[1]);                        
-            v_GD_DCSV_jets.push_back(v_DCSV_trijet[2]);                                                
-            num_GD_trijet++;
-        }
-        else {
-            num_BD_trijet++;
-            v_BD_Trijets.push_back(v_trijet[0]+v_trijet[1]+v_trijet[2]);
-            v_BD_jets.push_back(v_trijet[0]);
-            v_BD_jets.push_back(v_trijet[1]);
-            v_BD_jets.push_back(v_trijet[2]);
-            v_BD_DCSV_jets.push_back(v_DCSV_trijet[0]);                        
-            v_BD_DCSV_jets.push_back(v_DCSV_trijet[1]);                        
-            v_BD_DCSV_jets.push_back(v_DCSV_trijet[2]);                                                                
-        }
-    } while(std::prev_permutation(bitmask.begin(), bitmask.end()));       
+    for(unsigned int njet = 0; njet < v_allJets.size(); ++njet){
+      if(bitmask[njet]) {
+        v_trijet.push_back(v_allJets[njet]);
+        v_DCSV_trijet.push_back(v_DCSV_allJets[njet]);
+      } 
+    }
+    bitset<9> tempbit9set;        
+    std::vector<bitset<9>> v_bit9set;
+    std::vector<Double_t> v_flipDeltaR;
+
+    v_bit9set.clear();
+    v_flipDeltaR.clear();
+
+    int matchedTopIdx = 0;        
+    for( unsigned int njet = 0; njet < 3; ++njet ){
+      v_deltalR.clear();
+      tempbit9set.reset();                
+      for( unsigned int nTop = 0; nTop < topPt_TTbarMassCalc->size(); nTop++ ){
+        if( abs(topWID_TTbarMassCalc->at(nTop*2) ) > 6 || abs(topWID_TTbarMassCalc->at(nTop*2+1) ) > 6){ 
+          continue; 
+        } 
+        tempGenTopWd1.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(nTop*2),topWEta_TTbarMassCalc->at(nTop*2),topWPhi_TTbarMassCalc->at(nTop*2),topWEnergy_TTbarMassCalc->at(nTop*2));	
+        tempGenTopWd2.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(nTop*2+1),topWEta_TTbarMassCalc->at(nTop*2+1),topWPhi_TTbarMassCalc->at(nTop*2+1),topWEnergy_TTbarMassCalc->at(nTop*2+1));	        
+        tempGenTopb.SetPtEtaPhiE(topbPt_TTbarMassCalc->at(nTop),topbEta_TTbarMassCalc->at(nTop),topbPhi_TTbarMassCalc->at(nTop),topbEnergy_TTbarMassCalc->at(nTop));
+        v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopWd1)); 
+        v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopWd2));                                              
+        v_deltalR.push_back(v_trijet[njet].DeltaR(tempGenTopb));
+      }
+      idx_minDR = std::distance(v_deltalR.begin(), std::min_element(v_deltalR.begin(), v_deltalR.end()));
+      if( v_deltalR[idx_minDR] < 0.5 ){
+        tempbit9set.flip(idx_minDR);
+      }
+      v_flipDeltaR.push_back( v_deltalR[idx_minDR] );
+      v_bit9set.push_back( tempbit9set );
+    }
+    bitset<9> bit9set;        
+    bit9set = (v_bit9set[0]|v_bit9set[1])|v_bit9set[2]; // a complete bitset for a trijet                 
+    if(bit9set.test(0)*bit9set.test(1)*bit9set.test(2) || bit9set.test(3)*bit9set.test(4)*bit9set.test(5) || bit9set.test(6)*bit9set.test(7)*bit9set.test(8)){
+      v_GD_Trijets.push_back(v_trijet[0]+v_trijet[1]+v_trijet[2]);
+      v_GD_jets.push_back(v_trijet[0]);
+      v_GD_jets.push_back(v_trijet[1]);
+      v_GD_jets.push_back(v_trijet[2]);
+      v_GD_DCSV_jets.push_back(v_DCSV_trijet[0]);                        
+      v_GD_DCSV_jets.push_back(v_DCSV_trijet[1]);                        
+      v_GD_DCSV_jets.push_back(v_DCSV_trijet[2]);                                                
+      num_GD_trijet++;
+    }
+    else {
+      num_BD_trijet++;
+      v_BD_Trijets.push_back(v_trijet[0]+v_trijet[1]+v_trijet[2]);
+      v_BD_jets.push_back(v_trijet[0]);
+      v_BD_jets.push_back(v_trijet[1]);
+      v_BD_jets.push_back(v_trijet[2]);
+      v_BD_DCSV_jets.push_back(v_DCSV_trijet[0]);                        
+      v_BD_DCSV_jets.push_back(v_DCSV_trijet[1]);                        
+      v_BD_DCSV_jets.push_back(v_DCSV_trijet[2]);                                                                
+    }
+  } while(std::prev_permutation(bitmask.begin(), bitmask.end()));       
 }
 
 
-TMatrixD SpheAplaTensor(const vector<TLorentzVector> allJets){
-      TMatrixD MomentumTensor(3,3); 
-      Double_t p2_sum=0.0;
-      for(unsigned int njet = 0; njet < allJets.size(); ++njet){
-        MomentumTensor(0, 0) += allJets[njet].Px()*allJets[njet].Px();
-        MomentumTensor(0, 1) += allJets[njet].Px()*allJets[njet].Py();
-        MomentumTensor(0, 2) += allJets[njet].Px()*allJets[njet].Pz();
-        MomentumTensor(1, 0) += allJets[njet].Py()*allJets[njet].Px();
-        MomentumTensor(1, 1) += allJets[njet].Py()*allJets[njet].Py();
-        MomentumTensor(1, 2) += allJets[njet].Py()*allJets[njet].Pz();
-        MomentumTensor(2, 0) += allJets[njet].Pz()*allJets[njet].Px();
-        MomentumTensor(2, 1) += allJets[njet].Pz()*allJets[njet].Py();
-        MomentumTensor(2, 2) += allJets[njet].Pz()*allJets[njet].Pz();
-        p2_sum += allJets[njet].Px()*allJets[njet].Px()+allJets[njet].Py()*allJets[njet].Py()+allJets[njet].Pz()*allJets[njet].Pz();
-      }
-      if (p2_sum != 0){
-          MomentumTensor(0, 0) /= p2_sum;
-          MomentumTensor(0, 1) /= p2_sum;
-          MomentumTensor(0, 2) /= p2_sum;
-          MomentumTensor(1, 0) /= p2_sum;
-          MomentumTensor(1, 1) /= p2_sum;
-          MomentumTensor(1, 2) /= p2_sum;
-          MomentumTensor(2, 0) /= p2_sum;
-          MomentumTensor(2, 1) /= p2_sum;
-          MomentumTensor(2, 2) /= p2_sum;
-      }
-      TVectorD *_pv = new TVectorD(3);
-      return MomentumTensor;
+TMatrixD SpheAplaTensor( const vector<TLorentzVector> allJets ){
+  TMatrixD MomentumTensor(3,3); 
+  Double_t p2_sum=0.0;
+  for( unsigned int njet = 0; njet < allJets.size(); ++njet ){
+    MomentumTensor(0, 0) += allJets[njet].Px()*allJets[njet].Px();
+    MomentumTensor(0, 1) += allJets[njet].Px()*allJets[njet].Py();
+    MomentumTensor(0, 2) += allJets[njet].Px()*allJets[njet].Pz();
+    MomentumTensor(1, 0) += allJets[njet].Py()*allJets[njet].Px();
+    MomentumTensor(1, 1) += allJets[njet].Py()*allJets[njet].Py();
+    MomentumTensor(1, 2) += allJets[njet].Py()*allJets[njet].Pz();
+    MomentumTensor(2, 0) += allJets[njet].Pz()*allJets[njet].Px();
+    MomentumTensor(2, 1) += allJets[njet].Pz()*allJets[njet].Py();
+    MomentumTensor(2, 2) += allJets[njet].Pz()*allJets[njet].Pz();
+    p2_sum += allJets[njet].Px()*allJets[njet].Px()+allJets[njet].Py()*allJets[njet].Py()+allJets[njet].Pz()*allJets[njet].Pz();
+  }
+  if (p2_sum != 0){
+    MomentumTensor(0, 0) /= p2_sum;
+    MomentumTensor(0, 1) /= p2_sum;
+    MomentumTensor(0, 2) /= p2_sum;
+    MomentumTensor(1, 0) /= p2_sum;
+    MomentumTensor(1, 1) /= p2_sum;
+    MomentumTensor(1, 2) /= p2_sum;
+    MomentumTensor(2, 0) /= p2_sum;
+    MomentumTensor(2, 1) /= p2_sum;
+    MomentumTensor(2, 2) /= p2_sum;
+  }
+  TVectorD *_pv = new TVectorD(3);
+  return MomentumTensor;
 }
 
-bool compareFunc(const pair<TLorentzVector, double> &a, const pair<TLorentzVector, double> &b){
-    return (a.second > b.second);
+bool compareFunc( const pair<TLorentzVector, double> &a, const pair<TLorentzVector, double> &b ){
+  return (a.second > b.second);
 }
 
-float mt2( const TLorentzVector visa,  const TLorentzVector visb,  const TLorentzVector metVec)
-{
+float mt2( const TLorentzVector visa,  const TLorentzVector visb,  const TLorentzVector metVec){
+  Davismt2 davismt2;
+  const double mn = 0.; // neutrino mass
+  // Format: M, px, py
+  double visaVector[3] = { visa.M() , visa.Px(), visa.Py() };
+  double visbVector[3] = { visb.M(), visb.Px(), visb.Py() };
+  double metVector[3] = { mn, metVec.Px(), metVec.Py() };
 
-    Davismt2 davismt2;
-    const double mn = 0.; // neutrino mass
-    // Format: M, px, py
-    double visaVector[3] = { visa.M() , visa.Px(), visa.Py() };
-    double visbVector[3] = { visb.M(), visb.Px(), visb.Py() };
-    double metVector[3] = { mn, metVec.Px(), metVec.Py() };
+  davismt2.set_momenta( visaVector, visbVector, metVector );
+  davismt2.set_mn( mn );
 
-    davismt2.set_momenta(visaVector,visbVector,metVector);
-    davismt2.set_mn(mn);
-
-    return davismt2.get_mt2();
-
+  return davismt2.get_mt2();
 }
 
-TLorentzVector bestJet( const double corr_met_phi, 
-                        const double corr_met, 
-                        const double lepMass, 
-                        const TLorentzVector lepVector, 
-                        const vector<double>* theJetPt_PtOrdered,
-                        const vector<double>* theJetEta_PtOrdered,
-                        const vector<double>* theJetPhi_PtOrdered,
-                        const vector<double>* theJetEnergy_PtOrdered                                                
-                        ){
-      double metpx = corr_met*cos(corr_met_phi);
-      double metpy = corr_met*sin(corr_met_phi);
-      double metpt = corr_met;
+TLorentzVector bestJet( 
+    const double corr_met_phi, 
+    const double corr_met, 
+    const double lepMass, 
+    const TLorentzVector lepVector, 
+    const vector<double>* theJetPt_PtOrdered,
+    const vector<double>* theJetEta_PtOrdered,
+    const vector<double>* theJetPhi_PtOrdered,
+    const vector<double>* theJetEnergy_PtOrdered                                                
+  ){
+  double metpx = corr_met*cos(corr_met_phi);
+  double metpy = corr_met*sin(corr_met_phi);
+  double metpt = corr_met;
 
-      double Dtmp = (MW*MW)-(lepMass*lepMass)+2*((lepVector.Px())*(metpx)+(lepVector.Py())*(metpy));
-      double Atmp = 4.0*((lepVector.Energy())*(lepVector.Energy())-(lepVector.Pz())*(lepVector.Pz()));
-      double Btmp = -4.0*Dtmp*(lepVector.Pz());
-      double Ctmp = 4.0*(lepVector.Energy())*(lepVector.Energy())*(metpt)*(metpt)-Dtmp*Dtmp;
-      
-      double nuPz_1;
-      double nuPz_2;
-      
-      double DETtmp = Btmp*Btmp-4.0*Atmp*Ctmp;
-      
-      TLorentzVector Wlv_1, Wlv_2, lvTop, lvXTF;
-      if(DETtmp >= 0) {
-        nuPz_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
-        nuPz_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
-        TLorentzVector Nulv_1(metpx,metpy,nuPz_1,TMath::Sqrt((metpt)*(metpt)+(nuPz_1)*(nuPz_1)));
-        TLorentzVector Nulv_2(metpx,metpy,nuPz_2,TMath::Sqrt((metpt)*(metpt)+(nuPz_2)*(nuPz_2)));
-        Wlv_1 = Nulv_1+lepVector;
-        Wlv_2 = Nulv_2+lepVector;
-      }
-      if(DETtmp < 0) {
-        nuPz_1 = (-Btmp)/(2.0*Atmp);
-        nuPz_2 = (-Btmp)/(2.0*Atmp);
-        double alpha = (lepVector.Px())*(metpx)/(metpt)+(lepVector.Py())*(metpy)/(metpt);
-        double Delta = (MW*MW)-(lepMass*lepMass);
-        Atmp = 4.0*((lepVector.Pz())*(lepVector.Pz())-(lepVector.Energy())*(lepVector.Energy())+(alpha*alpha));
-        Btmp = 4.0*alpha*Delta;
-        Ctmp = Delta*Delta;
-        DETtmp = Btmp*Btmp-4.0*Atmp*Ctmp;
-        double pTnu_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
-        double pTnu_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
-        TLorentzVector Nulv_1(metpx*(pTnu_1)/(metpt),metpy*(pTnu_1)/(metpt),nuPz_1,TMath::Sqrt((pTnu_1)*(pTnu_1)+(nuPz_1)*(nuPz_1)));
-        TLorentzVector Nulv_2(metpx*(pTnu_2)/(metpt),metpy*(pTnu_2)/(metpt),nuPz_2,TMath::Sqrt((pTnu_2)*(pTnu_2)+(nuPz_2)*(nuPz_2)));
-        Wlv_1 = Nulv_1+lepVector;
-        Wlv_2 = Nulv_2+lepVector;
-        if (fabs(Wlv_1.M()-MW) < fabs(Wlv_2.M()-MW)) Wlv_2 = Wlv_1;
-        else Wlv_1 = Wlv_2;
-      }
-      
-      // ----------------------------------------------------------------------------
-      // top --> W b --> l nu b using W from above
-      // ----------------------------------------------------------------------------
+  double Dtmp = (MW*MW)-(lepMass*lepMass)+2*((lepVector.Px())*(metpx)+(lepVector.Py())*(metpy));
+  double Atmp = 4.0*((lepVector.Energy())*(lepVector.Energy())-(lepVector.Pz())*(lepVector.Pz()));
+  double Btmp = -4.0*Dtmp*(lepVector.Pz());
+  double Ctmp = 4.0*(lepVector.Energy())*(lepVector.Energy())*(metpt)*(metpt)-Dtmp*Dtmp;
 
-      double dMTOP = 1e8;
-      unsigned int topIndex = 0;
-      bool firstW = true;
-      double MTop_1, MTop_2;
-      TLorentzVector jet_lv;
-      for(unsigned int ijet=0; ijet < theJetPt_PtOrdered->size(); ijet++){
-        jet_lv.SetPtEtaPhiE(theJetPt_PtOrdered->at(ijet),theJetEta_PtOrdered->at(ijet),theJetPhi_PtOrdered->at(ijet),theJetEnergy_PtOrdered->at(ijet));
-        MTop_1 = (jet_lv + Wlv_1).M();
-        MTop_2 = (jet_lv + Wlv_2).M();
-        if(fabs(MTop_1 - MTOP) < dMTOP) {
-          if(fabs(MTop_1 - MTOP) < fabs(MTop_2 - MTOP)) {
-            firstW = true;
-            topIndex = ijet;
-            dMTOP = fabs(MTop_1 - MTOP);
-          }
-          else {
-            firstW = false;
-            topIndex = ijet;
-            dMTOP = fabs(MTop_2 - MTOP);
-          }
-        }
-        else if(fabs(MTop_2 - MTOP) < dMTOP) {
-          firstW = false;
-          topIndex = ijet;
-          dMTOP = fabs(MTop_2 - MTOP);
-        }
+  double nuPz_1;
+  double nuPz_2;
+
+  double DETtmp = Btmp*Btmp-4.0*Atmp*Ctmp;
+
+  TLorentzVector Wlv_1, Wlv_2, lvTop, lvXTF;
+  if(DETtmp >= 0) {
+    nuPz_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
+    nuPz_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
+    TLorentzVector Nulv_1(metpx,metpy,nuPz_1,TMath::Sqrt((metpt)*(metpt)+(nuPz_1)*(nuPz_1)));
+    TLorentzVector Nulv_2(metpx,metpy,nuPz_2,TMath::Sqrt((metpt)*(metpt)+(nuPz_2)*(nuPz_2)));
+    Wlv_1 = Nulv_1+lepVector;
+    Wlv_2 = Nulv_2+lepVector;
+  }
+  if(DETtmp < 0) {
+    nuPz_1 = (-Btmp) / (2.0*Atmp);
+    nuPz_2 = (-Btmp) / (2.0*Atmp);
+    double alpha = (lepVector.Px())*(metpx) / (metpt)+(lepVector.Py())*(metpy) / (metpt);
+    double Delta = (MW*MW)-(lepMass*lepMass);
+    Atmp = 4.0*((lepVector.Pz())*(lepVector.Pz())-(lepVector.Energy())*(lepVector.Energy())+(alpha*alpha));
+    Btmp = 4.0*alpha*Delta;
+    Ctmp = Delta*Delta;
+    DETtmp = Btmp*Btmp-4.0*Atmp*Ctmp;
+    double pTnu_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
+    double pTnu_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
+    TLorentzVector Nulv_1(metpx*(pTnu_1)/(metpt),metpy*(pTnu_1)/(metpt),nuPz_1,TMath::Sqrt((pTnu_1)*(pTnu_1)+(nuPz_1)*(nuPz_1)));
+    TLorentzVector Nulv_2(metpx*(pTnu_2)/(metpt),metpy*(pTnu_2)/(metpt),nuPz_2,TMath::Sqrt((pTnu_2)*(pTnu_2)+(nuPz_2)*(nuPz_2)));
+    Wlv_1 = Nulv_1+lepVector;
+    Wlv_2 = Nulv_2+lepVector;
+    if (fabs(Wlv_1.M()-MW) < fabs(Wlv_2.M()-MW)) Wlv_2 = Wlv_1;
+    else Wlv_1 = Wlv_2;
+  }
+
+  // ----------------------------------------------------------------------------
+  // top --> W b --> l nu b using W from above
+  // ----------------------------------------------------------------------------
+
+  double dMTOP = 1e8;
+  unsigned int topIndex = 0;
+  bool firstW = true;
+  double MTop_1, MTop_2;
+  TLorentzVector jet_lv;
+  for(unsigned int ijet=0; ijet < theJetPt_PtOrdered->size(); ijet++){
+    jet_lv.SetPtEtaPhiE(theJetPt_PtOrdered->at(ijet),theJetEta_PtOrdered->at(ijet),theJetPhi_PtOrdered->at(ijet),theJetEnergy_PtOrdered->at(ijet));
+    MTop_1 = (jet_lv + Wlv_1).M();
+    MTop_2 = (jet_lv + Wlv_2).M();
+    if(fabs(MTop_1 - MTOP) < dMTOP) {
+      if(fabs(MTop_1 - MTOP) < fabs(MTop_2 - MTOP)) {
+        firstW = true;
+        topIndex = ijet;
+        dMTOP = fabs(MTop_1 - MTOP);
       }
-      if(firstW) {Wlv = Wlv_1;}
-      else{Wlv = Wlv_2;}
-      jet_lv.SetPtEtaPhiE(theJetPt_PtOrdered->at(topIndex),theJetEta_PtOrdered->at(topIndex),theJetPhi_PtOrdered->at(topIndex),theJetEnergy_PtOrdered->at(topIndex));
-      return jet_lv;
+      else {
+        firstW = false;
+        topIndex = ijet;
+        dMTOP = fabs(MTop_2 - MTOP);
+      }
+    }
+    else if( fabs(MTop_2 - MTOP) < dMTOP ) {
+      firstW = false;
+      topIndex = ijet;
+      dMTOP = fabs(MTop_2 - MTOP);
+    }
+  }
+  if( firstW ) { Wlv = Wlv_1; }
+  else{ Wlv = Wlv_2; }
+  jet_lv.SetPtEtaPhiE(theJetPt_PtOrdered->at(topIndex),theJetEta_PtOrdered->at(topIndex),theJetPhi_PtOrdered->at(topIndex),theJetEnergy_PtOrdered->at(topIndex));
+  return jet_lv;
 }
 
 
 void step2::Loop()
 {   
-   if (inputTree == 0) return;
-   outputFile->cd();
-//    gROOT->SetBatch(kTRUE);   
-    TTree *outputTree = inputTree->CloneTree(); //Copy of Input Tree
-//    TTree *outputTree = new TTree("ljmet","ljmet"); //No Copy of Input Tree   
+  if ( inputTree == 0 ) return;
+  outputFile->cd();
+  //    gROOT->SetBatch(kTRUE);   
+  TTree *outputTree = inputTree->CloneTree(); //Copy of Input Tree
+  //    TTree *outputTree = new TTree("ljmet","ljmet"); //No Copy of Input Tree   
 
-   TBranch *b_btagDeepJet2DWeight_HTnj   = outputTree->Branch("btagDeepJet2DWeight_HTnj", &btagDeepJet2DWeight_HTnj, "btagDeepJet2DWeight_HTnj/F");
-   TBranch *b_btagCSV2DWeight_HTnj   = outputTree->Branch("btagCSV2DWeight_HTnj", &btagCSV2DWeight_HTnj, "btagCSV2DWeight_HTnj/F");
-   TBranch *b_isTraining            = outputTree->Branch("isTraining",&isTraining,"isTraining/I");
-   TBranch *b_xsecEff               = outputTree->Branch("xsecEff",&xsecEff,"xsecEff/F");
-   TBranch *b_deltaR_minBB          = outputTree->Branch("deltaR_minBB",&deltaR_minBB,"deltaR_minBB/F");
-   TBranch *b_aveBBdr               = outputTree->Branch("aveBBdr",&aveBBdr,"aveBBdr/F");
-   TBranch *b_deltaEta_maxBB        = outputTree->Branch("deltaEta_maxBB",&deltaEta_maxBB,"deltaEta_maxBB/F");  
-   TBranch *b_FW_momentum_2         = outputTree->Branch("FW_momentum_2",&FW_momentum_2,"FW_momentum_2/F");
-   TBranch *b_centrality            = outputTree->Branch("centrality",&centrality,"centrality/F");
-   TBranch *b_aveCSVpt              = outputTree->Branch("aveCSVpt",&aveCSVpt,"aveCSVpt/F");
-   TBranch *b_mass_maxJJJpt         = outputTree->Branch("mass_maxJJJpt",&mass_maxJJJpt,"mass_maxJJJpt/F");
-   TBranch *b_maxJJJpt              = outputTree->Branch("maxJJJpt",&maxJJJpt,"maxJJJpt/F");
-   TBranch *b_lepDR_minBBdr         = outputTree->Branch("lepDR_minBBdr",&lepDR_minBBdr,"lepDR_minBBdr/F");  
-   TBranch *b_HT_bjets              = outputTree->Branch("HT_bjets",&HT_bjets,"HT_bjets/F");     
-   TBranch *b_HT_ratio              = outputTree->Branch("HT_ratio",&HT_ratio,"HT_ratio/F");        
-   TBranch *b_HT_2m                 = outputTree->Branch("HT_2m",&HT_2m,"HT_2m/F");        
+  // deepJet 2D scale factors
+  TBranch *b_btagDeepJet2DWeight_HTnj            = outputTree->Branch( "btagDeepJet2DWeight_HTnj",            &btagDeepJet2DWeight_HTnj,            "btagDeepJet2DWeight_HTnj/F");
+  TBranch *b_btagDeepJet2DWeight_HTnj            = outputTree->Branch( "btagDeepJet2DWeight_HTnj",            &btagDeepJet2DWeight_HTnj,            "btagDeepJet2DWeight_HTnj/F");
+  TBranch *b_btagDeepJet2DWeight_HTnj_HFup       = outputTree->Branch( "btagDeepJet2DWeight_HTnj_HFup",       &btagDeepJet2DWeight_HTnj_HFup,       "btagDeepJet2DWeight_HTnj_HFup/F");         
+  TBranch *b_btagDeepJet2DWeight_HTnj_HFdn       = outputTree->Branch( "btagDeepJet2DWeight_HTnj_HFdn",       &btagDeepJet2DWeight_HTnj_HFdn,       "btagDeepJet2DWeight_HTnj_HFdn/F");         
+  TBranch *b_btagDeepJet2DWeight_HTnj_LFup       = outputTree->Branch( "btagDeepJet2DWeight_HTnj_LFup",       &btagDeepJet2DWeight_HTnj_LFup,       "btagDeepJet2DWeight_HTnj_LFup/F");         
+  TBranch *b_btagDeepJet2DWeight_HTnj_LFdn       = outputTree->Branch( "btagDeepJet2DWeight_HTnj_LFdn",       &btagDeepJet2DWeight_HTnj_LFdn,       "btagDeepJet2DWeight_HTnj_LFdn/F");         
+  TBranch *b_btagDeepJet2DWeight_HTnj_jesup      = outputTree->Branch( "btagDeepJet2DWeight_HTnj_jesup",      &btagDeepJet2DWeight_HTnj_jesup,      "btagDeepJet2DWeight_HTnj_jesup/F");        
+  TBranch *b_btagDeepJet2DWeight_HTnj_jesdn      = outputTree->Branch( "btagDeepJet2DWeight_HTnj_jesdn",      &btagDeepJet2DWeight_HTnj_jesdn,      "btagDeepJet2DWeight_HTnj_jesdn/F");        
+  TBranch *b_btagDeepJet2DWeight_HTnj_hfstats1up = outputTree->Branch( "btagDeepJet2DWeight_HTnj_hfstats1up", &btagDeepJet2DWeight_HTnj_hfstats1up, "btagDeepJet2DWeight_HTnj_hfstats1up/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_hfstats1dn = outputTree->Branch( "btagDeepJet2DWeight_HTnj_hfstats1dn", &btagDeepJet2DWeight_HTnj_hfstats1dn, "btagDeepJet2DWeight_HTnj_hfstats1dn/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_hfstats2up = outputTree->Branch( "btagDeepJet2DWeight_HTnj_hfstats2up", &btagDeepJet2DWeight_HTnj_hfstats2up, "btagDeepJet2DWeight_HTnj_hfstats2up/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_hfstats2dn = outputTree->Branch( "btagDeepJet2DWeight_HTnj_hfstats2dn", &btagDeepJet2DWeight_HTnj_hfstats2dn, "btagDeepJet2DWeight_HTnj_hfstats2dn/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_cferr1up   = outputTree->Branch( "btagDeepJet2DWeight_HTnj_cferr1up",   &btagDeepJet2DWeight_HTnj_cferr1up,   "btagDeepJet2DWeight_HTnj_cferr1up/F");     
+  TBranch *b_btagDeepJet2DWeight_HTnj_cferr1dn   = outputTree->Branch( "btagDeepJet2DWeight_HTnj_cferr1dn",   &btagDeepJet2DWeight_HTnj_cferr1dn,   "btagDeepJet2DWeight_HTnj_cferr1dn/F");     
+  TBranch *b_btagDeepJet2DWeight_HTnj_cferr2up   = outputTree->Branch( "btagDeepJet2DWeight_HTnj_cferr2up",   &btagDeepJet2DWeight_HTnj_cferr2up,   "btagDeepJet2DWeight_HTnj_cferr2up/F");     
+  TBranch *b_btagDeepJet2DWeight_HTnj_cferr2dn   = outputTree->Branch( "btagDeepJet2DWeight_HTnj_cferr2dn",   &btagDeepJet2DWeight_HTnj_cferr2dn,   "btagDeepJet2DWeight_HTnj_cferr2dn/F");     
+  TBranch *b_btagDeepJet2DWeight_HTnj_lfstats1up = outputTree->Branch( "btagDeepJet2DWeight_HTnj_lfstats1up", &btagDeepJet2DWeight_HTnj_lfstats1up, "btagDeepJet2DWeight_HTnj_lfstats1up/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_lfstats1dn = outputTree->Branch( "btagDeepJet2DWeight_HTnj_lfstats1dn", &btagDeepJet2DWeight_HTnj_lfstats1dn, "btagDeepJet2DWeight_HTnj_lfstats1dn/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_lfstats2up = outputTree->Branch( "btagDeepJet2DWeight_HTnj_lfstats2up", &btagDeepJet2DWeight_HTnj_lfstats2up, "btagDeepJet2DWeight_HTnj_lfstats2up/F");   
+  TBranch *b_btagDeepJet2DWeight_HTnj_lfstats2dn = outputTree->Branch( "btagDeepJet2DWeight_HTnj_lfstats2dn", &btagDeepJet2DWeight_HTnj_lfstats2dn, "btagDeepJet2DWeight_HTnj_lfstats2dn/F");
+  
+  // deepCSV discriminator values 
+  TBranch *b_firstcsvb_bb            = outputTree->Branch( "firstcsvb_bb",            &firstcsvb_bb,            "firstcsvb_bb/F");        
+  TBranch *b_secondcsvb_bb           = outputTree->Branch( "secondcsvb_bb",           &secondcsvb_bb,           "secondcsvb_bb/F");        
+  TBranch *b_thirdcsvb_bb            = outputTree->Branch( "thirdcsvb_bb",            &thirdcsvb_bb,            "thirdcsvb_bb/F");        
+  TBranch *b_fourthcsvb_bb           = outputTree->Branch( "fourthcsvb_bb",           &fourthcsvb_bb,           "fourthcsvb_bb/F");
+  TBranch *b_thirdcsvb_bb_BTagBHad   = outputTree->Branch( "thirdcsvb_bb_BTagBHad",   &thirdcsvb_bb_BTagBHad,   "thirdcsvb_bb_BTagBHad/F");
+  TBranch *b_thirdcsvb_bb_BTagNBHad  = outputTree->Branch( "thirdcsvb_bb_BTagNBHad",  &thirdcsvb_bb_BTagNBHad,  "thirdcsvb_bb_BTagNBHad/F");
+  TBranch *b_thirdcsvb_bb_NBTagBHad  = outputTree->Branch( "thirdcsvb_bb_NBTagBHad",  &thirdcsvb_bb_NBTagBHad,  "thirdcsvb_bb_NBTagBHad/F");
+  TBranch *b_thirdcsvb_bb_NBTagNBHad = outputTree->Branch( "thirdcsvb_bb_NBTagNBHad", &thirdcsvb_bb_NBTagNBHad, "thirdcsvb_bb_NBTagNBHad/F");
+  
+  // deepCSV discriminator values for the ordered jets
+  TBranch *b_csvJet1 = outputTree->Branch( "csvJet1", &csvJet1, "csvJet1/F");
+  TBranch *b_csvJet2 = outputTree->Branch( "csvJet2", &csvJet2, "csvJet2/F");
+  TBranch *b_csvJet3 = outputTree->Branch( "csvJet3", &csvJet3, "csvJet3/F");
+  TBranch *b_csvJet4 = outputTree->Branch( "csvJet4", &csvJet4, "csvJet4/F");
+  
+  // deepJet discriminator values
+  TBranch *b_firstdeepjetb  = outputTree->Branch( "firstdeepjetb",  &firstdeepjetb,  "firstdeepjetb/F");
+  TBranch *b_seconddeepjetb = outputTree->Branch( "seconddeepjetb", &seconddeepjetb, "seconddeepjetb/F");
+  TBranch *b_thirddeepjetb  = outputTree->Branch( "thirddeepjetb",  &thirddeepjetb,  "thirddeepjetb/F");
+  TBranch *b_fourthdeepjetb = outputTree->Branch( "fourthdeepjetb", &fourthdeepjetb, "fourthdeepjetb/F");
+  
+  // deepJet discriminator values for the ordered jets
+  TBranch *b_deepjetJet1 = outputTree->Branch( "deepjetJet1", &deepjetJet1, "deepjetJet1/F");
+  TBranch *b_deepjetJet2 = outputTree->Branch( "deepjetJet2", &deepjetJet2, "deepjetJet2/F");
+  TBranch *b_deepjetJet3 = outputTree->Branch( "deepjetJet3", &deepjetJet3, "deepjetJet3/F");
+  TBranch *b_deepjetJet4 = outputTree->Branch( "deepjetJet4", &deepjetJet4, "deepjetJet4/F");
+  
+  // process related variables
+  TBranch *b_isTraining = outputTree->Branch( "isTraining", &isTraining, "isTraining/I");
+  TBranch *b_xsecEff    = outputTree->Branch( "xsecEff",    &xsecEff,    "xsecEff/F");
+  
+  // b-tag variables
+  TBranch *b_deltaR_minBB   = outputTree->Branch( "deltaR_minBB",   &deltaR_minBB,   "deltaR_minBB/F");
+  TBranch *b_aveBBdr        = outputTree->Branch( "aveBBdr",        &aveBBdr,        "aveBBdr/F");
+  TBranch *b_deltaEta_maxBB = outputTree->Branch( "deltaEta_maxBB", &deltaEta_maxBB, "deltaEta_maxBB/F");  
+  TBranch *b_aveCSVpt       = outputTree->Branch( "aveCSVpt",       &aveCSVpt,       "aveCSVpt/F");
+  TBranch *b_HT_bjets       = outputTree->Branch( "HT_bjets",       &HT_bjets,       "HT_bjets/F"); 
+  TBranch *b_lepDR_minBBdr  = outputTree->Branch( "lepDR_minBBdr",  &lepDR_minBBdr,  "lepDR_minBBdr/F");    
+  
+  // Fox-Wolfram momentum coefficients https://arxiv.org/abs/1212.4436
+  TBranch *b_FW_momentum_0 = outputTree->Branch( "FW_momentum_0", &FW_momentum_0, "FW_momentum_0/F");
+  TBranch *b_FW_momentum_1 = outputTree->Branch( "FW_momentum_1", &FW_momentum_1, "FW_momentum_1/F");
+  TBranch *b_FW_momentum_2 = outputTree->Branch( "FW_momentum_2", &FW_momentum_2, "FW_momentum_2/F");
+  TBranch *b_FW_momentum_3 = outputTree->Branch( "FW_momentum_3", &FW_momentum_3, "FW_momentum_3/F");
+  TBranch *b_FW_momentum_4 = outputTree->Branch( "FW_momentum_4", &FW_momentum_4, "FW_momentum_4/F");
+  TBranch *b_FW_momentum_5 = outputTree->Branch( "FW_momentum_5", &FW_momentum_5, "FW_momentum_5/F");
+  TBranch *b_FW_momentum_6 = outputTree->Branch( "FW_momentum_6", &FW_momentum_6, "FW_momentum_6/F");
+  
+  // topological variables
+  TBranch *b_Sphericity = outputTree->Branch( "Sphericity", &Sphericity, "Sphericity/F");                        
+  TBranch *b_Aplanarity = outputTree->Branch( "Aplanarity", &Aplanarity, "Aplanarity/F"); 
+  TBranch *b_hemiout    = outputTree->Branch( "hemiout",    &hemiout,    "hemiout/F");
+  TBranch *b_centrality = outputTree->Branch( "centrality", &centrality, "centrality/F");
 
-   TBranch *b_firstcsvb_bb          = outputTree->Branch("firstcsvb_bb",&firstcsvb_bb,"firstcsvb_bb/F");        
-   TBranch *b_secondcsvb_bb         = outputTree->Branch("secondcsvb_bb",&secondcsvb_bb,"secondcsvb_bb/F");        
-   TBranch *b_thirdcsvb_bb          = outputTree->Branch("thirdcsvb_bb",&thirdcsvb_bb,"thirdcsvb_bb/F");        
-   TBranch *b_fourthcsvb_bb         = outputTree->Branch("fourthcsvb_bb",&fourthcsvb_bb,"fourthcsvb_bb/F");
-   TBranch *b_thirdcsvb_bb_BTagBHad          = outputTree->Branch("thirdcsvb_bb_BTagBHad",&thirdcsvb_bb_BTagBHad,"thirdcsvb_bb_BTagBHad/F");
-   TBranch *b_thirdcsvb_bb_BTagNBHad          = outputTree->Branch("thirdcsvb_bb_BTagNBHad",&thirdcsvb_bb_BTagNBHad,"thirdcsvb_bb_BTagNBHad/F");
-   TBranch *b_thirdcsvb_bb_NBTagBHad          = outputTree->Branch("thirdcsvb_bb_NBTagBHad",&thirdcsvb_bb_NBTagBHad,"thirdcsvb_bb_NBTagBHad/F");
-   TBranch *b_thirdcsvb_bb_NBTagNBHad          = outputTree->Branch("thirdcsvb_bb_NBTagNBHad",&thirdcsvb_bb_NBTagNBHad,"thirdcsvb_bb_NBTagNBHad/F");
-   TBranch *b_firstdeepjetb         = outputTree->Branch("firstdeepjetb",&firstdeepjetb,"firstdeepjetb/F");
-   TBranch *b_seconddeepjetb        = outputTree->Branch("seconddeepjetb",&seconddeepjetb,"seconddeepjetb/F");
-   TBranch *b_thirddeepjetb         = outputTree->Branch("thirddeepjetb",&thirddeepjetb,"thirddeepjetb/F");
-   TBranch *b_fourthdeepjetb        = outputTree->Branch("fourthdeepjetb",&fourthdeepjetb,"fourthdeepjetb/F");
-
-   TBranch *b_secondJetPt           = outputTree->Branch("secondJetPt",&secondJetPt,"secondJetPt/F");        
-   TBranch *b_fifthJetPt            = outputTree->Branch("fifthJetPt",&fifthJetPt,"fifthJetPt/F");        
-   TBranch *b_sixthJetPt            = outputTree->Branch("sixthJetPt",&sixthJetPt,"sixthJetPt/F");
-
-   TBranch *b_csvJet1               = outputTree->Branch("csvJet1",&csvJet1,"csvJet1/F");
-   TBranch *b_csvJet2               = outputTree->Branch("csvJet2",&csvJet2,"csvJet2/F");
-   TBranch *b_csvJet3               = outputTree->Branch("csvJet3",&csvJet3,"csvJet3/F");
-   TBranch *b_csvJet4               = outputTree->Branch("csvJet4",&csvJet4,"csvJet4/F");
-   TBranch *b_deepjetJet1           = outputTree->Branch("deepjetJet1",&deepjetJet1,"deepjetJet1/F");
-   TBranch *b_deepjetJet2           = outputTree->Branch("deepjetJet2",&deepjetJet2,"deepjetJet2/F");
-   TBranch *b_deepjetJet3           = outputTree->Branch("deepjetJet3",&deepjetJet3,"deepjetJet3/F");
-   TBranch *b_deepjetJet4           = outputTree->Branch("deepjetJet4",&deepjetJet4,"deepjetJet4/F");
-
-   TBranch *b_MHRE                  = outputTree->Branch("MHRE",&MHRE,"MHRE/F");              
-   TBranch *b_HTx                   = outputTree->Branch("HTx",&HTx,"HTx/F");                 
-   
-   TBranch *b_nGD_trijet            = outputTree->Branch("nGD_trijet",&nGD_trijet,"nGD_trijet/F");
-   TBranch *b_is_genMissingDaughter    = outputTree->Branch("is_genMissingDaughter",&is_genMissingDaughter,"is_genMissingDaughter/F");
-   TBranch *b_is_genFourTopsOnelepton  = outputTree->Branch("is_genFourTopsOnelepton",&is_genFourTopsOnelepton,"is_genFourTopsOnelepton/F");      
-   
-   TBranch *b_GD_DCSV_jetNotdijet   = outputTree->Branch("GD_DCSV_jetNotdijet",&GD_DCSV_jetNotdijet);
-   TBranch *b_BD_DCSV_jetNotdijet   = outputTree->Branch("BD_DCSV_jetNotdijet",&BD_DCSV_jetNotdijet);
-   TBranch *b_GD_DR_Tridijet        = outputTree->Branch("GD_DR_Tridijet",&GD_DR_Tridijet);
-   TBranch *b_BD_DR_Tridijet        = outputTree->Branch("BD_DR_Tridijet",&BD_DR_Tridijet);      
-   TBranch *b_GD_Ttrijet_TopMass    = outputTree->Branch("GD_Ttrijet_TopMass",&GD_Ttrijet_TopMass);
-   TBranch *b_BD_Ttrijet_TopMass    = outputTree->Branch("BD_Ttrijet_TopMass",&BD_Ttrijet_TopMass);   
-   TBranch *b_GD_Mass_minDR_dijet   = outputTree->Branch("GD_Mass_minDR_dijet",&GD_Mass_minDR_dijet);      
-   TBranch *b_BD_Mass_minDR_dijet   = outputTree->Branch("BD_Mass_minDR_dijet",&BD_Mass_minDR_dijet);         
-   TBranch *b_minMleppJet           = outputTree->Branch("minMleppJet",&minMleppJet,"minMleppJet/F");   
-   TBranch *b_mass_lepJets0         = outputTree->Branch("mass_lepJets0",&mass_lepJets0,"mass_lepJets0/F");
-   TBranch *b_mass_lepJets1         = outputTree->Branch("mass_lepJets1",&mass_lepJets1,"mass_lepJets1/F");
-   TBranch *b_mass_lepJets2         = outputTree->Branch("mass_lepJets2",&mass_lepJets2,"mass_lepJets2/F");      
-   TBranch *b_mass_minBBdr          = outputTree->Branch("mass_minBBdr",&mass_minBBdr,"mass_minBBdr/F");
-   TBranch *b_mass_minLLdr          = outputTree->Branch("mass_minLLdr",&mass_minLLdr,"mass_minLLdr/F");
-   TBranch *b_mass_maxBBpt          = outputTree->Branch("mass_maxBBpt",&mass_maxBBpt,"mass_maxBBpt/F");
-   TBranch *b_mass_maxBBmass        = outputTree->Branch("mass_maxBBmass",&mass_maxBBmass,"mass_maxBBmass/F");
-   TBranch *b_theJetLeadPt          = outputTree->Branch("theJetLeadPt",&theJetLeadPt,"theJetLeadPt/F");
-   TBranch *b_deltaR_lepBJets0      = outputTree->Branch("deltaR_lepBJets0",&deltaR_lepBJets0,"deltaR_lepBJets0/F");
-   TBranch *b_deltaR_lepBJets1      = outputTree->Branch("deltaR_lepBJets1",&deltaR_lepBJets1,"deltaR_lepBJets1/F");   
-   TBranch *b_minDR_lepBJet         = outputTree->Branch("minDR_lepBJet",&minDR_lepBJet,"minDR_lepBJet/F");
-   TBranch *b_minBBdr               = outputTree->Branch("minBBdr",&minBBdr,"minBBdr/F");
-   TBranch *b_mass_lepBJet0         = outputTree->Branch("mass_lepBJet0",&mass_lepBJet0,"mass_lepBJet0/F");
-   TBranch *b_mass_lepBB_minBBdr    = outputTree->Branch("mass_lepBB_minBBdr",&mass_lepBB_minBBdr,"mass_lepBB_minBBdr/F");
-   TBranch *b_mass_lepJJ_minJJdr    = outputTree->Branch("mass_lepJJ_minJJdr",&mass_lepJJ_minJJdr,"mass_lepJJ_minJJdr/F");
-   TBranch *b_mass_lepBJet_mindr    = outputTree->Branch("mass_lepBJet_mindr",&mass_lepBJet_mindr,"mass_lepBJet_mindr/F");
-   TBranch *b_deltaR_lepBJet_maxpt  = outputTree->Branch("deltaR_lepBJet_maxpt",&deltaR_lepBJet_maxpt,"deltaR_lepBJet_maxpt/F");
-   TBranch *b_deltaPhi_maxBB        = outputTree->Branch("deltaPhi_maxBB",&deltaPhi_maxBB,"deltaPhi_maxBB/F");
-   TBranch *b_hemiout               = outputTree->Branch("hemiout",&hemiout,"hemiout/F");
-   TBranch *b_corr_met              = outputTree->Branch("corr_met",&corr_met,"corr_met/F");
-   TBranch *b_deltaPhi_lepMET       = outputTree->Branch("deltaPhi_lepMET",&deltaPhi_lepMET,"deltaPhi_lepMET/F");
-   TBranch *b_min_deltaPhi_METjets  = outputTree->Branch("min_deltaPhi_METjets",&min_deltaPhi_METjets,"min_deltaPhi_METjets/F");
-   TBranch *b_deltaPhi_METjets      = outputTree->Branch("deltaPhi_METjets",&deltaPhi_METjets);
-   TBranch *b_aveCSV                = outputTree->Branch("aveCSV",&aveCSV,"aveCSV/F");
-   TBranch *b_deltaPhi_j1j2         = outputTree->Branch("deltaPhi_j1j2",&deltaPhi_j1j2,"deltaPhi_j1j2/F");
-   TBranch *b_alphaT                = outputTree->Branch("alphaT",&alphaT,"alphaT/F");
-   TBranch *b_PtFifthJet            = outputTree->Branch("PtFifthJet",&PtFifthJet,"PtFifthJet/F");
-   TBranch *b_FW_momentum_0         = outputTree->Branch("FW_momentum_0",&FW_momentum_0,"FW_momentum_0/F");
-   TBranch *b_FW_momentum_1         = outputTree->Branch("FW_momentum_1",&FW_momentum_1,"FW_momentum_1/F");
-   TBranch *b_FW_momentum_3         = outputTree->Branch("FW_momentum_3",&FW_momentum_3,"FW_momentum_3/F");
-   TBranch *b_FW_momentum_4         = outputTree->Branch("FW_momentum_4",&FW_momentum_4,"FW_momentum_4/F");
-   TBranch *b_FW_momentum_5         = outputTree->Branch("FW_momentum_5",&FW_momentum_5,"FW_momentum_5/F");
-   TBranch *b_FW_momentum_6         = outputTree->Branch("FW_momentum_6",&FW_momentum_6,"FW_momentum_6/F");
-   TBranch *b_MT2bb                 = outputTree->Branch("MT2bb",&MT2bb,"MT2bb/F");
-   TBranch *b_GD_pTrat              = outputTree->Branch("GD_pTrat",&GD_pTrat);
-   TBranch *b_BD_pTrat              = outputTree->Branch("BD_pTrat",&BD_pTrat);
-   TBranch *b_GD_DR_Trijet_jetNotdijet       = outputTree->Branch("GD_DR_Trijet_jetNotdijet",&GD_DR_Trijet_jetNotdijet);
-   TBranch *b_BD_DR_Trijet_jetNotdijet       = outputTree->Branch("BD_DR_Trijet_jetNotdijet",&BD_DR_Trijet_jetNotdijet);
-   TBranch *b_deltaR_lepJetInMinMljet        = outputTree->Branch("deltaR_lepJetInMinMljet",&deltaR_lepJetInMinMljet,"deltaR_lepJetInMinMljet/F");
-   TBranch *b_deltaPhi_lepJetInMinMljet      = outputTree->Branch("deltaPhi_lepJetInMinMljet",&deltaPhi_lepJetInMinMljet,"deltaPhi_lepJetInMinMljet/F");
-   TBranch *b_deltaR_lepbJetInMinMlb         = outputTree->Branch("deltaR_lepbJetInMinMlb",&deltaR_lepbJetInMinMlb,"deltaR_lepbJetInMinMlb/F");
-   TBranch *b_deltaR_lepbJetNotInMinMlb      = outputTree->Branch("deltaR_lepbJetNotInMinMlb",&deltaR_lepbJetNotInMinMlb,"deltaR_lepbJetNotInMinMlb/F");   
-   TBranch *b_deltaPhi_lepbJetInMinMlb       = outputTree->Branch("deltaPhi_lepbJetInMinMlb",&deltaPhi_lepbJetInMinMlb,"deltaPhi_lepbJetInMinMlb/F");
-
-   TBranch *b_HT_woBESTjet              = outputTree->Branch("HT_woBESTjet",&HT_woBESTjet,"HT_woBESTjet/F");
-   TBranch *b_MT_woBESTjet              = outputTree->Branch("MT_woBESTjet",&MT_woBESTjet,"MT_woBESTjet/F");
-   TBranch *b_PT_woBESTjet              = outputTree->Branch("PT_woBESTjet",&PT_woBESTjet,"PT_woBESTjet/F");
-   TBranch *b_M_woBESTjet               = outputTree->Branch("M_woBESTjet",&M_woBESTjet,"M_woBESTjet/F");      
-   TBranch *b_M_allJet_W                = outputTree->Branch("M_allJet_W",&M_allJet_W,"M_allJet_W/F");      
-   TBranch *b_W_PtdM                    = outputTree->Branch("W_PtdM",&W_PtdM,"W_PtdM/F");         
-   TBranch *b_ratio_HTdHT4leadjets      = outputTree->Branch("ratio_HTdHT4leadjets",&ratio_HTdHT4leadjets,"ratio_HTdHT4leadjets/F");      
-   TBranch *b_pTjet5_6                  = outputTree->Branch("pTjet5_6",&pTjet5_6,"pTjet5_6/F");         
-   TBranch *b_pt3HT                     = outputTree->Branch("pt3HT",&pt3HT,"pt3HT/F");         
-   TBranch *b_pt4HT                     = outputTree->Branch("pt4HT",&pt4HT,"pt4HT/F");            
-   TBranch *b_mean_csv                  = outputTree->Branch("mean_csv",&mean_csv,"mean_csv/F");               
-
-   TBranch *b_pT_3rdcsvJet              = outputTree->Branch("pT_3rdcsvJet",&pT_3rdcsvJet,"pT_3rdcsvJet/F");         
-   TBranch *b_pT_4thcsvJet              = outputTree->Branch("pT_4thcsvJet",&pT_4thcsvJet,"pT_4thcsvJet/F");            
-
-   TBranch *b_invM_jet34                = outputTree->Branch("invM_jet34",&invM_jet34,"invM_jet34/F");            
-   TBranch *b_invM_jet35                = outputTree->Branch("invM_jet35",&invM_jet35,"invM_jet35/F");            
-   TBranch *b_invM_jet36                = outputTree->Branch("invM_jet36",&invM_jet36,"invM_jet36/F");               
-   TBranch *b_invM_jet45                = outputTree->Branch("invM_jet45",&invM_jet45,"invM_jet45/F");            
-   TBranch *b_invM_jet46                = outputTree->Branch("invM_jet46",&invM_jet46,"invM_jet46/F");            
-   TBranch *b_invM_jet56                = outputTree->Branch("invM_jet56",&invM_jet56,"invM_jet56/F");                        
-
-   TBranch *b_Sphericity                = outputTree->Branch("Sphericity",&Sphericity,"Sphericity/F");                        
-   TBranch *b_Aplanarity                = outputTree->Branch("Aplanarity",&Aplanarity,"Aplanarity/F");                              
-   TBranch *b_BDTtrijet2                = outputTree->Branch("BDTtrijet2",&BDTtrijet2,"BDTtrijet2/F");
-   TBranch *b_BDTtrijet1                = outputTree->Branch("BDTtrijet1",&BDTtrijet1,"BDTtrijet1/F");
-   TBranch *b_BDTtrijet3                = outputTree->Branch("BDTtrijet3",&BDTtrijet3,"BDTtrijet3/F");
-   TBranch *b_BDTtrijet4                = outputTree->Branch("BDTtrijet4",&BDTtrijet4,"BDTtrijet4/F");
-
-   TBranch *b_HOTGoodTrijet1_mass       = outputTree->Branch("HOTGoodTrijet1_mass",&HOTGoodTrijet1_mass,"HOTGoodTrijet1_mass/F");
-   TBranch *b_HOTGoodTrijet1_dijetmass  = outputTree->Branch("HOTGoodTrijet1_dijetmass",&HOTGoodTrijet1_dijetmass,"HOTGoodTrijet1_dijetmass/F");
-   TBranch *b_HOTGoodTrijet1_pTratio    = outputTree->Branch("HOTGoodTrijet1_pTratio",&HOTGoodTrijet1_pTratio,"HOTGoodTrijet1_pTratio/F");
-   TBranch *b_HOTGoodTrijet1_dRtridijet = outputTree->Branch("HOTGoodTrijet1_dRtridijet",&HOTGoodTrijet1_dRtridijet,"HOTGoodTrijet1_dRtridijet/F");
-   TBranch *b_HOTGoodTrijet1_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet1_dRtrijetJetnotdijet",&HOTGoodTrijet1_dRtrijetJetnotdijet,"HOTGoodTrijet1_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet1_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet1_csvJetnotdijet",&HOTGoodTrijet1_csvJetnotdijet,"HOTGoodTrijet1_csvJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet1_deepjet_Jetnotdijet = outputTree->Branch("HOTGoodTrijet1_deepjet_Jetnotdijet",&HOTGoodTrijet1_deepjet_Jetnotdijet,"HOTGoodTrijet1_deepjet_Jetnotdijet/F");
-
-   TBranch *b_HOTGoodTrijet2_mass       = outputTree->Branch("HOTGoodTrijet2_mass",&HOTGoodTrijet2_mass,"HOTGoodTrijet2_mass/F");
-   TBranch *b_HOTGoodTrijet2_dijetmass  = outputTree->Branch("HOTGoodTrijet2_dijetmass",&HOTGoodTrijet2_dijetmass,"HOTGoodTrijet2_dijetmass/F");
-   TBranch *b_HOTGoodTrijet2_pTratio    = outputTree->Branch("HOTGoodTrijet2_pTratio",&HOTGoodTrijet2_pTratio,"HOTGoodTrijet2_pTratio/F");
-   TBranch *b_HOTGoodTrijet2_dRtridijet = outputTree->Branch("HOTGoodTrijet2_dRtridijet",&HOTGoodTrijet2_dRtridijet,"HOTGoodTrijet2_dRtridijet/F");
-   TBranch *b_HOTGoodTrijet2_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet2_dRtrijetJetnotdijet",&HOTGoodTrijet2_dRtrijetJetnotdijet,"HOTGoodTrijet2_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet2_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet2_csvJetnotdijet",&HOTGoodTrijet2_csvJetnotdijet,"HOTGoodTrijet2_csvJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet2_deepjet_Jetnotdijet = outputTree->Branch("HOTGoodTrijet2_deepjet_Jetnotdijet",&HOTGoodTrijet2_deepjet_Jetnotdijet,"HOTGoodTrijet2_deepjet_Jetnotdijet/F");
-
-   TBranch *b_HOTGoodTrijet3_mass       = outputTree->Branch("HOTGoodTrijet3_mass",&HOTGoodTrijet3_mass,"HOTGoodTrijet3_mass/F");
-   TBranch *b_HOTGoodTrijet3_dijetmass  = outputTree->Branch("HOTGoodTrijet3_dijetmass",&HOTGoodTrijet3_dijetmass,"HOTGoodTrijet3_dijetmass/F");
-   TBranch *b_HOTGoodTrijet3_pTratio    = outputTree->Branch("HOTGoodTrijet3_pTratio",&HOTGoodTrijet3_pTratio,"HOTGoodTrijet3_pTratio/F");
-   TBranch *b_HOTGoodTrijet3_dRtridijet = outputTree->Branch("HOTGoodTrijet3_dRtridijet",&HOTGoodTrijet3_dRtridijet,"HOTGoodTrijet3_dRtridijet/F");
-   TBranch *b_HOTGoodTrijet3_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet3_dRtrijetJetnotdijet",&HOTGoodTrijet3_dRtrijetJetnotdijet,"HOTGoodTrijet3_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet3_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet3_csvJetnotdijet",&HOTGoodTrijet3_csvJetnotdijet,"HOTGoodTrijet3_csvJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet4_mass       = outputTree->Branch("HOTGoodTrijet4_mass",&HOTGoodTrijet4_mass,"HOTGoodTrijet4_mass/F");
-   TBranch *b_HOTGoodTrijet4_dijetmass  = outputTree->Branch("HOTGoodTrijet4_dijetmass",&HOTGoodTrijet4_dijetmass,"HOTGoodTrijet4_dijetmass/F");
-   TBranch *b_HOTGoodTrijet4_pTratio    = outputTree->Branch("HOTGoodTrijet4_pTratio",&HOTGoodTrijet4_pTratio,"HOTGoodTrijet4_pTratio/F");
-   TBranch *b_HOTGoodTrijet4_dRtridijet = outputTree->Branch("HOTGoodTrijet4_dRtridijet",&HOTGoodTrijet4_dRtridijet,"HOTGoodTrijet4_dRtridijet/F");
-   TBranch *b_HOTGoodTrijet4_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet4_dRtrijetJetnotdijet",&HOTGoodTrijet4_dRtrijetJetnotdijet,"HOTGoodTrijet4_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTGoodTrijet4_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet4_csvJetnotdijet",&HOTGoodTrijet4_csvJetnotdijet,"HOTGoodTrijet4_csvJetnotdijet/F");
-
-   TBranch *b_HOTBadTrijet1_mass       = outputTree->Branch("HOTBadTrijet1_mass",&HOTBadTrijet1_mass,"HOTBadTrijet1_mass/F");
-   TBranch *b_HOTBadTrijet1_dijetmass  = outputTree->Branch("HOTBadTrijet1_dijetmass",&HOTBadTrijet1_dijetmass,"HOTBadTrijet1_dijetmass/F");
-   TBranch *b_HOTBadTrijet1_pTratio    = outputTree->Branch("HOTBadTrijet1_pTratio",&HOTBadTrijet1_pTratio,"HOTBadTrijet1_pTratio/F");
-   TBranch *b_HOTBadTrijet1_dRtridijet = outputTree->Branch("HOTBadTrijet1_dRtridijet",&HOTBadTrijet1_dRtridijet,"HOTBadTrijet1_dRtridijet/F");
-   TBranch *b_HOTBadTrijet1_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet1_dRtrijetJetnotdijet",&HOTBadTrijet1_dRtrijetJetnotdijet,"HOTBadTrijet1_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTBadTrijet1_csvJetnotdijet = outputTree->Branch("HOTBadTrijet1_csvJetnotdijet",&HOTBadTrijet1_csvJetnotdijet,"HOTBadTrijet1_csvJetnotdijet/F");
-   TBranch *b_HOTBadTrijet2_mass       = outputTree->Branch("HOTBadTrijet2_mass",&HOTBadTrijet2_mass,"HOTBadTrijet2_mass/F");
-   TBranch *b_HOTBadTrijet2_dijetmass  = outputTree->Branch("HOTBadTrijet2_dijetmass",&HOTBadTrijet2_dijetmass,"HOTBadTrijet2_dijetmass/F");
-   TBranch *b_HOTBadTrijet2_pTratio    = outputTree->Branch("HOTBadTrijet2_pTratio",&HOTBadTrijet2_pTratio,"HOTBadTrijet2_pTratio/F");
-   TBranch *b_HOTBadTrijet2_dRtridijet = outputTree->Branch("HOTBadTrijet2_dRtridijet",&HOTBadTrijet2_dRtridijet,"HOTBadTrijet2_dRtridijet/F");
-   TBranch *b_HOTBadTrijet2_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet2_dRtrijetJetnotdijet",&HOTBadTrijet2_dRtrijetJetnotdijet,"HOTBadTrijet2_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTBadTrijet2_csvJetnotdijet = outputTree->Branch("HOTBadTrijet2_csvJetnotdijet",&HOTBadTrijet2_csvJetnotdijet,"HOTBadTrijet2_csvJetnotdijet/F");
-   TBranch *b_HOTBadTrijet3_mass       = outputTree->Branch("HOTBadTrijet3_mass",&HOTBadTrijet3_mass,"HOTBadTrijet3_mass/F");
-   TBranch *b_HOTBadTrijet3_dijetmass  = outputTree->Branch("HOTBadTrijet3_dijetmass",&HOTBadTrijet3_dijetmass,"HOTBadTrijet3_dijetmass/F");
-   TBranch *b_HOTBadTrijet3_pTratio    = outputTree->Branch("HOTBadTrijet3_pTratio",&HOTBadTrijet3_pTratio,"HOTBadTrijet3_pTratio/F");
-   TBranch *b_HOTBadTrijet3_dRtridijet = outputTree->Branch("HOTBadTrijet3_dRtridijet",&HOTBadTrijet3_dRtridijet,"HOTBadTrijet3_dRtridijet/F");
-   TBranch *b_HOTBadTrijet3_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet3_dRtrijetJetnotdijet",&HOTBadTrijet3_dRtrijetJetnotdijet,"HOTBadTrijet3_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTBadTrijet3_csvJetnotdijet = outputTree->Branch("HOTBadTrijet3_csvJetnotdijet",&HOTBadTrijet3_csvJetnotdijet,"HOTBadTrijet3_csvJetnotdijet/F");
-   TBranch *b_HOTBadTrijet4_mass       = outputTree->Branch("HOTBadTrijet4_mass",&HOTBadTrijet4_mass,"HOTBadTrijet4_mass/F");
-   TBranch *b_HOTBadTrijet4_dijetmass  = outputTree->Branch("HOTBadTrijet4_dijetmass",&HOTBadTrijet4_dijetmass,"HOTBadTrijet4_dijetmass/F");
-   TBranch *b_HOTBadTrijet4_pTratio    = outputTree->Branch("HOTBadTrijet4_pTratio",&HOTBadTrijet4_pTratio,"HOTBadTrijet4_pTratio/F");
-   TBranch *b_HOTBadTrijet4_dRtridijet = outputTree->Branch("HOTBadTrijet4_dRtridijet",&HOTBadTrijet4_dRtridijet,"HOTBadTrijet4_dRtridijet/F");
-   TBranch *b_HOTBadTrijet4_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet4_dRtrijetJetnotdijet",&HOTBadTrijet4_dRtrijetJetnotdijet,"HOTBadTrijet4_dRtrijetJetnotdijet/F");
-   TBranch *b_HOTBadTrijet4_csvJetnotdijet = outputTree->Branch("HOTBadTrijet4_csvJetnotdijet",&HOTBadTrijet4_csvJetnotdijet,"HOTBadTrijet4_csvJetnotdijet/F");
-
-   TBranch *b_NJets_JetSubCalc_float 		= outputTree->Branch("NJets_JetSubCalc_float",&NJets_JetSubCalc_float,"NJets_JetSubCalc_float/F");
-   TBranch *b_NJetsCSVwithSF_MultiLepCalc_float = outputTree->Branch("NJetsCSVwithSF_MultiLepCalc_float",&NJetsCSVwithSF_MultiLepCalc_float,"NJetsCSV_MultiLepCalc_float/F");
-   TBranch *b_NresolvedTops1pFake_float 	= outputTree->Branch("NresolvedTops1pFake_float",&NresolvedTops1pFake_float,"NresolvedTops1pFake_float/F");
-   TBranch *b_NJetsTtagged_float  		= outputTree->Branch("NJetsTtagged_float",&NJetsTtagged_float,"NJetsTtagged_float/F");
-   TBranch *b_NJetsWtagged_float  		= outputTree->Branch("NJetsWtagged_float",&NJetsWtagged_float,"NJetsWtagged_float/F");
+  // trijet variables
+  TBranch *b_mass_maxJJJpt              = outputTree->Branch("mass_maxJJJpt",&mass_maxJJJpt,"mass_maxJJJpt/F");
+  TBranch *b_maxJJJpt                   = outputTree->Branch("maxJJJpt",&maxJJJpt,"maxJJJpt/F");
+  
+  // kinematic variables
+  TBranch *b_HT_ratio                   = outputTree->Branch("HT_ratio",&HT_ratio,"HT_ratio/F");        
+  TBranch *b_HT_2m                      = outputTree->Branch("HT_2m",&HT_2m,"HT_2m/F");       
+  TBranch *b_secondJetPt           = outputTree->Branch("secondJetPt",&secondJetPt,"secondJetPt/F");        
+  TBranch *b_fifthJetPt            = outputTree->Branch("fifthJetPt",&fifthJetPt,"fifthJetPt/F");        
+  TBranch *b_sixthJetPt            = outputTree->Branch("sixthJetPt",&sixthJetPt,"sixthJetPt/F");
 
 
-   Long64_t nentries = inputTree->GetEntriesFast();
-   Long64_t nbytes = 0, nb = 0;
-   TLorentzVector bjet1, bjet2, jet1, jet2, jet3, lep, met, jetTmp, BestTOPjet1, BestTOPjet2, BestTOPjet3, BADTOPjet1, BADTOPjet2, BADTOPjet3, BestGenTop, BestGenTopW1, BestGenTopW2, BestGenTopb;   
-   bool bool_TopMassCut = 0;
-   int allLeptonicWcount = 0;
-   int allMatchingCount = 0;   
-   float topdiscriminator = 0.95;
-        
-   cout << " Run year " << Year << endl; 
-   float btagWPdjet = 0.3033; // 2017 WP
-   float btagWPdcsv = 0.4941; // 2017 WP
-   if(Year==2016){
-   	btagWPdjet = 0.3093; // 2016 WP
-   	btagWPdcsv = 0.6321; // 2016 WP
-   }
-   if(Year==2018){
-   	btagWPdjet = 0.2770; // 2018 WP
-   	btagWPdcsv = 0.4184; // 2018 WP
-   }
+  TBranch *b_MHRE                  = outputTree->Branch("MHRE",&MHRE,"MHRE/F");              
+  TBranch *b_HTx                   = outputTree->Branch("HTx",&HTx,"HTx/F");                 
 
-   std::string sampleType = "";
-   if(isTTTT) sampleType = "tttt";
-   if(isTTBB) sampleType = "ttbb";
-   if(isTT2B) sampleType = "tt2b";
-   if(isTT1B) sampleType = "tt1b";
-   if(isTTCC) sampleType = "ttcc";
-   if(isTTLF) sampleType = "ttjj";
-   if(isTTBB_HT500Njet9) sampleType = "HT500Njet9_ttbb";
-   if(isTT2B_HT500Njet9) sampleType = "HT500Njet9_tt2b";
-   if(isTT1B_HT500Njet9) sampleType = "HT500Njet9_tt1b";
-   if(isTTCC_HT500Njet9) sampleType = "HT500Njet9_ttcc";
-   if(isTTLF_HT500Njet9) sampleType = "HT500Njet9_ttjj";
-   if(isSTs) sampleType = "STs";
-   if(isSTt) sampleType = "STt";
-   if(isSTtw) sampleType = "STtw";
-   if(isWJets) sampleType = "WJets";
+  TBranch *b_nGD_trijet            = outputTree->Branch("nGD_trijet",&nGD_trijet,"nGD_trijet/F");
+  TBranch *b_is_genMissingDaughter    = outputTree->Branch("is_genMissingDaughter",&is_genMissingDaughter,"is_genMissingDaughter/F");
+  TBranch *b_is_genFourTopsOnelepton  = outputTree->Branch("is_genFourTopsOnelepton",&is_genFourTopsOnelepton,"is_genFourTopsOnelepton/F");      
 
-   std::cout << sampleType << std::endl;
+  TBranch *b_GD_DCSV_jetNotdijet   = outputTree->Branch("GD_DCSV_jetNotdijet",&GD_DCSV_jetNotdijet);
+  TBranch *b_BD_DCSV_jetNotdijet   = outputTree->Branch("BD_DCSV_jetNotdijet",&BD_DCSV_jetNotdijet);
+  TBranch *b_GD_DR_Tridijet        = outputTree->Branch("GD_DR_Tridijet",&GD_DR_Tridijet);
+  TBranch *b_BD_DR_Tridijet        = outputTree->Branch("BD_DR_Tridijet",&BD_DR_Tridijet);      
+  TBranch *b_GD_Ttrijet_TopMass    = outputTree->Branch("GD_Ttrijet_TopMass",&GD_Ttrijet_TopMass);
+  TBranch *b_BD_Ttrijet_TopMass    = outputTree->Branch("BD_Ttrijet_TopMass",&BD_Ttrijet_TopMass);   
+  TBranch *b_GD_Mass_minDR_dijet   = outputTree->Branch("GD_Mass_minDR_dijet",&GD_Mass_minDR_dijet);      
+  TBranch *b_BD_Mass_minDR_dijet   = outputTree->Branch("BD_Mass_minDR_dijet",&BD_Mass_minDR_dijet);         
+  TBranch *b_minMleppJet           = outputTree->Branch("minMleppJet",&minMleppJet,"minMleppJet/F");   
+  TBranch *b_mass_lepJets0         = outputTree->Branch("mass_lepJets0",&mass_lepJets0,"mass_lepJets0/F");
+  TBranch *b_mass_lepJets1         = outputTree->Branch("mass_lepJets1",&mass_lepJets1,"mass_lepJets1/F");
+  TBranch *b_mass_lepJets2         = outputTree->Branch("mass_lepJets2",&mass_lepJets2,"mass_lepJets2/F");      
+  TBranch *b_mass_minBBdr          = outputTree->Branch("mass_minBBdr",&mass_minBBdr,"mass_minBBdr/F");
+  TBranch *b_mass_minLLdr          = outputTree->Branch("mass_minLLdr",&mass_minLLdr,"mass_minLLdr/F");
+  TBranch *b_mass_maxBBpt          = outputTree->Branch("mass_maxBBpt",&mass_maxBBpt,"mass_maxBBpt/F");
+  TBranch *b_mass_maxBBmass        = outputTree->Branch("mass_maxBBmass",&mass_maxBBmass,"mass_maxBBmass/F");
+  TBranch *b_theJetLeadPt          = outputTree->Branch("theJetLeadPt",&theJetLeadPt,"theJetLeadPt/F");
+  TBranch *b_deltaR_lepBJets0      = outputTree->Branch("deltaR_lepBJets0",&deltaR_lepBJets0,"deltaR_lepBJets0/F");
+  TBranch *b_deltaR_lepBJets1      = outputTree->Branch("deltaR_lepBJets1",&deltaR_lepBJets1,"deltaR_lepBJets1/F");   
+  TBranch *b_minDR_lepBJet         = outputTree->Branch("minDR_lepBJet",&minDR_lepBJet,"minDR_lepBJet/F");
+  TBranch *b_minBBdr               = outputTree->Branch("minBBdr",&minBBdr,"minBBdr/F");
+  TBranch *b_mass_lepBJet0         = outputTree->Branch("mass_lepBJet0",&mass_lepBJet0,"mass_lepBJet0/F");
+  TBranch *b_mass_lepBB_minBBdr    = outputTree->Branch("mass_lepBB_minBBdr",&mass_lepBB_minBBdr,"mass_lepBB_minBBdr/F");
+  TBranch *b_mass_lepJJ_minJJdr    = outputTree->Branch("mass_lepJJ_minJJdr",&mass_lepJJ_minJJdr,"mass_lepJJ_minJJdr/F");
+  TBranch *b_mass_lepBJet_mindr    = outputTree->Branch("mass_lepBJet_mindr",&mass_lepBJet_mindr,"mass_lepBJet_mindr/F");
+  TBranch *b_deltaR_lepBJet_maxpt  = outputTree->Branch("deltaR_lepBJet_maxpt",&deltaR_lepBJet_maxpt,"deltaR_lepBJet_maxpt/F");
+  TBranch *b_deltaPhi_maxBB        = outputTree->Branch("deltaPhi_maxBB",&deltaPhi_maxBB,"deltaPhi_maxBB/F");
+  TBranch *b_corr_met              = outputTree->Branch("corr_met",&corr_met,"corr_met/F");
+  TBranch *b_deltaPhi_lepMET       = outputTree->Branch("deltaPhi_lepMET",&deltaPhi_lepMET,"deltaPhi_lepMET/F");
+  TBranch *b_min_deltaPhi_METjets  = outputTree->Branch("min_deltaPhi_METjets",&min_deltaPhi_METjets,"min_deltaPhi_METjets/F");
+  TBranch *b_deltaPhi_METjets      = outputTree->Branch("deltaPhi_METjets",&deltaPhi_METjets);
+  TBranch *b_aveCSV                = outputTree->Branch("aveCSV",&aveCSV,"aveCSV/F");
+  TBranch *b_deltaPhi_j1j2         = outputTree->Branch("deltaPhi_j1j2",&deltaPhi_j1j2,"deltaPhi_j1j2/F");
+  TBranch *b_alphaT                = outputTree->Branch("alphaT",&alphaT,"alphaT/F");
+  TBranch *b_PtFifthJet            = outputTree->Branch("PtFifthJet",&PtFifthJet,"PtFifthJet/F");
+  TBranch *b_MT2bb                 = outputTree->Branch("MT2bb",&MT2bb,"MT2bb/F");
+  TBranch *b_GD_pTrat              = outputTree->Branch("GD_pTrat",&GD_pTrat);
+  TBranch *b_BD_pTrat              = outputTree->Branch("BD_pTrat",&BD_pTrat);
+  TBranch *b_GD_DR_Trijet_jetNotdijet       = outputTree->Branch("GD_DR_Trijet_jetNotdijet",&GD_DR_Trijet_jetNotdijet);
+  TBranch *b_BD_DR_Trijet_jetNotdijet       = outputTree->Branch("BD_DR_Trijet_jetNotdijet",&BD_DR_Trijet_jetNotdijet);
+  TBranch *b_deltaR_lepJetInMinMljet        = outputTree->Branch("deltaR_lepJetInMinMljet",&deltaR_lepJetInMinMljet,"deltaR_lepJetInMinMljet/F");
+  TBranch *b_deltaPhi_lepJetInMinMljet      = outputTree->Branch("deltaPhi_lepJetInMinMljet",&deltaPhi_lepJetInMinMljet,"deltaPhi_lepJetInMinMljet/F");
+  TBranch *b_deltaR_lepbJetInMinMlb         = outputTree->Branch("deltaR_lepbJetInMinMlb",&deltaR_lepbJetInMinMlb,"deltaR_lepbJetInMinMlb/F");
+  TBranch *b_deltaR_lepbJetNotInMinMlb      = outputTree->Branch("deltaR_lepbJetNotInMinMlb",&deltaR_lepbJetNotInMinMlb,"deltaR_lepbJetNotInMinMlb/F");   
+  TBranch *b_deltaPhi_lepbJetInMinMlb       = outputTree->Branch("deltaPhi_lepbJetInMinMlb",&deltaPhi_lepbJetInMinMlb,"deltaPhi_lepbJetInMinMlb/F");
+
+  TBranch *b_HT_woBESTjet              = outputTree->Branch("HT_woBESTjet",&HT_woBESTjet,"HT_woBESTjet/F");
+  TBranch *b_MT_woBESTjet              = outputTree->Branch("MT_woBESTjet",&MT_woBESTjet,"MT_woBESTjet/F");
+  TBranch *b_PT_woBESTjet              = outputTree->Branch("PT_woBESTjet",&PT_woBESTjet,"PT_woBESTjet/F");
+  TBranch *b_M_woBESTjet               = outputTree->Branch("M_woBESTjet",&M_woBESTjet,"M_woBESTjet/F");      
+  TBranch *b_M_allJet_W                = outputTree->Branch("M_allJet_W",&M_allJet_W,"M_allJet_W/F");      
+  TBranch *b_W_PtdM                    = outputTree->Branch("W_PtdM",&W_PtdM,"W_PtdM/F");         
+  TBranch *b_ratio_HTdHT4leadjets      = outputTree->Branch("ratio_HTdHT4leadjets",&ratio_HTdHT4leadjets,"ratio_HTdHT4leadjets/F");      
+  TBranch *b_pTjet5_6                  = outputTree->Branch("pTjet5_6",&pTjet5_6,"pTjet5_6/F");         
+  TBranch *b_pt3HT                     = outputTree->Branch("pt3HT",&pt3HT,"pt3HT/F");         
+  TBranch *b_pt4HT                     = outputTree->Branch("pt4HT",&pt4HT,"pt4HT/F");            
+  TBranch *b_mean_csv                  = outputTree->Branch("mean_csv",&mean_csv,"mean_csv/F");               
+
+  TBranch *b_pT_3rdcsvJet              = outputTree->Branch("pT_3rdcsvJet",&pT_3rdcsvJet,"pT_3rdcsvJet/F");         
+  TBranch *b_pT_4thcsvJet              = outputTree->Branch("pT_4thcsvJet",&pT_4thcsvJet,"pT_4thcsvJet/F");            
+
+  TBranch *b_invM_jet34                = outputTree->Branch("invM_jet34",&invM_jet34,"invM_jet34/F");            
+  TBranch *b_invM_jet35                = outputTree->Branch("invM_jet35",&invM_jet35,"invM_jet35/F");            
+  TBranch *b_invM_jet36                = outputTree->Branch("invM_jet36",&invM_jet36,"invM_jet36/F");               
+  TBranch *b_invM_jet45                = outputTree->Branch("invM_jet45",&invM_jet45,"invM_jet45/F");            
+  TBranch *b_invM_jet46                = outputTree->Branch("invM_jet46",&invM_jet46,"invM_jet46/F");            
+  TBranch *b_invM_jet56                = outputTree->Branch("invM_jet56",&invM_jet56,"invM_jet56/F");                        
+
+  TBranch *b_BDTtrijet2                = outputTree->Branch("BDTtrijet2",&BDTtrijet2,"BDTtrijet2/F");
+  TBranch *b_BDTtrijet1                = outputTree->Branch("BDTtrijet1",&BDTtrijet1,"BDTtrijet1/F");
+  TBranch *b_BDTtrijet3                = outputTree->Branch("BDTtrijet3",&BDTtrijet3,"BDTtrijet3/F");
+  TBranch *b_BDTtrijet4                = outputTree->Branch("BDTtrijet4",&BDTtrijet4,"BDTtrijet4/F");
+
+  TBranch *b_HOTGoodTrijet1_mass       = outputTree->Branch("HOTGoodTrijet1_mass",&HOTGoodTrijet1_mass,"HOTGoodTrijet1_mass/F");
+  TBranch *b_HOTGoodTrijet1_dijetmass  = outputTree->Branch("HOTGoodTrijet1_dijetmass",&HOTGoodTrijet1_dijetmass,"HOTGoodTrijet1_dijetmass/F");
+  TBranch *b_HOTGoodTrijet1_pTratio    = outputTree->Branch("HOTGoodTrijet1_pTratio",&HOTGoodTrijet1_pTratio,"HOTGoodTrijet1_pTratio/F");
+  TBranch *b_HOTGoodTrijet1_dRtridijet = outputTree->Branch("HOTGoodTrijet1_dRtridijet",&HOTGoodTrijet1_dRtridijet,"HOTGoodTrijet1_dRtridijet/F");
+  TBranch *b_HOTGoodTrijet1_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet1_dRtrijetJetnotdijet",&HOTGoodTrijet1_dRtrijetJetnotdijet,"HOTGoodTrijet1_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet1_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet1_csvJetnotdijet",&HOTGoodTrijet1_csvJetnotdijet,"HOTGoodTrijet1_csvJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet1_deepjet_Jetnotdijet = outputTree->Branch("HOTGoodTrijet1_deepjet_Jetnotdijet",&HOTGoodTrijet1_deepjet_Jetnotdijet,"HOTGoodTrijet1_deepjet_Jetnotdijet/F");
+
+  TBranch *b_HOTGoodTrijet2_mass       = outputTree->Branch("HOTGoodTrijet2_mass",&HOTGoodTrijet2_mass,"HOTGoodTrijet2_mass/F");
+  TBranch *b_HOTGoodTrijet2_dijetmass  = outputTree->Branch("HOTGoodTrijet2_dijetmass",&HOTGoodTrijet2_dijetmass,"HOTGoodTrijet2_dijetmass/F");
+  TBranch *b_HOTGoodTrijet2_pTratio    = outputTree->Branch("HOTGoodTrijet2_pTratio",&HOTGoodTrijet2_pTratio,"HOTGoodTrijet2_pTratio/F");
+  TBranch *b_HOTGoodTrijet2_dRtridijet = outputTree->Branch("HOTGoodTrijet2_dRtridijet",&HOTGoodTrijet2_dRtridijet,"HOTGoodTrijet2_dRtridijet/F");
+  TBranch *b_HOTGoodTrijet2_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet2_dRtrijetJetnotdijet",&HOTGoodTrijet2_dRtrijetJetnotdijet,"HOTGoodTrijet2_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet2_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet2_csvJetnotdijet",&HOTGoodTrijet2_csvJetnotdijet,"HOTGoodTrijet2_csvJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet2_deepjet_Jetnotdijet = outputTree->Branch("HOTGoodTrijet2_deepjet_Jetnotdijet",&HOTGoodTrijet2_deepjet_Jetnotdijet,"HOTGoodTrijet2_deepjet_Jetnotdijet/F");
+
+  TBranch *b_HOTGoodTrijet3_mass       = outputTree->Branch("HOTGoodTrijet3_mass",&HOTGoodTrijet3_mass,"HOTGoodTrijet3_mass/F");
+  TBranch *b_HOTGoodTrijet3_dijetmass  = outputTree->Branch("HOTGoodTrijet3_dijetmass",&HOTGoodTrijet3_dijetmass,"HOTGoodTrijet3_dijetmass/F");
+  TBranch *b_HOTGoodTrijet3_pTratio    = outputTree->Branch("HOTGoodTrijet3_pTratio",&HOTGoodTrijet3_pTratio,"HOTGoodTrijet3_pTratio/F");
+  TBranch *b_HOTGoodTrijet3_dRtridijet = outputTree->Branch("HOTGoodTrijet3_dRtridijet",&HOTGoodTrijet3_dRtridijet,"HOTGoodTrijet3_dRtridijet/F");
+  TBranch *b_HOTGoodTrijet3_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet3_dRtrijetJetnotdijet",&HOTGoodTrijet3_dRtrijetJetnotdijet,"HOTGoodTrijet3_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet3_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet3_csvJetnotdijet",&HOTGoodTrijet3_csvJetnotdijet,"HOTGoodTrijet3_csvJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet4_mass       = outputTree->Branch("HOTGoodTrijet4_mass",&HOTGoodTrijet4_mass,"HOTGoodTrijet4_mass/F");
+  TBranch *b_HOTGoodTrijet4_dijetmass  = outputTree->Branch("HOTGoodTrijet4_dijetmass",&HOTGoodTrijet4_dijetmass,"HOTGoodTrijet4_dijetmass/F");
+  TBranch *b_HOTGoodTrijet4_pTratio    = outputTree->Branch("HOTGoodTrijet4_pTratio",&HOTGoodTrijet4_pTratio,"HOTGoodTrijet4_pTratio/F");
+  TBranch *b_HOTGoodTrijet4_dRtridijet = outputTree->Branch("HOTGoodTrijet4_dRtridijet",&HOTGoodTrijet4_dRtridijet,"HOTGoodTrijet4_dRtridijet/F");
+  TBranch *b_HOTGoodTrijet4_dRtrijetJetnotdijet = outputTree->Branch("HOTGoodTrijet4_dRtrijetJetnotdijet",&HOTGoodTrijet4_dRtrijetJetnotdijet,"HOTGoodTrijet4_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTGoodTrijet4_csvJetnotdijet = outputTree->Branch("HOTGoodTrijet4_csvJetnotdijet",&HOTGoodTrijet4_csvJetnotdijet,"HOTGoodTrijet4_csvJetnotdijet/F");
+
+  TBranch *b_HOTBadTrijet1_mass       = outputTree->Branch("HOTBadTrijet1_mass",&HOTBadTrijet1_mass,"HOTBadTrijet1_mass/F");
+  TBranch *b_HOTBadTrijet1_dijetmass  = outputTree->Branch("HOTBadTrijet1_dijetmass",&HOTBadTrijet1_dijetmass,"HOTBadTrijet1_dijetmass/F");
+  TBranch *b_HOTBadTrijet1_pTratio    = outputTree->Branch("HOTBadTrijet1_pTratio",&HOTBadTrijet1_pTratio,"HOTBadTrijet1_pTratio/F");
+  TBranch *b_HOTBadTrijet1_dRtridijet = outputTree->Branch("HOTBadTrijet1_dRtridijet",&HOTBadTrijet1_dRtridijet,"HOTBadTrijet1_dRtridijet/F");
+  TBranch *b_HOTBadTrijet1_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet1_dRtrijetJetnotdijet",&HOTBadTrijet1_dRtrijetJetnotdijet,"HOTBadTrijet1_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTBadTrijet1_csvJetnotdijet = outputTree->Branch("HOTBadTrijet1_csvJetnotdijet",&HOTBadTrijet1_csvJetnotdijet,"HOTBadTrijet1_csvJetnotdijet/F");
+  TBranch *b_HOTBadTrijet2_mass       = outputTree->Branch("HOTBadTrijet2_mass",&HOTBadTrijet2_mass,"HOTBadTrijet2_mass/F");
+  TBranch *b_HOTBadTrijet2_dijetmass  = outputTree->Branch("HOTBadTrijet2_dijetmass",&HOTBadTrijet2_dijetmass,"HOTBadTrijet2_dijetmass/F");
+  TBranch *b_HOTBadTrijet2_pTratio    = outputTree->Branch("HOTBadTrijet2_pTratio",&HOTBadTrijet2_pTratio,"HOTBadTrijet2_pTratio/F");
+  TBranch *b_HOTBadTrijet2_dRtridijet = outputTree->Branch("HOTBadTrijet2_dRtridijet",&HOTBadTrijet2_dRtridijet,"HOTBadTrijet2_dRtridijet/F");
+  TBranch *b_HOTBadTrijet2_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet2_dRtrijetJetnotdijet",&HOTBadTrijet2_dRtrijetJetnotdijet,"HOTBadTrijet2_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTBadTrijet2_csvJetnotdijet = outputTree->Branch("HOTBadTrijet2_csvJetnotdijet",&HOTBadTrijet2_csvJetnotdijet,"HOTBadTrijet2_csvJetnotdijet/F");
+  TBranch *b_HOTBadTrijet3_mass       = outputTree->Branch("HOTBadTrijet3_mass",&HOTBadTrijet3_mass,"HOTBadTrijet3_mass/F");
+  TBranch *b_HOTBadTrijet3_dijetmass  = outputTree->Branch("HOTBadTrijet3_dijetmass",&HOTBadTrijet3_dijetmass,"HOTBadTrijet3_dijetmass/F");
+  TBranch *b_HOTBadTrijet3_pTratio    = outputTree->Branch("HOTBadTrijet3_pTratio",&HOTBadTrijet3_pTratio,"HOTBadTrijet3_pTratio/F");
+  TBranch *b_HOTBadTrijet3_dRtridijet = outputTree->Branch("HOTBadTrijet3_dRtridijet",&HOTBadTrijet3_dRtridijet,"HOTBadTrijet3_dRtridijet/F");
+  TBranch *b_HOTBadTrijet3_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet3_dRtrijetJetnotdijet",&HOTBadTrijet3_dRtrijetJetnotdijet,"HOTBadTrijet3_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTBadTrijet3_csvJetnotdijet = outputTree->Branch("HOTBadTrijet3_csvJetnotdijet",&HOTBadTrijet3_csvJetnotdijet,"HOTBadTrijet3_csvJetnotdijet/F");
+  TBranch *b_HOTBadTrijet4_mass       = outputTree->Branch("HOTBadTrijet4_mass",&HOTBadTrijet4_mass,"HOTBadTrijet4_mass/F");
+  TBranch *b_HOTBadTrijet4_dijetmass  = outputTree->Branch("HOTBadTrijet4_dijetmass",&HOTBadTrijet4_dijetmass,"HOTBadTrijet4_dijetmass/F");
+  TBranch *b_HOTBadTrijet4_pTratio    = outputTree->Branch("HOTBadTrijet4_pTratio",&HOTBadTrijet4_pTratio,"HOTBadTrijet4_pTratio/F");
+  TBranch *b_HOTBadTrijet4_dRtridijet = outputTree->Branch("HOTBadTrijet4_dRtridijet",&HOTBadTrijet4_dRtridijet,"HOTBadTrijet4_dRtridijet/F");
+  TBranch *b_HOTBadTrijet4_dRtrijetJetnotdijet = outputTree->Branch("HOTBadTrijet4_dRtrijetJetnotdijet",&HOTBadTrijet4_dRtrijetJetnotdijet,"HOTBadTrijet4_dRtrijetJetnotdijet/F");
+  TBranch *b_HOTBadTrijet4_csvJetnotdijet = outputTree->Branch("HOTBadTrijet4_csvJetnotdijet",&HOTBadTrijet4_csvJetnotdijet,"HOTBadTrijet4_csvJetnotdijet/F");
+
+  TBranch *b_NJets_JetSubCalc_float 		= outputTree->Branch("NJets_JetSubCalc_float",&NJets_JetSubCalc_float,"NJets_JetSubCalc_float/F");
+  TBranch *b_NJetsCSVwithSF_MultiLepCalc_float = outputTree->Branch("NJetsCSVwithSF_MultiLepCalc_float",&NJetsCSVwithSF_MultiLepCalc_float,"NJetsCSV_MultiLepCalc_float/F");
+  TBranch *b_NresolvedTops1pFake_float 	= outputTree->Branch("NresolvedTops1pFake_float",&NresolvedTops1pFake_float,"NresolvedTops1pFake_float/F");
+  TBranch *b_NJetsTtagged_float  		= outputTree->Branch("NJetsTtagged_float",&NJetsTtagged_float,"NJetsTtagged_float/F");
+  TBranch *b_NJetsWtagged_float  		= outputTree->Branch("NJetsWtagged_float",&NJetsWtagged_float,"NJetsWtagged_float/F");
+
+
+  Long64_t nentries = inputTree->GetEntriesFast();
+  Long64_t nbytes = 0, nb = 0;
+  TLorentzVector bjet1, bjet2, jet1, jet2, jet3, lep, met, jetTmp, BestTOPjet1, BestTOPjet2, BestTOPjet3, BADTOPjet1, BADTOPjet2, BADTOPjet3, BestGenTop, BestGenTopW1, BestGenTopW2, BestGenTopb;   
+  bool bool_TopMassCut = 0;
+  int allLeptonicWcount = 0;
+  int allMatchingCount = 0;   
+  float topdiscriminator = 0.95;
+
+  cout << " Run year " << Year << endl; 
+  float btagWPdjet = 0.3033; // 2017 WP
+  float btagWPdcsv = 0.4941; // 2017 WP
+  if(Year==2016){
+    btagWPdjet = 0.3093; // 2016 WP
+    btagWPdcsv = 0.6321; // 2016 WP
+  }
+  if(Year==2018){
+    btagWPdjet = 0.2770; // 2018 WP
+    btagWPdcsv = 0.4184; // 2018 WP
+  }
+
+  std::string sampleType = "";
+  if(isTTTT) sampleType = "tttt";
+  if(isTTBB) sampleType = "ttbb";
+  if(isTT2B) sampleType = "tt2b";
+  if(isTT1B) sampleType = "tt1b";
+  if(isTTCC) sampleType = "ttcc";
+  if(isTTLF) sampleType = "ttjj";
+  if(isTTBB_HT500Njet9) sampleType = "HT500Njet9_ttbb";
+  if(isTT2B_HT500Njet9) sampleType = "HT500Njet9_tt2b";
+  if(isTT1B_HT500Njet9) sampleType = "HT500Njet9_tt1b";
+  if(isTTCC_HT500Njet9) sampleType = "HT500Njet9_ttcc";
+  if(isTTLF_HT500Njet9) sampleType = "HT500Njet9_ttjj";
+  if(isSTs) sampleType = "STs";
+  if(isSTt) sampleType = "STt";
+  if(isSTtw) sampleType = "STtw";
+  if(isWJets) sampleType = "WJets";
+
+  std::cout << sampleType << std::endl;
 
      
-   for (Long64_t jentry=0; jentry<nentries;jentry++) {
-     if ( jentry == 317626 ) continue;
-     Long64_t ientry = LoadTree(jentry);
-     if (ientry < 0) break;
-     nb = inputTree->GetEntry(jentry);   nbytes += nb;
-     if (Cut(ientry) != 1) continue;
-     //std::cout << "Event: " << jentry << std::endl;
-     //if (jentry > 5000 ) break;  // debug
-//     cout << "\n start event # " << jentry << endl;
-     if(jentry % 1000 ==0) std::cout<<"Completed "<<jentry<<" out of "<<nentries<<" events"<<std::endl;      
+  for (Long64_t jentry=0; jentry<nentries;jentry++) {
+    if ( jentry == 317626 ) continue;
+    Long64_t ientry = LoadTree(jentry);
+    if (ientry < 0) break;
+    nb = inputTree->GetEntry(jentry);   nbytes += nb;
+    if (Cut(ientry) != 1) continue;
+    //std::cout << "Event: " << jentry << std::endl;
+    //if (jentry > 5000 ) break;  // debug
+    //     cout << "\n start event # " << jentry << endl;
+    if(jentry % 1000 ==0) std::cout<<"Completed "<<jentry<<" out of "<<nentries<<" events"<<std::endl;      
 
-     std::vector<TLorentzVector> GoodRecoJet1;         
-     std::vector<TLorentzVector> GoodRecoJet2;         
-     std::vector<TLorentzVector> GoodRecoJet3;                   
-     TRandom3 myseed;
-     myseed.SetSeed(static_cast<int>(leptonPhi_MultiLepCalc*1e5));
-     double coin = myseed.Rndm();
-     if(coin<1./3.) isTraining = 1;                          // BDT TRAINING
-     else if((coin>=1./3.) && (coin<2./3.))isTraining =2;    // BDT TESTING
-     else if((coin>=2./3.) && (coin<1))isTraining =3;        // BDT APPLICATION
-     minBBdr = 1e9;
-     minMleppJet = 1e9;     
-     tmp_minMleppBjet = 1e9;          
-     aveCSVpt = 0;
-     firstcsvb_bb = 0;
-     secondcsvb_bb = 0;
-     thirdcsvb_bb = 0;
-     fourthcsvb_bb = 0;
-     firstdeepjetb = 0;
-     seconddeepjetb = 0;
-     thirddeepjetb = 0;
-     fourthdeepjetb = 0;
-     MT2bb = 0;      
-     deltaR_minBB = 20.;
-     aveBBdr = -1;      
-     deltaEta_maxBB = 10;                  
-     lepDR_minBBdr = -1;
-     mass_maxJJJpt = -1;     
-     maxJJJpt = 0; 
-     FW_momentum_0=0; FW_momentum_1=0; FW_momentum_2=0; FW_momentum_3=0; FW_momentum_4=0; FW_momentum_5=0; FW_momentum_6=0;
-     centrality = -1;      
-     HT_bjets = 0;
-     HT_ratio = -1; //for ratio of HT(j1,2,3,4)/HT(other jets)     
-     HT_2m = -10;
-     theJetLeadPt = -1000; 
-     mass_lepJets0 = -1;             
-     mass_lepJets1 = -1;                          
-     mass_lepJets2 = -1;  
-     MHRE = -100;     
-     HTx = 0;                             
-     Sphericity = -1;
-     Aplanarity	= -1; 
-     BDTtrijet2 = -1.; BDTtrijet1 = -1.; BDTtrijet3 = -1.; BDTtrijet4 = -1.;
-     NJets_JetSubCalc_float = (float) NJets_JetSubCalc;
-     NJetsCSVwithSF_MultiLepCalc_float = (float) NJetsCSVwithSF_MultiLepCalc;
-     NresolvedTops1pFake_float = (float) NresolvedTops1pFake;
-     NJetsTtagged_float = (float) NJetsTtagged;
-     NJetsWtagged_float = (float) NJetsWtagged;
-//     thirdcsvb_bb_BTagBHad = 0; thirdcsvb_bb_BTagNBHad = 0; thirdcsvb_bb_NBTagBHad= 0; thirdcsvb_bb_NBTagNBHad = 0;
- 
-     int njetscsv = 0;      
-     double maxBBdeta = 0;
-     double totalJetPt = 0; //this is mainly HT
-     double totalJetE  = 0; 
-     double HT_4jets = 0; //for ratio of HT(j1,2,3,4)/HT(other jets)     
-     double HT_other = 0; //for ratio of HT(j1,2,3,4)/HT(other jets)          
-     double npairs = 0;     
-     double BjetSecondPt = 0;
-     int num_GD_trijet = 0;
-     int num_BD_trijet = 0;    
+    std::vector<TLorentzVector> GoodRecoJet1;         
+    std::vector<TLorentzVector> GoodRecoJet2;         
+    std::vector<TLorentzVector> GoodRecoJet3;                   
+    TRandom3 myseed;
+    myseed.SetSeed(static_cast<int>(leptonPhi_MultiLepCalc*1e5));
+    double coin = myseed.Rndm();
+    if(coin<1./3.) isTraining = 1;                          // BDT TRAINING
+    else if((coin>=1./3.) && (coin<2./3.))isTraining =2;    // BDT TESTING
+    else if((coin>=2./3.) && (coin<1))isTraining =3;        // BDT APPLICATION
+    minBBdr = 1e9;
+    minMleppJet = 1e9;     
+    tmp_minMleppBjet = 1e9;          
+    aveCSVpt = 0;
+    firstcsvb_bb = 0;
+    secondcsvb_bb = 0;
+    thirdcsvb_bb = 0;
+    fourthcsvb_bb = 0;
+    firstdeepjetb = 0;
+    seconddeepjetb = 0;
+    thirddeepjetb = 0;
+    fourthdeepjetb = 0;
+    MT2bb = 0;      
+    deltaR_minBB = 20.;
+    aveBBdr = -1;      
+    deltaEta_maxBB = 10;                  
+    lepDR_minBBdr = -1;
+    mass_maxJJJpt = -1;     
+    maxJJJpt = 0; 
+    FW_momentum_0=0; FW_momentum_1=0; FW_momentum_2=0; FW_momentum_3=0; FW_momentum_4=0; FW_momentum_5=0; FW_momentum_6=0;
+    centrality = -1;      
+    HT_bjets = 0;
+    HT_ratio = -1; //for ratio of HT(j1,2,3,4)/HT(other jets)     
+    HT_2m = -10;
+    theJetLeadPt = -1000; 
+    mass_lepJets0 = -1;             
+    mass_lepJets1 = -1;                          
+    mass_lepJets2 = -1;  
+    MHRE = -100;     
+    HTx = 0;                             
+    Sphericity = -1;
+    Aplanarity	= -1; 
+    BDTtrijet2 = -1.; BDTtrijet1 = -1.; BDTtrijet3 = -1.; BDTtrijet4 = -1.;
+    NJets_JetSubCalc_float = (float) NJets_JetSubCalc;
+    NJetsCSVwithSF_MultiLepCalc_float = (float) NJetsCSVwithSF_MultiLepCalc;
+    NresolvedTops1pFake_float = (float) NresolvedTops1pFake;
+    NJetsTtagged_float = (float) NJetsTtagged;
+    NJetsWtagged_float = (float) NJetsWtagged;
+    //     thirdcsvb_bb_BTagBHad = 0; thirdcsvb_bb_BTagNBHad = 0; thirdcsvb_bb_NBTagBHad= 0; thirdcsvb_bb_NBTagNBHad = 0;
+
+    int njetscsv = 0;      
+    double maxBBdeta = 0;
+    double totalJetPt = 0; //this is mainly HT
+    double totalJetE  = 0; 
+    double HT_4jets = 0; //for ratio of HT(j1,2,3,4)/HT(other jets)     
+    double HT_other = 0; //for ratio of HT(j1,2,3,4)/HT(other jets)          
+    double npairs = 0;     
+    double BjetSecondPt = 0;
+    int num_GD_trijet = 0;
+    int num_BD_trijet = 0;    
 
 
 /////////////////////////////////////////////////////////////////
