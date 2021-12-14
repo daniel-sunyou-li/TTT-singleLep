@@ -31,7 +31,8 @@ public :
   // Fixed size dimensions of array or collections stored in the TTree if any.
   Int_t           isTraining;
   Bool_t          isTTbar;
-  Bool_t          isTTTX;   
+  Bool_t          isTTTW;
+  Bool_t          isTTTJ;
   Bool_t          isTTTT;
   Float_t         xsecEff; //this is the weight actually!! so (Lumi * xsec)/nEvents, but keeping the naming the same to be consistent with TMVA setup
   Int_t	   Year;
@@ -762,11 +763,12 @@ step2::step2( TString inputFileName, TString outputFileName )// : inputTree(0), 
   cout << ">> xsecEff: " << xsecEff << endl;
   
   isTTbar = false;
-  isTTTX = false;
+  isTTTW = false;
+  isTTTJ = false;
   isTTTT = false;
   if ( inputFileName.Contains("TTTo") ) isTTbar = true;      
-  else if ( inputFileName.Contains("TTTW") ) isTTTX = true;   
-  else if ( inputFileName.Contains("TTTJ") ) isTTTX = true;      
+  else if ( inputFileName.Contains("TTTW") ) isTTTW = true;   
+  else if ( inputFileName.Contains("TTTJ") ) isTTTJ = true;      
   else if ( inputFileName.Contains("TTTT") ) isTTTT = true;
 
   isSTs = inputFileName.Contains("ST_s-channel");
