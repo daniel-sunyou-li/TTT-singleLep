@@ -862,29 +862,31 @@ void step2::Loop()
     if( !( theJetDeepFlavB_JetSubCalc_PtOrdered->at(i) > btagWPdjet ) ) continue; // 
 
     bjet1.SetPtEtaPhiE(
-      theJetPt_JetSubCalc_PtOrdered->at(ijet),
-      theJetEta_JetSubCalc_PtOrdered->at(ijet),
-      theJetPhi_JetSubCalc_PtOrdered->at(ijet),
-      theJetEnergy_JetSubCalc_PtOrdered->at(ijet)
+      theJetPt_JetSubCalc_PtOrdered->at(i),
+      theJetEta_JetSubCalc_PtOrdered->at(i),
+      theJetPhi_JetSubCalc_PtOrdered->at(i),
+      theJetEnergy_JetSubCalc_PtOrdered->at(i)
     );	
-    HT_bjets+=theJetPt_JetSubCalc_PtOrdered->at(ijet);
-    if (theJetPt_JetSubCalc_PtOrdered->at(ijet) < BJetLeadPt-0.001 && theJetPt_JetSubCalc_PtOrdered->at(ijet) >= BjetSecondPt) BjetSecondPt = theJetPt_JetSubCalc_PtOrdered->at(ijet);
+    HT_bjets += theJetPt_JetSubCalc_PtOrdered->at(i);
+    if ( theJetPt_JetSubCalc_PtOrdered->at(i) < BJetLeadPt - 0.001 && theJetPt_JetSubCalc_PtOrdered->at(i) >= BjetSecondPt ){
+      BjetSecondPt = theJetPt_JetSubCalc_PtOrdered->at(i);
+    }
 		//different float precision between theJetPt_JetSubCalc_PtOrdered->at(ijet) and BJetLeadPt
 		//require at least 0.001 between them to avoid double counting the leading bjet pt
 
-	double lbdr_ = (bjet1).DeltaR(lep);
-	double masslb = (lep+bjet1).M();
-	double ptlb = (lep+bjet1).Pt();
-	if(lbdr_<minDR_lepBJet){
-	  minDR_lepBJet=lbdr_;
-	  mass_lepBJet_mindr=masslb;
+	double lbdr_ = ( bjet1 ).DeltaR( lep );
+	double masslb = ( lep + bjet1 ).M();
+	double ptlb = ( lep + bjet1 ).Pt();
+	if( lbdr_ < minDR_lepBJet ){
+	  minDR_lepBJet = lbdr_;
+	  mass_lepBJet_mindr = masslb;
 	}
-	if(mass_lepBJet0<0){
+	if( mass_lepBJet0 < 0 ){
 	  mass_lepBJet0 = masslb;
 	  deltaR_lepBJets0 = lbdr_;
-	  BJetLeadPt = theJetPt_JetSubCalc_PtOrdered->at(ijet);
+	  BJetLeadPt = theJetPt_JetSubCalc_PtOrdered->at(i);
 	}
-	if(ptlb>maxLBpt){
+	if( ptlb > maxLBpt ){
 	  maxLBpt = ptlb;
 	  deltaR_lepBJet_maxpt = lbdr_;
 	}
