@@ -123,11 +123,19 @@ float HardcodedConditions::GetCrossSectionEfficiency( std::string inputFileName 
   else return 1.0;
 }
 
-  
-  
-  
-  
-  
-  
-  
-  
+float HardcodedConditions::GetBTagWP( int Year, std::string tagger ){
+  if( tagger == "deepJet" ){
+    if( Year == 2017 ) return 0.3040;
+    elif( Year == 2018 ) return 0.2783;
+    elif( Year == 2016 ) return 0.2489;
+    else return 1.0;
+  }
+  else if( tagger == "deepCSV" ){
+    if( Year == 2017 ) return 0.4506;
+    elif( Year == 2018 ) return 0.4168;
+    elif( Year == 2016 ) return 0.5847;
+    else return 1.0;
+  }
+  else return 1.0;
+}
+
