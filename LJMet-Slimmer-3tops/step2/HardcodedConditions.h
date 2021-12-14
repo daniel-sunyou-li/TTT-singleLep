@@ -14,30 +14,32 @@ typedef std::map<std::string, TH2F*> SFmap;
 class HardcodedConditions{
     
 public:
-    
-    HardcodedConditions();
-    ~HardcodedConditions();
 
-    float GetDeepJetRenorm2DSF_HTnj(float HT, int njets, std::string sampleType);
+  HardcodedConditions();
+  ~HardcodedConditions();
 
-    TFile *tfile_HTNJ_SF;
+  float GetDeepJetRenorm2DSF_HTnj(float HT, int njets, std::string sampleType);
+  float GetCrossSectionEfficiency( std::string inputFileName );
+  float GetBTagWP( int Year, std::string tagger );
 
-    SFmap hscale_tttw;
-    SFmap hscale_tttj;
-    // SFmap hscale_ttjj;
-    // SFmap hscale_ttbb;
-    // SFmap hscale_ttcc;
-    // SFmap hscale_tt2b;
-    // SFmap hscale_tt1b;
-    // SFmap hscale_HT500Njet9_ttjj;
-    // SFmap hscale_HT500Njet9_ttbb;
-    // SFmap hscale_HT500Njet9_ttcc;
-    // SFmap hscale_HT500Njet9_tt2b;
-    // SFmap hscale_HT500Njet9_tt1b;
-    // SFmap hscale_STs;
-    // SFmap hscale_STt;
-    // SFmap hscale_STtw;
-    // SFmap hscale_WJets;
+  TFile *tfile_HTNJ_SF;
+
+  SFmap hscale_tttw;
+  SFmap hscale_tttj;
+  // SFmap hscale_ttjj;
+  // SFmap hscale_ttbb;
+  // SFmap hscale_ttcc;
+  // SFmap hscale_tt2b;
+  // SFmap hscale_tt1b;
+  // SFmap hscale_HT500Njet9_ttjj;
+  // SFmap hscale_HT500Njet9_ttbb;
+  // SFmap hscale_HT500Njet9_ttcc;
+  // SFmap hscale_HT500Njet9_tt2b;
+  // SFmap hscale_HT500Njet9_tt1b;
+  // SFmap hscale_STs;
+  // SFmap hscale_STt;
+  // SFmap hscale_STtw;
+  // SFmap hscale_WJets;
 };
 
 #endif
