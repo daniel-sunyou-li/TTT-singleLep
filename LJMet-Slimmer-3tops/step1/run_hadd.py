@@ -40,7 +40,7 @@ for shift in shifts:
         for fs_key in [ "ttbb", "tt2b", "tt1b", "ttcc", "ttjj" ]:
           outList.append( "{}_{}".format( HT_key, fs_key ) )
     elif "TTTo" in sample:
-      outList = [ "ttbb", "tt2b", "tt1b", "ttcc", "ttjj" ]
+      outList = [ "ttjj" ] # [ "ttbb", "tt2b", "tt1b", "ttcc", "ttjj" ]
     else:
       outList = [ "none" ]
 
@@ -48,7 +48,7 @@ for shift in shifts:
       outSample = sample if outLabel == "none" else "{}_{}".format( sample, outLabel )
     
       step1Files = EOSlist_root_files( os.path.join( step1Dir[ shift ], outSample ) )
-   
+ 
       print( ">> Hadd'ing {}: {} files".format( outSample, len( step1Files ) ) )
     
       filesPerHadd = int( args.filesPerHadd )
