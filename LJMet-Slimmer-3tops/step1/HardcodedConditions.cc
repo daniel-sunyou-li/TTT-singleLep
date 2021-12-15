@@ -3464,33 +3464,37 @@ double HardcodedConditions::GetMuonIdSF2017(double pt, double eta)
 	// Cut based tight id
 	// Scale Factor 3: https://twiki.cern.ch/twiki/pub/CMS/MuonReferenceEffs2017/RunBCDEF_SF_ID.json
 	if (fabs(eta) < 0.90) {
-	    if (pt < 25.0) return 0.9910777627756951;
-	    else if (pt < 30.0) return 0.987410468262084;
-	    else if (pt < 40.0) return 0.9907753279135898;
-	    else if (pt < 50.0) return 0.9892483588952047;
-	    else if (pt < 60.0) return 0.9855545160334763;
-	    else return 0.9898057377093389; }
+            if(pt<20) return 0.988973745094469;
+            else if(pt<25) return 0.9901639639283745;
+            else if(pt<30) return 0.9894505622634719;
+            else if(pt<40) return 0.9890587934386978;
+            else if(pt<50) return 0.988569587464391;
+            else if(pt<60) return 0.9881735800442727;
+            else return 0.9871638011006827;}
 	else if (fabs(eta) < 1.20) {
-	    if (pt < 25.0) return 0.9927389275515244;
-	    else if (pt < 30.0) return 0.985063939762512;
-	    else if (pt < 40.0) return 0.9865359464182247;
-	    else if (pt < 50.0) return 0.984913093101493;
-	    else if (pt < 60.0) return 0.9839056384760008;
-	    else return 0.984060403143468; }  
+            if(pt<20) return 0.9838660835619908;  
+            else if(pt<25) return 0.9820592893628324;
+            else if(pt<30) return 0.9816256211978136;
+            else if(pt<40) return 0.9826795261832795;
+            else if(pt<50) return 0.9832114785473719;
+            else if(pt<60) return 0.9824017821465342;
+            else return 0.9826989601771537;}
 	else if (fabs(eta) < 2.10) {
-	    if (pt < 25.0) return 0.9924252719877384;
-	    else if (pt < 30.0) return 0.9890884461284933;
-	    else if (pt < 40.0) return 0.9946469069883841;
-	    else if (pt < 50.0) return 0.9926528825155183;
-	    else if (pt < 60.0) return 0.9906364222943529;
-	    else return 0.9920464322143979; }
+            if(pt<20) return 0.9897274594905875;
+            else if(pt<25) return 0.9894166761673087;
+            else if(pt<30) return 0.9908099250187937;
+            else if(pt<40) return 0.9909172603300768;
+            else if(pt<50) return 0.9913614742306379;
+            else if(pt<60) return 0.9901265754533497;
+            else return 0.9893528963937902;}
 	else {
-	    if (pt < 25.0) return 0.9758095839531763;
-	    else if (pt < 30.0) return 0.9745153594179884;
-	    else if (pt < 40.0) return 0.9787410500158746;
-	    else if (pt < 50.0) return 0.978189122919501;
-	    else if (pt < 60.0) return 0.9673568416097894;
-	    else return 0.9766311856731202; }
+            if(pt<20) return 0.9729565235238601;
+            else if(pt<25) return 0.9740614475300607;
+            else if(pt<30) return 0.9760309076915114;
+            else if(pt<40) return 0.9753358818465124;
+            else if(pt<50) return 0.9752601512900863;
+            else if(pt<60) return 0.970358299873981;
+            else return 0.9677621936001002;}
 
 }
 
