@@ -9,6 +9,7 @@ parser.add_argument( "-y", "--year", default = "17", help = "Options: [16,17,18]
 parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-s", "--systematic", action = "store_true" )
 parser.add_argument( "-f", "--filesPerHadd", default = "900" )
+parser.add_argument( "-l", "--location", default = "LPC", help = "Options: [ LPC, BRUX ]" )
 args = parser.parse_args()
 
 from ROOT import *
@@ -28,7 +29,11 @@ haddDir = {
 for shift in shifts:
   os.system( "eos root://cmseos.fnal.gov/ mkdir -p {}".format( haddDir[ shift ] ) )
 
-samples = config.samples[ "20" + args.year ][ "TEST" ] if args.test else config.samples[ "20" + args.year ][ "LPC" ]
+if args.location not in [ "LPC", "BRUX" ]: 
+  print( ">> [] is not a valid location option. Using: LPC" )
+  location = "LPC"
+
+samples = config.samples[ "20" + args.year ][ "TEST" ] if args.test else config.samples[ "20" + args.year ][ location ]
 
 for shift in shifts:
   for sample in samples:

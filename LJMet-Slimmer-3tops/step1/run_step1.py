@@ -10,11 +10,12 @@ parser.add_argument( "-s", "--systematics", action = "store_true" )
 parser.add_argument( "-t", "--test", action = "store_true" )
 parser.add_argument( "-f", "--filesPerJob", default = "30" )
 parser.add_argument( "-r", "--resubmit", default = "" )
+parser.add_argument( "-l", "--location", default = "LPC", help = "Options: LPC, BRUX" )
 args = parser.parse_args()
 
 from ROOT import *
 
-xrdClient = client.FileSystem("root://brux11.hep.brown.edu:1094/")
+xrdClient = client.FileSystem("root://brux30.hep.brown.edu:1094/")
 execfile( "../EOSSafeUtils.py" )
 
 start_time = time.time()
@@ -22,15 +23,14 @@ start_time = time.time()
 #IO directories must be full paths
 if args.test: print( "[OPT] Running in test mode. Only submitting one sample: TTTW" )
 if args.year not in [ "16", "17", "18" ]: sys.exit( "[ERR] Invalid year option. Use: 16, 17, 18" )
+if args.location not in [ "LPC", "BRUX" ]: sys.exit( "[ERR] Invalid location option. Use: BRUX, LPC" )
 shifts = [ "nominal" ] if not args.systematics else [ "JECup", "JECdown", "JERup", "JERdown" ]
 filesPerJob = int( args.filesPerJob )
 postfix = config.postfix
-inputDir = config.ljmetDir[ args.year ]
-inputLoc = "BRUX" if inputDir.startswith( "/isilon/hadoop/" ) else "LPC"
-inDir = "/eos/uscms/" if inputLoc == "LPC" else inputDir 
+inputDir = config.ljmetDir[ args.year ][ args.location ]
 
 outputDir = {
-  shift: os.path.join( config.step1Dir[ args.year ], shift ) for shift in shifts
+  shift: os.path.join( config.step1Dir[ args.year ][ args.location ], shift ) for shift in shifts
 }
 
 condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
@@ -54,7 +54,7 @@ print( ">> Starting step1 submission..." )
 
 job_count = 0
 
-samples = config.samples[ "20{}".format( args.year ) ][ "TEST" ] if args.test else config.samples[ "20{}".format( args.year ) ][ inputLoc ]
+samples = config.samples[ "20{}".format( args.year ) ][ "TEST" ] if args.test else config.samples[ "20{}".format( args.year ) ][ args.location ]
 
 # loop through samples and submit job
 for sample in samples:
@@ -81,7 +81,7 @@ for sample in samples:
       os.system( "eos root://cmseos.fnal.gov mkdir -p {}".format( os.path.join( outputDir[ shift ], step1_sample ) ) )
     
     runList = EOSlistdir( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
-    if inputLoc == "BRUX": 
+    if args.location == "BRUX": 
       status, dirList = xrdClient.dirlist( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
       runList = [ item.name for item in dirList ]
               
@@ -90,9 +90,9 @@ for sample in samples:
     for run in runList:
       if args.year == "18":
         if ( sample == "EGamma" and run == "191031_131344" ) or ( sample == "SingleMuon" and run == "191031_131820" ): continue
-      if inputLoc == "LPC":
+      if args.location == "LPC":
         numList = EOSlistdir( "{}/{}/UL{}/{}/".format( inputDir, sample, args.year, run ) )
-      elif inputLoc == "BRUX":
+      elif args.location == "BRUX":
         status, dirList = xrdClient.dirlist( "{}/{}/UL{}/{}".format( inputDir, sample, args.year, run ) )
         numList = [ item.name for item in dirList ]
 
@@ -101,9 +101,9 @@ for sample in samples:
           pathSuffix = numPath.split("/")[-3:]
           pathSuffix = "/".join( pathSuffix )
 
-          if inputLoc == "LPC":
+          if args.location == "LPC":
             rootFiles = EOSlist_root_files( numPath )
-          elif inputLoc == "BRUX":
+          elif args.location == "BRUX":
             status, fileList = xrdClient.dirlist( "{}/{}/UL{}/{}/{}/".format( inputDir, sample, args.year, run, num ) )
             rootFiles = [ item.name for item in fileList if item.name.endswith( ".root" ) ]
           if not rootFiles: continue #Check if rootfiles is empty list (remove failed jobs)

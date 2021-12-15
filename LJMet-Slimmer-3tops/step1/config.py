@@ -1,20 +1,33 @@
 eosUserName = "dali"
+bruxUserName = "dli50"
 postfix = "deepJetV1"  #"Winter2021"
 years = [ "16", "17", "18" ]
 
 ljmetDir = {
-  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix ) for year in years
+  year: {
+    "LPC": "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix ),
+    "BRUX": "/isilon/hadoop/users/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( bruxUserName, year, postfix )
+  } for year in years
 }
 
 step1Dir = {
-  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( eosUserName, year, postfix ) for year in years
+  year: {
+    "LPC": "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( eosUserName, year, postfix ), 
+    "BRUX": "/isilon/hadoop/users/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( bruxUserName, year, postfix ) 
+  } for year in years
 }
 
 haddDir = {
-  year: "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1hadds".format( eosUserName, year, postfix ) for year in years
+  year: {
+    "LPC": "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1hadds".format( eosUserName, year, postfix ),
+    "BRUX": "/isilon/hadoop/users/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1hadds".format( bruxUserName, year, postfix )
+  } for year in years
 }
 
-outputPath = "/store/user/{}/".format( eosUserName )
+outputPath = {
+  "LPC": "/store/user/{}/".format( eosUserName ),
+  "BRUX": "/isilon/hadoop/users/{}/".format( bruxUserName )
+}
 
 samples = {
   "2016": {
@@ -157,7 +170,24 @@ samples = {
       #"TTToSemiLepton_HT500Njet9_hdampUP_TuneCP5_PSweights_13TeV-powheg-pythia8",
     ],
     "BRUX": [
-      
+      "DYJetsToLL_M-50_HT-600to800_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8",
+      "QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8",
+      "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
+      "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
+      "TTHH_TuneCP5_13TeV-madgraph-pythia8",
+      "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
+      "TTTW_TuneCP5_13TeV-madgraph-pythia8",
+      "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8",
+      "TTTo2L2Nu_hdampUP_TuneCP5_13TeV-powheg-pythia8",
+      "TTToHadronic_TuneCP5_13TeV-powheg-pythia8",
+      "TTToHadronic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8",
+      "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8",
+      "TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8",
+      "TTWH_TuneCP5_13TeV-madgraph-pythia8",
+      "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8",
+      "TTWW_TuneCP5_13TeV-madgraph-pythia8",
+      "TTWZ_TuneCP5_13TeV-madgraph-pythia8",
+      "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8" 
     ]
   },
   "2018": {
