@@ -28,7 +28,7 @@ root -l -b -q compile_step1.C
 XRDpath=root://cmseos.fnal.gov/$inputDir
 if [[ $inputDir == /isilon/hadoop/* ]] ;
 then
-XRDpath=root://brux11.hep.brown.edu:1094/$inputDir
+XRDpath=root://brux30.hep.brown.edu:1094/$inputDir
 fi
 
 echo ">> Running step1 over list: ${idlist}"

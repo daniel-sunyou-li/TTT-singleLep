@@ -16,10 +16,11 @@ class HardcodedConditions{
 public:
 
   HardcodedConditions();
+  HardcodedConditions( Int_t Year );
   ~HardcodedConditions();
 
-  float GetDeepJetRenorm2DSF_HTnj(float HT, int njets, std::string sampleType);
-  float GetCrossSectionEfficiency( std::string inputFileName );
+  float GetDeepJetRenorm2DSF_HTnj(float HT, int njets, std::string sampleType, std::string sysType );
+  float GetCrossSectionEfficiency( TString inputFileName, int Year );
   float GetBTagWP( int Year, std::string tagger );
 
   TFile *tfile_HTNJ_SF;

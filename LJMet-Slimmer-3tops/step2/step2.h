@@ -107,10 +107,6 @@ public :
   Float_t         secondcsvb_bb;        
   Float_t         thirdcsvb_bb;        
   Float_t         fourthcsvb_bb;  
-  Float_t 	       thirdcsvb_bb_BTagBHad;
-  Float_t         thirdcsvb_bb_BTagNBHad;
-  Float_t         thirdcsvb_bb_NBTagBHad;
-  Float_t         thirdcsvb_bb_NBTagNBHad;
   Float_t         PtFifthJet;
   Float_t         deltaR_lepJetInMinMljet;      
   Float_t         deltaPhi_lepJetInMinMljet;         
@@ -186,13 +182,13 @@ public :
   Float_t         M_allJet_W;
   Float_t         ratio_HTdHT4leadjets;
   Float_t         W_PtdM;
-  Float_t	       BDTtrijet2;
+  Float_t         BDTtrijet2;
   Float_t         BDTtrijet1;
   Float_t         BDTtrijet3;
   Float_t         BDTtrijet4;
 
-  Float_t	       HOTGoodTrijet1_mass;
-  Float_t	       HOTGoodTrijet1_dijetmass;
+  Float_t         HOTGoodTrijet1_mass;
+  Float_t         HOTGoodTrijet1_dijetmass;
   Float_t         HOTGoodTrijet1_pTratio;
   Float_t         HOTGoodTrijet1_dRtridijet;
   Float_t         HOTGoodTrijet1_dRtrijetJetnotdijet;
@@ -320,10 +316,19 @@ public :
   Float_t         MT_lepMetmod;
   Float_t         minDPhi_MetJet;
 
+  Float_t         recLeptonicTopPt;
+  Float_t         recLeptonicTopEta;
+  Float_t         recLeptonicTopPhi;
+  Float_t         recLeptonicTopMass;
+  Int_t           recLeptonicTopJetIdx;
+  Float_t         recLeptonicTopJetCSV;
+  Float_t         recLeptonicTopJetPt;
+
   vector<double>  *theJetPt_JetSubCalc;
   vector<double>  *theJetEta_JetSubCalc;
   vector<double>  *theJetPhi_JetSubCalc;
   vector<double>  *theJetEnergy_JetSubCalc;
+  vector<double>  *theJetDeepFlavB_JetSubCalc;
   vector<int>     *AK4JetBTag_MultiLepCalc_PtOrdered;
   vector<double>  *AK4JetDeepCSVb_MultiLepCalc;
   vector<double>  *AK4JetDeepCSVbb_MultiLepCalc;
@@ -333,6 +338,7 @@ public :
   vector<double>  *theJetEta_JetSubCalc_PtOrdered;
   vector<double>  *theJetPhi_JetSubCalc_PtOrdered;
   vector<double>  *theJetEnergy_JetSubCalc_PtOrdered;
+  vector<double>  *theJetDeepFlavB_JetSubCalc_PtOrdered;
   //   vector<double>  *theJetDeepCSVb_JetSubCalc_PtOrdered;
   //   vector<double>  *theJetDeepCSVbb_JetSubCalc_PtOrdered;
   //   vector<double>  *theJetDeepCSVc_JetSubCalc_PtOrdered;
@@ -476,7 +482,6 @@ public :
   vector<double>  *renormPSWeights;
   vector<double>  *topMass_TTbarMassCalc;
   vector<int>     *topID_TTbarMassCalc;
-  vector<double>  *theJetDeepFlavB_JetSubCalc_PtOrdered;
   Int_t           NresolvedTops1pFakeNoSF;
   Int_t           NresolvedTops2pFakeNoSF;
   Int_t           NresolvedTops5pFakeNoSF;
@@ -496,6 +501,44 @@ public :
   Int_t           NJetsCSVwithSF_MultiLepCalc_bSFdn;
   Int_t           NJetsCSVwithSF_MultiLepCalc_lSFup;
   Int_t           NJetsCSVwithSF_MultiLepCalc_lSFdn;
+
+  Float_t        BestTop_Discriminator;
+  Float_t        BestTop_Pt;
+  Float_t        BestTop_Phi;
+  Float_t        BestTop_Eta;
+  Float_t        BestTop_Mass;
+  
+  Float_t        NoTop_Jet1_CSV;
+  Float_t        NoTop_Jet1_Pt;
+  Float_t        NoTop_Jet1_Phi;
+  Float_t        NoTop_Jet1_Eta;
+  Float_t        NoTop_Jet1_Energy;
+   
+  Float_t        NoTop_Jet2_CSV;
+  Float_t        NoTop_Jet2_Pt;
+  Float_t        NoTop_Jet2_Phi;
+  Float_t        NoTop_Jet2_Eta;
+  Float_t        NoTop_Jet2_Energy;                 
+
+  Float_t        LeptonicTB1_M;
+  Float_t        LeptonicTB2_M;
+   
+  Float_t        LeptonicTB1_Pt;
+  Float_t        LeptonicTB2_Pt;
+
+  Float_t        LeptonicTB1_Eta;
+  Float_t        LeptonicTB2_Eta;
+
+  Float_t        HadronicTB1_M;
+  Float_t        HadronicTB2_M;
+  
+  Float_t        HadronicTB1_Pt;
+  Float_t        HadronicTB2_Pt; 
+ 
+  Float_t        HadronicTB1_Eta;
+  Float_t        HadronicTB2_Eta;
+
+
 
 
   // List of branches
@@ -723,10 +766,18 @@ public :
   TBranch        *b_NJetsCSVwithSF_MultiLepCalc_bSFdn;   //!
   TBranch        *b_NJetsCSVwithSF_MultiLepCalc_lSFup;   //!
   TBranch        *b_NJetsCSVwithSF_MultiLepCalc_lSFdn;   //!
+
+  TBranch        *b_recLeptonicTopPt;
+  TBranch        *b_recLeptonicTopEta;
+  TBranch        *b_recLeptonicTopPhi;
+  TBranch        *b_recLeptonicTopMass;
+  TBranch        *b_recLeptonicTopJetIdx;
+
   TBranch        *b_theJetPt_JetSubCalc;   //!
   TBranch        *b_theJetEta_JetSubCalc;   //!
   TBranch        *b_theJetPhi_JetSubCalc;   //!
   TBranch        *b_theJetEnergy_JetSubCalc;   //!
+  TBranch        *b_theJetDeepFlavB_JetSubCalc;
   TBranch        *b_AK4JetBTag_MultiLepCalc_PtOrdered;   //!
   TBranch        *b_AK4JetDeepCSVb_MultiLepCalc;   //!
   TBranch        *b_AK4JetDeepCSVbb_MultiLepCalc;   //!
@@ -756,10 +807,14 @@ public :
 #ifdef step2_cxx
 step2::step2( TString inputFileName, TString outputFileName )// : inputTree(0), inputFile(0), outputFile(0) 
 {   // weight branches to be used in the BDT training, xsecEff is the weight
-  hardcodedConditions = HardcodedConditions();
+  if( inputFileName.Contains("1lep2016") ) Year = 2016;
+  if( inputFileName.Contains("1lep2017") ) Year = 2017;
+  if( inputFileName.Contains("1lep2018") ) Year = 2018;
+
+  hardcodedConditions = HardcodedConditions(Year);
 
   // TT bkg divided into TTToSemiLep, TTToHadronic, TT high mass appear below
-  xsecEff = hardcodedConditions.GetCrossSectionEfficiency( inputFileName ); 
+  xsecEff = hardcodedConditions.GetCrossSectionEfficiency( inputFileName, Year ); 
   cout << ">> xsecEff: " << xsecEff << endl;
   
   isTTbar = false;
@@ -953,16 +1008,33 @@ void step2::Init(TTree *tree)
   //   genJetEtaNoClean_MultiLepCalc = 0;
   //   genJetPhiNoClean_MultiLepCalc = 0;
   //   genJetEnergyNoClean_MultiLepCalc = 0;
+
+  recLeptonicTopPt = 0;
+  recLeptonicTopEta = 0;
+  recLeptonicTopPhi = 0;
+  recLeptonicTopMass = 0;
+  recLeptonicTopJetIdx = 0;
+
   theJetPt_JetSubCalc = 0;
   theJetEta_JetSubCalc = 0;
   theJetPhi_JetSubCalc = 0;
   theJetEnergy_JetSubCalc = 0;
+  theJetDeepFlavB_JetSubCalc = 0;
   AK4JetBTag_MultiLepCalc_PtOrdered = 0;
   AK4JetDeepCSVb_MultiLepCalc = 0;
   AK4JetDeepCSVbb_MultiLepCalc = 0;
   AK4JetDeepCSVc_MultiLepCalc = 0;
   AK4JetDeepCSVudsg_MultiLepCalc = 0;
-
+  AK4JetDeepCSVb_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepCSVbb_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepCSVc_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepCSVudsg_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavb_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavbb_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavc_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavg_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavlepb_MultiLepCalc_PtOrdered = 0;
+  AK4JetDeepFlavuds_MultiLepCalc_PtOrdered = 0;
 
   // Set branch addresses and branch pointers
   if (!tree) return;
@@ -1018,10 +1090,21 @@ void step2::Init(TTree *tree)
   inputTree->SetBranchAddress("theJetEta_JetSubCalc_PtOrdered", &theJetEta_JetSubCalc_PtOrdered, &b_theJetEta_JetSubCalc_PtOrdered);
   inputTree->SetBranchAddress("theJetPhi_JetSubCalc_PtOrdered", &theJetPhi_JetSubCalc_PtOrdered, &b_theJetPhi_JetSubCalc_PtOrdered);
   inputTree->SetBranchAddress("theJetEnergy_JetSubCalc_PtOrdered", &theJetEnergy_JetSubCalc_PtOrdered, &b_theJetEnergy_JetSubCalc_PtOrdered);
+  inputTree->SetBranchAddress("theJetDeepFlavB_JetSubCalc_PtOrdered", &theJetDeepFlavB_JetSubCalc_PtOrdered, &b_theJetDeepFlavB_JetSubCalc_PtOrdered);
   //   inputTree->SetBranchAddress("theJetDeepCSVb_JetSubCalc_PtOrdered", &theJetDeepCSVb_JetSubCalc_PtOrdered, &b_theJetDeepCSVb_JetSubCalc_PtOrdered);
   //   inputTree->SetBranchAddress("theJetDeepCSVbb_JetSubCalc_PtOrdered", &theJetDeepCSVbb_JetSubCalc_PtOrdered, &b_theJetDeepCSVbb_JetSubCalc_PtOrdered);
   //   inputTree->SetBranchAddress("theJetDeepCSVc_JetSubCalc_PtOrdered", &theJetDeepCSVc_JetSubCalc_PtOrdered, &b_theJetDeepCSVc_JetSubCalc_PtOrdered);
   //   inputTree->SetBranchAddress("theJetDeepCSVudsg_JetSubCalc_PtOrdered", &theJetDeepCSVudsg_JetSubCalc_PtOrdered, &b_theJetDeepCSVudsg_JetSubCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepCSVb_MultiLepCalc_PtOrdered", &AK4JetDeepCSVb_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVb_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepCSVbb_MultiLepCalc_PtOrdered", &AK4JetDeepCSVbb_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVbb_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepCSVc_MultiLepCalc_PtOrdered", &AK4JetDeepCSVc_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVc_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepCSVudsg_MultiLepCalc_PtOrdered", &AK4JetDeepCSVudsg_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVudsg_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavb_MultiLepCalc_PtOrdered", &AK4JetDeepFlavb_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavb_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavbb_MultiLepCalc_PtOrdered", &AK4JetDeepFlavbb_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavbb_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavc_MultiLepCalc_PtOrdered", &AK4JetDeepFlavc_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavc_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavg_MultiLepCalc_PtOrdered", &AK4JetDeepFlavg_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavg_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavlepb_MultiLepCalc_PtOrdered", &AK4JetDeepFlavlepb_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavlepb_MultiLepCalc_PtOrdered);
+  inputTree->SetBranchAddress("AK4JetDeepFlavuds_MultiLepCalc_PtOrdered", &AK4JetDeepFlavuds_MultiLepCalc_PtOrdered, &b_AK4JetDeepFlavuds_MultiLepCalc_PtOrdered);
   inputTree->SetBranchAddress("AK4JetDeepCSVb_MultiLepCalc_PtOrdered", &AK4JetDeepCSVb_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVb_MultiLepCalc_PtOrdered);
   inputTree->SetBranchAddress("AK4JetDeepCSVbb_MultiLepCalc_PtOrdered", &AK4JetDeepCSVbb_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVbb_MultiLepCalc_PtOrdered);
   inputTree->SetBranchAddress("AK4JetDeepCSVc_MultiLepCalc_PtOrdered", &AK4JetDeepCSVc_MultiLepCalc_PtOrdered, &b_AK4JetDeepCSVc_MultiLepCalc_PtOrdered);
@@ -1186,10 +1269,16 @@ void step2::Init(TTree *tree)
   inputTree->SetBranchAddress("NJetsCSVwithSF_MultiLepCalc_bSFdn", &NJetsCSVwithSF_MultiLepCalc_bSFdn, &b_NJetsCSVwithSF_MultiLepCalc_bSFdn);
   inputTree->SetBranchAddress("NJetsCSVwithSF_MultiLepCalc_lSFup", &NJetsCSVwithSF_MultiLepCalc_lSFup, &b_NJetsCSVwithSF_MultiLepCalc_lSFup);
   inputTree->SetBranchAddress("NJetsCSVwithSF_MultiLepCalc_lSFdn", &NJetsCSVwithSF_MultiLepCalc_lSFdn, &b_NJetsCSVwithSF_MultiLepCalc_lSFdn);
+  inputTree->SetBranchAddress("recLeptonicTopPt", &recLeptonicTopPt, &b_recLeptonicTopPt);
+  inputTree->SetBranchAddress("recLeptonicTopEta", &recLeptonicTopEta, &b_recLeptonicTopEta);
+  inputTree->SetBranchAddress("recLeptonicTopPhi", &recLeptonicTopPhi, &b_recLeptonicTopPhi);
+  inputTree->SetBranchAddress("recLeptonicTopMass", &recLeptonicTopMass, &b_recLeptonicTopMass);
+  inputTree->SetBranchAddress("recLeptonicTopJetIdx", &recLeptonicTopJetIdx, &b_recLeptonicTopJetIdx);
   inputTree->SetBranchAddress("theJetPt_JetSubCalc", &theJetPt_JetSubCalc, &b_theJetPt_JetSubCalc);
   inputTree->SetBranchAddress("theJetEta_JetSubCalc", &theJetEta_JetSubCalc, &b_theJetEta_JetSubCalc);
   inputTree->SetBranchAddress("theJetPhi_JetSubCalc", &theJetPhi_JetSubCalc, &b_theJetPhi_JetSubCalc);
   inputTree->SetBranchAddress("theJetEnergy_JetSubCalc", &theJetEnergy_JetSubCalc, &b_theJetEnergy_JetSubCalc);
+  inputTree->SetBranchAddress("theJetDeepFlavB_JetSubCalc", &theJetDeepFlavB_JetSubCalc, &b_theJetDeepFlavB_JetSubCalc);
   inputTree->SetBranchAddress("AK4JetBTag_MultiLepCalc_PtOrdered", &AK4JetBTag_MultiLepCalc_PtOrdered, &b_AK4JetBTag_MultiLepCalc_PtOrdered);
   inputTree->SetBranchAddress("AK4JetDeepCSVb_MultiLepCalc", &AK4JetDeepCSVb_MultiLepCalc, &b_AK4JetDeepCSVb_MultiLepCalc);
   inputTree->SetBranchAddress("AK4JetDeepCSVbb_MultiLepCalc", &AK4JetDeepCSVbb_MultiLepCalc, &b_AK4JetDeepCSVbb_MultiLepCalc);

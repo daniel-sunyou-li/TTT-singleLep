@@ -1,6 +1,6 @@
 # last updated 11/22/2021 by Daniel Li
 
-# miniAOD sample extension --> miniAODv2 uses a newer version of pythia than miniAODv1
+# miniAOP5_13TeV-madgraph-pythia8
 MINIAODv1v2 = "RunIISummer20UL17MiniAOD-106X_mc2017_realistic_v6-v2/MINIAODSIM"
 MINIAODv2v1 = "RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM"
 MINIAODv2v2 = "RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM"

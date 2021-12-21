@@ -30,7 +30,7 @@ postfix = config.postfix
 inputDir = config.ljmetDir[ args.year ][ args.location ]
 
 outputDir = {
-  shift: os.path.join( config.step1Dir[ args.year ][ args.location ], shift ) for shift in shifts
+  shift: os.path.join( config.step1Dir[ args.year ][ "LPC" ], shift ) for shift in shifts
 }
 
 condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
@@ -79,12 +79,14 @@ for sample in samples:
 
     for shift in shifts:
       os.system( "eos root://cmseos.fnal.gov mkdir -p {}".format( os.path.join( outputDir[ shift ], step1_sample ) ) )
-    
-    runList = EOSlistdir( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
-    if args.location == "BRUX": 
+
+    if args.location == "LPC":    
+      runList = EOSlistdir( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
+    elif args.location == "BRUX": 
       status, dirList = xrdClient.dirlist( "{}/{}/UL{}/".format( inputDir, sample, args.year ) )
-      runList = [ item.name for item in dirList ]
-              
+      runList = [ item.name for item in dirList ]        
+    else: print( "[ERR] No valid location option used. Exiting..." )      
+
     print( ">> Running {} CRAB directories...".format( len(runList) ) )
 
     for run in runList:

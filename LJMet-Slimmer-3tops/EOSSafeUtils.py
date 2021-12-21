@@ -75,7 +75,6 @@ def BRUXlistdir(Dir):
 	if not Dir.startswith('/store'):
 		print 'BRUXlistdir: begin path with /store'
 		return 
-        #items = os.popen('gfal-ls gsiftp://brux11.hep.brown.edu/mnt/hadoop/'+Dir).readlines()
         items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
 	return striplist(items)
 
@@ -94,7 +93,6 @@ def BRUXlist_root_files(Dir):
 	if not Dir.startswith('/store'):
 		print 'BRUXlistdir: begin path with /store'
 		return 
-        #items = os.popen('gfal-ls gsiftp://brux11.hep.brown.edu/mnt/hadoop/'+Dir).readlines()
         items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
 	items2 = striplist(items)
 	rootlist = []

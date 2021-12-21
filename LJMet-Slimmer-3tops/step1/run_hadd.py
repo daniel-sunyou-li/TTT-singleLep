@@ -19,11 +19,11 @@ execfile( "../EOSSafeUtils.py" )
 shifts = [ "nominal" ] if not args.systematic else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 
 step1Dir = {
-  shift: os.path.join( config.step1Dir[ args.year ], shift ) for shift in shifts
+  shift: os.path.join( config.step1Dir[ args.year ][ args.location ], shift ) for shift in shifts
 }
 
 haddDir = {
-  shift: os.path.join( config.haddDir[ args.year ], shift ) for shift in shifts 
+  shift: os.path.join( config.haddDir[ args.year ][ args.location ], shift ) for shift in shifts 
 }
 
 for shift in shifts:
@@ -32,6 +32,7 @@ for shift in shifts:
 if args.location not in [ "LPC", "BRUX" ]: 
   print( ">> [] is not a valid location option. Using: LPC" )
   location = "LPC"
+else: location = args.location
 
 samples = config.samples[ "20" + args.year ][ "TEST" ] if args.test else config.samples[ "20" + args.year ][ location ]
 
