@@ -16,6 +16,12 @@ step2Path = {
   } for year in years
 }
 
+lumi = {
+  "16": 35867.
+  "17": 41530.
+  "18": 59970.
+}
+
 xsec_ttbar = 831.8 # +19.8+35.1 -29.2-35.1 https://pdg.lbl.gov/2018/reviews/rpp2018-rev-top-quark.pdf
 br_ttbar = {
   "TTToHadronic": 0.457,
