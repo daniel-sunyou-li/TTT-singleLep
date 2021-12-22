@@ -1,8 +1,8 @@
-import ROOT
 import sys, os
 import numpy as np
 import argparse
 import array
+import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--file", default="", help = "The path to the analysis tree")
@@ -13,7 +13,9 @@ from ROOT import TFile, TTree
 
 if not os.path.exists( "renorm" ): os.system( "mkdir -v renorm" )
 
-tfile = TFile.Open( args.file )
+haddPath = "root://cmsxrootd.fnal.gov//store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1hadds/nominal/".format( config.eosUserName, args.year, config.postfix )
+
+tfile = TFile.Open( os.path.join( haddPath, args.file ) )
 limits = {
   "NJ": [5,4,9],
   "HT": [40,150,4000]
@@ -39,21 +41,13 @@ for systematic in systematics:
 
 ttree = tfile.Get( "ljmet" )
 
-#ttree.SetBranchStatus("*", 0)
-#ttree.SetBranchStatus("NJets_JetSubCalc*", 1)
-#ttree.SetBranchStatus("theJetPt_JetSubCalc_PtOrdered*", 1)
-#ttree.SetBranchStatus("AK4HT*", 1)
-#ttree.SetBranchStatus("btagDeepJetWeight*", 1)
-#ttree.SetBranchStatus("leptonPt_MultiLepCalc*", 1)
-#ttree.SetBranchStatus("isElectron*", 1)
-#ttree.SetBranchStatus("isMuon*", 1)
-#ttree.SetBranchStatus("corr_met_MultiLepCalc*", 1)
-#ttree.SetBranchStatus("MCPastTrigger*", 1)
-
 nEvents = ttree.GetEntries()
+checkpoints = np.linspace( 0, nEvents, 11 ).round() 
+nPassed = 0
 
 for i in range( nEvents ):
   ttree.GetEntry(i)
+  if i in checkpoints: print( ">> Finished processing {:.0f}% ({}/{}) events".format( 100.* float( i ) / float ( nEvents ), i, nEvents ) )
   if not ( ( ttree.leptonPt_MultiLepCalc > 20 and ttree.isElectron) or (ttree.leptonPt_MultiLepCalc > 20 and ttree.isMuon)): continue
   if not (ttree.corr_met_MultiLepCalc > 30): continue
   if not (ttree.MCPastTrigger): continue 
@@ -67,7 +61,7 @@ for i in range( nEvents ):
   for systematic in systematics:
     h2D[ "weight" ][ systematic ].Fill( njet, HT, getattr( ttree, "btagDeepJetWeight_{}".format( systematic ) ) )
 
-  if i in np.linspace( 0, nEvents, 11 ).round(): print( ">> Finished processing {}% ({}/{}) events".format( 100.* float( i ) / float ( nEvents ), i, nEvents ) )
+  nPassed += 1
 
 h2D[ "scale" ][ "nominal" ] = h2D[ "origin" ][ "nominal" ].Clone()
 h2D[ "scale" ][ "nominal" ].SetTitle( "h2D_scale" )
@@ -82,4 +76,5 @@ for systematic in systematics:
   fout.WriteTObject( h2D[ "scale" ][ systematic ], "h2D_scale_{}".format( systematic ) )
 
 fout.Close()
+print( "[DONE] {}/{} events passed".format( nPassed, nEvents ) )
 os.system( "mv {} renorm/".format( "Weights_{}_extended_HT_cuts_sys.root".format( args.label ) ) )

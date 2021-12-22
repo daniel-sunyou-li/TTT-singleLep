@@ -8,19 +8,25 @@ MINIAODv2v2 = "RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
 groups = {
   "TEST": {
     "TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
+    #"QCDHT200to300": "/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"QCDHT300to500": "/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"QCDHT1000to1500": "/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"QCDHT2000toInf": "/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
+    #"WJetsHT800To1200": "/WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1,
+    #"WJetsHT2500ToInf": "/WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1
   },
   "DATA": {
     "SingleElectronRun2017B": "/SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleElectronRun2017C": "/SingleElectron/Run2017C-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleElectronRun2017D": "/SingleElectron/Run2017D-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleElectronRun2017E": "/SingleElectron/Run2017E-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleElectronRun2017F": "/SingleElectron/Run2017F-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleElectronRun2017C": "/SingleElectron/Run2017C-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleElectronRun2017D": "/SingleElectron/Run2017D-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleElectronRun2017E": "/SingleElectron/Run2017E-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleElectronRun2017F": "/SingleElectron/Run2017F-UL2017_MiniAODv2-v1/MINIAOD",
 
-    "SingleMuonRun2017B": "/SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleMuonRun2017C": "/SingleMuon/Run2017C-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleMuonRun2017D": "/SingleMuon/Run2017D-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleMuonRun2017E": "/SingleMuon/Run2017E-UL2017_MiniAODv2-v1/MINIAOD",
-    "SingleMuonRun2017F": "/SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD"
+    #"SingleMuonRun2017B": "/SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleMuonRun2017C": "/SingleMuon/Run2017C-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleMuonRun2017D": "/SingleMuon/Run2017D-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleMuonRun2017E": "/SingleMuon/Run2017E-UL2017_MiniAODv2-v1/MINIAOD",
+    #"SingleMuonRun2017F": "/SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD"
   },
   "SIGNAL": {
     "TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2,
@@ -61,7 +67,7 @@ groups = {
 
 for DYM_HT in [ "200to400", "400to600", "600to800", "800to1200", "1200to2500", "2500toInf" ]: 
   groups[ "EWKHT" ][ "DYM50HT" + DYM_HT ] = "/DYJetsToLL_M-50_HT-{}_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8/{}".format( DYM_HT, MINIAODv2v1 )
-for WJets_HT in [ "200To400", "400To600", "600To800", "1200To2500" ]: # in-progres 800To1200, 2500ToInf 
+for WJets_HT in [ "200To400", "400To600", "600To800", "800To1200", "1200To2500", "2500ToInf" ]:  
   groups[ "EWKHT" ][ "WJetsHT" + WJets_HT ] = "/WJetsToLNu_HT-{}_TuneCP5_13TeV-madgraphMLM-pythia8/{}".format( WJets_HT, MINIAODv2v1 )
 for QCD_HT in [ "200to300", "300to500", "500to700", "700to1000", "1500to2000" ]: # "1000to1500", "2000toInf" in-progress
   groups[ "QCDHT" ][ "QCDHT" + QCD_HT ] = "/QCD_HT{}_TuneCP5_PSWeights_13TeV-madgraph-pythia8/{}".format( QCD_HT, MINIAODv2v1 )

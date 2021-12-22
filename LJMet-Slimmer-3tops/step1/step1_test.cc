@@ -82,9 +82,9 @@ void step1_test::Loop(TString inTreeName, TString outTreeName, const BTagCalibra
   // btagCalibration initialization -csv reshaping
   if (calib == NULL)
   {
-    std::string btagcsvfile("data/DeepCSV_106XUL17SF_V2p1.csv");
+    std::string btagcsvfile("btag_sf/DeepCSV_106XUL17SF.csv");
     if (Year== 2018) {
-      btagcsvfile = "DeepCSV_102XSF_V2.csv"; 
+      btagcsvfile = "btag_sf/DeepCSV_102XSF_V2.csv"; 
     }
     cout << "CSV reshaping file " << btagcsvfile << endl;
     calib = new const BTagCalibrationForLJMet("DeepCSV", btagcsvfile); 
@@ -92,7 +92,7 @@ void step1_test::Loop(TString inTreeName, TString outTreeName, const BTagCalibra
 
   if (calib_dj == NULL)
   {
-    std::string btagdjcsvfile("data/DeepJet_106XUL17SF_V2p1.csv");
+    std::string btagdjcsvfile("btag_sf/DeepJet_106XUL17SF.csv");
     cout<< "DeepJet reshaping file: "<<btagdjcsvfile<<endl;
     calib_dj = new const BTagCalibrationForLJMet("DeepJet", btagdjcsvfile);
   }

@@ -37,15 +37,15 @@ condorDir = "./logs_UL{}_{}/".format( args.year, postfix )
 for shift in shifts: os.system( "mkdir -p {}".format( os.path.join( condorDir, shift ) ) )
 
 deepCSV_SF = {
-  "16": "data/DeepCSV_106XUL16.csv",
-  "17": "data/DeepCSV_106XUL17SF.csv",
-  "18": "data/DeepCSV_106XUL18SF_V1p1.csv"
+  "16": "btag_sf/DeepCSV_106XUL16.csv",
+  "17": "btag_sf/DeepCSV_106XUL17SF.csv",
+  "18": "btag_sf/DeepCSV_106XUL18SF_V1p1.csv"
 }
 
 deepJet_SF = {
-  "16": "data/DeepJet_106XUL16.csv",
-  "17": "data/DeepJet_106XUL17SF.csv",
-  "18": "data/DeepJet_106XUL18SF_V1p1.csv"
+  "16": "btag_sf/DeepJet_106XUL16.csv",
+  "17": "btag_sf/DeepJet_106XUL17SF.csv",
+  "18": "btag_sf/DeepJet_106XUL18SF_V1p1.csv"
 }
 
 # Start processing
