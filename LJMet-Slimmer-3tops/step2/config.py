@@ -64,8 +64,7 @@ xsec = {
   "ST_tW_antitop": 35.83, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
   "ST_t_top": 136.02, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
   "ST_t_antitop": 80.95, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-  "ST_s_top": 2.12, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-  "ST_s_antitop": 1.32, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
+  "ST_s": 3.44, # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
   "WW": 118.7, # https://arxiv.org/pdf/1408.5243.pdf
   "WZ": 47.13, # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns#W_jets
   "ZZ": 16.523, # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns#W_jets
@@ -97,54 +96,53 @@ for syst in [ "HD", "UE" ]:
   
 nrun = {
   "2017":
-    "TTTW": 
-    "TTTJ": 360000.,
-    "TTToHadronic": 
-    "TTToSemiLeptonicNjet0": 
-    "TTToSemiLeptonicNjet9": 
-    "TTToSemiLeptonHT500": 
-    "TTTo2L2Nu": 
-    "TTTT": 
-    "TTWW": 
-    "TTZZ": 
-    "TTHH": 
-    "TTZH": 
-    "TTWZ": 
-    "TTWH": 
-    "TTWl": 
-    "TTWq": 
-    "TZM1to10": 
-    "TTZM10": 
-    "TTHbb": 
-    "TTHnonbb": 
-    "ST_tW_top": 
-    "ST_tW_antitop": 
-    "ST_t_top": 
-    "ST_t_antitop": 
-    "ST_s_top": 
-    "ST_s_antitop": 
-    "WW": 
-    "WZ": 
-    "ZZ": 
-    "DYM50HT200": 12513057.,
-    "DYM50HT400": 
-    "DYM50HT600": 
-    "DYM50HT800": 
+    "TTTW": 360000.,
+    "TTTJ": 354000.,
+    "TTToHadronic": 233815417.,
+    "TTToSemiLeptonicNjet0": 352212660.,
+    "TTToSemiLeptonicNjet9": 352212660.,
+    "TTToSemiLeptonHT500": 10179200.,
+    "TTTo2L2Nu": 44580106. + 28515514. + 51439568. + 47012288. + 25495972.,
+    "TTTT": 4526556.,
+    "TTWW": 698000.,
+    "TTZZ": 327000.,
+    "TTHH": 360000.,
+    "TTZH": 350000.,
+    "TTWZ": 350000.,
+    "TTWH": 360000.,
+    "TTWl": 6497731.,
+    "TTWq": 359006.,
+    #"TTZM1to10": 
+    "TTZM10": 6990534.,
+    "TTHbb": 7661778.,
+    "TTHnonbb": 4965389.,
+    "ST_tW_top": 5648712.,
+    "ST_tW_antitop": 5673700.,
+    #ST_t_top": 
+    "ST_t_antitop": 65821722., 
+    "ST_s": 8938338., 
+    "WW": 15634000.,
+    "WZ": 7889000.,
+    "ZZ": 2706000.,
+    "DYM50HT200":  12513057.,
+    "DYM50HT400":  5543804.,
+    "DYM50HT600":  5278417., 
+    "DYM50HT800":  4506887.,
     "DYM50HT1200": 4802716., 
     "DYM50HT2500": 1480047.,
-    "WJetsMG200": 
-    "WJetsMG400": 
-    "WJetsMG600": 
-    "WJetsMG800": 
-    "WJetsMG1200": 
-    "WJetsMG2500": 
-    "QCDHT200": 
-    "QCDHT300": 
-    "QCDHT500": 
-    "QCDHT700": 
-    "QCDHT1000": 
-    "QCDHT1500": 
-    "QCDHT2000": 
+    "WJetsMG200": 42602407.,
+    "WJetsMG400": 5437447.,
+    "WJetsMG600": 5545298.,
+    #"WJetsMG800": 
+    "WJetsMG1200": 4942590., 
+    #"WJetsMG2500": 
+    #"QCDHT200": 
+    #"QCDHT300": 
+    "QCDHT500": 36194860.,
+    "QCDHT700": 34051754.,
+    #"QCDHT1000": 
+    "QCDHT1500": 7701876.,
+    #"QCDHT2000": 
 }
 
 xsecEff = { year: {} for year in years }
