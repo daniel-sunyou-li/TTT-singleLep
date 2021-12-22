@@ -1,6 +1,6 @@
 eosUserName = "dali"
 postfix = "deepJetV1"
-years = [ "16", "17", "18" ]
+years = [ "17" ]
 
 haddPath = {
   year: {
@@ -93,4 +93,70 @@ xsec = {
 for syst in [ "HD", "UE" ]:
   for shift in [ "up", "dn" ]:
     xsec[ "TTToSemiLeptonicNjet0" + syst + shift ] = xsec_ttbar * br_ttbar[ "TTToSemiLeptonic" ] * ( 1.0 - filtEff_ttbar[ "Njet9" + syst + shift ] )
-    xsec[ "TTToSemiLeptonicNjet9" + syst + shift ] = xsec_ttbar * br_ttbar[ "TTToSemiLeptonic" ] * filtEff_ttbar[ "Njet9" + syst + shift ] 
+    xsec[ "TTToSemiLeptonicNjet9" + syst + shift ] = xsec_ttbar * br_ttbar[ "TTToSemiLeptonic" ] * filtEff_ttbar[ "Njet9" + syst + shift ]
+  
+nrun = {
+  "2017":
+    "TTTW": 
+    "TTTJ": 360000.,
+    "TTToHadronic": 
+    "TTToSemiLeptonicNjet0": 
+    "TTToSemiLeptonicNjet9": 
+    "TTToSemiLeptonHT500": 
+    "TTTo2L2Nu": 
+    "TTTT": 
+    "TTWW": 
+    "TTZZ": 
+    "TTHH": 
+    "TTZH": 
+    "TTWZ": 
+    "TTWH": 
+    "TTWl": 
+    "TTWq": 
+    "TZM1to10": 
+    "TTZM10": 
+    "TTHbb": 
+    "TTHnonbb": 
+    "ST_tW_top": 
+    "ST_tW_antitop": 
+    "ST_t_top": 
+    "ST_t_antitop": 
+    "ST_s_top": 
+    "ST_s_antitop": 
+    "WW": 
+    "WZ": 
+    "ZZ": 
+    "DYM50HT200": 12513057.,
+    "DYM50HT400": 
+    "DYM50HT600": 
+    "DYM50HT800": 
+    "DYM50HT1200": 4802716., 
+    "DYM50HT2500": 1480047.,
+    "WJetsMG200": 
+    "WJetsMG400": 
+    "WJetsMG600": 
+    "WJetsMG800": 
+    "WJetsMG1200": 
+    "WJetsMG2500": 
+    "QCDHT200": 
+    "QCDHT300": 
+    "QCDHT500": 
+    "QCDHT700": 
+    "QCDHT1000": 
+    "QCDHT1500": 
+    "QCDHT2000": 
+}
+
+xsecEff = { year: {} for year in years }
+for year in years:
+  for sample in nrun[ year ]:
+    xsecEff[ year ][ sample ] = lumi[ year ] * xsec[ sample ] / nrun[ year ][ sample ]
+  
+  
+  
+  
+  
+  
+  
+  
+  
