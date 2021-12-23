@@ -27,16 +27,17 @@ public:
 
   SFmap hscale_tttw;
   SFmap hscale_tttj;
-  // SFmap hscale_ttjj;
-  // SFmap hscale_ttbb;
-  // SFmap hscale_ttcc;
-  // SFmap hscale_tt2b;
-  // SFmap hscale_tt1b;
-  // SFmap hscale_HT500Njet9_ttjj;
-  // SFmap hscale_HT500Njet9_ttbb;
-  // SFmap hscale_HT500Njet9_ttcc;
-  // SFmap hscale_HT500Njet9_tt2b;
-  // SFmap hscale_HT500Njet9_tt1b;
+  SFmap hscale_tttt;
+  SFmap hscale_ttjj;
+  SFmap hscale_ttbb;
+  SFmap hscale_ttcc;
+  SFmap hscale_tt2b;
+  SFmap hscale_tt1b;
+  SFmap hscale_HT500Njet9_ttjj;
+  SFmap hscale_HT500Njet9_ttbb;
+  SFmap hscale_HT500Njet9_ttcc;
+  SFmap hscale_HT500Njet9_tt2b;
+  SFmap hscale_HT500Njet9_tt1b;
   // SFmap hscale_STs;
   // SFmap hscale_STt;
   // SFmap hscale_STtw;
