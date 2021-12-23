@@ -1,3 +1,6 @@
+# this script loads in a trained model from the specified folder and applies it to a dataset and reports the average DNN discriminator value
+# for the ttt signal samples, tttt and a ttbar sample
+
 import os, sys, glob
 from argparse import ArgumentParser
 import numpy as np
@@ -22,10 +25,10 @@ model = tf.keras.models.load_model( glob.glob( "{}/*.tf".format( args.folder ) )
 year = jsonFile[ "year" ]
 
 files = [
-  config.step2DirLPC[ year ] + "nominal/" + config.sig_training[ year ][0],
-  config.step2DirLPC[ year ] + "nominal/" + config.sig_training[ year ][1],
-  config.step2DirLPC[ year ] + "nominal/" + config.bkg_training[ year ][0],
-  config.step2DirLPC[ year ] + "nominal/" + config.bkg_training[ year ][1]
+  config.step2DirXRD[ year ] + "nominal/" + config.sig_training[ year ][0], # tttj
+  config.step2DirXRD[ year ] + "nominal/" + config.sig_training[ year ][1], # tttw
+  config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][0], # tttt
+  config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][1]  # ttjj
 ]
 
 variables = jsonFile[ "variables" ]
