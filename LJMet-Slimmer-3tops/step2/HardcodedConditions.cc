@@ -28,17 +28,17 @@ HardcodedConditions::HardcodedConditions( Int_t year ) {
   for( size_t i = 0; i < 19; i++ ){
     hscale_tttw[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTW"+SYSs[i]).c_str())->Clone();
     hscale_tttj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTJ"+SYSs[i]).c_str())->Clone();   // hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
-    hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
+    hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTT"+SYSs[i]).c_str())->Clone();
     hscale_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttjj"+SYSs[i]).c_str())->Clone();
     hscale_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttbb"+SYSs[i]).c_str())->Clone();
     hscale_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttcc"+SYSs[i]).c_str())->Clone();
     hscale_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt2b"+SYSs[i]).c_str())->Clone();
     hscale_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt1b"+SYSs[i]).c_str())->Clone();
-    hscale_HT500Njet9_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttjj"+SYSs[i]).c_str())->Clone();
-    hscale_HT500Njet9_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttbb"+SYSs[i]).c_str())->Clone();
-    hscale_HT500Njet9_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttcc"+SYSs[i]).c_str())->Clone();
-    hscale_HT500Njet9_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt2b"+SYSs[i]).c_str())->Clone();
-    hscale_HT500Njet9_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt1b"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500ttjj"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500ttbb"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500ttcc"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500tt2b"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500tt1b"+SYSs[i]).c_str())->Clone();
     // hscale_STs[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STs"+SYSs[i]).c_str())->Clone();
     // hscale_STtw[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STtw"+SYSs[i]).c_str())->Clone();
     // hscale_STt[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STt"+SYSs[i]).c_str())->Clone();
@@ -80,8 +80,31 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
 
   if( sampleType == "tt2b" ){
     return hscale_tt2b[ sysType ]->GetBinContent( hscale_tt2b[ sysType ]->FindBin( njets_idx, HT ) );
+  }
+  
+  if( sampleType == "tt1b" ){
+    return hscale_tt1b[ sysType ]->GetBinContent( hscale_tt1b[ sysType ]->FindBin( njets_idx, HT ) );
   }  
 
+  if( sampleType == "HT500Njet9_ttjj" ){
+    return hscale_HT500Njet9_ttjj[ sysType ]->GetBinContent( hscale_HT500Njet9_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
+
+  if( sampleType == "HT500Njet9_ttcc" ){
+    return hscale_HT500Njet9_ttcc[ sysType ]->GetBinContent( hscale_HT500Njet9_ttcc[ sysType ]->FindBin( njets_idx, HT ) );
+  }
+
+  if( sampleType == "HT500Njet9_ttbb" ){
+    return hscale_HT500Njet9_ttbb[ sysType ]->GetBinContent( hscale_HT500Njet9_ttbb[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
+
+  if( sampleType == "HT500Njet9_tt2b" ){
+    return hscale_HT500Njet9_tt2b[ sysType ]->GetBinContent( hscale_HT500Njet9_tt2b[ sysType ]->FindBin( njets_idx, HT ) );
+  }
+  
+  if( sampleType == "HT500Njet9_tt1b" ){
+    return hscale_HT500Njet9_tt1b[ sysType ]->GetBinContent( hscale_HT500Njet9_tt1b[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
 
 
 //  if( sampleType == "STs" ){
@@ -103,7 +126,7 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
   return 1.0;  
 } 
 
-float HardcodedConditions::GetCrossSectionEfficiency( TString inputFileName, int Year ){
+float HardcodedConditions::GetCrossSectionEfficiency( TString inputFileName, int Year ){ // used for event weighting, only compute for samples used in DNN training
   if( Year == 2016 ){
     return 1.0; // hasn't been implemented yet 
   }
