@@ -7,72 +7,39 @@ varList = {}
 bruxUserName = "dli50"
 lpcUserName = "dsunyou"
 eosUserName = "dali"
-date = "02182021"
+postfix = "deepJetV1"
+
+years = [ "17" ]
 
 step2Sample = {
-  "2017": "FWLJMET102X_1lep2017_Oct2019_3t_{}_step2".format( date ),
-  "2018": "FWLJMET102X_1lep2018_Oct2019_3t_{}_step2".format( date )
+  year: "FWLJMET106XUL_1lep20{}_Oct2019_3t_{}_step2".format( year, postfix ) for year in years
 }
 
-step3Sample = { year: "FWLJMET102X_1lep{}_Oct2019_3t_{}_step3".format( str( year ), date ) for year in step2Sample.keys() }
+step3Sample = { year: "FWLJMET106XUL_1lep20{}_Oct2019_3t_{}_step3".format( str( year ), postfix ) for year in years }
 
-step2DirBRUX = { year: "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/{}/".format( step2Sample[ year ] ) for year in step2Sample.keys() }
+step2DirBRUX = { year: "/isilon/hadoop/store/user/dali/{}/".format( step2Sample[ year ] ) for year in years }
 
-step2DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in step2Sample.keys() }
+step2DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
 
-step3DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_9_4_6_patch1/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in step2Sample.keys() }
+step3DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
 
-step2DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in step2Sample.keys() }
+step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}".format( eosUserName, step2Sample[ year ] ) for year in years }
 
-step3DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in step2Sample.keys() }
+step2DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
+
+step3DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
 # signal sample to be used in training
 sig_training = {
-  "2017": [ 
+  "17": [ 
     "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
-    "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
-  ],
-  "2018": [ 
-    "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
   ]
 }
 
 # background samples to be used in training, only using ttbar events
 bkg_training = {
-  "2017": [
-    "TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
-    "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_ttjj_hadd.root"  
-  ],
-  "2018": [
+  "17": [
     "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
@@ -80,6 +47,8 @@ bkg_training = {
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
@@ -99,7 +68,7 @@ bkg_training = {
     "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
     "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
     "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"
+    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"  
   ]
 }
 
@@ -112,43 +81,41 @@ shift_keys = {
 }
 
 all_samples = { 
-  "2017": {
-    "TTTT": "TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
+  "17": {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
+    "TTTT": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+    "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTWH": "TTWH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWl": "TTWJetsToLNu_TuneCP5_PSweights_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
     "TTWW": "TTWW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTWZ": "TTWZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTZH": "TTZH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTZZ": "TTZZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+    "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
+    "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+    #"TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
     "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
  
     "DataE": "SingleElectron_hadd.root",
     "DataM": "SingleMuon_hadd.root",
-    "DataJ": "JetHT_hadd.root",
   
-    "DYMG200": "DYJetsToLL_M-50_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG400": "DYJetsToLL_M-50_HT-400to600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYGM600": "DYJetsToLL_M-50_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYGM800": "DYJetsToLL_M-50_HT-800to1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG1200": "DYJetsToLL_M-50_HT-1200to2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG2500": "DYJetsToLL_M-50_HT-2500toInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYMG200":  "DYJetsToLL_M-50_HT-200to400_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYMG400":  "DYJetsToLL_M-50_HT-400to600_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYGM600":  "DYJetsToLL_M-50_HT-600to800_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYGM800":  "DYJetsToLL_M-50_HT-800to1200_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYMG1200": "DYJetsToLL_M-50_HT-1200to2500_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
+    "DYMG2500": "DYJetsToLL_M-50_HT-2500toInf_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
   
-    "QCDht200": "QCD_HT200to300_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht300": "QCD_HT300to500_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht500": "QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht700": "QCD_HT700to1000_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht1000": "QCD_HT1000to1500_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht1500": "QCD_HT1500to2000_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "QCDht2000": "QCD_HT2000toInf_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht200":  "QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht300":  "QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht500":  "QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht700":  "QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht1000": "QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht1500": "QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
+    "QCDht2000": "QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
   
-    "Tbs": "ST_s-channel_antitop_leptonDecays_13TeV-PSweights_powheg-pythia_hadd.root",
-    "Ts": "ST_s-channel_top_leptonDecays_13TeV-PSweights_powheg-pythia_hadd.root",
+    "Ts": "ST_s-channel_4f_leptonDecays_13TeV_amcatnlo-pythia_hadd.root",
     "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
     "Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
     "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
@@ -170,58 +137,6 @@ all_samples = {
     "WZ": "WZ_TuneCP5_13TeV-pythia8_hadd.root",
     "ZZ": "ZZ_TuneCP5_13TeV-pythia8_hadd.root"
   },
-  "2018": {
-    "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTTT": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWH": "TTWH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
-    "TTWW": "TTWW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWZ": "TTWZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTZH": "TTZH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTZZ": "TTZZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-    "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-    
-    "DataM": "SingleMuon_hadd.root", 
-    "DataE": "EGamma_hadd.root",
-    "DataJ": "JetHT_hadd.root",  
-
-    "DYMG200": "DYJetsToLL_M-50_HT-200to400_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG400": "DYJetsToLL_M-50_HT-400to600_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG600": "DYJetsToLL_M-50_HT-600to800_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG800": "DYJetsToLL_M-50_HT-800to1200_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG1200": "DYJetsToLL_M-50_HT-1200to2500_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DYMG2500": "DYJetsToLL_M-50_HT-2500toInf_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-  
-    "QCDht200": "QCD_HT200to300_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht300": "QCD_HT300to500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht500": "QCD_HT500to700_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht700": "QCD_HT700to1000_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht1000": "QCD_HT1000to1500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht1500": "QCD_HT1500to2000_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "QCDht2000": "QCD_HT2000toInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-  
-    "Ts": "ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8_hadd.root",
-    "Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8_hadd.root",
-    "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-    "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-
-    "WJetsMG200": "WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG400": "WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG600": "WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG800": "WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG1200": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG2500": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-  
-    "WW": "WW_TuneCP5_PSweights_13TeV-pythia8_hadd.root",
-    "WZ": "WZ_TuneCP5_PSweights_13TeV-pythia8_hadd.root",
-    "ZZ": "ZZ_TuneCP5_13TeV-pythia8_hadd.root"
-  }
 }  
 
 for jj in [ "TT1b", "TT2b", "TTbb", "TTcc", "TTjj" ]:
