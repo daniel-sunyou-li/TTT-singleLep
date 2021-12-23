@@ -242,4 +242,4 @@ weightStr = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPr
 
 # general cut, add selection based cuts in training scripts
 
-base_cut =  "( isTraining == 1 || isTraining == 2 ) && ( DataPastTriggerX == 1 ) && ( MCPastTriggerX == 1 )"
+base_cut =  "( isTraining == 1 ) && ( DataPastTriggerX == 1 ) && ( MCPastTriggerX == 1 )"
