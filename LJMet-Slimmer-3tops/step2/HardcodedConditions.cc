@@ -66,21 +66,21 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
 //    return hscale_tttt[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
 //  }  
 
-//if( sampleType == "ttjj" ){
-//    return hscale_ttjj[ sysType ]->GetBinContent( hscale_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
-//  }  
+  if( sampleType == "ttjj" ){
+    return hscale_ttjj[ sysType ]->GetBinContent( hscale_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
 
-//  if( sampleType == "ttcc" ){
-//    return hscale_ttcc[ sysType ]->GetBinContent( hscale_ttcc[ sysType ]->FindBin( njets_idx, HT ) );
-//  }
+  if( sampleType == "ttcc" ){
+    return hscale_ttcc[ sysType ]->GetBinContent( hscale_ttcc[ sysType ]->FindBin( njets_idx, HT ) );
+  }
 
-//  if( sampleType == "ttbb" ){
-//    return hscale_ttbb[ sysType ]->GetBinContent( hscale_ttbb[ sysType ]->FindBin( njets_idx, HT ) );
-//  }  
+  if( sampleType == "ttbb" ){
+    return hscale_ttbb[ sysType ]->GetBinContent( hscale_ttbb[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
 
-//  if( sampleType == "tt2b" ){
-//    return hscale_tt2b[ sysType ]->GetBinContent( hscale_tt2b[ sysType ]->FindBin( njets_idx, HT ) );
-//  }  
+  if( sampleType == "tt2b" ){
+    return hscale_tt2b[ sysType ]->GetBinContent( hscale_tt2b[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
 
 //  if( sampleType == "STs" ){
 //    return hscale_STs[ sysType ]->GetBinContent( hscale_STs[ sysType ]->FindBin( njets_idx, HT ) );
@@ -106,14 +106,14 @@ float HardcodedConditions::GetCrossSectionEfficiency( TString inputFileName, int
     return 1.0; // hasn't been implemented yet 
   }
   else if( Year == 2017 ){
-    if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT0Njet0" ) ) return 1;
-    else if( inputFileName.Contains( "TTToSemiLepton_HT500Njet9_TuneCP5" ) ) return 1;
-    else if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT500Njet9" ) ) return 1;
-    else if( inputFileName.Contains( "TTToHadronic_TuneCP5" ) ) return 1;
-    else if( inputFileName.Contains( "TTTo2L2Nu_TuneCP5" ) ) return 1;
-    else if( inputFileName.Contains( "TTTT" ) ) return 1;
-    else if( inputFileName.Contains( "TTTW" ) ) return 1;
-    else if( inputFileName.Contains( "TTTJ" ) ) return 1;
+    if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT0Njet0" ) ) return 0.04269313;
+    else if( inputFileName.Contains( "TTToSemiLepton_HT500Njet9_TuneCP5" ) ) return 0.00918382;
+    else if( inputFileName.Contains( "TTToSemiLeptonic_TuneCP5" ) && inputFileName.Contains( "HT500Njet9" ) ) return 0.00026545;
+    else if( inputFileName.Contains( "TTToHadronic_TuneCP5" ) ) return 0.06751867;
+    else if( inputFileName.Contains( "TTTo2L2Nu_TuneCP5" ) ) return 0.01840806;
+    else if( inputFileName.Contains( "TTTT" ) ) return 0.000109821;
+    else if( inputFileName.Contains( "TTTW" ) ) return 0.00008437;
+    else if( inputFileName.Contains( "TTTJ" ) ) return 0.00004662;
     else return 1;
   }
   else if( Year == 2018 ){
