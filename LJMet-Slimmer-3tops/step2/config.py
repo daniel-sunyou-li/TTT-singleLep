@@ -17,8 +17,8 @@ step2Path = {
 }
 
 lumi = {
-  "16": 35867.
-  "17": 41530.
+  "16": 35867.,
+  "17": 41530.,
   "18": 59970.
 }
 
@@ -95,7 +95,7 @@ for syst in [ "HD", "UE" ]:
     xsec[ "TTToSemiLeptonicNjet9" + syst + shift ] = xsec_ttbar * br_ttbar[ "TTToSemiLeptonic" ] * filtEff_ttbar[ "Njet9" + syst + shift ]
   
 nrun = {
-  "2017":
+  "17": {
     "TTTW": 360000.,
     "TTTJ": 354000.,
     "TTToHadronic": 233815417.,
@@ -143,6 +143,7 @@ nrun = {
     #"QCDHT1000": 
     "QCDHT1500": 7701876.,
     #"QCDHT2000": 
+  }
 }
 
 xsecEff = { year: {} for year in years }
