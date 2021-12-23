@@ -23,7 +23,7 @@ step2DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/
 
 step3DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_19/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
 
-step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}".format( eosUserName, step2Sample[ year ] ) for year in years }
+step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
 step2DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
@@ -41,14 +41,14 @@ sig_training = {
 bkg_training = {
   "17": [
     "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
