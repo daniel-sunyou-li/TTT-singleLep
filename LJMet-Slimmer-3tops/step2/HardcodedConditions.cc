@@ -28,17 +28,17 @@ HardcodedConditions::HardcodedConditions( Int_t year ) {
   for( size_t i = 0; i < 19; i++ ){
     hscale_tttw[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTW"+SYSs[i]).c_str())->Clone();
     hscale_tttj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTJ"+SYSs[i]).c_str())->Clone();   // hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
-    // hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
-     hscale_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttjj"+SYSs[i]).c_str())->Clone();
-     hscale_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttbb"+SYSs[i]).c_str())->Clone();
-     hscale_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttcc"+SYSs[i]).c_str())->Clone();
-     hscale_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt2b"+SYSs[i]).c_str())->Clone();
-     hscale_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt1b"+SYSs[i]).c_str())->Clone();
-    // hscale_HT500Njet9_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttjj"+SYSs[i]).c_str())->Clone();
-    // hscale_HT500Njet9_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttbb"+SYSs[i]).c_str())->Clone();
-    // hscale_HT500Njet9_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttcc"+SYSs[i]).c_str())->Clone();
-    // hscale_HT500Njet9_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt2b"+SYSs[i]).c_str())->Clone();
-    // hscale_HT500Njet9_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt1b"+SYSs[i]).c_str())->Clone();
+    hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
+    hscale_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttjj"+SYSs[i]).c_str())->Clone();
+    hscale_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttbb"+SYSs[i]).c_str())->Clone();
+    hscale_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttcc"+SYSs[i]).c_str())->Clone();
+    hscale_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt2b"+SYSs[i]).c_str())->Clone();
+    hscale_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_tt1b"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttjj"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttbb"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_ttcc[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_ttcc"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_tt2b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt2b"+SYSs[i]).c_str())->Clone();
+    hscale_HT500Njet9_tt1b[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_HT500Njet9_tt1b"+SYSs[i]).c_str())->Clone();
     // hscale_STs[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STs"+SYSs[i]).c_str())->Clone();
     // hscale_STtw[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STtw"+SYSs[i]).c_str())->Clone();
     // hscale_STt[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_STt"+SYSs[i]).c_str())->Clone();
@@ -62,9 +62,9 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
     return hscale_tttj[ sysType ]->GetBinContent( hscale_tttj[ sysType ]->FindBin( njets_idx, HT ) );
   }  
 
-//  if( sampleType == "tttt" ){
-//    return hscale_tttt[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
-//  }  
+  if( sampleType == "tttt" ){
+    return hscale_tttt[ sysType ]->GetBinContent( hscale_tttt[ sysType ]->FindBin( njets_idx, HT ) );
+  }  
 
   if( sampleType == "ttjj" ){
     return hscale_ttjj[ sysType ]->GetBinContent( hscale_ttjj[ sysType ]->FindBin( njets_idx, HT ) );
@@ -81,6 +81,8 @@ float HardcodedConditions::GetDeepJetRenorm2DSF_HTnj( float HT, int njets, std::
   if( sampleType == "tt2b" ){
     return hscale_tt2b[ sysType ]->GetBinContent( hscale_tt2b[ sysType ]->FindBin( njets_idx, HT ) );
   }  
+
+
 
 //  if( sampleType == "STs" ){
 //    return hscale_STs[ sysType ]->GetBinContent( hscale_STs[ sysType ]->FindBin( njets_idx, HT ) );
