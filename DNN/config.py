@@ -92,6 +92,7 @@ all_samples = {
     "TTZH": "TTZH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTZZ": "TTZZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
     "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
+    "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
     "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     #"TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
@@ -116,56 +117,42 @@ all_samples = {
     "QCDht2000": "QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
   
     "Ts": "ST_s-channel_4f_leptonDecays_13TeV_amcatnlo-pythia_hadd.root",
-    "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
-    "Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
-    "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
-    "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
+    "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8_hadd.root",
+    #"Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
+    "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
+    "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
 
     "WJetsMG200": "WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
     "WJetsMG400": "WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
     "WJetsMG600": "WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
     "WJetsMG800": "WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJetsMG12001": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_1_hadd.root",
-    "WJetsMG12002": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_2_hadd.root",
-    "WJetsMG12003": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_3_hadd.root",
-    "WJetsMG25001": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_1_hadd.root",
-    "WJetsMG25002": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_2_hadd.root",
-    "WJetsMG25003": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_3_hadd.root",
-    "WJetsMG25004": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_4_hadd.root",
+    "WJetsMG1200": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
+    "WJetsMG2500": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
   
     "WW": "WW_TuneCP5_13TeV-pythia8_hadd.root",
     "WZ": "WZ_TuneCP5_13TeV-pythia8_hadd.root",
     "ZZ": "ZZ_TuneCP5_13TeV-pythia8_hadd.root"
   },
-}  
+}
 
-for jj in [ "TT1b", "TT2b", "TTbb", "TTcc", "TTjj" ]:
-  for shift in [ "", "UEdn", "UEup", "HDAMPdn", "HDAMPup" ]:
-    if shift == "":
-      # 2017 nominal ttbar samples
-      all_samples[ "2017" ][ "TTJets2L2nu{}{}".format( shift, jj ) ] = "TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2017" ][ "TTJetsHad{}{}".format( shift, jj ) ] = "TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2017" ][ "TTJetsSemiLepNjet9bin{}{}".format( shift, jj ) ] = "TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2017" ][ "TTJetsSemiLepNjet9{}{}".format( shift, jj ) ] = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT500Njet9_{}_hadd.root".format( jj.lower() )
-      # 2018 nominal ttbar samples
-      all_samples[ "2018" ][ "TTJets2L2nu{}{}".format( shift, jj ) ] = "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2018" ][ "TTJetsHad{}{}".format( shift, jj ) ] = "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2018" ][ "TTJetsSemiLepNjet9bin{}{}".format( shift, jj ) ] = "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_{}_hadd.root".format( jj.lower() )
-      all_samples[ "2018" ][ "TTJetsSemiLepNjet9{}{}".format( shift, jj ) ] = "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_{}_hadd.root".format( jj.lower() )
-      if jj == "TTjj":
-        for n in [ "1", "2", "3", "4", "5" ]:
-          all_samples[ "2017" ][ "TTJetsSemiLepNjet0{}{}{}".format( shift, jj, n ) ] = "TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_HT0Njet0_{}_{}_hadd.root".format( jj, n )
-        for n in [ "1", "2" ]:
-          all_samples[ "2018" ][ "TTJetsSemiLepNjet0{}{}{}".format( shift, jj, n ) ] = "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_{}_{}_hadd.root".format( jj, n )
-    elif "UE" in shift:
-      all_samples[ "2017" ][ "TTJets2L2nu{}{}".format( shift, jj ) ] = "TTTo2L2Nu_TuneCP5{}_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-      all_samples[ "2017" ][ "TTJetsHad{}{}".format( shift, jj ) ] =  "TTToHadronic_TuneCP5{}_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-      all_samples[ "2017" ][ "TTJetsSemiLep{}{}".format( shift, jj ) ] = "TTToSemiLeptonic_TuneCP5{}_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-    elif "HDAMP" in shift:
-      all_samples[ "2017" ][ "TTJets2L2nu{}{}".format( shift, jj ) ] = "TTTo2L2Nu_{}_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-      all_samples[ "2017" ][ "TTJetsHad{}{}".format( shift, jj ) ] = "TTToHadronic_{}_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-      all_samples[ "2017" ][ "TTJetsSemiLep{}{}".format( shift, jj ) ] = "TTToSemiLeptonic_{}_TuneCP5_PSweights_13TeV-powheg-pythia8_{}_hadd.root".format( shift_keys[ shift ], jj.lower() )
-  
+shift_key = {
+  "TuneCP5": "",
+  "TuneCP5up": "UEUP",
+  "TuneCP5down": "UEDN",
+  "hdampUP_TuneCP5": "HDUP",
+  "hdampDOWN_TuneCP5": "HDDN"
+}
+
+for year in years:
+  for tt in [ "SemiLeptonic", "SemiLepton", "2L2Nu", "Hadronic" ]:
+    for jj in [ "tt1b", "tt2b", "ttbb", "ttcc", "ttjj" ]:
+      for shift in shift_key:
+        if tt == "SemiLeptonic" and shift == "TuneCP5":
+          for n in ["1","2","3","4"]:
+            all_samples[ year ][ "TTTo{}_{}_{}_{}".format( tt, jj, shift_key[ shift ], n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_{}_{}_hadd.root".format( tt, shift, jj, n )
+        else:
+          all_samples[ year ][ "TTTo{}_{}_{}".format( tt, jj, shift_key[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_{}_hadd.root".format( tt, shift, jj ) 
+      
 varList["DNN"] = [
   ("AK4HTpMETpLepPt", "S_{T} [GeV]" , 0, 4000, 101),
   ("minMleppBjet", "min[M(l,b)] [GeV]", 0, 1000, 101),
@@ -214,10 +201,10 @@ varList["DNN"] = [
   ("ratio_HTdHT4leadjets", "HT/HT(4 leading jets)", 0, 2.6, 51),
   ("csvJet3", "DeepCSV(3rdPtJet)", -2.2, 1.2, 101),
   ("csvJet4", "DeepCSV(4thPtJet)", -2.2, 1.2, 101),
-  ("firstcsvb_bb", "DeepCSV(1stDeepCSVJet)", -2, 1.5, 51),
-  ("secondcsvb_bb", "DeepCSV(2ndDeepCSVJet)", -2, 1.5, 51),
-  ("thirdcsvb_bb", "DeepCSV(3rdDeepCSVJet)", -2, 1.5, 51),
-  ("fourthcsvb_bb", "DeepCSV(4thDeepCSVJet)", -2, 1.5, 51),
+  ("firstcsvb_bb", "DeepJet(1st)", -2, 1.5, 51),
+  ("secondcsvb_bb", "DeepJet(2nd)", -2, 1.5, 51),
+  ("thirdcsvb_bb", "DeepJet(3rd)", -2, 1.5, 51),
+  ("fourthcsvb_bb", "DeepJet(4th)", -2, 1.5, 51),
   ("NJets_JetSubCalc", "AK4 jet multiplicity", 0, 15, 16),
   ("HT_2m", "HTwoTwoPtBjets [GeV]", -20, 5000, 201),
   ("Sphericity", "Sphericity", 0, 1.0, 51),
@@ -230,7 +217,7 @@ varList["DNN"] = [
   ("NresolvedTops1pFake", "resolved t-tagged jet multiplicity", 0, 5, 6),
   ("NJetsTtagged", "t-tagged jet multiplicity", 0, 4, 5),
   ("NJetsWtagged", "W-tagged multiplicity", 0, 5, 6),
-  ("NJetsCSV_MultiLepCalc", "b-tagged jet multiplicity", 0, 10, 11),
+  ("NJetsCSV_JetSubcCalc", "b-tagged jet multiplicity", 0, 10, 11),
   ("HOTGoodTrijet1_mass", "HOTGoodTrijet1_mass [GeV]", 0, 300, 51),               # Trijet variables
   ("HOTGoodTrijet1_dijetmass", "HOTGoodTrijet1_dijetmass [GeV]", 0, 250, 51),
   ("HOTGoodTrijet1_pTratio", "HOTGoodTrijet1_pTratio" , 0, 1, 51),
@@ -246,12 +233,7 @@ varList["DNN"] = [
 ]
 
 varList["Step3"] = varList["DNN"][:] 
-varList["Step3"].append( tuple( ( "DNN_4j_40vars", "ttt discriminator (4j, 40vars)", 0, 1, 101) ) )
-varList["Step3"].append( tuple( ( "DNN_4j_50vars", "ttt discriminator (4j, 50vars)", 0, 1, 101) ) )
-varList["Step3"].append( tuple( ( "DNN_4j_76vars", "ttt discriminator (4j, 76vars)", 0, 1, 101) ) )
-varList["Step3"].append( tuple( ( "DNN_6j_40vars", "ttt discriminator (6j, 40vars)", 0, 1, 101) ) )
-varList["Step3"].append( tuple( ( "DNN_6j_50vars", "ttt discriminator (6j, 50vars)", 0, 1, 101) ) )
-varList["Step3"].append( tuple( ( "DNN_6j_76vars", "ttt discriminator (6j, 76vars)", 0, 1, 101) ) )
+varList["Step3"].append( tuple( ( "DNN_3t", "ttt discriminator", 0, 1, 101) ) )
 
 # weight event count
 
