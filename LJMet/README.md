@@ -67,7 +67,8 @@ Continue setting up HOT tagger (part 2):
     
 To run LJMET interactively:
 
-    cmsRun LJMet/runFWLJMet_singleLep.py era=2017
+    cd LJMet
+    cmsRun runFWLJMetUL17_cfg.py
     
 To run LJMET through CRAB3:
 
@@ -75,12 +76,13 @@ To run LJMET through CRAB3:
     source /cvmfs/cms.cern.ch/cmsset_default.csh
     cmsenv
     
-Test the config using a dryrun before mass submission:
+Test the config using the `-t` option before mass submission:
 
-    crab submit --dryrun crab_FWLJMET_cfg.py
+    python create_config_template.py -y 17 -p test -t
+    python submit_crab_jobs.py -c crab_configs/test/UL17/
     
 For mass submission:
     
-    python create_config_template.py --year 17 [--postfix] [--test] [--systematics]
-    python submit_crab_jobs.py --configDir crab_configs/test/UL17/ --year 17 --group TEST  
+    python create_config_template.py --year 17 -p [TAG] [--systematics]
+    python submit_crab_jobs.py --configDir crab_configs/[TAG]/UL17/ --year 17 --group TEST [SIGNAL/DATA/TTBAR/TOP/EWK/EWKHT/QCDHT]
     
