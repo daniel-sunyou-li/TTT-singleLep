@@ -11,6 +11,7 @@ start_time = time.time()
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", default = "17", help = "Year options: [16,17,18]" )
 parser.add_argument( "-t", "--test", action = "store_true" )
+parser.add_argument( "-d", "--dnn", action = "store_true" )
 parser.add_argument( "-s", "--systematics", action = "store_true" )
 parser.add_argument( "-l", "--location", default = "LPC", help = "Options: LPC, BRUX" )
 args = parser.parse_args()
@@ -61,8 +62,13 @@ for shift in shifts:
   for rootFile in step1Files[ shift ]:
     if args.test: 
       if "TTTW" not in rootFile: continue
+    if args.dnn:
+      if "TTTW" not in rootFile and "TTTJ" not in rootFile and "TTTT" not in rootFile and "TTTo" not in rootFile: continue
+      if "up" in rootFile.lower() or "down" in rootFile.lower(): continue
     if not rootFile.endswith( ".root" ): continue
-    if rootFile in step2Files[ shift ]: continue # skip finished step2 files
+    if rootFile in step2Files[ shift ]: 
+      print( "[WARN] {} step2 completed, skipping...".format( rootFile ) )
+      continue # skip finished step2 files
     
     jobParams = {
       "RUNDIR": runDir, 

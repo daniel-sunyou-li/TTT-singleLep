@@ -6,21 +6,21 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing( "analysis" )
 options.register( "isTest", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
 options.register( "systematics", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Include systematics" )
-options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
+options.register( "isMC", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
 options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
 options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
 options.register( "era", "2017", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
 
 ## SET DEFAULT VALUES
-options.maxEvents = -1
+options.maxEvents = -1 if not options.isTest else 5
 options.inputFiles = [
-"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAOD/TTTW_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v3/270000/056C0DD9-6A0B-E14F-B424-9C6DE439A711.root"
+"root://cmsxrootd.fnal.gov//store/data/Run2017B/SingleElectron/MINIAOD/UL2017_MiniAODv2-v1/270000/00E7B0AA-E2D6-7245-9407-D6661A8BB74B.root"
 ]
 options.parseArguments()
 
 systematics = options.systematics
 isTest = options.isTest
-maxEvents = options.maxEvents if not isTest else 10
+maxEvents = options.maxEvents
 isMC = options.isMC
 isTTbar = options.isTTbar
 doGenHT = options.doGenHT
@@ -400,7 +400,7 @@ hlt_path_hadronic = cms.vstring( "" )
 #Selector/Calc config
 print( ">> Setting up MultiLepSelector configuration..." )
 MultiLepSelector_cfg = cms.PSet(
-  debug  = cms.bool(False),
+  debug  = cms.bool(True),
   isMc  = cms.bool(isMC),
 
   # Trigger cuts
@@ -527,7 +527,7 @@ MultiLepSelector_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -617,7 +617,7 @@ MultiLepCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
@@ -668,7 +668,7 @@ JetSubCalc_cfg = cms.PSet(
   btagOP                   = cms.string('MEDIUM'),
   bdisc_min                = cms.double(0.3040), # THIS HAS TO MATCH btagOP !
   applyBtagSF              = cms.bool(True), #This is implemented by BTagSFUtil.cc
-  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF_WPonly.csv'),
+  DeepJetfile              = cms.FileInPath('TTT-singleLep/LJMet/data/DeepJet_106XUL17SF.csv'),
   DeepCSVSubjetfile        = cms.FileInPath('TTT-singleLep/LJMet/data/subjet_DeepCSV_106X_UL17_SF.csv'),
   BTagUncertUp             = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.
   BTagUncertDown           = cms.bool(False), # no longer needed, but can still be utilized. Keep false as default.

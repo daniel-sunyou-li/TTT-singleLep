@@ -52,6 +52,8 @@ void JetMETCorrHelper::Initialize(const edm::ParameterSet& iConfig){
     mJetParStr["DataL3JetParAK8"] = iConfig.getParameter<edm::FileInPath>("DataL3JetParAK8").fullPath();
     mJetParStr["DataResJetParAK8"] = iConfig.getParameter<edm::FileInPath>("DataResJetParAK8").fullPath();
 
+    std::cout << "Read SF ok" << std::endl;
+
     if ( isMc ) jecUnc = std::shared_ptr<JetCorrectionUncertainty>( new JetCorrectionUncertainty(JEC_txtfile) );
 
     resolution = JME::JetResolution(JER_txtfile);
@@ -140,6 +142,8 @@ void JetMETCorrHelper::Initialize(const edm::ParameterSet& iConfig){
           mEra_mStrJetCorPar[era]["L3JetParAK8"]  = std::shared_ptr<JetCorrectorParameters>( new JetCorrectorParameters(mEraJetParStr[era]["DataL3JetParAK8ByIOV"]) );
           mEra_mStrJetCorPar[era]["L2JetParAK8"]  = std::shared_ptr<JetCorrectorParameters>( new JetCorrectorParameters(mEraJetParStr[era]["DataL2JetParAK8ByIOV"]) );
           mEra_mStrJetCorPar[era]["L1JetParAK8"]  = std::shared_ptr<JetCorrectorParameters>( new JetCorrectorParameters(mEraJetParStr[era]["DataL1JetParAK8ByIOV"]) );
+       
+          if(debug) std::cout << mLegend << "JetCorrectorParameters Pointers set" << std::endl;
 
           // Load the JetCorrectorParameter objects into a std::vector,
           // IMPORTANT: THE ORDER MATTERS HERE !!!!
@@ -152,8 +156,12 @@ void JetMETCorrHelper::Initialize(const edm::ParameterSet& iConfig){
           mEraVParAK8[era].push_back(*mEra_mStrJetCorPar[era]["L3JetParAK8"]);
           mEraVParAK8[era].push_back(*mEra_mStrJetCorPar[era]["ResJetParAK8"]);
 
+          if(debug) std::cout << mLegend << "Loaded JetCorrectorParameter objects into std::vector" << std::endl;
+
           mEraFacJetCorr[era] = std::shared_ptr<FactorizedJetCorrector>( new FactorizedJetCorrector(mEraVPar[era]) );
 	  mEraFacJetCorrAK8[era] = std::shared_ptr<FactorizedJetCorrector> (new FactorizedJetCorrector(mEraVParAK8[era]) );
+
+          if(debug) std::cout << mLegend << "Factorized Jet Corrector pointer set" << std::endl;
 
       }
 

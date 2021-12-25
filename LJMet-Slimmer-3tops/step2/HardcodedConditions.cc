@@ -15,7 +15,7 @@ HardcodedConditions::HardcodedConditions( Int_t year ) {
     sfFileName = "HT_njets_SF_3t_UL18_sys.root"; 
   }
   else if( year == 2016 ){
-    sfFileName = "renorm/HT_njets_SF_3t_UL16_sys.root"; 
+    sfFileName = "HT_njets_SF_3t_UL16_sys.root"; 
   }
 
   cout << ">> Reading scale factor file: " << sfFileName << endl;
@@ -27,7 +27,7 @@ HardcodedConditions::HardcodedConditions( Int_t year ) {
   std::string SYSs[19] = { "", "_HFup", "_HFdn", "_LFup", "_LFdn", "_jesup", "_jesdn", "_hfstats1up", "_hfstats1dn", "_hfstats2up", "_hfstats2dn", "_cferr1up", "_cferr1dn", "_cferr2up", "_cferr2dn", "_lfstats1up", "_lfstats1dn", "_lfstats2up", "_lfstats2dn" };  
   for( size_t i = 0; i < 19; i++ ){
     hscale_tttw[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTW"+SYSs[i]).c_str())->Clone();
-    hscale_tttj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTJ"+SYSs[i]).c_str())->Clone();   // hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_tttt"+SYSs[i]).c_str())->Clone();
+    hscale_tttj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTJ"+SYSs[i]).c_str())->Clone();  
     hscale_tttt[SYSs[i]]   =(TH2F*)tfile_HTNJ_SF->Get(("hscale_TTTT"+SYSs[i]).c_str())->Clone();
     hscale_ttjj[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttjj"+SYSs[i]).c_str())->Clone();
     hscale_ttbb[SYSs[i]]    = (TH2F*)tfile_HTNJ_SF->Get(("hscale_ttbb"+SYSs[i]).c_str())->Clone();

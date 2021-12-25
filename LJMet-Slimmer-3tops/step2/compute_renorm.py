@@ -5,11 +5,12 @@ import array
 import config
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--file", default="", help = "The path to the analysis tree")
-parser.add_argument("-l", "--label", default="", help = "The name of the output file")
+parser.add_argument( "-f", "--file", default="", help = "The path to the analysis tree")
+parser.add_argument( "-l", "--label", default="", help = "The name of the output file")
+parser.add_argument( "-y", "--year", default = "17" )
 args = parser.parse_args()
 
-from ROOT import TFile, TTree
+from ROOT import TFile, TTree, TH2F
 
 if not os.path.exists( "renorm" ): os.system( "mkdir -v renorm" )
 
@@ -21,7 +22,7 @@ limits = {
   "HT": [40,150,4000]
 }
 
-fout = ROOT.TFile( "Weights_{}_extended_HT_cuts_sys.root".format( args.label ), "RECREATE" )
+fout = TFile( "Weights_{}_extended_HT_cuts_sys.root".format( args.label ), "RECREATE" )
 
 systematics = []
 for shift in [ "up", "dn" ]:
@@ -29,14 +30,14 @@ for shift in [ "up", "dn" ]:
     systematics.append( systematic + shift )
 h2D = { "origin": {}, "weight": {}, "scale": {} }
 
-h2D[ "origin" ][ "nominal" ] = ROOT.TH2F( "h2D_origin", "h2D_origin", limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
+h2D[ "origin" ][ "nominal" ] = TH2F( "h2D_origin", "h2D_origin", limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
 h2D[ "origin" ][ "nominal" ].Sumw2()
-h2D[ "weight" ][ "nominal" ] = ROOT.TH2F( "h2D_weight", "h2D_weight", limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
+h2D[ "weight" ][ "nominal" ] = TH2F( "h2D_weight", "h2D_weight", limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
 h2D[ "weight" ][ "nominal" ].Sumw2()
 
 # the nominal h2d[ "origin" ] gets cloned for the systematics scales
 for systematic in systematics:
-  h2D[ "weight" ][ systematic ] = ROOT.TH2F( "h2D_weight_{}".format( systematic ), "h2D_{}".format( systematic ), limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
+  h2D[ "weight" ][ systematic ] = TH2F( "h2D_weight_{}".format( systematic ), "h2D_{}".format( systematic ), limits["NJ"][0], limits["NJ"][1], limits["NJ"][2], limits["HT"][0], limits["HT"][1], limits["HT"][2] )
   h2D[ "weight" ][ systematic ].Sumw2()
 
 ttree = tfile.Get( "ljmet" )

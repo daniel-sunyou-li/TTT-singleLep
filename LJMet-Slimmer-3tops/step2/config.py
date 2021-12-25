@@ -149,13 +149,4 @@ nrun = {
 xsecEff = { year: {} for year in years }
 for year in years:
   for sample in nrun[ year ]:
-    xsecEff[ year ][ sample ] = lumi[ year ] * xsec[ sample ] / nrun[ year ][ sample ]
-  
-  
-  
-  
-  
-  
-  
-  
-  
+    xsecEff[ year ][ sample ] = lumi[ year ] * xsec[ sample ] / nrun[ year ][ sample ] 

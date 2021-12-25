@@ -7,13 +7,9 @@ MINIAODv2v2 = "RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM
 
 groups = {
   "TEST": {
-    "TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
-    #"QCDHT200to300": "/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"QCDHT300to500": "/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"QCDHT1000to1500": "/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"QCDHT2000toInf": "/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/" + MINIAODv2v1,
-    #"WJetsHT800To1200": "/WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1,
-    #"WJetsHT2500ToInf": "/WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1
+    #"TTTW": "/TTTW_TuneCP5_13TeV-madgraph-pythia8/" + MINIAODv2v2
+    "WJetsHT800To1200": "/WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1,
+    "WJetsHT2500ToInf": "/WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/" + MINIAODv2v1
   },
   "DATA": {
     "SingleElectronRun2017B": "/SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD",
@@ -85,9 +81,3 @@ for tt in [ "SemiLeptonic", "Hadronic", "2L2Nu" ]:
   for shift in shift_key:
     groups[ "TTBAR" ][ "TTTo" + tt + shift_key[ shift ] ] = "/TTTo{}_{}_13TeV-powheg-pythia8/{}".format( tt, shift, MINIAODv2v1 )
     
-# not sure where trigdictmc is referenced or how it is used 
-#trigdictmc = {
-#  "TTTo2L2Nu": "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/" + MINIAODv2v1
-#}
-    
-# still need to add the TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9 samples --> probably need to request
