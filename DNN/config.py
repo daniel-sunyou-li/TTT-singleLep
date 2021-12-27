@@ -12,10 +12,10 @@ postfix = "deepJetV1"
 years = [ "17" ]
 
 step2Sample = {
-  year: "FWLJMET106XUL_1lep20{}_Oct2019_3t_{}_step2".format( year, postfix ) for year in years
+  year: "FWLJMET106XUL_1lep20{}_3t_{}_step2".format( year, postfix ) for year in years
 }
 
-step3Sample = { year: "FWLJMET106XUL_1lep20{}_Oct2019_3t_{}_step3".format( str( year ), postfix ) for year in years }
+step3Sample = { year: step2Sample[ year ].replace( "step2", "step3" ) for year in years }
 
 step2DirBRUX = { year: "/isilon/hadoop/store/user/dali/{}/".format( step2Sample[ year ] ) for year in years }
 
