@@ -26,10 +26,10 @@ import config
 CUT_VARIABLES = ["leptonPt_MultiLepCalc", "isElectron", "isMuon",
                  "corr_met_MultiLepCalc", "MT_lepMet", "minDR_lepJet",
                  "DataPastTriggerX", "MCPastTriggerX", "isTraining", "AK4HT",
-                 "NJetsCSV_MultiLepCalc", "NJets_JetSubCalc" ]
+                 "NJetsCSV_JetSubCalc", "NJets_JetSubCalc" ]
 
 base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
-            "( %(isTraining)s == 1 or %(isTraining)s == 2 )"
+            "( %(isTraining)s == 1 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
 VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ) ) ) )
@@ -55,7 +55,7 @@ class MLTrainingInstance(object):
     self.cut = base_cut + \
                " and ( (%(leptonPt_MultiLepCalc)s > {} and %(isElectron)s == 1 )".format( lepPt ) + \
                " or (%(leptonPt_MultiLepCalc)s > {} and %(isMuon)s == 1 ) )".format( lepPt ) + \
-               " and ( %(NJetsCSV_MultiLepCalc)s >= {} ) ".format( nbjets ) + \
+               " and ( %(NJetsCSV_JetSubCalc)s >= {} ) ".format( nbjets ) + \
                " and ( %(NJets_JetSubCalc)s >= {} )".format( njets) + \
                " and ( %(AK4HT)s >= {} )".format( ak4ht ) + \
                " and ( %(corr_met_MultiLepCalc)s > {} )".format( met ) + \
@@ -136,8 +136,8 @@ class MLTrainingInstance(object):
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
       n_s += df.Count().GetValue()
-      df_1 = df.Filter( "isTraining == 1 || isTraining == 2" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
-      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_MultiLepCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
+      df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
+      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCS_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       sig_dict = df_3.AsNumpy( columns = VARIABLES )
       sig_list = []
