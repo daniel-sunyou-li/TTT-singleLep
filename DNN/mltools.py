@@ -138,14 +138,16 @@ class MLTrainingInstance(object):
       
       with open( path, "wb" ) as f: pickle_dump( event_partition, f )
 
-  def apply_cut( self ):
-    all_signals = {}
-    n_s, c_s = 0, 0
+  def apply_cut( self ): # applies cuts to events as well as computing the event weight from the cut events to set relative proportion of events
     ROOT.gInterpreter.Declare("""
     float compute_weight( float triggerXSF, float pileupWeight, float lepIdSF, float isoSF, float L1NonPrefiringProb_CommonCalc, float MCWeight_MultiLepCalc, float xsecEff, float tthfWeight, float btagDeepJetWeight, float btagDeepJet2DWeight_HTnj ){
       return triggerXSF * pileupWeight * lepIdSF * isoSF * L1NonPrefiringProb_CommonCalc * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) ) * xsecEff * tthfWeight * btagDeepJetWeight * btagDeepJet2DWeight_HTnj;
     }
     """)
+    weights = {}
+    factors = {}
+    all_signals = {}
+    n_s, c_s, w_s = 0, 0, 0
     for path in self.signal_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
@@ -154,18 +156,21 @@ class MLTrainingInstance(object):
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       sig_dict = df_3.AsNumpy( columns = VARIABLES )
-      
+      df_weight = df_3.Define( "weight", "compute_weight( triggerXSF, pileupWeight, lepIdSF, isoSF, L1NonPrefiringProb_CommonCalc, MCWeight_MultiLepCalc, xsecEff, tthfWeight, btagDeepJetWeight, btagDeepJet2DWeight_HTnj )" )
+      weights[ path ] = df_weight.Sum( "weight" ).GetValue()
+      factors[ path ] = weights[ path ] / df_weight.Count().GetValue()
       sig_list = []
       for x, y in sig_dict.items(): sig_list.append(y)
       if path in all_signals:
         all_signals[path] = np.concatenate( ( all_signals[path], np.array( sig_list ).transpose() ) )
       else:
         all_signals[path] = np.array( sig_list ).transpose()
-      print( "     - {}/{} events passed".format( df_3.Count().GetValue(), df.Count().GetValue() ) )
+      print( "     - {}/{} events passed, event weight = {:.0f}".format( df_3.Count().GetValue(), df.Count().GetValue(), weights[path] ) )
       c_s += df_3.Count().GetValue()
-
+      w_s += weights[ path ]
+      
     all_backgrounds = {}
-    n_b, c_b = 0, 0
+    n_b, c_b, w_b = 0, 0, 0
     for path in self.background_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
@@ -173,6 +178,9 @@ class MLTrainingInstance(object):
       df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
+      df_weight = df_3.Define( "weight", "compute_weight( triggerXSF, pileupWeight, lepIdSF, isoSF, L1NonPrefiringProb_CommonCalc, MCWeight_MultiLepCalc, xsecEff, tthfWeight, btagDeepJetWeight, btagDeepJet2DWeight_HTnj )" )
+      weights[ path ] = df_weight.Sum( "weight" ).GetValue()
+      factors[ path ] = weights[ path ] / df_weight.Count().GetValue()
       bkg_dict = df_3.AsNumpy( columns = VARIABLES )
       bkg_list = []
       for x, y in bkg_dict.items(): bkg_list.append(y)
@@ -180,8 +188,9 @@ class MLTrainingInstance(object):
         all_backgrounds[path] = np.concatenate( ( all_backgrounds[path], np.array( bkg_list ).tranpose() ) )
       else:
         all_backgrounds[path] = np.array( bkg_list ).transpose()
-      print( "     - {}/{} events passed".format( df_3.Count().GetValue(), df.Count().GetValue() ) )
+      print( "     - {}/{} events passed, event weight = {:0.f}".format( df_3.Count().GetValue(), df.Count().GetValue(), weights[ path ] ) )
       c_b += df_3.Count().GetValue()
+      w_b += weights[ path ]
 
     self.cut_events = {
       "condition": self.cut,
@@ -197,8 +206,6 @@ class MLTrainingInstance(object):
     for path, events in all_backgrounds.iteritems():
       self.cut_events[ "background" ][ path ] = []
       for event in events: self.cut_events[ "background" ][ path ].append( np.append( event, 0 ) )
-
-    
         
     bkg_frac = self.ratio * float( c_s ) / float( c_b )
     r_b = 0
@@ -209,14 +216,16 @@ class MLTrainingInstance(object):
       print( ">> Using all background samples for training..." )
       bkg_frac = 1.
     for path in self.cut_events[ "background" ]:
-      bkg_excl = np.around( ( 1. - bkg_frac ) * len( self.cut_events[ "background" ][ path ] ), 0 )
-      bkg_incl = len( self.cut_events[ "background" ][ path ] ) - bkg_excl
+      nEvents_bkg = weights[ path ] if factors[ path ] <= 1 else len( self.cut_events[ "background" ][ path ] )
+      bkg_excl = np.around( ( 1. - bkg_frac ) * nEvents_bkg, 0 )
+      bkg_incl = int( nEvents_bkg - bkg_excl )
       mask = np.concatenate( ( np.full( int( bkg_incl ), 1 ), np.full( int( bkg_excl ), 0 ) ) )
       np.random.shuffle( mask )
       self.cut_events[ "background" ][ path ] = np.array( self.cut_events[ "background" ][ path ] )[ mask.astype(bool) ]
-      r_b += len( self.cut_events[ "background" ][ path ] )
+      r_b += nEvents_bkg
 
-    print( ">> Signal: {}/{}, Background: {}/{}".format( c_s, n_s, c_b, n_b ) )
+    print( ">> Signal: {}/{}, Weighted: {}".format( c_s, n_s, w_s ) )
+    print( ">> Background: {}/{}, Weighted: {:.0f}".format( c_b, n_b, w_b ) )
     if bkg_frac > 0 and bkg_frac < 1:
       print( ">> Reducing background to be x{} of signal size: {} events".format( self.ratio, r_b ) ) 
 
