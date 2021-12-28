@@ -23,16 +23,25 @@ from sklearn.utils import shuffle as shuffle_data
 import config
 
 # The parameters to apply to the cut.
-CUT_VARIABLES = ["leptonPt_MultiLepCalc", "isElectron", "isMuon",
-                 "corr_met_MultiLepCalc", "MT_lepMet", "minDR_lepJet",
-                 "DataPastTriggerX", "MCPastTriggerX", "isTraining", "AK4HT",
-                 "NJetsCSV_JetSubCalc", "NJets_JetSubCalc" ]
+CUT_VARIABLES = [
+  "leptonPt_MultiLepCalc", "isElectron", "isMuon",
+  "corr_met_MultiLepCalc", "MT_lepMet", "minDR_lepJet",
+  "DataPastTriggerX", "MCPastTriggerX", "isTraining", 
+  "AK4HT", "NJetsCSV_JetSubCalc", "NJets_JetSubCalc" 
+]
+
+WEIGHT_VARIABLES = [
+  "triggerXSF", "pileupWeight", "lepIdSF", 
+  "EGammaGsfSF", "isoSF", "L1NonPrefiringProb_CommonCalc",
+  "MCWeight_MultiLepCalc", "xsecEff", "tthfWeight",
+  "btagDeepJetWeight", "btagDeepJet2DWeight_HTnj"
+]
 
 base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
             "( %(isTraining)s == 1 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
-VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ) ) ) )
+VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ).union( set( CUT_VARIABLES ) ) ) ) )
 CUT_VARIABLES = [ ( v, VARIABLES.index(v) ) for v in CUT_VARIABLES ]
 
 SAVE_FPR_TPR_POINTS = 20
@@ -132,14 +141,20 @@ class MLTrainingInstance(object):
   def apply_cut( self ):
     all_signals = {}
     n_s, c_s = 0, 0
+    ROOT.gInterpreter.Declare("""
+    float compute_weight( float triggerXSF, float pileupWeight, float lepIdSF, float isoSF, float L1NonPrefiringProb_CommonCalc, float MCWeight_MultiLepCalc, float xsecEff, float tthfWeight, float btagDeepJetWeight, float btagDeepJet2DWeight_HTnj ){
+      return triggerXSF * pileupWeight * lepIdSF * isoSF * L1NonPrefiringProb_CommonCalc * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) ) * xsecEff * tthfWeight * btagDeepJetWeight * btagDeepJet2DWeight_HTnj;
+    }
+    """)
     for path in self.signal_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
       n_s += df.Count().GetValue()
       df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
-      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCS_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
+      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       sig_dict = df_3.AsNumpy( columns = VARIABLES )
+      
       sig_list = []
       for x, y in sig_dict.items(): sig_list.append(y)
       if path in all_signals:
@@ -155,8 +170,8 @@ class MLTrainingInstance(object):
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
       n_b += df.Count().GetValue()
-      df_1 = df.Filter( "isTraining == 1 || isTraining == 2" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
-      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_MultiLepCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
+      df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
+      df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       bkg_dict = df_3.AsNumpy( columns = VARIABLES )
       bkg_list = []
@@ -183,6 +198,8 @@ class MLTrainingInstance(object):
       self.cut_events[ "background" ][ path ] = []
       for event in events: self.cut_events[ "background" ][ path ].append( np.append( event, 0 ) )
 
+    
+        
     bkg_frac = self.ratio * float( c_s ) / float( c_b )
     r_b = 0
     if bkg_frac > 1: 
