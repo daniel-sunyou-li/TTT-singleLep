@@ -171,6 +171,7 @@ class MLTrainingInstance(object):
       
     all_backgrounds = {}
     n_b, c_b, w_b = 0, 0, 0
+    min_factor = 1e10
     for path in self.background_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
@@ -181,6 +182,7 @@ class MLTrainingInstance(object):
       df_weight = df_3.Define( "weight", "compute_weight( triggerXSF, pileupWeight, lepIdSF, isoSF, L1NonPrefiringProb_CommonCalc, MCWeight_MultiLepCalc, xsecEff, tthfWeight, btagDeepJetWeight, btagDeepJet2DWeight_HTnj )" )
       weights[ path ] = df_weight.Sum( "weight" ).GetValue()
       factors[ path ] = weights[ path ] / df_weight.Count().GetValue()
+      if factors[ path ] < min_factor: min_factor = factors[ path ]
       bkg_dict = df_3.AsNumpy( columns = VARIABLES )
       bkg_list = []
       for x, y in bkg_dict.items(): bkg_list.append(y)
@@ -216,7 +218,7 @@ class MLTrainingInstance(object):
       print( ">> Using all background samples for training..." )
       bkg_frac = 1.
     for path in self.cut_events[ "background" ]:
-      nEvents_bkg = weights[ path ] if factors[ path ] <= 1 else len( self.cut_events[ "background" ][ path ] )
+      nEvents_bkg = weights[ path ] * min_factor if ( weights[ path ] * min_factor <= len( self.cut_events[ "background" ][ path ] ) else len( self.cut_events[ "background" ][ path ] )
       bkg_excl = np.around( ( 1. - bkg_frac ) * nEvents_bkg, 0 )
       bkg_incl = int( nEvents_bkg - bkg_excl )
       mask = np.concatenate( ( np.full( int( bkg_incl ), 1 ), np.full( int( bkg_excl ), 0 ) ) )
