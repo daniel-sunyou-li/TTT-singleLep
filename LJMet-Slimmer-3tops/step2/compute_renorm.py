@@ -18,7 +18,7 @@ haddPath = "root://cmsxrootd.fnal.gov//store/user/{}/FWLJMET106XUL_1lep20{}_3t_{
 
 tfile = TFile.Open( os.path.join( haddPath, args.file ) )
 limits = {
-  "NJ": [5,4,9],
+  "NJ": [5,3,8],
   "HT": [40,150,4000]
 }
 
@@ -42,6 +42,16 @@ for systematic in systematics:
 
 ttree = tfile.Get( "ljmet" )
 
+ttree.SetBranchStatus( "*", 0 )
+ttree.SetBranchStatus( "NJets_JetSubCalc*", 1 )
+ttree.SetBranchStatus( "AK4HT*", 1 )
+ttree.SetBranchStatus( "btagDeepJetWeight*", 1 )
+ttree.SetBranchStatus( "leptonPt_MultiLepCalc*", 1 )
+ttree.SetBranchStatus( "isElectron*", 1 )
+ttree.SetBranchStatus( "isMuon*", 1 )
+ttree.SetBranchStatus( "corr_met_MultiLepCalc*", 1 )
+ttree.SetBranchStatus( "MCPastTrigger*", 1 )
+
 nEvents = ttree.GetEntries()
 checkpoints = np.linspace( 0, nEvents, 11 ).round() 
 nPassed = 0
@@ -49,9 +59,9 @@ nPassed = 0
 for i in range( nEvents ):
   ttree.GetEntry(i)
   if i in checkpoints: print( ">> Finished processing {:.0f}% ({}/{}) events".format( 100.* float( i ) / float ( nEvents ), i, nEvents ) )
-  if not ( ( ttree.leptonPt_MultiLepCalc > 20 and ttree.isElectron) or (ttree.leptonPt_MultiLepCalc > 20 and ttree.isMuon)): continue
-  if not (ttree.corr_met_MultiLepCalc > 30): continue
-  if not (ttree.MCPastTrigger): continue 
+  if not ( ( ttree.leptonPt_MultiLepCalc > 35 and ttree.isElectron ) or ( ttree.leptonPt_MultiLepCalc > 30 and ttree.isMuon ) ): continue
+  if not ( ttree.corr_met_MultiLepCalc > 30 ): continue
+  if not ( ttree.MCPastTrigger ): continue 
   njet = getattr( ttree, "NJets_JetSubCalc" ) 
   HT = getattr( ttree, "AK4HT" )
   if njet > 8: njet = 8
@@ -66,6 +76,7 @@ for i in range( nEvents ):
 
 h2D[ "scale" ][ "nominal" ] = h2D[ "origin" ][ "nominal" ].Clone()
 h2D[ "scale" ][ "nominal" ].SetTitle( "h2D_scale" )
+h2D[ "scale" ][ "nominal" ].Divide( h2D[ "weight" ][ "nominal" ] )
 fout.WriteTObject( h2D[ "origin" ][ "nominal" ], "h2D_origin" )
 fout.WriteTObject( h2D[ "weight" ][ "nominal" ], "h2D_weight" )
 fout.WriteTObject( h2D[ "scale" ][ "nominal" ], "h2D_scale" )
