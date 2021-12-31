@@ -1,5 +1,9 @@
 import numpy as np
 
+years = [ "16", "17", "18" ]
+
+postfix = "deepJetV1"
+step3Dir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_3t_step3/".format( year, postfix ) for year in years }
 
 lumi = { # 1/pb
   "16": 35867., 
