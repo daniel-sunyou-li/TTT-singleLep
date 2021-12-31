@@ -1,240 +1,247 @@
 import os, time
+from argparse import ArgumentParser
 
-cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_2_13/src"
+cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_6_19/src"
 
-step = 5 # steps range from 1 through 6
+parser = ArgumentParser()
+parser.add_argument( "-s", "--step", required = True, help = "Options: 1-6" )
+parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16, 17, 18" )
+parser.add_argument( "-t", "--tags", nargs = "+", required = True )
+parser.add_arugment( "-v", "--variables", nargs = "+", required = True )
+args = parser.parse_args()
+
 postfixes = ["DNN250_C{}".format(num) for num in [18,19]]#[16,17,20,21]]
-#postfixes = ["DNN500_C{}".format(num) for num in [16,17,18,19,20,21]]
-#postfixes = ["DNN500_C21"]
-years = ["17"] 
-variables = [
-  "DNN_4j_1to50"
-]
 
-date = "02182021"
-#date = "10072020"
-
-paths = {
-  "16": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2016_Feb2020_3t_{}_step3/".format(date),
-  "17": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2017_Oct2019_3t_{}_step3/".format(date),
-  "18": "/home/dli50/TTT_1lep/CMSSW_10_2_13/src/FWLJMET102X_1lep2018_Oct2019_3t_{}_step3/".format(date)
-}
 
 # this is used in step = 1, 2, 3, 4
 trainings = []
-
-for postfix in postfixes:
-  for year in years:
-    trainings.append(
-      {
-        "year": "R" + year,
-        "variable": variables,
-        "postfix": postfix,
-        "path": paths[ year ]
-      }
-    )
+for tag in args.tags
+  for year in args.years:
+    trainings.append( {
+      "year": "UL" + year,
+      "variable": args.variables,
+      "tag": args.tag,
+      "path": config.step3Dir[ year ]
+    } )
     
 # this is used in step 5 to combine years
 combinations = []
 
-for postfix in postfixes:
-  for variable in variables:
-    combinations.append(
-      {
-        "variable": variable,
-        "postfix": postfix
-      }
-    )
-    
-if step==1:
-	os.chdir( "makeTemplates" )
-	for training in trainings:
-		for variable in training[ "variable" ]:
-			os.system( "python doCondorTemplates.py {} {} {} {}".format( training["year"], variable, training["postfix"], training['path'] ) )
-			time.sleep( 2 )
-	os.chdir( ".." )
+for tag in args.tags:
+  for variable in args.variables:
+    combinations.append( {
+      "variable": variable,
+      "tag": tags
+    } )
   
-if step==2:
-	os.chdir( "makeTemplates" )
-	for training in trainings:
-		shell_name = "cfg/condor_step2_{}_{}.sh".format( training["year"], training["postfix"] )
-		shell = open( shell_name, "w" )
-		shell.write(
+def produce_templates( trainings ):
+  os.chdir( "makeTemplates" )
+  for training in trainings:
+    for variable in training[ "variable" ]:
+      os.system( "python condor_templates.py -y {} -v {} -p {} -i {} -r {} --categorize".format( 
+        training[ "year" ],
+        variable,
+        training[ "tag" ],
+        training[ "path" ],
+        "SR"
+      ) )
+      time.sleep( 1 )
+  os.chdir( ".." )
+                
+def run_templates( trainings ):
+  os.chdir( "makeTemplates" )
+  if not os.path.exists( "condor_config" ): os.system( "mkdir -vp condor_config" )
+  for training in trainings:
+    step2_name = "condor_step2_UL{}_{}".format( training[ "year" ], training[ "tag" ] )
+    shell_name = "condor_config/{}.sh".format( step2_name )
+    shell = open( shell_name, "w" )
+    shell.write(
 "#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
-cd " + cmsswbase + "\n\
+cd {} \n\
 eval `scramv1 runtime -sh`\n\
-cd " + os.getcwd() + "\n\
-python doTemplates.py " + training["year"] + " " + training["postfix"] + "\n" )
-		shell.close()
-		jdf_name = "cfg/condor_step2_" + training["year"] + "_" + training["postfix"] + ".job"
-		jdf = open( jdf_name, "w" )
-		jdf.write(
-"universe = vanilla\n\
-Executable = " + os.getcwd() + "/" + shell_name + "\n\
+cd {} \n\
+python templates.py -y {} -t {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ] )
+    )
+    shell.close()
+    jdf_name = "condor_config/{}.job".format( step2_name )
+    jdf = open( jdf_name, "w" )
+    jdf.write(
+"universe = vanilla \n\
+Executable = {}/{}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step2_dli50\n\
+JobBatchName = SLA_step2\n\
 request_memory = 5000\n\
-Output = " + os.getcwd() + "/log/" + shell_name.split(".")[0].split("/")[1] + ".out\n\
-Error = " + os.getcwd() + "/log/" + shell_name.split(".")[0].split("/")[1] + ".err\n\
-Log = " + os.getcwd() + "/log/" + shell_name.split(".")[0].split("/")[1] + ".log\n\
+Output = {}/condor_log/{}.out\n\
+Error = {}/condor_log/{}.err\n\
+Log = {}/condor_log/{}.log\n\
 Notification = Error\n\
 Arguments = \n\
-Queue 1\n")
-		jdf.close()
-		os.system( "condor_submit " + jdf_name)
-		print( shell_name )
-		# os.system('source '+shell_name+' & ')
-		time.sleep(2)
+Queue 1\n".format( os.getcwd(), shell_name, os.getcwd(), step2_name, os.getcwd(), step2_name, os.getcwd(), step2_name ) 
+    )
+    jdf.close()
+		os.system( "condor_submit {}".format( jdf_name ) )
+		time.sleep(1)
 	os.chdir("..")
   
-if step==3:
-	os.chdir('makeTemplates')
-	for train in trainings:
-		for v in train['variable']:
-			shell_name = 'cfg/condor_step3_'+train['year']+'_'+train['postfix']+'_'+v+'.sh'
-			shell=open(shell_name,'w')
-			shell.write(
-'#!/bin/bash\n\
+def produce_binned_plots():
+  os.chdir( "makeTemplates" )
+  for train in trainings:
+    for variable in train[ "variable" ]:
+      condor_name = "condor_step3_{}_{}_{}".format( train[ "year" ], train[ "tag" ], variable )
+      shell_name = "condor_config/{}.sh".format( condor_name )
+      shell = open( shell_name, "w" )
+      shell.write(
+"#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
-cd '+cmsswbase+'\n\
+cd {} \n\
 eval `scramv1 runtime -sh`\n\
-cd '+os.getcwd()+'\n\
-python modifyBinning.py '+train['year']+' '+v+' '+train['postfix']+'\n\
-python plotTemplates.py '+train['year']+' '+v+' '+train['postfix']+'\n')
-			shell.close()
-			jdf_name = 'cfg/condor_step3_'+train['year']+'_'+train['postfix']+'_'+v+'.job'
-			jdf=open(jdf_name,'w')
-			jdf.write(
-'universe = vanilla\n\
-Executable = '+os.getcwd()+'/'+shell_name+'\n\
+cd {} \n\
+python modify_binning.py -y {} -v {} -t {} \n\
+python plot_templates.py -y {} -v {} -t {} \n\ ".format( 
+  cmsswbase, os.getcwd(), 
+  train[ "year" ], variable, train[ "tag" ], 
+  train[ "year" ], variable, train[ "tag" ]
+)
+      )
+      shell.close()
+      jdf_name = "crab_config/{}.job".format( condor_name ) 
+      jdf = open( jdf_name, "w" )
+      jdf.write(
+"""universe = vanilla \n\
+Executable = {}/{}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step3_dli50\n\
+JobBatchName = SLA_step3\n\
 request_memory = 3072\n\
-Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
-Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\
-Log = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.log\n\
+Output = {}/condor_log/{}.out\n\
+Error = {}/condor_log/{}.err\n\
+Log = {}/condor_log/{}.log\n\
 Notification = Error\n\
 Arguments = \n\
-Queue 1\n')
+Queue 1""".format(
+  os.getcwd(), shell_name,
+  os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
+)
+      )
 			jdf.close()
-			os.system('condor_submit '+jdf_name)
-			# print(shell_name)
-			# os.system('source '+shell_name+' & ')
-			# time.sleep(2)
-	os.chdir('..')
+			os.system( "condor_submit {}".format( jdf_name ) )
+	os.chdir( ".." )
   
-if step==4:
-	os.chdir('combineLimits')
-	for train in trainings:
-		for v in train['variable']:
-			shell_name = 'cfg/condor_step4_'+train['year']+'_'+train['postfix']+'_'+v+'.sh'
-			shell=open(shell_name,'w')
-			shell.write(
-'#!/bin/bash\n\
+def run_combine():
+  os.chdir( "combine" )
+  for training in trainings:
+    for variable in training[ "variable" ]:
+      condor_name = "condor_step4_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable )
+      shell_name = "condor_config/{}.sh".format( condor_name )
+      shell = open( shell_name, "w" )
+      shell.write(
+"#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
-cd '+cmsswbase+'\n\
+cd {} \n\
 eval `scramv1 runtime -sh`\n\
-cd '+os.getcwd()+'\n\
-python dataCard.py '+train['year']+' '+v+' '+train['postfix']+'\n\
-cd limits_'+train['year']+'_'+train['postfix']+'_'+v+'\n\
-combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 &> sig.txt\n\
-combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 &> asy.txt\n\
-cd ..\n')
-			shell.close()
-			jdf_name = 'cfg/condor_step4_'+train['year']+'_'+train['postfix']+'_'+v+'.job'
-			jdf=open(jdf_name,'w')
-			jdf.write(
-'universe = vanilla\n\
-Executable = '+os.getcwd()+'/'+shell_name+'\n\
-Should_Transfer_Files = YES\n\
-WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step4_dli50\n\
-request_memory = 3072\n\
-Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
-Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\
-Log = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.log\n\
-Notification = Error\n\
+cd {} \n\
+python make_datacard.py -y {} -v {} -t {} \n\
+cd limits_UL{}_{}_{}\n\
+combine -M Significance cmb/workspace.root -t -l --expectSignal=1 --cminDefaultMinimizerStrategry 0 &> significance.txt\n\
+combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0&> limits.txt\n\
+cd ..\n".format(
+  cmsswbase, os.getcwd(),
+  training[ "year" ], variable, training[ "tag" ], 
+  training[ "year" ], training[ "tag" ], variable,
+)
+      )
+      shell.close()
+      jdf_name = "condor_config/{}.job".format( condor_name )
+      jdf = open( jdf_name, "w" )
+      jdf.write(
+"""universe = vanilla \n\
+Executable = {}/{} \n\
+Should_Transfer_Files = YES \n\
+WhenToTransferOutput = ON_EXIT \n\
+JobBatchName = SLA_step4 \n\
+request_memory = 3072 \n\
+Output = {}/conodr_log/{}.out \n\
+Error = {}/condor_log/{}.err \n\
+Log = {}/condor_log/{}.log \n\
+Notification = Error \n\
 Arguments = \n\
-Queue 1\n')
+Queue 1""".format(
+  os.getcwd(), shell_name,
+  os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
+)
+      )
 			jdf.close()
-			os.system('condor_submit '+jdf_name)
-	os.chdir('..')
+			os.system( "condor_submit {}".format( jdf_name ) )
+	os.chdir( ".." )
   
-if step==5:
-	os.chdir('combineLimits')
-	for c in combinations:
-		combo=c['postfix']+'_'+c['variable']
-		shell_name = 'cfg/condor_step5_'+combo+'.sh'
-		shell=open(shell_name,'w')
-		shell.write(
-'#!/bin/bash\n\
-source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
-cd '+cmsswbase+'\n\
-eval `scramv1 runtime -sh`\n\
-cd '+os.getcwd()+'\n\
-combineCards.py R17=limits_R17_'+combo+'/cmb/combined.txt.cmb R18=limits_R18_'+combo+'/cmb/combined.txt.cmb &> BDTcomb/'+combo+'.txt\n\
-text2workspace.py  BDTcomb/'+combo+'.txt  -o BDTcomb/'+combo+'.root\n\
-combine -M Significance BDTcomb/'+combo+'.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 &> BDTcomb/sig_'+combo+'.txt\n\
-combine -M AsymptoticLimits BDTcomb/'+combo+'.root --run=blind --cminDefaultMinimizerStrategy 0 &> BDTcomb/asy_'+combo+'.txt\n')
-		shell.close()
-		jdf_name = 'cfg/condor_step5_'+combo+'.job'
-		jdf=open(jdf_name,'w')
-		jdf.write(
-'universe = vanilla\n\
-Executable = '+os.getcwd()+'/'+shell_name+'\n\
-Should_Transfer_Files = YES\n\
-WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step5_dli50\n\
-request_memory = 3072\n\
-Output = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.out\n\
-Error = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.err\n\
-Log = '+os.getcwd()+'/log/'+shell_name.split('.')[0].split('/')[1]+'.log\n\
-Notification = Error\n\
+def combine_years( tags, variables ):
+  combinations = []
+
+  for tag in tags:
+    for variable in avariables:
+      combinations.append( {
+        "variable": variable,
+        "tag": tags
+      } )
+      
+  os.chdir( "combine" )
+  for combination in combinations:
+    combine_tag = "{}_{}".format( combination[ "tag" ], combination[ "variable" ] )
+    condor_name = "condor_step5_{}".format( combine_tag )
+    shell_name = "condor_config/{}.sh".format( condor_name )
+    shell = open( shell_name, "w" )
+    shell.write(
+"#!/bin/bash\n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
+cd {} \n\
+eval `scramv1 runtime -sh` \n\
+cd {} \n\
+combine_datacrads.py R17=limits_UL17_{}/cmb/combined.txt.cmb R18=limits_UL18_{}/cmb/combined.txt.cmb &> results/{}.txt \n\
+text2workspace.py results/{}.txt -o results/{}.root \n\
+combine -M Significance results/{}.root -t - --expectSignal=1 --cminDefaultMinimizerStrategy 0 &> results/significance_{}.txt \n\
+combine -M AsymptoticLimits results/{}.root --run=blind --cminDefaultMinimizerStrategy 0 &> results/limits_{}.txt".format(
+  cmsswbase, os.getcwd(),
+  combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combined_tag, combine_tag
+)
+    )
+    shell.close()
+    jdf_name = "condor_config/{}.job".format( condor_name )
+    jdf = open( jdf_name, "w" )
+    jdf.write(
+"""universe = vanilla \n\
+Executable = {}/{} \n\
+Should_Transfer_Files = YES \n\
+WhenToTransferOutput = ON_EXIT \n\
+JobBatchName = SLA_step5 \n\
+request_memory = 3072 \n\
+Output = {}/condor_log/{}.out \n\
+Error = {}/condor_log/{}.err \n\
+Log = {}/condor_log/{}.log \n\
+Notification = Error \n\
 Arguments = \n\
-Queue 1\n')
+Queue 1""".format(
+  os.getcwd(), shell_name,
+  os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
+)
+    )
 		jdf.close()
-		os.system('condor_submit '+jdf_name)
-	os.chdir('..')
+		os.system( "condor_submit {}".format( jdf_name ) )
+	os.chdir( ".." )
+
+if args.step == 1:
   
-
-def printlim(spec,year,variable,isComb):
-
-	inputDir='limits_'+year+'_'+spec+'_'+variable
-	sigFile = inputDir+'/sig.txt'
-	limFile = inputDir+'/asy.txt'
-	if isComb:
-		inputDir='BDTcomb/'
-		sigFile = inputDir+'/sig_'+spec+'_'+variable+'.txt'
-		limFile = inputDir+'/asy_'+spec+'_'+variable+'.txt'
-
-	sigData = open(sigFile,'r').read()
-	siglines = sigData.split('\n')
-	limData = open(limFile,'r').read()
-	limlines = limData.split('\n')
-	theSig = ''
-	theLim = ['']*5
-	for line in siglines:
-		if line.startswith('Significance:'): theSig = line.split()[-1]
-	for line in limlines:
-		if line.startswith('Expected  2.5%:'): theLim[0] =  "{:.2f}".format(float(line.split()[-1])*12)
-		if line.startswith('Expected 16.0%:'): theLim[1] = "{:.2f}".format(float(line.split()[-1])*12)
-		if line.startswith('Expected 50.0%:'): theLim[2] = "{:.2f}".format(float(line.split()[-1])*12)
-		if line.startswith('Expected 84.0%:'): theLim[3] = "{:.2f}".format(float(line.split()[-1])*12)
-		if line.startswith('Expected 97.5%:'): theLim[4] = "{:.2f}".format(float(line.split()[-1])*12)
-	print year+' , '+variable+' , '+spec+' , '+theSig+' , '+theLim[0]+' , '+theLim[1]+' , '+theLim[2]+' , '+theLim[3]+' , '+theLim[4]
+elif args.step == 2:
   
-if step==6:
-	print 'Year , Var , Specifications , Significance , -2sigma, -1sigma, central, +1sigma, +2sigma'
-	os.chdir('combineLimits')
-	for train in trainings:
-		for v in train['variable']:
-			printlim(train['postfix'] , train['year'] , v ,False)
-	for combo in combinations:
-		printlim(combo['postfix'],'R16+17+18',combo['variable'],True)
-	os.chdir('..')
+elif args.step == 3:
+  
+elif args.step == 4:
+  
+elif args.step == 5:
+  
+else:
+  print( "[ERR] Invalid step option used" )
   
   
   
