@@ -121,9 +121,9 @@ Queue 1""".format(
   os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
 )
       )
-			jdf.close()
-			os.system( "condor_submit {}".format( jdf_name ) )
-	os.chdir( ".." )
+      jdf.close()
+      os.system( "condor_submit {}".format( jdf_name ) )
+      os.chdir( ".." )
   
 def run_combine():
   trainings = get_trainings( args.tags, args.years, args.variables )
@@ -169,9 +169,9 @@ Queue 1""".format(
   os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
 )
       )
-			jdf.close()
-			os.system( "condor_submit {}".format( jdf_name ) )
-	os.chdir( ".." )
+      jdf.close()
+      os.system( "condor_submit {}".format( jdf_name ) )
+      os.chdir( ".." )
   
 def combine_years( tags, variables ):
   combinations = []
@@ -229,13 +229,9 @@ Queue 1""".format(
 
 if args.step == 1: produce_templates()
 elif args.step == 2: run_templates()
-  
-elif args.step == 3:
-  
-elif args.step == 4:
-  
-elif args.step == 5:
-  
+elif args.step == 3: produce_binned_templates()
+elif args.step == 4: run_combine()
+elif args.step == 5: combine_years()
 else:
   print( "[ERR] Invalid step option used" )
   
