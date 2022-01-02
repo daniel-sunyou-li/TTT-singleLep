@@ -2,6 +2,7 @@ import os, time
 from argparse import ArgumentParser
 
 cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_6_19/src"
+cmsswbase = os.path.join( os.getcwd(), ".." )
 
 parser = ArgumentParser()
 parser.add_argument( "-s", "--step", required = True, help = "Options: 1-6" )
@@ -10,31 +11,24 @@ parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_arugment( "-v", "--variables", nargs = "+", required = True )
 args = parser.parse_args()
 
-postfixes = ["DNN250_C{}".format(num) for num in [18,19]]#[16,17,20,21]]
-
 
 # this is used in step = 1, 2, 3, 4
-trainings = []
-for tag in args.tags
-  for year in args.years:
-    trainings.append( {
-      "year": "UL" + year,
-      "variable": args.variables,
-      "tag": args.tag,
-      "path": config.step3Dir[ year ]
-    } )
-    
-# this is used in step 5 to combine years
-combinations = []
 
-for tag in args.tags:
-  for variable in args.variables:
-    combinations.append( {
-      "variable": variable,
-      "tag": tags
-    } )
+def get_trainings( tags, years, variables ):
+  trainings = []
+  for tag in tags:
+    for year in years:
+      trainings.append( {
+        "year": "UL{}".format( year ),
+        "variable": variables,
+        "tag": tag,
+        "path": config.step3Dir[ year ]
+      } )
+  return trainings
+    
   
-def produce_templates( trainings ):
+def produce_templates():
+  trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
   for training in trainings:
     for variable in training[ "variable" ]:
@@ -48,7 +42,8 @@ def produce_templates( trainings ):
       time.sleep( 1 )
   os.chdir( ".." )
                 
-def run_templates( trainings ):
+def run_templates():
+  trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
   if not os.path.exists( "condor_config" ): os.system( "mkdir -vp condor_config" )
   for training in trainings:
@@ -86,6 +81,7 @@ Queue 1\n".format( os.getcwd(), shell_name, os.getcwd(), step2_name, os.getcwd()
 	os.chdir("..")
   
 def produce_binned_plots():
+  trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
   for train in trainings:
     for variable in train[ "variable" ]:
@@ -130,6 +126,7 @@ Queue 1""".format(
 	os.chdir( ".." )
   
 def run_combine():
+  trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "combine" )
   for training in trainings:
     for variable in training[ "variable" ]:
@@ -226,13 +223,12 @@ Queue 1""".format(
   os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
 )
     )
-		jdf.close()
-		os.system( "condor_submit {}".format( jdf_name ) )
-	os.chdir( ".." )
+    jdf.close()
+    os.system( "condor_submit {}".format( jdf_name ) )
+    os.chdir( ".." )
 
-if args.step == 1:
-  
-elif args.step == 2:
+if args.step == 1: produce_templates()
+elif args.step == 2: run_templates()
   
 elif args.step == 3:
   
