@@ -43,9 +43,9 @@ def group_process():
   groups[ "SIG" ][ "PROCESS" ] = [ "TTTW", "TTTJ" ]
   
   
-  ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT600", "TTToSemiLeptonicHT500", "TTToSemiLeptonic" ]
+  ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT500", "TTToSemiLeptonicHT500", "TTToSemiLeptonic" ]
   groups[ "BKG" ][ "PROCESS" ] = {
-    "WJETS": [ "WJetsHT200", "WJetsHT400", "WJetsHT600", "WJetsHT800" ],
+    "WJETS": [ "WJetsHT200", "WJetsHT400", "WJetsHT600", "WJetsHT800", "WJetsHT1200", "WJetsHT2500" ],
     "DY": [ "DYHT200", "DYHT400", "DYHT600", "DYHT800", "DYHT1200", "DYHT2500" ],
     "QCD": [ "QCDHT200", "QCDHT300", "QCDHT500", "QCDHT700", "QCDHT1000", "QCDHT1500", "QCDHT2000" ],
     "VV": [ "WW", "WZ", "ZZ" ],
@@ -63,14 +63,101 @@ def group_process():
     groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicTTJJ" + num for num in [ "1", "2", "3", "4" ] ]
     
   # grouped background processes
+  groups[ "BKG" ][ "SUPERGROUP" ] = {
+    "TTNOBB": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).flatten().tolist(),
+    "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
+    "TOP": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] ] ).flatten().tolist(),
+    "EWK": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DY", "VV" ] ] ).flatten().tolist(),
+    "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ]
+  }
   
+  groups[ "BKG" ][ "TTBAR_GROUPS" ] = {
+    group: groups[ "BKG" ][ "SUPERGROUP" ][ group ] for group in [ "TTNOBB", "TTBB" ]
+  }
   
+  groups[ "BKG" ][ "TTBAR_PROCESS" ] = {
+    process: groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B", "TTBB" ]
+  }
+  
+  groups[ "BKG" ][ "HT" ] = {
+    "EWK": groups[ "BKG" ][ "SUPERGROUP" ][ "EWK" ],
+    "WJETS": groups[ "BKG" ][ "PROCESS" ][ "WJETS" ],
+    "QCD": groups[ "BKG" ][ "SUPERGROUP" ][ "QCD" ]
+  }
+  
+  groups[ "BKG" ][ "TOPPT" ] = {
+    process: np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TTBB", "TT1B", "TT2B" ] ] ).flatten().tolist()
+  }
+  groups[ "BKG" ][ "TOPPT" ][ "TTBJ" ] = np.array( [ groups[ "BKG" ][ "PROCESS" ][ process] for process in [ "TT1B", "TT2B" ] ] ).flatten().tolist()
+  groups[ "BKG" ][ "TOPPT" ][ "TTNOBB" ] = groups[ "BKG" ][ "SUPERGROUP" ][ "TTNOBB" ]
+  
+  groups[ "BKG" ][ "SYSTEMATICS" ] = {}
+  syst_key = {
+    "HD": "HDAMP", 
+    "UE": "UE"
+  }
+  for syst in [ "HD", "UE" ]:
+    for shift in [ "UP", "DN" ]:
+      for flav in [ "JJ", "CC", "1B", "2B", "2B" ]:
+        for tt in [ "TTToSemiLeptonic", "TTToHadronic", "TTTo2L2Nu" ]:
+          groups[ "BKG" ][ "SYSTEMATICS" ][ "TT{}_{}{}".format( flav, syst, shift ) ] = [ "{}{}{}TT{}".format( tt, syst_key[ syst ], shift, flav ) ]
+      groups[ "BKG" ][ "SYSTEMATICS" ][ "TTBJ_{}{}".format( syst, shift ) ] = []
+      groups[ "BKG" ][ "SYSTEMATICS" ][ "TTNOBB_{}{}".format( syst, shift ) ] = []
+      for flav in [ "1B", "2B" ]:
+        groups[ "BKG" ][ "SYSTEMATICS" ][ "TTBJ_{}{}".format( syst, shift ) ] += groups[ "BKG" ][ "SYSTEMATICS" ][ "TT{}_{}{}".format( flav, syst, shift ) ]
+      for flav in [ "JJ", "CC", "1B", "2B" ]:
+        groups[ "BKG" ][ "SYSTEMATICS" ][ "TTNOBB_{}{}".format( syst, shift ) ] += groups[ "BKG" ][ "SYSTEMATICS" ][ "TT{}_{}{}".format( flav, syst, shift ) ]
 
-doBRScan = False
-BRs={}
-BRs['BW']=[0.0,0.50,0.0,0.0,0.0,0.0,0.0,0.0,0.2,0.2,0.2,0.2,0.2,0.4,0.4,0.4,0.4,0.6,0.6,0.6,0.8,0.8,1.0]
-BRs['TH']=[0.5,0.25,0.0,0.2,0.4,0.6,0.8,1.0,0.0,0.2,0.4,0.6,0.8,0.0,0.2,0.4,0.6,0.0,0.2,0.4,0.0,0.2,0.0]
-BRs['TZ']=[0.5,0.25,1.0,0.8,0.6,0.4,0.2,0.0,0.8,0.6,0.4,0.2,0.0,0.6,0.4,0.2,0.0,0.4,0.2,0.0,0.2,0.0,0.0]
+  return groups
+        
+def load_histograms( variable, categories ): 
+  hists = {
+    "DAT": {},
+    "BKG": {},
+    "SIG": {},
+    "CMB": {}
+  }
+  
+  templateDir = os.path.join( os.getcwd(), "makeTemplates/templates_UL{}_{}".format( args.year, args.tag ) ) 
+  for category in categories:
+    categoryTag = "{}_nH{}_nT{}_nW{}_nB{}_nJ{}".format( category[ "LEPTON" ], category[ "NHOT" ], category[ "NTOP" ], category[ "NW" ], category[ "NB" ], category[ "NJ" ] )
+    categoryDir = os.path.join( templateDir, categoryTag )
+    hists[ "DAT" ].update( pickle.load( open( os.path.join( categoryDir, "data_{}.pkl".format( variable ) ), "rb" ) ) )
+    hists[ "BKG" ].update( pickle.load( open( os.path.join( categoryDir, "bkg_{}.pkl".format( variable ) ), "rb" ) ) )
+    hists[ "SIG" ].update( pickle.load( open( os.path.join( categoryDir, "sig_{}.pkl".format( variable ) ), "rb" ) ) )
+    
+  return hists
+  
+def modify_histograms( hists, doScale, doRebin, doNegCorr, doBinCorr ):
+  def scale_luminosity( hists_ ):
+      if args.verbose: print( ">> Re-scaling MC luminosity by factor: {}".format( args.lumiscale ) )
+      for ikey in [ "BKG", "SIG" ]:
+        for jkey in hists_[ ikey ]: hists[ ikey ][ jkey ].Scale( args.lumiscale )
+    return hists_
+  
+  def rebinning( hists_ ):
+    if args.verbose: print( ">> Re-binning histogram bins by: {}".format( args.rebin ) )
+    for ikey in [ "BKG", "SIG", "DAT" ]:
+      for jkey in hists_[ ikey ]: hists[ ikey ][ jkey ].Rebin( args.rebin )
+    return hists_
+  
+  def negative_correction( hists_ ):
+    def function( hist_ ):
+      integral = hist.Integral()
+      for i in range( hist_.GetNbinsX() + 2 ):
+        if hist_.GetBinContent( i ) < 0:
+    if args.verbose: print( ">> Correcting negative histogram bins" )
+    
+    
+    return hists_
+  
+  def bin_correction( hists_ ):
+    
+    return hists_
+  
+  
+  return hists
+  
 nBRconf=len(BRs['BW'])
 if not doBRScan: nBRconf=1
 
