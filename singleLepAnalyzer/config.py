@@ -3,7 +3,7 @@ import numpy as np
 years = [ "16", "17", "18" ]
 
 postfix = "deepJetV1"
-step3Dir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_3t_step3/".format( year, postfix ) for year in years }
+inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_3t_step3/".format( year, postfix ) for year in years }
 
 lumi = { # 1/pb
   "16": 35867., 
@@ -12,9 +12,37 @@ lumi = { # 1/pb
 }
 
 BR = {
-  'BW' : [0.0,0.50,0.0,0.0,0.0,0.0,0.0,0.0,0.2,0.2,0.2,0.2,0.2,0.4,0.4,0.4,0.4,0.6,0.6,0.6,0.8,0.8,1.0],
-  'TH' :[0.5,0.25,0.0,0.2,0.4,0.6,0.8,1.0,0.0,0.2,0.4,0.6,0.8,0.0,0.2,0.4,0.6,0.0,0.2,0.4,0.0,0.2,0.0],
-  'TZ' :[0.5,0.25,1.0,0.8,0.6,0.4,0.2,0.0,0.8,0.6,0.4,0.2,0.0,0.6,0.4,0.2,0.0,0.4,0.2,0.0,0.2,0.0,0.0]
+  "BW" : [0.0,0.50,0.0,0.0,0.0,0.0,0.0,0.0,0.2,0.2,0.2,0.2,0.2,0.4,0.4,0.4,0.4,0.6,0.6,0.6,0.8,0.8,1.0],
+  "TH" : [0.5,0.25,0.0,0.2,0.4,0.6,0.8,1.0,0.0,0.2,0.4,0.6,0.8,0.0,0.2,0.4,0.6,0.0,0.2,0.4,0.0,0.2,0.0],
+  "TZ" : [0.5,0.25,1.0,0.8,0.6,0.4,0.2,0.0,0.8,0.6,0.4,0.2,0.0,0.6,0.4,0.2,0.0,0.4,0.2,0.0,0.2,0.0,0.0]
+}
+
+systematics = {
+  "MC": [ "pileup", "muRFcorrd", "muR", "muF", "isr", "fsr", "hotstat", "hotcspur", "hotclosure", "JEC", "JER", "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", "CFerr1", "CFerr2" ],
+  "LUMI": {
+    "17": 0.023,
+    "18": 0.025
+  },
+  "TRIG": {
+    "E": 0.0, 
+    "M": 0.0
+  },
+  "ID": {
+    "E": 0.03,
+    "M": 0.03
+  },
+  "ISO": {
+    "E": 0.0,
+    "M": 0.0
+  },
+  "XSEC": {
+    "TTBAR": 0.0515,
+    "TTH": 0.20,
+    "TOP": 0.04,
+    "EWK": 0.038
+  },
+  "TTHF": 0.13,
+  "HDAMP": 0.085
 }
 
 # binning configuration
@@ -71,17 +99,6 @@ plot_params = {
   "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
   "DNN_3t": ( "DNN_3t", bins( 0, 1, 101 ), ";DNN 3t" )
 }
-
-systematics = [
-  "pileup",
-  "muRFcorrd", "muR", "muF",
-  "isr", "fsr",
-  "hotstat", "hotcspur", "hotclosure",
-  "JEC", "JER",
-  "LF", "LFstat1", "LFstat2",
-  "HF", "HFstat1", "HFstat2",
-  "CFerr1", "CFerr2"
-]
 
 ttHFsf = 4.7/3.9 # from TOP-18-002 (v34), set to 1 if no ttHFsf used
 ttLFsf = -1      # if ttLFsf -1, computed automatically using ttHFsf, else set manually
