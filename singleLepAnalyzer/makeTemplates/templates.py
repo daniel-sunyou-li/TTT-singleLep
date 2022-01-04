@@ -5,12 +5,22 @@ from argparse import ArgumentParser
 import numpy as np
 from array import array
 import utils, samples
-
-parent = os.path.dirname( os.getcwd() )
-sys.path.append( parent )
+import config
 
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year",   required = True )
+parser.add_argument( "-t", "--tag", required = True )
+parser.add_argument( "-sys", "--systematics", action = "store_true" )
+parser.add_argument( "-ue", "--ue", action = "store_true" )
+parser.add_argument( "-hd", "--hdamp", action = "store_true" )
+parser.add_argument( "-pdf", "--pdf", action = "store_true" )
+parser.add_argument( "-rpdf", "--renormPDF", action = "store_true", help = "Normalize renormalization/pdf uncertainties for signal processes" ) 
+parser.add_argument( "-cr", "--crsys", action = "store_true" )
+parser.add_argument( "-br", "--brscan", action = "store_true" )
+parser.add_argument( "-sum", "--summary", action = "store_true", help = "Write Summary Histograms" )
+parser.add_argument( "-scale", "--scale", action = "store_true", help = "Scale the signal cross section to 1 pb" )
+parser.add_argument( "-ls", "--lumiscale", default = "1", help = "Rescale the target luminosity" )
+parser.add_argument( "-rb", "--rebin", default = "-1", help = "Rebin the histograms by given value" )
 args = parser.parse_args()
 
 from ROOT import gROOT, TFile, TH1F
@@ -22,90 +32,39 @@ cutString = ''#'lep30_MET100_NJets4_DR1_1jet250_2jet50'
 theDir = 'templates_'+year+'_'+sys.argv[2]
 outDir = os.getcwd()+'/'+theDir+'/'+cutString
 
-writeSummaryHists = True
-scaleSignalXsecTo1pb = False # !!!!!Make sure you know signal x-sec used in input files to this script. If this is True, it will scale signal histograms by 1/x-sec in weights.py!!!!!
-lumiScaleCoeff = 1. # Rescale luminosity used in doHists.py
-ttHFsf = 4.7/3.9 # from TOP-18-002 (v34) Table 4, set it to 1, if no ttHFsf is wanted.
-ttLFsf = -1 # if it is set to -1, ttLFsf is calculated based on ttHFsf in order to keep overall normalization unchanged. Otherwise, it will be used as entered. If no ttLFsf is wanted, set it to 1.
-doAllSys = True
-doHDsys = False
-doUEsys = False
-doPDF = True
-addCRsys = False
-systematicList = ['pileup','muRFcorrd','muR','muF','isr','fsr','hotstat','hotcspur','hotclosure']#,'njet','njetsf'] # ,'tau32','jmst','jmrt','tau21','jmsW','jmrW','tau21pt','ht','trigeff','toppt' #,'btag','btagcorr','btaguncorr','mistag'
-systematicList+= ['CSVshapelf','CSVshapehf','CSVshapehfstats1','CSVshapehfstats2','CSVshapecferr1','CSVshapecferr2','CSVshapelfstats1','CSVshapelfstats2']
-systematicList+= ['JEC','JER']#,
-# 'JEC_Total','JEC_FlavorQCD',
-# 'JEC_RelativeBal','JEC_RelativeSample_'+year.replace('R','20'),
-# 'JEC_Absolute','JEC_Absolute_'+year.replace('R','20'),
-# 'JEC_HF','JEC_HF_'+year.replace('R','20'),
-# 'JEC_EC2','JEC_EC2_'+year.replace('R','20'),
-# 'JEC_BBEC1','JEC_BBEC1_'+year.replace('R','20')]
-if year != 'R18': systematicList += ['prefire']
-#if year == 'R18': systematicList += ['hem']
-normalizeRENORM_PDF = False #normalize the renormalization/pdf uncertainties to nominal templates --> normalizes signal processes only !!!!
-rebinBy = -1 #performs a regular rebinning with "Rebin(rebinBy)", put -1 if rebinning is not wanted
-zero = 1E-12
-# removeThreshold and removeStatUnc applied together! If a process/totalBkg is less than the threshold and the overall statistical uncertainty of a process is than the threshold, the process will be removed in the output files!
-removeThreshold = 0.015
-removeStatUnc = 0.5
+systematics = config.systematics
+if args.year in [ "16", "17" ]: systematics += [ "prefire" ]
 
-ttbarGrupList = ['ttnobb','ttbb']
-bkgGrupList = ttbarGrupList+['ttH','top','ewk','qcd']
-ttbarProcList = ['ttjj','ttcc','ttbb','tt1b','tt2b']
-bkgProcList = ttbarProcList+['T','TTH','TTV','TTXY','WJets','ZJets','VV','qcd']
-bkgProcs = {}
-bkgProcs['WJets'] = ['WJetsMG200','WJetsMG400','WJetsMG600','WJetsMG800']
-if year=='R17':
-	bkgProcs['WJets']+= ['WJetsMG12001','WJetsMG12002','WJetsMG12003','WJetsMG25002','WJetsMG25003','WJetsMG25004']
-elif year=='R16' or year=='R18':
-	bkgProcs['WJets']+= ['WJetsMG1200','WJetsMG2500']
-bkgProcs['ZJets']  = ['DYMG200','DYMG400','DYMG600','DYMG800','DYMG1200','DYMG2500']
-bkgProcs['VV']     = ['WW','WZ','ZZ']
-TTlist = ['TTJetsHad','TTJets2L2nu','TTJetsSemiLepNjet0','TTJetsSemiLepNjet9','TTJetsSemiLepNjet9bin']
-bkgProcs['tt1b']  = [tt+'TT1b' for tt in TTlist]
-bkgProcs['tt2b']  = [tt+'TT2b' for tt in TTlist]
-bkgProcs['ttbj']  = bkgProcs['tt1b'] + bkgProcs['tt2b']
-bkgProcs['ttbb']  = [tt+'TTbb' for tt in TTlist]
-bkgProcs['ttcc']  = [tt+'TTcc' for tt in TTlist]
-bkgProcs['ttjj']  = [tt+'TTjj' for tt in TTlist if tt!='TTJetsSemiLepNjet0']
-if year=='R16' or year=='R17':
-	bkgProcs['ttjj'] += ['TTJetsSemiLepNjet0TTjj'+tt for tt in ['1','2','3','4','5']]
-elif year=='R18':
-	bkgProcs['ttjj'] += ['TTJetsSemiLepNjet0TTjj'+tt for tt in ['1','2']]
-bkgProcs['ttnobb']  = bkgProcs['ttjj'] + bkgProcs['ttcc'] + bkgProcs['tt1b'] + bkgProcs['tt2b']
-bkgProcs['T'] = ['Ts','Tt','Tbt','TtW','TbtW']
-if year=='R17': bkgProcs['T']+= ['Tbs']
-bkgProcs['TTH'] = ['TTHB','TTHnoB']
-bkgProcs['TTV'] = ['TTWl','TTZlM10','TTZlM1to10']
-bkgProcs['TTXY']= ['TTHH','tttt','TTWH','TTWW','TTWZ','TTZH','TTZZ']
-bkgProcs['qcd'] = ['QCDht200','QCDht300','QCDht500','QCDht700','QCDht1000','QCDht1500','QCDht2000']
-bkgProcs['ttH'] = bkgProcs['TTH']
-bkgProcs['top'] = bkgProcs['T']+bkgProcs['TTV']+bkgProcs['TTXY']#+bkgProcs['TTJets']
-bkgProcs['ewk'] = bkgProcs['WJets']+bkgProcs['ZJets']+bkgProcs['VV']
-dataList = ['DataE','DataM']#,'DataJ']
-
-htProcs = ['ewk','WJets','qcd']
-topptProcs = ['ttjj','ttcc','ttbb','tt1b','tt2b','ttbj','ttnobb']
-for hf in ['jj','cc','bb','1b','2b']:
-	bkgProcs['tt'+hf+'_hdup'] = ['TTJetsHadHDAMPupTT'+hf,'TTJets2L2nuHDAMPupTT'+hf,'TTJetsSemiLepHDAMPupNjet0TT'+hf,'TTJetsSemiLepHDAMPupNjet9TT'+hf,'TTJetsSemiLepHDAMPupNjet9binTT'+hf]
-	bkgProcs['tt'+hf+'_hddn'] = ['TTJetsHadHDAMPdnTT'+hf,'TTJets2L2nuHDAMPdnTT'+hf,'TTJetsSemiLepHDAMPdnNjet0TT'+hf,'TTJetsSemiLepHDAMPdnNjet9TT'+hf,'TTJetsSemiLepHDAMPdnNjet9binTT'+hf]
-	bkgProcs['tt'+hf+'_ueup'] = ['TTJetsHadUEupTT'+hf,'TTJets2L2nuUEupTT'+hf,'TTJetsSemiLepUEupNjet0TT'+hf,'TTJetsSemiLepUEupNjet9TT'+hf,'TTJetsSemiLepUEupNjet9binTT'+hf]
-	bkgProcs['tt'+hf+'_uedn'] = ['TTJetsHadUEdnTT'+hf,'TTJets2L2nuUEdnTT'+hf,'TTJetsSemiLepUEdnNjet0TT'+hf,'TTJetsSemiLepUEdnNjet9TT'+hf,'TTJetsSemiLepUEdnNjet9binTT'+hf]
-for syst in ['hdup','hddn','ueup','uedn']:
-	bkgProcs['ttbj_'+syst] = bkgProcs['tt1b_'+syst] + bkgProcs['tt2b_'+syst]
-	bkgProcs['ttnobb_'+syst] = bkgProcs['ttjj_'+syst] + bkgProcs['ttcc_'+syst]+bkgProcs['tt1b_'+syst] + bkgProcs['tt2b_'+syst]
-
-whichSignal = 'tttx' #HTB, TT, BB, X53 or tttt
-massList = [690]#range(800,1600+1,100)
-sigList = [whichSignal+'M'+str(mass) for mass in massList]
-if whichSignal=='tttx': sigList = ["TTTJ","TTTW"]
-if whichSignal=='X53': 
-	sigList = [whichSignal+'LHM'+str(mass) for mass in [1100,1200,1400,1700]]
-	sigList+= [whichSignal+'RHM'+str(mass) for mass in range(900,1700+1,100)]
-if whichSignal=='TT': decays = ['BWBW','THTH','TZTZ','TZBW','THBW','TZTH'] #T' decays
-elif whichSignal=='BB': decays = ['TWTW','BHBH','BZBZ','BZTW','BHTW','BZBH'] #B' decays
-else: decays = [''] #there is only one possible decay mode!
+def group_process():
+  groups = { group: {} for group in [ "BKG", "SIG", "DAT" ] }
+  
+  groups[ "DAT" ][ "PROCESS" ] = [ "DataE", "DataM" ]
+  
+  groups[ "SIG" ][ "PROCESS" ] = [ "TTTW", "TTTJ" ]
+  
+  
+  ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT600", "TTToSemiLeptonicHT500", "TTToSemiLeptonic" ]
+  groups[ "BKG" ][ "PROCESS" ] = {
+    "WJETS": [ "WJetsHT200", "WJetsHT400", "WJetsHT600", "WJetsHT800" ],
+    "DY": [ "DYHT200", "DYHT400", "DYHT600", "DYHT800", "DYHT1200", "DYHT2500" ],
+    "QCD": [ "QCDHT200", "QCDHT300", "QCDHT500", "QCDHT700", "QCDHT1000", "QCDHT1500", "QCDHT2000" ],
+    "VV": [ "WW", "WZ", "ZZ" ],
+    "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
+    "TTV": [ "TTWl", "TTZlM10", "TTHB", "TTHnoB" ], # TTZlM1to10 in-progress
+    "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+    "TTJJ": [ tt + "TTJJ" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
+    "TTCC": [ tt + "TTCC" for tt in ttbar ],
+    "TT1B": [ tt + "TT1B" for tt in ttbar ],
+    "TT2B": [ tt + "TT2B" for tt in ttbar ],
+    "TTBB": [ tt + "TTBB" for tt in ttbar ]
+  }
+  
+  if args.year == "17": 
+    groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicTTJJ" + num for num in [ "1", "2", "3", "4" ] ]
+    
+  # grouped background processes
+  
+  
 
 doBRScan = False
 BRs={}
