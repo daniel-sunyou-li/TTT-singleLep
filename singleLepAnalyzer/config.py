@@ -11,6 +11,12 @@ lumi = { # 1/pb
   "18": 59970.
 }
 
+BR = {
+  'BW' : [0.0,0.50,0.0,0.0,0.0,0.0,0.0,0.0,0.2,0.2,0.2,0.2,0.2,0.4,0.4,0.4,0.4,0.6,0.6,0.6,0.8,0.8,1.0],
+  'TH' :[0.5,0.25,0.0,0.2,0.4,0.6,0.8,1.0,0.0,0.2,0.4,0.6,0.8,0.0,0.2,0.4,0.6,0.0,0.2,0.4,0.0,0.2,0.0],
+  'TZ' :[0.5,0.25,1.0,0.8,0.6,0.4,0.2,0.0,0.8,0.6,0.4,0.2,0.0,0.6,0.4,0.2,0.0,0.4,0.2,0.0,0.2,0.0,0.0]
+}
+
 # binning configuration
 
 bins = {
@@ -67,31 +73,22 @@ plot_params = {
 }
 
 systematics = [
-  "pileup", 
-  "prefire", 
-  "muRFcorrd", 
-  "muR", 
-  "muF", 
-  "isr", 
-  "fsr", 
-  "tau32", 
-  "jmst", 
-  "jmrt", 
-  "tau21",
-  "jmsW",
-  "jmrW",
-  "tau21pt",
-  "btag",
-  "mistag",
-  "jec",
-  "jer",
-  "hotstat",
-  "hostcspur",
-  "hotclosure",
-  "njet",
-  "njetsf",
-  "lfstats",
-  "hfstats"
+  "pileup",
+  "muRFcorrd", "muR", "muF",
+  "isr", "fsr",
+  "hotstat", "hotcspur", "hotclosure",
+  "JEC", "JER",
+  "LF", "LFstat1", "LFstat2",
+  "HF", "HFstat1", "HFstat2",
+  "CFerr1", "CFerr2"
 ]
 
+ttHFsf = 4.7/3.9 # from TOP-18-002 (v34), set to 1 if no ttHFsf used
+ttLFsf = -1      # if ttLFsf -1, computed automatically using ttHFsf, else set manually
+
 pdf_range = 100
+
+ratio_threshold = 0.015 # ratio beneath which process / total background a process will be exccluded
+uncertainty_threshold = 0.5 # threshold beneath which a statistical uncertainty is excluded
+
+zero = 1e-12
