@@ -117,7 +117,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   if doSYST:
     for syst in config.systematics:
       for shift in [ "UP", "DOWN" ]:
-        histTag = "{}_{}_{}_{}".format( variable + syst.upper() + shift, lumiStr, categoryTag, process )
+        histTag = "{}_{}_{}_{}".format( variable, syst.upper() + shift, lumiStr, categoryTag, process )
         hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
     for i in range( config.pdf_range ):
