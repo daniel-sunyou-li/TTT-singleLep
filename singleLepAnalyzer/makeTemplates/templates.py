@@ -252,7 +252,12 @@ def consolidate_histograms( hists, variable, categories ):
     for process in groups[ "DAT" ][ "PROCESS" ][1:]: hists[ "CMB" ][ "DAT_{}".format( catTag ) ].Add( hists[ "DAT" ][ "{}_{}".format( prefix, process ) ] )
     
     # combine signal hists
-    hists[ "CMB" ][ "SIG_{}".format( catTag ) ] = hists[ "SIG" ][ ]
+    hists[ "CMB" ][ "SIG_{}".format( catTag ) ] = hists[ "SIG" ][ "{}_{}".format( prefix, groups[ "SIG" ][ "PROCESS" ][0] ) ].Clone( "{}_SIG".format( prefix ) )
+    for process in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ "SIG_{}".format( catTag ) ].Add( hists[ "SIG" ][ "{}_{}".format( prefix, process ) ] )
+    
+    # combine background hists
+		for process in list( groups[ "BKG" ][ "PROCESS" ].keys() ):
+      hists[ "CMB" ][ "{}_{}".format( process, catTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "PROCESS" ][0] ) ].Clone( "{}_{}".format( prefix, process )
     
                                                                     
                                                                     
