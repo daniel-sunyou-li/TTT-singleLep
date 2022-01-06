@@ -306,7 +306,11 @@ def consolidate_histograms( hists, variable, categories ):
   hists = set_zero( hists )
   
   return hists
-                                                                                         
+         
+
+def combine_templates( hists ):
+  print( ">> Writing Combine templates" )
+	 
 def make_tables( hists, variable ):
   def initialize():
     return tables
@@ -318,9 +322,6 @@ def make_tables( hists, variable ):
   return tables
   
 def theta_templates( hists ):
-
-
-def combine_templates( hists ):
 
 def summary_templates( hists ):
 
