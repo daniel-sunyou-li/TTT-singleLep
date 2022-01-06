@@ -203,44 +203,47 @@ def consolidate_histograms( hists, variable, categories ):
   def scale_ttbar( hists_ ):
     if args.verbose: print( ">> Scaling ttbb by a factor of {:.2f}".format( config.ttHFsf ) )
     for category in categories:
+      catTag = category_tag( category )
       N = {
-        "TTBB": hists[ "CMB" ][ "TTBB_" + category_tag( category ) ].Integral(),
-        "TTNOBB": hists[ "CMB" ][ "TTNOBB_" + category_tag( category ) ].Integral()
+        "TTBB": hists[ "CMB" ][ "TTBB_" + catTag ].Integral(),
+        "TTNOBB": hists[ "CMB" ][ "TTNOBB_" + catTag ].Integral()
       }
       if config.ttLFsf == -1:
         try: ttLFsf = 1. + ( 1. - config.ttLFsf ) * ( N[ "TTBB" ] / N[ "TTNOBB" ] )
         except ZeroDivisionError: ttLFsf = 1.
       
-      hists_[ "CMB" ][ "TTBB_" + categoryTag ].Scale( config.ttHFsf )
-      hists_[ "CMB" ][ "TTNOBB_" + categoryTag ].Scale( ttLFsf )
+      hists_[ "CMB" ][ "TTBB_" + catTag ].Scale( config.ttHFsf )
+      hists_[ "CMB" ][ "TTNOBB_" + catTag ].Scale( ttLFsf )
       
       if args.systematics:
         for syst in config.systematics[ "MC" ] + [ "HD", "UE" ]:
+          if syst == "HD" and not args.hd: continue
+          if syst == "UE" and not args.ue: continue
           for shift in [ "UP", "DN" ]:
-            if syst == "HD" and not args.hd: continue
-            if syst == "UE" and not args.ue: continue
-            hists_[ "CMB" ][ "TTBB_{}_{}{}".format( category_tag( category ), syst.upper(), shift.upper() ) ].Scale( config.ttHFsf )
-            hists_[ "CMB" ][ "TTNOBB_{}_{}{}".format( category_tag( category ), syst.upper(), shift.upper() ) ].Scale( ttLFsf )
+            hists_[ "CMB" ][ "TTBB_{}_{}".format( catTag, sysTag ) ].Scale( config.ttHFsf )
+            hists_[ "CMB" ][ "TTNOBB_{}_{}{}".format( catTag, sysTag ) ].Scale( ttLFsf )
       if args.pdf:
-        for i in range( pdf_range ):
-          hists_[ "CMB" ][ "TTBB_{}_PDF{}".format( category_tag( category ), i ) ].Scale( config.ttHFsf )
-          hists_[ "CMB" ][ "TTNOBB_{}_PDF{}".format( category_tag( category ), i ) ].Scale( ttLFsf )
+        for i in range( config.pdf_range ):
+          hists_[ "CMB" ][ "TTBB_{}_PDF{}".format( catTag, i ) ].Scale( config.ttHFsf )
+          hists_[ "CMB" ][ "TTNOBB_{}_PDF{}".format( catTag, i ) ].Scale( ttLFsf )
           
     return hists_
     
   def set_zero( hists_ ):
     if args.verbose: print( ">> Setting 0 bins to be non-trivial ({}) in histograms".format( config.zero ) )
     for category in categories:
+      catTag = category_tag( category )
       for process in list( groups[ "BKG" ][ "GROUP" ].keys() ) + groups[ "SIG" ][ "PROCESS" ]:
-        if hists[ "{}_{}".format( process, category_tag( category ) ) ].Integral() == 0: 
-          hists[ "{}_{}".format( process, category_tag( category ) ) ].SetBinContent( 1, config.zero )
+        if hists[ "{}_{}".format( process, catTag ) ].Integral() == 0: 
+          hists[ "{}_{}".format( process, catTag ) ].SetBinContent( 1, config.zero )
         if args.systematics:
           for syst in config.systematics + [ "HD", "UE" ]:
-            for shift in [ "UP", "DN" ]:
               if syst == "HD" and not args.hd: continue
               if syst == "UE" and not args.ue: continue
-              if hists[ "{}_{}_{}{}".format( process, category_tag( category ), syst.upper(), shift ) ].Integral() == 0:
-                hists[ "{}_{}_{}{}".format( process, category_tag( category ), syst.upper(), shift ) ].SetBinContent( 1, config.zero )
+            for shift in [ "UP", "DN" ]:
+              sysTag = syst.upper() + shift
+              if hists[ "{}_{}_{}".format( process, catTag, sysTag ) ].Integral() == 0:
+                hists[ "{}_{}_{}".format( process, catTag, sysTag ) ].SetBinContent( 1, config.zero )
     return hists_
   
   for category in categories:
@@ -256,60 +259,120 @@ def consolidate_histograms( hists, variable, categories ):
     for process in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ "SIG_{}".format( catTag ) ].Add( hists[ "SIG" ][ "{}_{}".format( prefix, process ) ] )
     
     # combine background hists
-		for process in list( groups[ "BKG" ][ "PROCESS" ].keys() ):
-      hists[ "CMB" ][ "{}_{}".format( process, catTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "PROCESS" ][0] ) ].Clone( "{}_{}".format( prefix, process )
-    
-                                                                    
-                                                                    
-  return hists
+		for process in groups[ "BKG" ][ "PROCESS" ]:
+      hists[ "CMB" ][ "{}_{}".format( process, catTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "PROCESS" ][ process ][0] ) ].Clone( "{}_{}".format( prefix, process ) )
+      for sample in groups[ "BKG" ][ "PROCESS" ][ process ][1:]: hists[ "CMB" ][ "{}_{}".format( process, catTag ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) ] )
       
-                              
-               
+    for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+      hists[ "CMB" ][ "{}_{}".format( group, catTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( "{}_{}".format( prefix, group ) )
+      for sample in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:]: hists[ "CMB" ][ "{}_{}".format( group, catTag ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) ] )
+        
+    if args.systematics:
+      for syst in systematics + [ "HD", "UE" ]:
+        if syst == "HD" and not args.hd: continue
+        if syst == "UE" and not args.ue: continue
+        for shift in [ "UP", "DN" ]:
+          sysTag = syst.upper() + shift
+          prefix = "{}_{}_{}_{}".format( variable, sysTag, lumiStr, catTag )
+          
+          hists[ "CMB" ][ "SIG_{}_{}".format( catTag, sysTag ) ] = hists[ "SIG" ][ "{}_{}".format( prefix, groups[ "SIG" ][ "PROCESS" ][0] ) ].Clone( "{}_{}_SIG".format( prefix, sysTag ) )
+          for process in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ "SIG_{}_{}".format( catTag, sysTag ) ].Add( hists[ "SIG" ][ "{}_{}".format( prefix, process ) ] )
+          
+          for process in groups[ "BKG" ][ "PROCESS" ]:
+            hists[ "CMB" ][ "{}_{}_{}".format( process, catStr, sysTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "PROCESS" ][ process ][0] ) ].Clone( "{}_{}_{}".format( prefix, sysTag, process ) )
+            for sample in groups[ "BKG" ][ "PROCESS" ][ process ][1:]: hists[ "CMB" ][ "{}_{}_{}".format( process, catStr, sysTag ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) )
+          
+          for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+            hists[ "CMB" ][ "{}_{}_{}".format( group, catStr, sysTag ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( "{}_{}_{}".format( prefix, sysTag, group ) )
+            for sample in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:]: hists[ "CMB" ][ "{}_{}_{}".format( group, catStr, sysTag ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) )
+     
+    if args.pdf:
+      for i in range( config.pdf_range)
+        prefix = "{}_PDF{}_{}_{}".format( variable, i, lumiStr, catTag )
+        
+        hists[ "CMB" ][ "SIG_{}_PDF{}".format( catStr, i ) ] = hists[ "SIG" ][ "{}_{}".format( prefix, groups[ "SIG" ][ "PROCESS" ][0] ) ].Clone( "{}_SIG_PDF{}".format( prefix, i ) )
+        for sample in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ "SIG_{}_PDF{}".format( catStr, i ) ].Add( hists[ "SIG" ][ "{}_{}".format( prefix, sample ) ] )
+        
+        for process in groups[ "BKG" ][ "PROCESS" ]:
+          hists[ "CMB" ][ "{}_{}_PDF{}".format( process, catStr, i ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "PROCESS" ][ process ][0] ) ].Clone( "{}_{}_PDF{}".format( prefix, process, i ) )
+          for sample in groups[ "BKG" ][ "PROCESS" ][ process ][1:] hists[ "CMB" ][ "{}_{}_PDF{}".format( process, catStr, i ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) ] )
+          
+        for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+          hists[ "CMB" ][ "{}_{}_PDF{}".format( group, catStr, i ) ] = hists[ "BKG" ][ "{}_{}".format( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( "{}_{}_PDF{}".format( prefix, group, i ) )
+          for sample in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:] hists[ "CMB" ][ "{}_{}_PDF{}".format( group, catStr, i ) ].Add( hists[ "BKG" ][ "{}_{}".format( prefix, sample ) ] )
+                                                                                                                                                     
+  for key in hists[ "CMB" ]: hists[ "CMB" ][ key ].SetDirectory(0)
+  if ttHFsf != 1 and "TTBB" in groups[ "BKG" ][ "TTBAR_GROUPS" ].keys(): hists = scale_ttbar( hists )
+  hists = set_zero( hists )
   
-nBRconf=len(BRs['BW'])
-if not doBRScan: nBRconf=1
+  return hists
+                                                                                         
+def make_tables( hists, variable ):
+  def initialize():
+    return tables
+  
+  def table_systematics( tables, category ):
 
-if year=='R16':
-	from weights16 import *
-elif year=='R17':
-	from weights17 import *
-elif year=='R18':
-	from weights18 import *
+    return tables
+    
+  return tables
+  
+def theta_templates( hists ):
 
-lumiStr = str(targetlumi/1000).replace('.','p')+'fb' # 1/fb
-if theDir.startswith('kinematics'): removeThreshold = 0.0
-if not doAllSys: 
-	doHDsys = False
-	doUEsys = False
-	doPDF = False
-# if doPDF: writeSummaryHists = False
 
-elcorrdSys = math.sqrt(lumiSys**2+eltrigSys**2+elIdSys**2+elIsoSys**2)#+njetSys**2)
-mucorrdSys = math.sqrt(lumiSys**2+mutrigSys**2+muIdSys**2+muIsoSys**2)#+njetSys**2)
+def combine_templates( hists ):
 
-if not os.path.exists(outDir): 
-	print outDir,'DOES NOT EXIST!!!'
-	os._exit(1)
-isEMlist = ['E','M']
-catList = ['is'+x for x in os.walk(outDir).next()[1] if x.startswith('E_') or x.startswith('M_')]
-catList.sort()
-tagList = [x[4:] for x in catList if 'isE' in x]
-nhottlist = list(set([x.split('_')[0] for x in tagList]))
-nttaglist = list(set([x.split('_')[1] for x in tagList]))
-nWtaglist = list(set([x.split('_')[2] for x in tagList]))
-nbtaglist = list(set([x.split('_')[3] for x in tagList]))
-njetslist = list(set([x.split('_')[4] for x in tagList]))
+def summary_templates( hists ):
 
-for tag in tagList:
-	modTag = tag#[tag.find('nT'):tag.find('nJ')-3]
-	modelingSys['data_'+modTag] = 0.
-	modelingSys['qcd_'+modTag] = 0.
-	if not addCRsys: #else CR uncertainties are defined in modSyst.py module 
-		for proc in bkgProcs.keys():
-			modelingSys[proc+'_'+modTag] = 0.
-	modelingSys['ttbb_'+modTag]=math.sqrt(xsec_ttbar**2+ttHF**2+hDamp**2)#math.sqrt(QCDscale_ttbar**2+pdf_gg**2+ttHF**2)
-	modelingSys['ttnobb_'+modTag]=math.sqrt(xsec_ttbar**2+hDamp**2)#math.sqrt(QCDscale_ttbar**2+pdf_gg**2)
-	modelingSys['ttH_'+modTag]=xsec_ttH
-	modelingSys['top_'+modTag]=xsec_top#math.sqrt(QCDscale_top**2+pdf_qg**2)
-	modelingSys['ewk_'+modTag]=xsec_ewk#math.sqrt(QCDscale_ewk**2+pdf_qqbar**2)
+def print_tables( tables, variable ):
+  def nominal_table():
+  
+  def an_table():
+  
+  def pas_table( tables ):
+  
+  def systematic_table( tables ):
+  
+  def print_table():
+  
+def main():
+  groups = group_process()
+  for variable in args.variables:
+    print( ">> Producing histograms and tables for: {}".format( variable ) )
+    hists = load_histograms( variable )
+    hists = correct_histograms( hists )
+    hists = consolidate_histograms( hists )
+    tables = make_tables( hists )
+    theta_templates( hists )
+    combine_templates( hists )
+    summary_templates( hists )
+    print_tables( tables, variable )
+    del hists
+    del tables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
