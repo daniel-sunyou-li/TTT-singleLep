@@ -45,6 +45,11 @@ def category_tag( category ):
     category[ "NJ" ] 
   )
   
+def hist_tag( *args ):
+  histTag = args[0]
+  for arg in args[1:]: histTag += "_{}".format( arg )
+  return histTag
+	
 def group_process():
   groups = { group: {} for group in [ "BKG", "SIG", "DAT" ] }
   
@@ -205,8 +210,8 @@ def consolidate_histograms( hists, variable, categories ):
     for category in categories:
       catTag = category_tag( category )
       N = {
-        "TTBB": hists[ "CMB" ][ "TTBB_" + catTag ].Integral(),
-        "TTNOBB": hists[ "CMB" ][ "TTNOBB_" + catTag ].Integral()
+        "TTBB": hists[ "CMB" ][ hist_key( "TTBB", catTag ) ].Integral(),
+        "TTNOBB": hists[ "CMB" ][ hist_key( "TTNOBB", catTag ) ].Integral()
       }
       if config.ttLFsf == -1:
         try: ttLFsf = 1. + ( 1. - config.ttLFsf ) * ( N[ "TTBB" ] / N[ "TTNOBB" ] )
@@ -308,8 +313,41 @@ def consolidate_histograms( hists, variable, categories ):
   return hists
          
 
-def combine_templates( hists ):
+def combine_templates( hists, variable, categories ):
   print( ">> Writing Combine templates" )
+  combine_name = "template_combine_{}_{}.root".format( variable, lumiStr )
+  combine_file = TFile( combine_name, "RECREATE" )
+  
+  for category in categories:
+  	catTag = category_tag( category )
+		
+		histKey = "DAT_{}".format( catTag )
+		hists[ "CMB" ][ histKey ].SetName( hists[ "CMB" ][ histKey ].GetName().replace( "DAT", "data_obs" ) )
+		hists[ "CMB" ][ histKey ].Write()
+		
+		for process in groups[ "SIG" ][ "PROCESS" ]:
+			histKey = "{}_{}".format( process, catTag )
+			hists[ "SIG" ][ histKey ].SetName( hists[ "SIG" ][ histKey ].GetName().replace( "SIG", process ) )
+			hists[ "SIG" ][ histKey ].Write()
+			if args.systematics:
+				for syst in config.systematics + [ "HD", "UE" ]:
+					if syst == "HD" and not args.hd: continue
+					if syst == "UE" and not args.ue: continue
+					if syst.upper() == "TOPPT" or syst.upper() == "HT": continue
+					for shift in [ "UP", "DN" ]:
+						histKey = "{}_{}_{}".format( process, catTag, syst.upper() + shift )
+						hists[ "SIG" ][ histKey ].SetName( hists[ histKey ].GetName().replace( "SIG", process ) )
+						hists[ "SIG" ][ histKey ].Write()
+			if args.pdf:
+				for i in range( config.pdf_range ):
+					histKey = "{}_{}_PDF{}".format( process, catTag, syst.upper() + shift )
+		
+		
+		
+		if args.systematics:
+			hists[ "CMB" ][ "
+									 
+									 
 	 
 def make_tables( hists, variable ):
   def initialize():
