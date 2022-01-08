@@ -1,66 +1,41 @@
 #!/usr/bin/python
 
-import os,sys,time,math,fnmatch
+import os, sys, time, math, fnmatch
 parent = os.path.dirname(os.getcwd())
 sys.path.append(parent)
 from array import array
-#from weights import *
 from modSyst import *
 from utils import *
 from ROOT import *
+from argparse import ArgumentParser()
 start_time = time.time()
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Run as:
-# > python modifyBinning.py
-# 
-# Optional arguments:
-# -- statistical uncertainty threshold
-#
-# Notes:
-# -- Finds certain root files in a given directory and rebins all histograms in each file
-# -- A selection of subset of files in the input directory can be done below under "#Setup the selection ..."
-# -- A custom binning choice can also be given by manually filling "xbinsList[chn]" for each channel
-#    with the preferred choice of binning
-# -- If no rebinning is wanted, but want to add PDF and R/F uncertainties, use a stat unc threshold 
-#    that is larger than 100% (i.e, >1.)
-# -- If CR and SR templates are in the same file and single bins are required for CR templates,
-#    this can be done with "singleBinCR" bool (assumes that the CR templates contain "isCR" tags!).
-# -- Use "removalKeys" to remove specific systematics from the output file.
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+parser = ArgumentParser()
+parser.add_argument( "-t", "--threshold", default = 0.3 )
+parser.add_argument( "-y", "--year", required = True )
+parser.add_argument( "-pdf", "--pdf", action = "store_true" )
+parser.add_argument( "-murf", "--murf", action = "store_true" )
+parser.add_argument( "--psweights", action = "store_true" )
+parser.add_argument( "--normtheorysig", action = "store_true" )
+parser.add_argument( "--normtheorybkg", action = "store_true" )
+parser.add_argument( "-f", "--folder" )
+parser.add_argument( "-v", "--variable", required = True )
+parser.add_argument( "-b", "--blind", action = "store_true" )
+parser.add_argument( "--statshapes", action = "store_true" )
+parser.add_argument( "--smoothing", action = "store_true" )
+parser.add_argument( "--symmetrize", action = "store_true" )
+args = parser.parse()
 
-year=sys.argv[1]
-if year=='R16':
-	from weights16 import *
-elif year=='R17':
-	from weights17 import *
-elif year=='R18':
-	from weights18 import *
+if args.year == "16": from weights_UL16 import *
+elif args.year == "17": from weights_UL17 import *
+elif args.year == "18": from weights_UL18 import *
 
-iPlot=sys.argv[2]
-saveKey = ''
-# if len(sys.argv)>1: iPlot=str(sys.argv[1])
-cutString = ''#'lep30_MET150_NJets4_DR1_1jet450_2jet150'
 lumiStr = str(targetlumi/1000).replace('.','p')+'fb' # 1/fb
 templateDir = os.getcwd()+'/templates_'+year+'_'+sys.argv[3]+'/'+cutString
 combinefile = 'templates_'+iPlot+'_'+lumiStr+'.root'
 
-blindBDT = True
-
-quiet = True #if you don't want to see the warnings that are mostly from the stat. shape algorithm!
-rebinCombine = True #else rebins theta templates
-doStatShapes = False
-doSmoothing = True
-smoothingAlgo = 'lowess' #lowess, super, or kern
-symmetrizeSmoothing = True #Symmetrize up/down shifts around nominal before smoothing
-doPDF = True
-doMURF = True
-doPSWeights = True
-normalizeTheorySystSig = True #normalize renorm/fact, PDF and ISR/FSR systematics to nominal templates for signals
-normalizeTheorySystBkg = False #normalize renorm/fact, PDF and ISR/FSR systematics to nominal templates for backgrounds
-if normalizeTheorySystBkg: saveKey+='_tshape'
 #tttt, X53, TT, BB, HTB, etc --> this is used to identify signal histograms for combine templates when normalizing the pdf and muRF shapes to nominal!!!!
-sigName = 'tttx' #MAKE SURE THIS WORKS FOR YOUR ANALYSIS PROPERLY!!!!!!!!!!!
+sigName = "TTTX" #MAKE SURE THIS WORKS FOR YOUR ANALYSIS PROPERLY!!!!!!!!!!!
 massList = [690]
 sigProcList = [sigName+'M'+str(mass) for mass in massList]
 if sigName=='tttx': sigProcList = ["TTTJ","TTTW"]
