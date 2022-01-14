@@ -7,6 +7,8 @@ from argparse import ArgumentParser
 from json import loads as load_json
 from json import dump as dump_json
 
+execfile( "EOSSafeUtils.py" )
+
 # read in arguments
 parser = ArgumentParser()
 parser.add_argument("-y","--year",required=True,help="The sample year (2017 or 2018)")
@@ -203,8 +205,14 @@ def submit_jobs( files, key, condorDir, logrDir, sampleDir ):
   if args.verbose: print( ">> Making new EOS directory: store/user/{}/{}/".format( config.eosUserName, outputDir ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, sampleDir.replace( "step2","step3" ) ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, outputDir ) ) 
+  step3_files = EOSlistdir( "eos/uscms/store/user/{}/{}/{}".format(
+    config.eosUserName,
+    config.step3Sample[ args.year ],
+    key
+  ) )
   jobCount = 0
   for file in files[key]:
+    if file in step3_files: continue
     if args.verbose: print( ">> Submitting Condor job for {}/{}".format( key, file ) )
     condor_job( file.split(".")[0], condorDir, outputDir, logDir, key )
     jobCount += 1

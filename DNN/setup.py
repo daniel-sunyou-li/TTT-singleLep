@@ -178,27 +178,37 @@ def brux_to_eos( year, systematics, samples ):
 
 def create_tar():
   # tar the CMSSW repo
-  tarDir = "CMSSW_10_6_9/src/TTT-singleLep/"
-  if "CMSSW1069_ttt.tgz" in os.listdir( home ):
-    print( ">> Deleting existing CMSSW1069_ttt.tgz" ) 
-    os.system( "rm {}{}".format( home, "CMSSW1069_ttt.tgz" ) )
-  print( ">> Creating new tar file for CMSSW1069_ttt.tgz" )
-  os.system( "tar -C ~/nobackup/TTT-singleLep/ -zcvf CMSSW1069_ttt.tgz --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\"  --exclude=\"{}\" --exclude=\"{}\" --exclude=\"{}\" {}".format(
-    tarDir + "LJMet-Slimmer-3tops/*",
-    tarDir + "singleLepAnalyzer/*",
-    tarDir + "FWLJMET/*",
-    tarDir + "ABCDnn/*",
-    tarDir + "DNN/condor_log*",
-    tarDir + "DNN/dataset*",
-    tarDir + "DNN/application_log*",
-    tarDir + "DNN/notebooks/*",
-    tarDir + "DNN/*.pkl",
-    tarDir + "*.tgz",
-    tarDir + ".git/*",
-    "CMSSW_10_6_9/" 
-  ) )
-  print( ">> Transferring CMSSW1069_ttt.tgz to EOS" )
-  os.system( "xrdcp -f CMSSW1069_ttt.tgz root://cmseos.fnal.gov//store/user/{}".format( config.eosUserName ) )
+  tarDir = "CMSSW_10_6_19/src/TTT-singleLep/"
+  if "CMSSW106_ttt.tgz" in os.listdir( home ):
+    print( ">> Deleting existing CMSSW106_ttt.tgz" ) 
+    os.system( "rm {}{}".format( home, "CMSSW106_ttt.tgz" ) )
+  print( ">> Creating new tar file for CMSSW106_ttt.tgz" )
+  tar_command = "tar -C ~/nobackup/TTT-singleLep/ -zcvf CMSSW106_ttt.tgz"
+  excludes = [
+    "PhysicsTools",
+    "RecoEgamma",
+    "RecoJets",
+    "RecoMET",
+    "TopTagger",
+    "LJMet-Slimmer-3tops",
+    "LJMet",
+    "WeightAnalyzer/*"
+    "singleLepAnalyzer/*",
+    "DNN/notebooks/*",
+    "DNN/condor_log*",
+    "DNN/dataset*",
+    "DNN/application_log*",
+    "DNN/*.pkl",
+    "*.so",
+    "*.tgz",
+    ".git/*"
+  ]
+  for exclude in excludes: tar_command += " --exclude=\"{}\"".format( exclude )
+  tar_command += " CMSSW_10_6_19/"
+  os.system( tar_command )
+  
+  print( ">> Transferring CMSSW106_ttt.tgz to EOS" )
+  os.system( "xrdcp -f CMSSW106_ttt.tgz root://cmseos.fnal.gov//store/user/{}".format( config.eosUserName ) )
   print( "[OK ] Transfer complete!" )
  
 def main():

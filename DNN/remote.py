@@ -72,12 +72,12 @@ for bkg in config.bkg_training[ args.year ]:
 
 # Set weights and cuts
 cutStr = config.base_cut
-cutStr += " && ( NJetsCSV_MultiLepCalc >= {} )".format( args.NBJETS ) 
-cutStr += " && ( NJets_JetSubCalc >= {} )".format( args.NJETS )
+cutStr += " && ( isTraining == 1 )"
+cutStr += " && ( NJetsCSV_JetSubCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( args.NBJETS, args.NJETS ) 
 cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet > {} ) && ( minDR_lepJet > {} )".format( args.AK4HT, args.MET, args.MT, args.MINDR )
 cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( args.LEPPT, args.LEPPT ) 
 
-loader.SetSignalWeightExpression( config.weightStr )
+loader.SetSignalWeightExpression( "1" )
 loader.SetBackgroundWeightExpression( config.weightStr )
 
 cut = TCut( cutStr )
@@ -94,8 +94,7 @@ model = Sequential()
 model.add( Dense( num_vars,
                 input_dim = num_vars,
                 activation = "relu") )
-for _ in range( 3 ):
-    model.add( BatchNormalization() )
+for _ in range( 2 ):
     model.add( Dropout( 0.3 ) )
     model.add( Dense( 50, activation = "relu" ) )
 model.add( Dense( 2, activation="sigmoid" ) )
@@ -113,7 +112,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:TriesEarlyStopping=5:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=20:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

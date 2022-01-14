@@ -4,17 +4,20 @@ import os
 ## PARSE ARGUMENTS
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing( "analysis" )
-options.register( "isTest", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
+options.register( "isTest", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is test" )
 options.register( "systematics", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Include systematics" )
-options.register( "isMC", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
-options.register( "isTTbar", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
+options.register( "isMC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is MC")
+options.register( "isTTbar", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Is TTbar")
 options.register( "doGenHT", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do Gen HT")
 options.register( "era", "2017", VarParsing.multiplicity.singleton, VarParsing.varType.string, "Run era" )
+options.register( "doJEC", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "Do new JEC" )
 
 ## SET DEFAULT VALUES
-options.maxEvents = -1 if not options.isTest else 5
+options.maxEvents = -1 if not options.isTest else 10
 options.inputFiles = [
-"root://cmsxrootd.fnal.gov//store/data/Run2017B/SingleElectron/MINIAOD/UL2017_MiniAODv2-v1/270000/00E7B0AA-E2D6-7245-9407-D6661A8BB74B.root"
+#"root://cmsxrootd.fnal.gov//store/data/Run2017B/SingleElectron/MINIAOD/UL2017_MiniAODv2-v1/270000/00E7B0AA-E2D6-7245-9407-D6661A8BB74B.root"
+#"root://cmsxrootd.fnal.gov//store/mc/RunIISummer20UL17MiniAODv2/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/MINIAODSIM/PUForMUOVal_106X_mc2017_realistic_v9_ext1-v2/110000/0053076B-0C68-9644-8013-7206CA85026B.root"
+"/store/mc/RunIISummer20UL17MiniAOD/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/MINIAODSIM/106X_mc2017_realistic_v6-v2/00000/2AA87953-FA66-BA48-B3F3-AE0105F6323D.root"
 ]
 options.parseArguments()
 
@@ -25,6 +28,7 @@ isMC = options.isMC
 isTTbar = options.isTTbar
 doGenHT = options.doGenHT
 era = options.era
+doJEC = options.doJEC
 
 # Check arguments
 print( ">> Options used: \n{}".format( options ) )
@@ -154,7 +158,7 @@ process.load( "Configuration.StandardSequences.Services_cff" )
 process.load( "Configuration.StandardSequences.MagneticField_cff" )
 process.load( "Configuration.StandardSequences.FrontierConditions_GlobalTag_cff" )
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag( process.GlobalTag, "106X_mc2017_realistic_v8", "" )
+process.GlobalTag = GlobalTag( process.GlobalTag, "106X_mc2017_realistic_v9", "" )
 if not isMC: process.GlobalTag = GlobalTag( process.GlobalTag, "106X_dataRun2_v35" )
 print( ">> Using global tag: {}".format( process.GlobalTag.globaltag ) )
 
@@ -331,7 +335,7 @@ jetDir = {
 for key in jetDir: print( ">> Using JEC/JER MC SF in {}".format( jetDir[key] ) )
     
 ## For Jet corrections
-doNewJEC                 = True
+doNewJEC                 = doJEC
 JECup                    = False
 JECdown                  = False
 JERup                    = False
@@ -426,7 +430,7 @@ MultiLepSelector_cfg = cms.PSet(
 
   # MET cuts
   met_cuts        = cms.bool(True),
-  min_met         = cms.double(20.0),
+  min_met         = cms.double(30.0),
   max_met         = cms.double(99999999999.0),
   met_collection  = cms.InputTag( "slimmedMETs" ),
   rhoJetsInputTag = cms.InputTag( "fixedGridRhoFastjetAll" ), #for jetmetcorrection
@@ -438,7 +442,7 @@ MultiLepSelector_cfg = cms.PSet(
   muon_cuts                = cms.bool(True),
   muonsCollection          = cms.InputTag("slimmedMuons"),
   min_muon                 = cms.int32(0), #not implemented in src code
-  muon_minpt               = cms.double(15.0),
+  muon_minpt               = cms.double(20.0),
   muon_maxeta              = cms.double(2.4),
   muon_useMiniIso          = cms.bool(True),
   loose_muon_minpt         = cms.double(10.0),
@@ -457,7 +461,7 @@ MultiLepSelector_cfg = cms.PSet(
   # electronsCollection      = cms.InputTag("slimmedElectrons"), #slimmedElectrons::LJMET" #for Egamma ID V2
   electronsCollection      = cms.InputTag("slimmedElectrons::LJMET"), #slimmedElectrons::LJMET" #for Egamma ID V2
   min_electron             = cms.int32(0), #not implemented in src code
-  electron_minpt           = cms.double(15.0),
+  electron_minpt           = cms.double(20.0),
   electron_maxeta          = cms.double(2.5),
   electron_useMiniIso      = cms.bool(True),
   electron_miniIso         = cms.double(0.1),
@@ -496,7 +500,7 @@ MultiLepSelector_cfg = cms.PSet(
   jet_maxeta               = cms.double(3.0),
   jet_minpt_AK8            = cms.double(170.0),
   jet_maxeta_AK8           = cms.double(2.4),
-  min_jet                  = cms.int32(5),
+  min_jet                  = cms.int32(4),
   max_jet                  = cms.int32(4000),
   leading_jet_pt           = cms.double(20.0),
   # Jet corrections are read from txt files

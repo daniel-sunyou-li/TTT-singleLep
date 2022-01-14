@@ -38,10 +38,10 @@ public:
   SFmap hscale_HT500Njet9_ttcc;
   SFmap hscale_HT500Njet9_tt2b;
   SFmap hscale_HT500Njet9_tt1b;
-  // SFmap hscale_STs;
-  // SFmap hscale_STt;
-  // SFmap hscale_STtw;
-  // SFmap hscale_WJets;
+  SFmap hscale_STs;
+  SFmap hscale_STt;
+  SFmap hscale_STtw;
+  SFmap hscale_WJets;
 };
 
 #endif

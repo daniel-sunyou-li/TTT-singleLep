@@ -123,7 +123,7 @@ for sample in samples:
               for j in range( i + 1, i + filesPerJob ):
                 if j >= len(rootFiles): continue
                 idParts = ( rootFiles[j].split('.')[0] ).split('_')[-2:]
-                idList += "{}{} ".format( idPars[0][-1], idParts[1] )
+                idList += "{}{} ".format( idParts[0][-1], idParts[1] )
             elif "ext" in segments[-2]:     # WON'T WORK in FWLJMET 052219, but ok since no samples need it
               idList = "{}{} ".format( segments[-2][-4:], segements[-1] )
               for j in range( i + 1, i + filesPerJob ):

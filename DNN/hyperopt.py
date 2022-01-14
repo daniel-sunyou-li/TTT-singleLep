@@ -125,7 +125,7 @@ print( ">> Creating hyper parameter optimization sub-directory: {}".format( args
 os.system( "mkdir ./{}/".format( os.path.join( args.dataset, subDirName ) ) ) 
 print( ">> Variables used in optimization:\n - {}".format( "\n - ".join( variables ) ) )
 
-tree_folder = config.step2DirLPC[ year ] + "nominal/"
+tree_folder = config.step2DirXRD[ year ] + "nominal/"
 signal_files = [ os.path.join( tree_folder, sig ) for sig in ( config.sig_training[ year ] ) ]
 background_files = [ os.path.join( tree_folder, bkg ) for bkg in ( config.bkg_training[ year ] ) ]
 
@@ -183,20 +183,20 @@ CONFIG = {
     "LMI",
     "QMI"
   ],
-    "epochs": 50,
+    "epochs": 20,
     "patience": 5,
     "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
 
     "hidden_layers": [ 1, 2 ],
-    "initial_nodes": [ len(variables), len(variables) * 10 ],
+    "initial_nodes": [ len(variables), len(variables) * 5 ],
     "node_pattern": [ "static", "dynamic" ],
     "batch_power": [ 8, 9, 10 ],
-    "learning_rate": [ 1e-4, 1e-3, 1e-2],
+    "learning_rate": [ 1e-5, 1e-4],
     "regulator": [ "dropout", "none" ],
     "activation_function": [ "selu", "softplus", "elu" ],
 
-    "n_calls": 30,
-    "n_starts": 20,
+    "n_calls": 20,
+    "n_starts": 15,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
 }

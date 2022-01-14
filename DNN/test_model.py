@@ -27,8 +27,8 @@ year = jsonFile[ "year" ]
 files = [
   config.step2DirXRD[ year ] + "nominal/" + config.sig_training[ year ][0], # tttj
   config.step2DirXRD[ year ] + "nominal/" + config.sig_training[ year ][1], # tttw
-  config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][0], # tttt
-  config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][1]  # ttjj
+  #config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][0], # tttt
+  #config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][1]  # ttjj
 ]
 
 variables = jsonFile[ "variables" ]

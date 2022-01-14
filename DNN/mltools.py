@@ -91,6 +91,7 @@ class MLTrainingInstance(object):
           print( ">> Cut events file will be overridden." )
           override = True
         cut_events_pkl.append( cut_event_pkl )
+        del cut_event_pkl
 
     if override:
       self.apply_cut()
@@ -106,19 +107,25 @@ class MLTrainingInstance(object):
       }
       c_s, c_b = 0, 0
       for event_key in self.cut_events["signal"].keys(): 
-        self.cut_events["signal"][event_key] = self.cut_events["signal"][event_key]
+        #self.cut_events["signal"][event_key] = self.cut_events["signal"][event_key]
         c_s += len( self.cut_events["signal"][event_key] )
       for event_key in self.cut_events["background"].keys():
-        self.cut_events["background"][event_key] = self.cut_events["background"][event_key].tolist()
+        self.cut_events["background"][event_key] = self.cut_events["background"][event_key]
         c_b += len( self.cut_events["background"][event_key] )
 
-      for cut_event in cut_events_pkl[1:]:
-        for event_key in cut_event[ "signal" ].keys():
-          self.cut_events[ "signal" ][ event_key ].extend( cut_event[ "signal" ][ event_key ] )
-          c_s += len( cut_event[ "signal" ][ event_key ] )
-        for event_key in cut_event[ "background" ].keys():
-          self.cut_events[ "background" ][ event_key ].extend( cut_event[ "background" ][ event_key ].tolist() )
-          c_b += len( cut_event[ "background" ][ event_key ] )
+      del cut_events_pkl[0]
+      while len( cut_events_pkl ) > 0:
+        while len( cut_events_pkl[0][ "signal" ].keys() ) > 0:     
+          event_key = cut_events_pkl[0][ "signal" ].keys()[0]
+          self.cut_events[ "signal" ][ event_key  ].extend( cut_events_pkl[0][ "signal" ][ event_key ] )
+          c_s += len( cut_events_pkl[0][ "signal" ][ event_key ] )
+          del cut_events_pkl[0][ "signal" ][ event_key ]
+        while len( cut_events_pkl[0][ "background" ].keys() ) > 0:
+          event_key = cut_events_pkl[0][ "background" ].keys()[0]
+          self.cut_events[ "background" ][ event_key ].extend( cut_events_pkl[0][ "background" ][ event_key ] )
+          c_b += len( cut_events_pkl[0][ "background" ][ event_key ] )
+          del cut_events_pkl[0][ "background" ][ event_key ]
+        del cut_events_pkl[0]
       print( "[OK] Found {} signal events and {} background events...".format( c_s, c_b ) )
 
   def save_cut_events( self, paths ):
@@ -151,48 +158,56 @@ class MLTrainingInstance(object):
     for path in self.signal_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
-      n_s += df.Count().GetValue()
+      df_count = df.Count().GetValue()
+      n_s += df_count
       df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
+      df3_count = df_3.Count().GetValue()
       sig_dict = df_3.AsNumpy( columns = VARIABLES )
       df_weight = df_3.Define( "weight", "compute_weight( triggerXSF, pileupWeight, lepIdSF, isoSF, L1NonPrefiringProb_CommonCalc, MCWeight_MultiLepCalc, xsecEff, tthfWeight, btagDeepJetWeight, btagDeepJet2DWeight_HTnj )" )
+      del df, df_1, df_2, df_3
       weights[ path ] = df_weight.Sum( "weight" ).GetValue()
-      factors[ path ] = weights[ path ] / df_weight.Count().GetValue()
+      factors[ path ] = float( df3_count ) / weights[ path ] 
       sig_list = []
       for x, y in sig_dict.items(): sig_list.append(y)
       if path in all_signals:
         all_signals[path] = np.concatenate( ( all_signals[path], np.array( sig_list ).transpose() ) )
       else:
         all_signals[path] = np.array( sig_list ).transpose()
-      print( "     - {}/{} events passed, event weight = {:.0f}".format( df_3.Count().GetValue(), df.Count().GetValue(), weights[path] ) )
-      c_s += df_3.Count().GetValue()
+      print( "     - {}/{} events passed, event weight = {:.2f}".format( df3_count, df_count, weights[path] ) )
+      c_s += df3_count
       w_s += weights[ path ]
-      
+      del df_weight, sig_list      
+
     all_backgrounds = {}
     n_b, c_b, w_b = 0, 0, 0
     min_factor = 1e10
     for path in self.background_paths:
       print( "   >> Applying cuts to {}...".format( path.split("/")[-1] ) )
       df = ROOT.RDataFrame( "ljmet", path )
-      n_b += df.Count().GetValue()
+      df_count = df.Count().GetValue()
+      n_b += df_count
       df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
+      df3_count = df_3.Count().GetValue()
       df_weight = df_3.Define( "weight", "compute_weight( triggerXSF, pileupWeight, lepIdSF, isoSF, L1NonPrefiringProb_CommonCalc, MCWeight_MultiLepCalc, xsecEff, tthfWeight, btagDeepJetWeight, btagDeepJet2DWeight_HTnj )" )
       weights[ path ] = df_weight.Sum( "weight" ).GetValue()
-      factors[ path ] = weights[ path ] / df_weight.Count().GetValue()
+      factors[ path ] = df3_count / weights[ path ]
       if factors[ path ] < min_factor: min_factor = factors[ path ]
       bkg_dict = df_3.AsNumpy( columns = VARIABLES )
+      del df, df_1, df_2, df_3
       bkg_list = []
       for x, y in bkg_dict.items(): bkg_list.append(y)
       if path in all_backgrounds:
         all_backgrounds[path] = np.concatenate( ( all_backgrounds[path], np.array( bkg_list ).tranpose() ) )
       else:
         all_backgrounds[path] = np.array( bkg_list ).transpose()
-      print( "     - {}/{} events passed, event weight = {:0.f}".format( df_3.Count().GetValue(), df.Count().GetValue(), weights[ path ] ) )
-      c_b += df_3.Count().GetValue()
+      print( "     - {}/{} events passed, event weight = {:.2f}".format( df3_count, df_count, weights[ path ] ) )
+      c_b += df3_count
       w_b += weights[ path ]
+      del df_weight, bkg_list
 
     self.cut_events = {
       "condition": self.cut,
@@ -203,33 +218,31 @@ class MLTrainingInstance(object):
     }
 
     for path, events in all_signals.iteritems(): 
-      self.cut_events[ "signal" ][ path ] = []
-      for event in events: self.cut_events[ "signal" ][ path ].append( np.append( event, 1 ) )
+      self.cut_events[ "signal" ][ path ] = events.tolist()
+      #self.cut_events[ "signal" ][ path ] = []
+      #for event in events: self.cut_events[ "signal" ][ path ].append( np.append( event, 1 ) )
+    del all_signals
     for path, events in all_backgrounds.iteritems():
-      self.cut_events[ "background" ][ path ] = []
-      for event in events: self.cut_events[ "background" ][ path ].append( np.append( event, 0 ) )
-        
-    bkg_frac = self.ratio * float( c_s ) / float( c_b )
+      self.cut_events[ "background" ][ path ] = events
+      #self.cut_events[ "background" ][ path ] = []
+      #for event in events: self.cut_events[ "background" ][ path ].append( np.append( event, 0 ) )
+    del all_backgrounds
+   
     r_b = 0
-    if bkg_frac > 1: 
-      print( "[WARN] The reduced background fraction is greater than 1.0, setting to 1.0..." )
-      bkg_frac = 1.
-    if self.ratio < 0:
-      print( ">> Using all background samples for training..." )
-      bkg_frac = 1.
     for path in self.cut_events[ "background" ]:
-      nEvents_bkg = weights[ path ] * min_factor if ( weights[ path ] * min_factor <= len( self.cut_events[ "background" ][ path ] ) else len( self.cut_events[ "background" ][ path ] )
-      bkg_excl = np.around( ( 1. - bkg_frac ) * nEvents_bkg, 0 )
-      bkg_incl = int( nEvents_bkg - bkg_excl )
-      mask = np.concatenate( ( np.full( int( bkg_incl ), 1 ), np.full( int( bkg_excl ), 0 ) ) )
+      max_path = self.ratio * float( c_s ) * ( weights[ path ] / float( w_b ) )
+      rel_path = min_factor * weights[ path ]
+      nEvents_bkg = max_path if self.ratio > 0 else rel_path
+      bkg_incl = int( nEvents_bkg ) if nEvents_bkg <= len( self.cut_events[ "background" ][ path ] ) else len( self.cut_events[ "background" ][ path ] )
+      bkg_excl = int( len( self.cut_events[ "background" ][ path ] ) - bkg_incl )
+      mask = np.concatenate( ( np.full( bkg_incl, 1 ), np.full( bkg_excl, 0 ) ) )
       np.random.shuffle( mask )
-      self.cut_events[ "background" ][ path ] = np.array( self.cut_events[ "background" ][ path ] )[ mask.astype(bool) ]
-      r_b += nEvents_bkg
+      self.cut_events[ "background" ][ path ] = np.array( self.cut_events[ "background" ][ path ] )[ mask.astype(bool) ].tolist()
+      r_b += bkg_incl
 
-    print( ">> Signal: {}/{}, Weighted: {}".format( c_s, n_s, w_s ) )
-    print( ">> Background: {}/{}, Weighted: {:.0f}".format( c_b, n_b, w_b ) )
-    if bkg_frac > 0 and bkg_frac < 1:
-      print( ">> Reducing background to be x{} of signal size: {} events".format( self.ratio, r_b ) ) 
+    print( ">> Signal: {}/{}, Weighted: {:.0f}".format( c_s, n_s, w_s ) )
+    print( ">> Background: Passed = {}/{}, Weighted = {:.0f}, Training = {}".format( c_b, n_b, w_b, r_b ) )
+    print( "  - Minimum Factor: {:.2f}".format( min_factor ) )
 
   def build_model(self):
     # Override with the code that builds the Keras model.
@@ -247,13 +260,9 @@ class HyperParameterModel(MLTrainingInstance):
 
   def select_ml_variables(self, sig_events, bkg_events, varlist):
     # Select which variables from ML_VARIABLES to use in training
-    events = []
-    positions = {v: VARIABLES.index(v) for v in varlist}
-    for e in sig_events:
-      events.append([e[positions[v]] for v in varlist])
-    for e in bkg_events:
-      events.append([e[positions[v]] for v in varlist])
-    return events
+    positions = { v: VARIABLES.index(v) for v in varlist }
+    var_mask = [ positions[v] for v in positions ]
+    return np.concatenate( ( np.array( sig_events )[:, var_mask], np.array( bkg_events )[:, var_mask] ) )
 
   def build_model(self, input_size="auto"):
     self.model = Sequential()
@@ -299,7 +308,6 @@ class HyperParameterModel(MLTrainingInstance):
     )
 
     if self.model_name != None:
-      #tf.keras.experimental.export_saved_model( self.model, self.model_name )
       self.model.save( self.model_name )
 
     self.model.summary()
@@ -307,18 +315,18 @@ class HyperParameterModel(MLTrainingInstance):
   def train_model( self ):
     # Join all signals and backgrounds
     signal_events = []
-    for events in self.cut_events[ "signal" ].values():
-      for event in events:
-        signal_events.append( event )
+    for path in self.cut_events[ "signal" ]:
+      signal_events += self.cut_events[ "signal" ][ path ]
+    
     background_events = []
-    for events in self.cut_events[ "background" ].values():
-      for event in events:
-        background_events.append( event )
-        
+    for path in self.cut_events[ "background" ]:
+      background_events += self.cut_events[ "background" ][ path ]
+
     signal_labels = np.full( len( signal_events ), [1] ).astype( "bool" )
     background_labels = np.full( len( background_events ), [0] ).astype( "bool" )
 
-    all_x = np.array( self.select_ml_variables( signal_events, background_events, self.parameters[ "variables" ] ) )
+    all_x = self.select_ml_variables( signal_events, background_events, self.parameters[ "variables" ] )
+    del signal_events, background_events
     all_y = np.concatenate( ( signal_labels, background_labels ) )
 
     print( ">> Splitting data." )
@@ -326,6 +334,7 @@ class HyperParameterModel(MLTrainingInstance):
       all_x, all_y,
       test_size = 0.2
     )
+    del all_x, all_y
 
     model_checkpoint = ModelCheckpoint(
       self.model_name,
@@ -363,6 +372,8 @@ class HyperParameterModel(MLTrainingInstance):
 
     self.auc_train = auc( self.fpr_train, self.tpr_train )
     self.auc_test  = auc( self.fpr_test,  self.tpr_test )
+
+    del train_x, test_x, train_y, test_y, history
 
 class CrossValidationModel( HyperParameterModel ):
   def __init__( self, parameters, signal_paths, background_paths, ratio, model_folder, njets, nbjets, ak4ht, lepPt, met, mt, minDR, num_folds = 5 ):
@@ -428,10 +439,10 @@ class CrossValidationModel( HyperParameterModel ):
       ])
             
       fold_data.append( {
-        "train_x": np.array( self.select_ml_variables(
-          sig_train_k, bkg_train_k, self.parameters[ "variables" ] ) ),
-        "test_x": np.array( self.select_ml_variables(
-          sig_test_k, bkg_test_k, self.parameters[ "variables" ] ) ),
+        "train_x": self.select_ml_variables(
+          sig_train_k, bkg_train_k, self.parameters[ "variables" ] ),
+        "test_x": self.select_ml_variables(
+          sig_test_k, bkg_test_k, self.parameters[ "variables" ] ),
 
         "train_y": np.concatenate( (
           np.full( np.shape( sig_train_k )[0], 1 ).astype( "bool" ),

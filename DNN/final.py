@@ -92,7 +92,7 @@ for config_num, config_path in enumerate(config_order):
     save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( config_json[ "njets" ], config_json[ "nbjets" ], config_json[ "ak4ht" ], config_json["year"], i + 1 ) ) )  
 
   # Gather list of signal and background folders
-  tree_folder = config.step2DirLPC[ config_json["year"] ] + "nominal"
+  tree_folder = config.step2DirXRD[ config_json["year"] ] + "nominal"
   signal_files = [ os.path.join( tree_folder, sig ) for sig in config.sig_training[ config_json["year"] ] ]
   background_files = [ os.path.join( tree_folder, bkg ) for bkg in config.bkg_training[ config_json["year"] ] ]
   

@@ -13,15 +13,9 @@ TMVA.PyMethodBase.PyInitialize()
 def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
   # Returns the correlation matrix of the given variables
   # Get signal and background paths
-  tttw_path = os.path.join(os.getcwd(),
-                             config.step2Sample[ str(year) ] + "/nominal/",
-                             config.sig_training[ str(year) ][0] )
-  tttj_path = os.path.join(os.getcwd(),
-                             config.step2Sample[ str(year) ] + "/nominal/",
-                             config.sig_training[ str(year) ][1] )
-  bkgrnd_path = os.path.join(os.getcwd(),
-                             config.step2Sample[ str(year) ] + "/nominal/",
-                             config.bkg_training[ str(year) ][0] )
+  tttw_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
+  tttj_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][1] )
+  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year ) ], "nominal/", config.sig_training[ str(year ) ][0] )
 
   # Create ROOT.TMVA object
   loader = TMVA.DataLoader("tmva_data")
@@ -45,9 +39,7 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
   # Load signal and background
   loader.AddSignalTree(tttw)
   loader.AddSignalTree(tttj)
-  #loader.fTreeS = 
   loader.AddBackgroundTree(bkgrnd)
-  #loader.fTreeB = bkgrnd
 
   # Set weights
   weight_string = config.weightStr
@@ -56,7 +48,7 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
 
   # Set cuts
   cutStr = config.base_cut
-  cutStr += " && ( NJetsCSV_MultiLepCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
+  cutStr += " && ( NJetsCSV_JetSubCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
   cutStr += " && ( minDR_lepJet > {} )".format( minDR )
   cutStr += " && ( AK4HT >= {} ) && ( MT_lepMet > {} ) && ( corr_met_MultiLepCalc > {} ) ".format( ak4ht, mt, met )
   cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron ) ||".format( lepPt )

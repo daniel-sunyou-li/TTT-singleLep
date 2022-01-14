@@ -12,7 +12,7 @@ parser = ArgumentParser()
 parser.add_argument( "-v",   "--verbose",     action = "store_true", help = "Display detailed logs." )
 parser.add_argument( "-r",   "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
 parser.add_argument( "-p",   "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
-parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from. Valid: 2017 or 2018." )
+parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from: 16, 17, 18" )
 parser.add_argument( "-n",   "--seeds",       default = "500",       help = "The number of seeds to submit (only in submit mode)." )
 parser.add_argument( "-c",   "--correlation", default = "60",        help = "The correlation cutoff percentage." )
 parser.add_argument( "-l",   "--varlist",     default = "all",       help = "The variables to use when generating seeds." )
@@ -30,8 +30,8 @@ args = parser.parse_args()
 
 from correlation import generate_uncorrelated_seeds
 
-if args.year not in [ "2016", "2017", "2018" ]:
-  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 2016, 2017, 2018.".format( args.year ) )
+if args.year not in [ "16", "17", "18" ]:
+  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16, 17, 18.".format( args.year ) )
 
 # Parse command line arguments
 jt.LOG = args.verbose
@@ -114,7 +114,7 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "5 GB" if int( args.AK4HT ) > 400 else "4.2 GB",
+    "MEMORY": "7 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
@@ -128,7 +128,7 @@ def submit_job(job):
     "MT": args.MT,
     "MINDR": args.MINDR,
   }
-  if args.resubmit: condorParams[ "MEMORY" ] = "6.5 GB" 
+  if args.resubmit: condorParams[ "MEMORY" ] = "10 GB" 
  
   with open( job.path, "w" ) as f:
     f.write(
