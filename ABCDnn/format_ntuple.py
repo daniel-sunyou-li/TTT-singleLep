@@ -6,36 +6,52 @@ from array import array
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument( "-y", "--year", default = "2017", help = "Year for sample" )
-parser.add_argument( "-f", "--finalstate", required = True, help = "Final state of ttbar [Hadronic,Semilep,2L2nu]" )
+parser.add_argument( "-y",  "--year", default = "2017", help = "Year for sample" )
 parser.add_argument( "-sI", "--sIn", nargs = "*", default = [], help = "Source ROOT files to consolidate into one file" )
 parser.add_argument( "-tI", "--tIn", nargs = "*", default = [], help = "Target ROOT files to consolidate into one file" )
 parser.add_argument( "-sO", "--sOut", default = "source_ttbar", help = "Output name of source ROOT file" )
 parser.add_argument( "-tO", "--tOut", default = "target_data", help = "Output name of target ROOT file" )
-parser.add_argument( "-v", "--variables", nargs = "+", default = [ "AK4HT", "DNN" ], help = "Variables to transform" )
-parser.add_argument( "-p", "--pEvents", default = 100, help = "Percent of events (0 to 100) to include from each file." )
+parser.add_argument( "-v",  "--variables", nargs = "+", default = [ "AK4HT", "DNN_5j_1to50" ], help = "Variables to transform" )
+parser.add_argument( "-p",  "--pEvents", default = 100, help = "Percent of events (0 to 100) to include from each file." )
 args = parser.parse_args()
 
 # some params to consider editing --> need to check this (09/29)
 ttbar_xsec = 831.76
 target_lumi = {
-  "2016": 1.,
+  "2016": 35867.,
   "2017": 41530.,
-  "2018": 1.
+  "2018": 59970.
 }
 BR = {
   "Hadronic": 0.457,
-  "Semilep": 0.438,
-  "2L2nu": 0.105,
-  "None": 0
+  "SemiLeptonic": 0.438,
+  "2L2Nu": 0.105,
+  "HT500Njet9": 0.438 * 0.00617938417682763
 }
 num_MC = {
-  "2016": 1,
-  "2017": 109124472,
-  "2018": 1
+  "2016": {
+    "Hadronic":     67963984,
+    "SemiLeptonic": 106736180,
+    "2L2Nu":        67312164,
+    "HT500Njet9":   8912888
+  },
+  "2017": {
+    "Hadronic":     129092906,
+    "SemiLeptonic": 109124472,
+    "2L2Nu":        68448328,
+    "HT500Njet9":   8648145
+  },
+  "2018": {
+    "Hadronic":     132368556,
+    "SemiLeptonic": 100579948,
+    "2L2Nu":        63791474,
+    "HT500Njet9":   8398387
+  }
 }
 
-weight_ttbar = ttbar_xsec * target_lumi[ args.year ] * BR[ args.finalstate ] / num_MC[ args.year ]
+weight_ttbar = {}
+for finalstate in BR:
+  weight_ttbar[ finalstate ] = ttbar_xsec * target_lumi[ args.year ] * BR[ finalstate ] / num_MC[ args.year ][ finalstate ]
 
 class ToyTree:
   def __init__( self, name, trans_var ):
@@ -118,13 +134,13 @@ def format_ntuple( output, inputs, trans_var, weight = None ):
             
           event_data[ variable ] = getattr( rTree_in, str( variable ) )
       
-      if weight == None:
-        event_data[ "xsecWeight" ] = 1
-      else:
-        event_data[ "xsecWeight" ] = getattr( rTree_in, "triggerXSF" ) * getattr( rTree_in, "pileupWeight" ) * getattr( rTree_in, "lepIdSF" )
-        event_data[ "xsecWeight" ] *= getattr( rTree_in, "isoSF" ) * getattr( rTree_in, "L1NonPrefiringProb_CommonCalc" )
-        event_data[ "xsecWeight" ] *= getattr( rTree_in, "MCWeight_MultiLepCalc" ) / abs( getattr( rTree_in, "MCWeight_MultiLepCalc" ) )
-        event_data[ "xsecWeight" ] *= weight * 3
+      event_data[ "xsecWeight" ] = 1
+      for key in weight:
+        if key in input:
+          event_data[ "xsecWeight" ] = getattr( rTree_in, "triggerXSF" ) * getattr( rTree_in, "pileupWeight" ) * getattr( rTree_in, "lepIdSF" )
+          event_data[ "xsecWeight" ] *= getattr( rTree_in, "isoSF" ) * getattr( rTree_in, "L1NonPrefiringProb_CommonCalc" )
+          event_data[ "xsecWeight" ] *= getattr( rTree_in, "MCWeight_MultiLepCalc" ) / abs( getattr( rTree_in, "MCWeight_MultiLepCalc" ) )
+          event_data[ "xsecWeight" ] *= weight[ key ] * 3
         
       ntuple.Fill( event_data )
 
