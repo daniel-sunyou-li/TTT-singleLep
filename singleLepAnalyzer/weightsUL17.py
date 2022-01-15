@@ -1,276 +1,305 @@
 #!/usr/bin/python
 
-targetlumi = 41530. # 1/pb
+xsec[ "TT" ] = 831.8
 
-# Number of processed MC events (before selections)
-nRun={}
-# new counts for 2017
-#Do NGen*[1-2X], where X is the neg event fraction calculated from the jobs completed! 
-#A = P - N = F - 2*N   A/F = 1 - 2*(N/F)  N/F = (1 - A/F)/2
-nRun['TTJets'] = 14188545. #need negative counts
+BR = { 
+  "TT": {
+    "SemiLeptonic": 0.438,
+    "Hadronic": 0.457,
+    "2L2Nu": 0.105
+  }
+}
 
-BR_TTJetsHad = 0.457
-BR_TTJetsSemiLep = 0.438
-BR_TTJets2L2nu = 0.105
-filtEff_TTJets1000mtt = 0.02474
-filtEff_TTJets700mtt = 0.0921
-filtEff_TTJets0mtt = 0.8832 # 1-filtEff_TTJets700mtt-filtEff_TTJets1000mtt
-#filtEff_TTJetsSemiLepNjet9 = 0.0057 # from McM
-filtEff_TTJetsSemiLepNjet9 = 0.00617938417682763 # from nicholas.james.manganelli@cern.ch
-filtEff_TTJetsSemiLepNjet9HDAMPdn = 0.005645170035947885 # from nicholas.james.manganelli@cern.ch
-filtEff_TTJetsSemiLepNjet9HDAMPup = 0.006711348259851689 # from nicholas.james.manganelli@cern.ch
-filtEff_TTJetsSemiLepNjet9UEdn = 0.006108623095875414 # from nicholas.james.manganelli@cern.ch
-filtEff_TTJetsSemiLepNjet9UEup = 0.0062286452403598055 # from nicholas.james.manganelli@cern.ch
-nRun_TTJetsHad = 129092906.0 # from integral 130262340.0, file TTToHadronic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700_hadd.root
-nRun_TTJetsSemiLep = 109124472.0 # from integral 110085096.0, file TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700_hadd.root
-nRun_TTJets2L2nu = 68448328.0 # from integral 69155808.0, file TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700_hadd.root
-nRun_TTJets700mtt = 38299363.0 # from 39258853, file TT_Mtt-700to1000_TuneCP5_13TeV-powheg-pythia8_hadd.root
-nRun_TTJets1000mtt = 21288395.0 # from integral 22458751.0, file TT_Mtt-1000toInf_TuneCP5_PSweights_13TeV-powheg
-nRun_TTJetsSemiLepNjet9 = 8648145.0 # from integral, file TTToSemiLepton_HT500Njet9_TuneCP5_PSweights_13TeV-powheg-pythia8_Mtt0to700_hadd.root
-nRun['TTJetsHad0']    = nRun_TTJetsHad * filtEff_TTJets0mtt 
-nRun['TTJetsHad700']  = nRun_TTJetsHad * filtEff_TTJets700mtt  + nRun_TTJets700mtt  * BR_TTJetsHad
-nRun['TTJetsHad1000'] = nRun_TTJetsHad * filtEff_TTJets1000mtt + nRun_TTJets1000mtt * BR_TTJetsHad
-nRun['TTJetsSemiLep0']    = nRun_TTJetsSemiLep * filtEff_TTJets0mtt 
-nRun['TTJetsSemiLep700']  = nRun_TTJetsSemiLep * filtEff_TTJets700mtt  + nRun_TTJets700mtt  * BR_TTJetsSemiLep
-nRun['TTJetsSemiLep1000'] = nRun_TTJetsSemiLep * filtEff_TTJets1000mtt + nRun_TTJets1000mtt * BR_TTJetsSemiLep
-nRun['TTJets2L2nu0']    = nRun_TTJets2L2nu * filtEff_TTJets0mtt 
-nRun['TTJets2L2nu700']  = nRun_TTJets2L2nu * filtEff_TTJets700mtt  + nRun_TTJets700mtt  * BR_TTJets2L2nu
-nRun['TTJets2L2nu1000'] = nRun_TTJets2L2nu * filtEff_TTJets1000mtt + nRun_TTJets1000mtt * BR_TTJets2L2nu
-nRun['TTJets700mtt']  = nRun_TTJets700mtt  + nRun_TTJetsHad * filtEff_TTJets700mtt  + nRun_TTJetsSemiLep * filtEff_TTJets700mtt  + nRun_TTJets2L2nu * filtEff_TTJets700mtt
-nRun['TTJets1000mtt'] = nRun_TTJets1000mtt + nRun_TTJetsHad * filtEff_TTJets1000mtt + nRun_TTJetsSemiLep * filtEff_TTJets1000mtt + nRun_TTJets2L2nu * filtEff_TTJets1000mtt
+filtEff_tt = {
+  "Njet9": 0.00617938417682763,
+  "Njet9_HDDN": 0.005645170035947885,
+  "Njet9_HDUP": 0.006711348259851689,
+  "Njet9_UEDN": 0.006108623095875414,
+  "Njet9_UEUP": 0.0062286452403598055 
+}
 
-nRun['TTJetsHad'] = nRun_TTJetsHad
-nRun['TTJetsSemiLepNjet0'] = nRun_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9 ) 
-nRun['TTJetsSemiLepNjet9'] = nRun_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9 + nRun_TTJetsSemiLepNjet9
-nRun['TTJetsSemiLepNjet9bin'] = nRun['TTJetsSemiLepNjet9']
-nRun['TTJets2L2nu'] = nRun_TTJets2L2nu
-nRun['TTJetsSemiLep'] = nRun_TTJetsSemiLep
+k_factor = {
+  "WJets": 1.21
+}
 
-nRun['TTJets2L2nuUEdn'] = 5431150.0 # from integral, file TTTo2L2Nu_TuneCP5down_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJets2L2nuUEup'] = 5455598.0 # from integral, file TTTo2L2Nu_TuneCP5up_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJets2L2nuHDAMPdn'] = 5248352.0 # from integral, file TTTo2L2Nu_hdampDOWN_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJets2L2nuHDAMPup'] = 5389169.0 # from integral, file TTTo2L2Nu_hdampUP_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsSemiLepUEdn'] = 26885578.0 # from integral, file TTToSemiLeptonic_TuneCP5down_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsSemiLepUEup'] = 25953874.0 # from integral, file TTToSemiLeptonic_TuneCP5up_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsSemiLepHDAMPdn'] = 26359926.0 # from integral, file TTToSemiLeptonic_hdampDOWN_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsSemiLepHDAMPup'] = 27068397.0 # from integral, file TTToSemiLeptonic_hdampUP_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsHadUEdn'] = 25943263.0 # from integral, file TTToHadronic_TuneCP5down_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsHadUEup'] = 26986311.0 # from integral, file TTToHadronic_TuneCP5up_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsHadHDAMPdn'] = 26007959.0 # from integral, file TTToHadronic_hdampDOWN_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsHadHDAMPup'] = 25586551.0 # from integral, file TTToHadronic_hdampUP_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
+mc_stats = {
+  "TTTJ": { 
+    "EVENTS": 354000., 
+    "XSEC": 0.0003974 
+  },
+  "TTTW": { 
+    "EVENTS": 360000., 
+    "XSEC": 0.0007314
+  },
+  
+  "TTTT": { 
+    "EVENTS": 4526556., 
+    "XSEC": 0.01197
+  },
+  "TTWW": { 
+    "EVENTS": 698000., 
+    "XSEC": 0.00703
+  },
+  "TTWZ": { 
+    "EVENTS": 350000., 
+    "XSEC": 0.002453
+  },
+  "TTWH": { 
+    "EVENTS": 360000., 
+    "XSEC": 0.001141
+  },
+  "TTHH": { 
+    "EVENTS": 360000., 
+    "XSEC": 0.0006655
+  },
+  "TTZH": { 
+    "EVENTS": 350000., 
+    "XSEC": 0.00113
+  },
+  "TTZZ": { 
+    "EVENTS": 327000., 
+    "XSEC": 0.001385
+  },
+  "TTWl": { 
+    "EVENTS": 6497731., 
+    "XSEC": 0.2161
+  },
+  "TTWq": { 
+    "EVENTS": 359006., 
+    "XSEC": 0.4377
+  },
+  "TTZlM10": { 
+    "EVENTS": 6990534., 
+    "XSEC": 0.05324
+  },
+#  "TTZlM1to10": { 
+#    "EVENTS": 0., 
+#    "XSEC": 0.05324
+#  },
+  "TTHBB": { 
+    "EVENTS": 7661779., 
+    "XSEC": 0.5269
+  },
+  "TTHnoBB": { 
+    "EVENTS": 4965389., 
+    "XSEC": 0.5638
+  },
+  "Ts": { 
+    "EVENTS": 8938338., 
+    "XSEC": 3.44
+  },
+  "Tt": { 
+    "EVENTS": 121728252.0, 
+    "XSEC": 136.02
+  },
+  "Tbt": { 
+    "EVENTS": 65821722., 
+    "XSEC": 80.95
+  },
+  "TtW": { 
+    "EVENTS": 5648712., 
+    "XSEC": 35.83
+  },
+  "TbtW": { 
+    "EVENTS": 5673700., 
+    "XSEC": 35.83
+  },
+  
+  "QCD200": { 
+    "EVENTS": 42714435., 
+    "XSEC": 1712000
+  },
+  "QCD300": { 
+    "EVENTS": 43589739.0, 
+    "XSEC": 347700
+  },
+  "QCD500": { 
+    "EVENTS": 36194860., 
+    "XSEC": 32100
+  },
+  "QCD700": { 
+    "EVENTS": 34051754., 
+    "XSEC": 6831
+  },
+  "QCD1000": { 
+    "EVENTS": 10256089.0, 
+    "XSEC": 1207
+  },
+  "QCD1500": { 
+    "EVENTS": 7701876., 
+    "XSEC": 119.9
+  },
+  "QCD2000": { 
+    "EVENTS": 4112573.0, 
+    "XSEC": 25.24
+  },
+  
+  "WW": { 
+    "EVENTS": 15634000., 
+    "XSEC": 118.7
+  },
+  "WZ": { 
+    "EVENTS": 7889000., 
+    "XSEC": 47.13
+  },
+  "ZZ": { 
+    "EVENTS": 2706000., 
+    "XSEC": 16.523
+  },
+  
+  "DYM200": { 
+    "EVENTS": 12513057., 
+    "XSEC": 54.951
+  },
+  "DYM400": { 
+    "EVENTS": 5543804., 
+    "XSEC": 7.862
+  },
+  "DYM600": { 
+    "EVENTS": 5278417., 
+    "XSEC": 1.977
+  },
+  "DYM800": { 
+    "EVENTS": 4506887., 
+    "XSEC": 0.858
+  },
+  "DYM1200": { 
+    "EVENTS": 4802716., 
+    "XSEC": 0.191
+  },
+  "DYM2500": { 
+    "EVENTS": 1480047., 
+    "XSEC": 0.0045
+  },
+  
+  "WJets200": { 
+    "EVENTS": 42602407., 
+    "XSEC": 359.7 * k_factor[ "WJets" ]
+  },
+  "WJets400": { 
+    "EVENTS": 5437447., 
+    "XSEC": 48.91 * k_factor[ "WJets" ]
+  },
+  "WJets600": { 
+    "EVENTS": 5545298., 
+    "XSEC": 12.05 * k_factor[ "WJets" ]
+  },
+  "WJets800": { 
+    "EVENTS": 5088483.0, 
+    "XSEC": 5.501 * k_factor[ "WJets" ]
+  },
+  "WJets1200": { 
+    "EVENTS": 4942590., 
+    "XSEC": 1.329 * k_factor[ "WJets" ]
+  },
+  "WJets2500": { 
+    "EVENTS": 1185699.0, 
+    "XSEC": 0.03216 * k_factor[ "WJets" ]
+  },
+  
+  "TTToSemiLeptonic": { 
+    "EVENTS": 352212660.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9" ] )
+  },
+  "TTToSemiLeptonic_UEUP": { 
+    "EVENTS": 137475034.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_UEUP" ] )
+  },
+  "TTToSemiLeptonic_UEDN": { 
+    "EVENTS": 131182302.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_UEDN" ] )
+  },
+  "TTToSemiLeptonic_HDUP": { 
+    "EVENTS": 132383014.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_HDUP" ] )
+  },
+  "TTToSemiLeptonic_HDDN": { 
+    "EVENTS": 132018269.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_HDDN" ] )
+  },
+  
+  "TTToSemiLeptonicHT500": { 
+    "EVENTS": 352212660, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9" ] 
+  },
+  "TTToSemiLeptonicHT500_UEUP": { 
+    "EVENTS": 137475034.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_UEUP" ]
+  },
+  "TTToSemiLeptonicHT500_UEDN": { 
+    "EVENTS": 131182302.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_UEDN" ]
+  },
+  "TTToSemiLeptonicHT500_HDUP": { 
+    "EVENTS": 132383014.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_HDUP" ]
+  },
+  "TTToSemiLeptonicHT500_HDDN": { 
+    "EVENTS": 132018269.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_HDDN" ]
+  },
+  
+  "TTToSemiLeptonHT500": { 
+    "EVENTS": 10179200, 
+    "XSEC": 2.251
+  },
+  
+  "TTToHadronic": { 
+    "EVENTS": 233815417., 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ] 
+  },
+  "TTToHadronic_UEUP": { 
+    "EVENTS": 95498399.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
+  },
+  "TTToHadronic_UEDN": { 
+    "EVENTS": 94308036.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
+  },
+  "TTToHadronic_HDUP": { 
+    "EVENTS": 99030356.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
+  },
+  "TTToHadronic_HDDN": { 
+    "EVENTS": 93721302.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
+  },
+  
+  "TTTo2L2Nu": { 
+    "EVENTS": 44580106. + 28515514. + 51439568. + 47012288. + 25495972., 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
+  },
+  "TTTo2L2Nu_UEUP": { 
+    "EVENTS": 42495090.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
+  },
+  "TTTo2L2Nu_UEDN": { 
+    "EVENTS": 39078720.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
+  },
+  "TTTo2L2Nu_HDUP":{ 
+    "EVENTS": 40026124.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
+  },
+  "TTTo2L2Nu_HDDN": { 
+    "EVENTS": 39960772.0, 
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
+  }
+}
 
-nRun_TTJetsSemiLepUEdn = nRun['TTJetsSemiLepUEdn']
-nRun_TTJetsSemiLepUEup = nRun['TTJetsSemiLepUEup']
-nRun_TTJetsSemiLepHDAMPdn = nRun['TTJetsSemiLepHDAMPdn']
-nRun_TTJetsSemiLepHDAMPup = nRun['TTJetsSemiLepHDAMPup']
-nRun_TTJetsSemiLepUEdnNjet9 = 1992461.0 # from integral, file TTToSemiLepton_HT500Njet9_TuneCP5down_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun_TTJetsSemiLepUEupNjet9 = 1652000.0 # from integral, file TTToSemiLepton_HT500Njet9_TuneCP5up_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun_TTJetsSemiLepHDAMPdnNjet9 = 1802904.0 # from integral, file TTToSemiLepton_HT500Njet9_hdampDOWN_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun_TTJetsSemiLepHDAMPupNjet9 = 2322004.0 # from integral, file TTToSemiLepton_HT500Njet9_hdampUP_TuneCP5_PSweights_13TeV-powheg-pythia8_ttbb_hadd.root
-nRun['TTJetsSemiLepUEdnNjet0'] = nRun_TTJetsSemiLepUEdn * ( 1. - filtEff_TTJetsSemiLepNjet9UEdn ) 
-nRun['TTJetsSemiLepUEdnNjet9'] = nRun_TTJetsSemiLepUEdn * filtEff_TTJetsSemiLepNjet9UEdn + nRun_TTJetsSemiLepUEdnNjet9
-nRun['TTJetsSemiLepUEdnNjet9bin'] = nRun['TTJetsSemiLepUEdnNjet9']
-nRun['TTJetsSemiLepUEupNjet0'] = nRun_TTJetsSemiLepUEup * ( 1. - filtEff_TTJetsSemiLepNjet9UEup ) 
-nRun['TTJetsSemiLepUEupNjet9'] = nRun_TTJetsSemiLepUEup * filtEff_TTJetsSemiLepNjet9UEup + nRun_TTJetsSemiLepUEupNjet9
-nRun['TTJetsSemiLepUEupNjet9bin'] = nRun['TTJetsSemiLepUEupNjet9']
-nRun['TTJetsSemiLepHDAMPdnNjet0'] = nRun_TTJetsSemiLepHDAMPdn * ( 1. - filtEff_TTJetsSemiLepNjet9HDAMPdn ) 
-nRun['TTJetsSemiLepHDAMPdnNjet9'] = nRun_TTJetsSemiLepHDAMPdn * filtEff_TTJetsSemiLepNjet9HDAMPdn + nRun_TTJetsSemiLepHDAMPdnNjet9
-nRun['TTJetsSemiLepHDAMPdnNjet9bin'] = nRun['TTJetsSemiLepHDAMPdnNjet9']
-nRun['TTJetsSemiLepHDAMPupNjet0'] = nRun_TTJetsSemiLepHDAMPup * ( 1. - filtEff_TTJetsSemiLepNjet9HDAMPup ) 
-nRun['TTJetsSemiLepHDAMPupNjet9'] = nRun_TTJetsSemiLepHDAMPup * filtEff_TTJetsSemiLepNjet9HDAMPup + nRun_TTJetsSemiLepHDAMPupNjet9
-nRun['TTJetsSemiLepHDAMPupNjet9bin'] = nRun['TTJetsSemiLepHDAMPupNjet9']
+weights = { key: config.lumi[ "17" ] * mc_stats[ key ][ "XSEC" ] / mc_stats[ key ][ "EVENTS" ] for key in mc_stats  }
 
-nRun['Ts'] = 6895750.0 # from integral 6898000.0, file ST_s-channel_top_leptonDecays_13TeV-PSweights_powheg-pythia_hadd.root
-nRun['Tbs'] = 2952214.0 # from integral 2953000.0, file ST_s-channel_antitop_leptonDecays_13TeV-PSweights_powheg-pythia_hadd.root
-nRun['Tt'] = 122688200.0 # from integral 109621700.0, file ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root
-nRun['Tbt']= 64818800.0 # from integral 50194500.0, file ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root
-nRun['TtW'] = 7884388.0 # from integral 7945242.0, file ST_tW_top_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root
-nRun['TbtW'] = 7686032.0 # from integral 7745276.0, file ST_tW_antitop_5f_inclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root
-
-nRun['WJetsMG200'] = 16118580.0 # from integral 21250517.0, file WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['WJetsMG400'] = 14237953.0 # from integral 14252285.0, file WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['WJetsMG600'] = 21570948.0 # from integral 21455857.0, file WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['WJetsMG800'] = 20187318.0 # from integral 20432728.0, file WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['WJetsMG1200'] = 39694923.0 # from integral 20216830.0, file WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['WJetsMG2500'] = 34500020.0 # from integral 21495421.0, file WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-
-nRun['DYMG200'] = 10699051.0 # from integral 10728447.0, file DYJetsToLL_M-50_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['DYMG400'] = 10174800.0 # from integral 10219524.0, file DYJetsToLL_M-50_HT-400to600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['DYMG600'] = 8691608.0 # from integral 8743640.0, file DYJetsToLL_M-50_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['DYMG800'] = 3089712.0 # from integral 3114980.0, file DYJetsToLL_M-50_HT-800to1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['DYMG1200']= 616906.0 # from integral 625517.0, file DYJetsToLL_M-50_HT-1200to2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-nRun['DYMG2500']=  401334.0 # from integral 419308.0, file DYJetsToLL_M-50_HT-2500toInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root
-
-nRun['WW'] = 7765828.0 # from integral 7765828.0, file WW_TuneCP5_13TeV-pythia8_hadd.root
-nRun['WZ'] = 3928567.0 # from integral 3928630.0, file WZ_TuneCP5_13TeV-pythia8_hadd.root
-nRun['ZZ'] = 1925931.0 # from integral 1925931.0, file ZZ_TuneCP5_13TeV-pythia8_hadd.root
-
-nRun['QCDht200'] = 59360369.0 # from integral 59074480.0, file QCD_HT200to300_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht300'] = 59459614.0 # from integral 59569132.0, file QCD_HT300to500_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht500'] = 56041018.0 # from integral 56207744.0, file QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht700'] = 135551578.0 # from integral 46840955.0, file QCD_HT700to1000_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht1000'] = 16770762.0 # from integral 16882838.0, file QCD_HT1000to1500_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht1500'] = 11508604.0 # from integral 11634434.0, file QCD_HT1500to2000_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['QCDht2000'] = 5825566.0 # from integral 5941306.0, file QCD_HT2000toInf_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-
-nRun['TTW'] = 9384328. # from integral 9425384.0, file ttWJets_TuneCP5_13TeV_madgraphMLM_pythia8_hadd.root
-nRun['TTZ'] = 8519074. # from integral 8536618.0, file ttZJets_TuneCP5_13TeV_madgraphMLM_pythia8_hadd.root
-nRun['TTH'] = 9580578. # from integral 9783674.0, file ttH_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root
-nRun['TTWl'] = 2686141.0 # from integral, file TTWJetsToLNu_TuneCP5_PSweights_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root
-nRun['TTWq'] = 441560.0 # from integral 811306.0, file TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root
-nRun['TTZlM10'] = 5239484.0 # from integral, file TTZToLLNuNu_M-10_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root
-nRun['TTZlM1to10'] = 129114.0 # from integral, file TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root
-nRun['TTZq'] = 351164. # from 749400
-nRun['TTHB'] = 7833734.0 # from integral 8000000.0, file ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root
-nRun['TTHnoB'] = 7814711.0 # from integral 7161154.0, file ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root
-
-nRun['TTHH'] = 199371.0 # from integral, file TTHH_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTTJ'] = 198546.0 # from integral, file TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTTW'] = 199699.0 # from integral, file TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTWH'] = 198978.0 # from integral, file TTWH_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTWW'] = 199008.0 # from integral, file TTWW_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTWZ'] = 198756.0 # from integral, file TTWZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTZH'] = 199285.0 # from integral, file TTZH_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-nRun['TTZZ'] = 199363.0 # from integral, file TTZZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root
-
-#4 tops
-#nRun['tttt'] = 849964.0 # from file TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_hadd.root
-nRun['tttt'] = 3739493.0 # from file TTTT_TuneCP5_PSweights_13TeV-amcatnlo-pythia8_correctnPartonsInBorn_hadd.root
-
-nRun['X53LHM700'] = 300000.
-nRun['X53RHM700'] = 297400.
-nRun['X53LHM800'] = 295600.
-nRun['X53RHM800'] = 299600.
-nRun['X53LHM900'] = 300000. #old
-nRun['X53RHM900'] = 281452.0
-nRun['X53LHM1000'] = 293600.#old
-nRun['X53RHM1000'] = 289224.0
-nRun['X53LHM1100'] = 284174.0
-nRun['X53RHM1100'] = 273508.0
-nRun['X53LHM1200'] = 252566.0 
-nRun['X53RHM1200'] = 275384.0
-nRun['X53LHM1300'] = 300000. #old
-nRun['X53RHM1300'] = 267170.0
-nRun['X53LHM1400'] = 251084.0
-nRun['X53RHM1400'] = 256020.0
-nRun['X53LHM1500'] = 298400. #old
-nRun['X53RHM1500'] = 240182.0
-nRun['X53LHM1600'] = 300000. #old
-nRun['X53RHM1600'] = 212304.0
-nRun['X53LHM1700'] = 193068.0
-nRun['X53RHM1700'] = 192194.0
-
-# Cross sections for MC samples (in pb) -- most unchanged for 2017
-xsec={}
-xsec['TTJets'] = 831.76
-xsec['TTJetsHad0']    = xsec['TTJets'] * BR_TTJetsHad * filtEff_TTJets0mtt # BRs from PDG Top Review 2018: 45.7%/43.8%/10.5% 0/1/2 leptons
-xsec['TTJetsHad700']  = xsec['TTJets'] * BR_TTJetsHad * filtEff_TTJets700mtt
-xsec['TTJetsHad1000'] = xsec['TTJets'] * BR_TTJetsHad * filtEff_TTJets1000mtt
-xsec['TTJetsSemiLep0']    = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJets0mtt
-xsec['TTJetsSemiLep700']  = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJets700mtt
-xsec['TTJetsSemiLep1000'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJets1000mtt
-xsec['TTJets2L2nu0']    = xsec['TTJets'] * BR_TTJets2L2nu * filtEff_TTJets0mtt
-xsec['TTJets2L2nu700']  = xsec['TTJets'] * BR_TTJets2L2nu * filtEff_TTJets700mtt
-xsec['TTJets2L2nu1000'] = xsec['TTJets'] * BR_TTJets2L2nu * filtEff_TTJets1000mtt
-xsec['TTJets700mtt']  = xsec['TTJets'] * filtEff_TTJets700mtt # (xsec*filtering coeff.)
-xsec['TTJets1000mtt'] = xsec['TTJets'] * filtEff_TTJets1000mtt # (xsec*filtering coeff.)
-
-xsec['TTJetsHad'] = xsec['TTJets'] * BR_TTJetsHad
-xsec['TTJetsSemiLepNjet0'] = xsec['TTJets'] * BR_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9 ) 
-xsec['TTJetsSemiLepNjet9'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9
-xsec['TTJetsSemiLepNjet9bin'] = xsec['TTJetsSemiLepNjet9']
-xsec['TTJets2L2nu'] = xsec['TTJets'] * BR_TTJets2L2nu
-xsec['TTJetsSemiLep'] = xsec['TTJets'] * BR_TTJetsSemiLep
-
-xsec['TTJets2L2nuUEdn'] = xsec['TTJets'] * BR_TTJets2L2nu
-xsec['TTJets2L2nuUEup'] = xsec['TTJets'] * BR_TTJets2L2nu
-xsec['TTJets2L2nuHDAMPdn'] = xsec['TTJets'] * BR_TTJets2L2nu
-xsec['TTJets2L2nuHDAMPup'] = xsec['TTJets'] * BR_TTJets2L2nu
-xsec['TTJetsSemiLepUEdn'] = xsec['TTJets'] * BR_TTJetsSemiLep
-xsec['TTJetsSemiLepUEup'] = xsec['TTJets'] * BR_TTJetsSemiLep
-xsec['TTJetsSemiLepHDAMPdn'] = xsec['TTJets'] * BR_TTJetsSemiLep
-xsec['TTJetsSemiLepHDAMPup'] = xsec['TTJets'] * BR_TTJetsSemiLep
-xsec['TTJetsHadUEdn'] = xsec['TTJets'] * BR_TTJetsHad
-xsec['TTJetsHadUEup'] = xsec['TTJets'] * BR_TTJetsHad
-xsec['TTJetsHadHDAMPdn'] = xsec['TTJets'] * BR_TTJetsHad
-xsec['TTJetsHadHDAMPup'] = xsec['TTJets'] * BR_TTJetsHad
-
-xsec['TTJetsSemiLepUEdnNjet0'] = xsec['TTJets'] * BR_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9UEdn ) 
-xsec['TTJetsSemiLepUEdnNjet9'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9UEdn
-xsec['TTJetsSemiLepUEdnNjet9bin'] = xsec['TTJetsSemiLepUEdnNjet9']
-xsec['TTJetsSemiLepUEupNjet0'] = xsec['TTJets'] * BR_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9UEup ) 
-xsec['TTJetsSemiLepUEupNjet9'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9UEup
-xsec['TTJetsSemiLepUEupNjet9bin'] = xsec['TTJetsSemiLepUEupNjet9']
-xsec['TTJetsSemiLepHDAMPdnNjet0'] = xsec['TTJets'] * BR_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9HDAMPdn ) 
-xsec['TTJetsSemiLepHDAMPdnNjet9'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9HDAMPdn
-xsec['TTJetsSemiLepHDAMPdnNjet9bin'] = xsec['TTJetsSemiLepHDAMPdnNjet9']
-xsec['TTJetsSemiLepHDAMPupNjet0'] = xsec['TTJets'] * BR_TTJetsSemiLep * ( 1. - filtEff_TTJetsSemiLepNjet9HDAMPup ) 
-xsec['TTJetsSemiLepHDAMPupNjet9'] = xsec['TTJets'] * BR_TTJetsSemiLep * filtEff_TTJetsSemiLepNjet9HDAMPup
-xsec['TTJetsSemiLepHDAMPupNjet9bin'] = xsec['TTJetsSemiLepHDAMPupNjet9']
-
-xsec['Ts'] = 6.35*0.3259 # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-xsec['Tbs'] = 3.97*0.3259 # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-xsec['Tt'] = 136.02 # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-xsec['Tbt'] = 80.95 # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopRefXsec
-xsec['TtW'] = 35.85 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma
-xsec['TbtW'] = 35.85 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma
-
-xsec['WJets'] = 61526.7
-xsec['WJetsMG'] = 61526.7
-xsec['WJetsMG100'] = 1345.*1.21 # (1.21 = k-factor )# https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG200'] = 359.7*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG400'] = 48.91*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG600'] = 12.05*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG800'] = 5.501*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG1200'] = 1.329*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['WJetsMG2500'] = 0.03216*1.21 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns 
-xsec['WJetsPt100'] = 676.3 #B2G-17-010 / AN2016_480_v5
-xsec['WJetsPt250'] = 23.94 #B2G-17-010 / AN2016_480_v5
-xsec['WJetsPt400'] = 3.031 #B2G-17-010 / AN2016_480_v5
-xsec['WJetsPt600'] = 0.4524 #B2G-17-010 / AN2016_480_v5
-
-xsec['DY'] = 6025.2 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-xsec['DYMG'] = 6025.2 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG100'] = 147.4*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG200'] = 40.99*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG400'] = 5.678*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG600'] = 1.367*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG800'] = 0.6304*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG1200'] = 0.1514*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-# xsec['DYMG2500'] = 0.003565*1.23 # https://twiki.cern.ch/twiki/bin/view/CMS/SummaryTable1G25ns
-
-xsec['DYMG100'] = 185.649 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG200'] = 54.951 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG400'] = 7.862 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG600'] = 1.977 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG800'] = 0.858 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG1200'] = 0.191 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-xsec['DYMG2500'] = 0.0045 # from OSDL in https://twiki.cern.ch/twiki/bin/view/CMS/FourTopCombination
-
-xsec['WW'] = 118.7 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeVInclusive
-xsec['WZ'] = 47.13 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#Diboson
-xsec['ZZ'] = 16.523 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#Diboson
-
-xsec['QCDht100'] = 27990000. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD
-xsec['QCDht200'] = 1712000. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD 
-xsec['QCDht300'] = 347700. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD 
-xsec['QCDht500'] = 32100. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD
-xsec['QCDht700'] = 6831. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD 
-xsec['QCDht1000'] = 1207. # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD
-xsec['QCDht1500'] = 119.9 # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD 
-xsec['QCDht2000'] = 25.24 # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#QCD
-
-xsec['TTW'] = 0.55 # from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW)
-xsec['TTZ'] = 0.86 # from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW)
-xsec['TTH'] = 0.5269 # from XsecDB, NLO
-xsec['TTWl'] = 0.55*0.3259 #= 0.1792 pb from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW) #0.2043 from McM
-xsec['TTWq'] = 0.55*0.6741 #= 0.3708 pb from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW) #0.4062 from McM
-xsec['TTZlM10'] = 0.86*3*(0.0337+0.0667) #=0.2589pb from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW) #0.2529 from McM
-xsec['TTZlM1to10'] = 0.0532 # from McM
-xsec['TTZq'] = 0.86*0.69911 #= 0.6012 pb from Table 3 of https://arxiv.org/pdf/1812.08622.pdf (NLO + NNLL + EW) #0.5297 from McM
-xsec['TTHB'] = 0.2934 # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#ttH
-xsec['TTHnoB'] = 0.2151 # from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SummaryTable1G25ns#ttH
-
+for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
+  for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
+    if tt == "SemiLeptonic":
+      for n in [ "1", "2", "3", "4" ]:
+        weight[ "{}_tt{}{}".format( tt, fs, n ) ] = weight[ tt ]
+    else:
+      weight[ "{}_tt{}".format( tt, fs ) ] = weight[ tt ]
+    if tt in [ "SemiLeptonic", "SemiLeptonicHT500", "Hadronic", "2L2Nu" ]:
+      for syst in [ "UE", "HD" ]:
+        for shift in [ "DN", "UP" ]:
+          weight[ "{}_tt{}_{}{}".format( tt, fs, syst, shift ) ] = weight[ "{}_{}{}".format( tt, syst, shift ) ]
 xsec['TTTJ'] = 0.0004741 # from McM
 xsec['TTTW'] = 0.0007330 # from McM
 xsec['TTHH'] = 0.0007565 # from https://arxiv.org/pdf/1610.07922.pdf (NLO QCD)
