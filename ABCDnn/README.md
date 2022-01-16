@@ -12,8 +12,11 @@ The `ABCDnn` method is intended to be run following the production of step3 samp
     export SCRAM_ARCH=slc7_amd64
     
     pip install --user "tensorflow-probability<0.9"
-
-
+    
+    source /cvmfs/cms.cern.ch/cmsset_default.csh
+    cmsenv
+    source /cvmfs/sft.cern.ch/lcg/views/LCG_98/x86_64-centos7-gcc8-opt/setup.csh
+    
 ## About Neural Autoregressive Flows
 
 Each of the terms in 'Neural Autoregressive Flows' refers to:
