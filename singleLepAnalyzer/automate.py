@@ -1,4 +1,5 @@
 import os, time
+import config
 from argparse import ArgumentParser
 
 cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_6_19/src"
@@ -8,7 +9,7 @@ parser = ArgumentParser()
 parser.add_argument( "-s", "--step", required = True, help = "Options: 1-6" )
 parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16, 17, 18" )
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
-parser.add_arugment( "-v", "--variables", nargs = "+", required = True )
+parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 args = parser.parse_args()
 
 
@@ -19,10 +20,10 @@ def get_trainings( tags, years, variables ):
   for tag in tags:
     for year in years:
       trainings.append( {
-        "year": "UL{}".format( year ),
+        "year": year,
         "variable": variables,
         "tag": tag,
-        "path": config.step3Dir[ year ]
+        "path": config.inputDir[ year ]
       } )
   return trainings
     
@@ -32,13 +33,15 @@ def produce_templates():
   os.chdir( "makeTemplates" )
   for training in trainings:
     for variable in training[ "variable" ]:
-      os.system( "python condor_templates.py -y {} -v {} -p {} -i {} -r {} --categorize".format( 
+      command = "python condor_templates.py -y {} -v {} -p {} -i {} -r {} --categorize".format(
         training[ "year" ],
         variable,
         training[ "tag" ],
         training[ "path" ],
         "SR"
-      ) )
+      )
+      print( command )
+      #os.system( command ) 
       time.sleep( 1 )
   os.chdir( ".." )
                 
@@ -76,9 +79,9 @@ Arguments = \n\
 Queue 1\n".format( os.getcwd(), shell_name, os.getcwd(), step2_name, os.getcwd(), step2_name, os.getcwd(), step2_name ) 
     )
     jdf.close()
-		os.system( "condor_submit {}".format( jdf_name ) )
-		time.sleep(1)
-	os.chdir("..")
+    os.system( "condor_submit {}".format( jdf_name ) )
+    time.sleep(1)
+  os.chdir("..")
   
 def produce_binned_plots():
   trainings = get_trainings( args.tags, args.years, args.variables )
@@ -227,11 +230,11 @@ Queue 1""".format(
     os.system( "condor_submit {}".format( jdf_name ) )
     os.chdir( ".." )
 
-if args.step == 1: produce_templates()
-elif args.step == 2: run_templates()
-elif args.step == 3: produce_binned_templates()
-elif args.step == 4: run_combine()
-elif args.step == 5: combine_years()
+if args.step == "1": produce_templates()
+elif args.step == "2": run_templates()
+elif args.step == "3": produce_binned_templates()
+elif args.step == "4": run_combine()
+elif args.step == "5": combine_years()
 else:
   print( "[ERR] Invalid step option used" )
   

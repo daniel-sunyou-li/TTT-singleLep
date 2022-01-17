@@ -47,7 +47,7 @@ systematics = {
 
 # binning configuration
 
-bins = {
+hist_bins = {
   "templates": {
     "lepton": [ "E", "M" ],
     "nHOT": [ "0", "1", "2p" ],

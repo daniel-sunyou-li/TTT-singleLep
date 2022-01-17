@@ -113,4 +113,4 @@ for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
   make_hists( groups, group )
   print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60,2 ) ) )
   
-print( "[DONE] Finished making hists in {}".format( % (round( (time.time() - start_time ) / 60, 2 ) ) )
+print( "[DONE] Finished making hists in {}".format( round( (time.time() - start_time ) / 60, 2 ) ) )

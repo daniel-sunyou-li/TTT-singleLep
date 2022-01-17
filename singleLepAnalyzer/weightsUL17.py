@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-xsec[ "TT" ] = 831.8
+import config
+
+xsec = { "TT": 831.8 }
 
 BR = { 
   "TT": {
@@ -293,10 +295,10 @@ for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", 
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
     if tt == "SemiLeptonic":
       for n in [ "1", "2", "3", "4" ]:
-        weight[ "{}_tt{}{}".format( tt, fs, n ) ] = weight[ tt ]
+        weights[ "TTTo{}_tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
     else:
-      weight[ "{}_tt{}".format( tt, fs ) ] = weight[ tt ]
+      weights[ "TTTo{}_tt{}".format( tt, fs ) ] = weights[ "TTTo{}".format( tt ) ]
     if tt in [ "SemiLeptonic", "SemiLeptonicHT500", "Hadronic", "2L2Nu" ]:
       for syst in [ "UE", "HD" ]:
         for shift in [ "DN", "UP" ]:
-          weight[ "{}_tt{}_{}{}".format( tt, fs, syst, shift ) ] = weight[ "{}_{}{}".format( tt, syst, shift ) ]
+          weights[ "TTTo{}_tt{}_{}{}".format( tt, fs, syst, shift ) ] = weights[ "TTTo{}_{}{}".format( tt, syst, shift ) ]

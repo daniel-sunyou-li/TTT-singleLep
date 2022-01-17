@@ -102,8 +102,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
                            "DOWN": cuts[ "NOMINAL" ].replace( "NresolvedTops1pFake", "NresolvedTops1pFake_shifts[5]" ) }
 	
   if nbtag == "0" and "minmlb" in iPlot.lower():
-  originalLJMETName = plotTreeName
-  plotTreeName = "minMleppJet"
+    originalLJMETName = plotTreeName
+    plotTreeName = "minMleppJet"
     
   # declare histograms
   hists = {}
