@@ -18,25 +18,32 @@ args = parser.parse_args()
 
 thisDir = os.getcwd()
 
-if args.categorize: 
-  bins = config.hist_bins[ "templates" ]
-else: bins = config.hist_bins[ "baseline" ]
+if args.categorize:
+  if args.region == "TTCR": 
+    bins = config.hist_bins[ "TEMPLATES" ]
+  elif args.region == "WJCR":
+    bins = config.hist_bins[ "TEMPLATES" ]
+  elif args.region == "SR":
+    bins = config.hist_bins[ "TEMPLATES" ]
+  else:
+    bins = config.hist_bins[ "TEMPLATES" ]
+else: bins = config.hist_bins[ "BASELINE" ]
 
 categories = list(
   itertools.product(
-    bins[ "lepton" ],
-    bins[ "nHOT" ],
-    bins[ "nT" ],
-    bins[ "nW" ],
-    bins[ "nB" ],
-    bins[ "nJ" ]
+    bins[ "LEPTON" ],
+    bins[ "NHOT" ],
+    bins[ "NT" ],
+    bins[ "NW" ],
+    bins[ "NB" ],
+    bins[ "NJ" ]
   )
 )
 	
 prefix = "templates"
 if args.region == "TTCR": prefix = "ttbar"
 if args.region == "WJCR": prefix = "wjets"
-if not args.categorize: prefix = "kinematics_{}".format( args.region )
+if not args.categorize: prefix = "baseline"
 subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )
@@ -70,10 +77,7 @@ for variable in args.variables:
     os.chdir( categoryTag )
 
     jobParams = {
-      "OUTPUTPATH": outputPath,
       "VARIABLE": variable,
-      "REGION": args.region,
-      "CATEGORIZE": args.categorize,
       "YEAR": args.year,
       "LEPTON": category[0],
       "NHOT":  category[1],
@@ -81,14 +85,13 @@ for variable in args.variables:
       "NW": category[3],
       "NB": category[4],
       "NJ": category[5],
-      "INPUTDIR": config.inputDir[ args.year ],
-      "EXEDIR": thisDir
+      "EXEDIR": os.path.join( thisDir, subDir ) 
     }
 
     jdf = open( "condor_step1_{}.job".format( variable ), "w" )
     jdf.write(
 """universe = vanilla
-Executable = %(OUTPUTPATH)s/condor_templates.sh
+Executable = %(EXEDIR)s/condor_templates.sh
 Should_Transfer_Files = YES
 WhenToTransferOutput = ON_EXIT
 request_memory = 5000
@@ -97,13 +100,15 @@ Error = condor_step1_%(VARIABLE)s.err
 Log = condor_step1_%(VARIABLE)s.log
 JobBatchName = SLA_step1_3t
 Notification = Error
-Arguments = %(OUTPUTPATH)s %(VARIABLE)s %(REGION)s %(CATEGORIZE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s
+Arguments = %(VARIABLE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s
 Queue 1"""%jobParams
     )
     jdf.close()
     os.system( "condor_submit condor_step1_{}.job".format( variable ) )
     os.chdir( ".." )
     nJobs += 1
-    break
+    if config.options[ "TEST" ]: 
+      print( "[OPT] Testing one job." )
+      break
 
 print( "[DONE] Total jobs submitted: {}".format( nJobs ) )

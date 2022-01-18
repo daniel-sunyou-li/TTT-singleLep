@@ -301,4 +301,4 @@ for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", 
     if tt in [ "SemiLeptonic", "SemiLeptonicHT500", "Hadronic", "2L2Nu" ]:
       for syst in [ "UE", "HD" ]:
         for shift in [ "DN", "UP" ]:
-          weights[ "TTTo{}_tt{}_{}{}".format( tt, fs, syst, shift ) ] = weights[ "TTTo{}_{}{}".format( tt, syst, shift ) ]
+          weights[ "TTTo{}_{}{}_tt{}".format( tt, syst, shift, fs ) ] = weights[ "TTTo{}_{}{}".format( tt, syst, shift ) ]

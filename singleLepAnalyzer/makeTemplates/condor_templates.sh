@@ -1,32 +1,23 @@
 #!/bin/bash
 
-outputDir=${1}
-variable=${2}
-region=${3}
-categorize=${4}
-year=${5}
-lepton=${6}
-nhot=${7}
-nT=${8}
-nW=${9}
-nB=${10}
-nJ=${11}
-exeDir=${12}
+variable=${1}
+year=${2}
+lepton=${3}
+nhot=${4}
+nT=${5}
+nW=${6}
+nB=${7}
+nJ=${8}
+exeDir=${9}
 condorDir=$PWD
-
-echo $PWD
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 cd $exeDir
 eval `scramv1 runtime -sh`
 
-cd $runDir
-
-pwd
 python -u hists.py \
   -v $variable \
-  -c $categorize \
   -y $year \
   -l $lepton \
   -nh $nhot \
@@ -34,5 +25,3 @@ python -u hists.py \
   -nw $nW \
   -nb $nB \
   -nj $nJ \
-  -d $condorDir \
-  -w $cmsswDir

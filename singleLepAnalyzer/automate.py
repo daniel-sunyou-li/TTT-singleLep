@@ -40,8 +40,7 @@ def produce_templates():
         training[ "path" ],
         "SR"
       )
-      print( command )
-      #os.system( command ) 
+      os.system( command ) 
       time.sleep( 1 )
   os.chdir( ".." )
                 

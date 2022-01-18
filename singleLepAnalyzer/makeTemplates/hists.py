@@ -4,9 +4,8 @@ import os, sys, time, math, datetime, pickle, itertools, getopt
 import numpy as np
 from argparse import ArgumentParser
 
-sys.path.append( os.path.dirname( os.getcwd() ) )
+sys.path.append( os.path.dirname( "../../" ) ) 
 
-import ROOT
 import weights
 import analyze
 import samples
@@ -22,14 +21,9 @@ parser.add_argument( "-nt", "--nt", default = "0p" )
 parser.add_argument( "-nw", "--nw", default = "0p" )
 parser.add_argument( "-nb", "--nb", default = "2p" )
 parser.add_argument( "-nj", "--nj", default = "5p" )
-parser.add_argument( "-c", "--categorize", action = "store_true" )
-parser.add_argument( "-t", "--test", action = "store_true" )
-parser.add_argument( "-s", "--shifts", action = "store_true" )
-parser.add_argument( "-hd", "--hdamp", action = "store_true" )
-parser.add_argument( "-ue", "--ue", action = "store_true" )
-parser.add_argument( "-p", "--pdf", action = "store_true" )
-parser.add_argument( "-sys", "--systematics", action = "store_true" )
 args = parser.parse_args()
+
+import ROOT
 
 """
 Note: 
@@ -56,9 +50,9 @@ category = {
 groups = {
   "DATA": [ str( process ) for process in samples.samples[ "DATA" ] ],
   "SIGNAL": [ str( process ) for process in samples.samples[ "SIGNAL" ] ],
-  "BACKGROUND": [ str( process ) for process in samples.samples[ "BACKGROUND" ] ],
-  "UE": [ str( process ) for process in samples.samples[ "UE" ] ],
-  "HD": [ str( process ) for process in samples.samples[ "HD" ] ],
+  "BACKGROUND": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if ( "UE" not in str( process ) and "HD" not in str( process ) ) ],
+  "UE": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "UE" in str( process ) ],
+  "HD": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "HD" in str( process ) ],
   "TEST": [ str( process ) for process in samples.samples[ "TEST" ] ]
 }
 
@@ -68,49 +62,56 @@ ue = list( samples.samples[ "UE" ].keys() )
 signals = list( samples.samples[ "SIGNAL" ].keys() )
 data = list( samples.samples[ "DATA" ].keys() )
          		
-def read_tree( file ):
-  if not os.path.exists(file):
-    print("[ERR] {} does not exist.  Exiting program...".format(file))
+def read_tree( samplePath ):
+  if not os.path.exists( samplePath ):
+    print("[ERR] {} does not exist.  Exiting program...".format( samplePath ) )
     sys.exit(1)
-  rootFile = TFile( file, "READ" )
+  rootFile = ROOT.TFile.Open( samplePath, "READ" )
   rootTree = rootFile.Get( "ljmet" )
-  return rootTree
+  return rootFile, rootTree
 
-def make_hists( groups, group ): 
-  # only valid group arguments are DATA, SIGNAL, BACKGROUND
-  doSys = args.systematics if group in [ "SIGNAL", "BACKGROUND" ] else False
+def make_hists( groups, group, category ): 
+  # only valid group arguments are DATA, SIGNAL, BACKGROUND, TEST
+  doSys = config.options[ "SYSTEMATICS" ] if group in [ "SIGNAL", "BACKGROUND", "TEST" ] else False
   hists = {}
   for process in groups[ group ]:
     process_time = time.time()
-    rTrees = {}
-    rTrees[ process ] = read_tree( os.path.join( config.inputDir, "nominal/", samples.samples[ group ][ process ] ) )
-    if args.shifts and group in [ "SIGNAL", "BACKGROUND" ]:
-      for sys in [ "JEC", "JER" ]:
+    rFiles, rTrees = {}, {} 
+    rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ group ][ process ] + "_hadd.root" ) )
+    if config.options[ "JET SHIFTS" ] and group in [ "SIGNAL", "BACKGROUND" ]:
+      for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
-          rTrees[ process + sys + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
-    hists.update( analyze.analyze( rTrees, args.year, process, args.variable, doSys, args.pdf, category, True ) )
+          rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
+    hists.update( analyze.analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "PDF" ], category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
-    del rTrees
-  if args.ue and group in [ "BACKGROUND" ]:
+    del rFiles, rTrees
+  if config.options[ "UE" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "UE" ]:
       process_time = time.time()
-      rTree = read_tree( os.path.join( config.inputDir, "nominal/", samples.samples[ "UE" ][ process ] ) )
-      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, args.pdf, category, True ) )
-      del rTree
-      print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
-  if args.hdamp and group in [ "BACKGROUND" ]:
+      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
+      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "PDF" ], category, True ) )
+      print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
+  if config.options[ "HDAMP" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "HD" ]:
       process_time = time.time()
-      rTree = read_tree( os.path.join( config.inputDir, "nominal/", samples.samples[ "HD"][ process ] ) )
-      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, args.pdf, category, True ) )
-      del rTree
-      print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
-  pickle.dump( hists, open( "{}_{}.pkl".format( group, args.variable ), "wb" ) )
+      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
+      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "PDF" ], category, True ) )
+      print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
+  categoryDir = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0], category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0] )
+  pickle.dump( hists, open( "{}/{}_{}.pkl".format( categoryDir, group, args.variable ), "wb" ) )
   
-for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
-  group_time = time.time()
-  print( ">> Processing hists for {}".format( group ) )
-  make_hists( groups, group )
-  print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60,2 ) ) )
-  
-print( "[DONE] Finished making hists in {}".format( round( (time.time() - start_time ) / 60, 2 ) ) )
+if not config.options[ "TEST" ]:
+  for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
+    group_time = time.time()
+    print( ">> Processing hists for {}".format( group ) )
+    for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
+    make_hists( groups, group, category )
+    print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60, 2 ) ) )
+else:
+  test_time = time.time() 
+  print( ">> Processing TEST hists" )
+  for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
+  make_hists( groups, "TEST", category )
+  print( "[DONE] Finished processing hists for TEST in {} minutes".format( round( ( time.time() - test_time ) / 60, 2 ) ) )
+
+print( "[DONE] Finished making hists in {}".format( round( ( time.time() - start_time ) / 60, 2 ) ) )

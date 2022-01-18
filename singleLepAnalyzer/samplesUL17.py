@@ -3,8 +3,9 @@
 samples = {
   "TEST": {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
-    "DataE": "SingleElectron",
-    "TTToSemiLeptonic": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8"
+    #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
+    #"DataE": "SingleElectron",
+    "TTToSemiLeptonHT500": "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb"
   },
   "DATA": {
     "DataE": "SingleElectron",
