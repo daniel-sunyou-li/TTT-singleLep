@@ -106,7 +106,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     
   # declare histograms
   hists = {}
-  lumiStr = str( config.lumi[ year ] / 1000. ).replace(".","p") + "fb" # 1/fb  
+  lumiStr = config.lumiStr[ year ] # 1/fb  
   categoryTag = "is{}nJ{}nB{}nT{}nH{}nW{}".format( 
     category[ "LEPTON" ][0], category[ "NJ" ][0], category[ "NB" ][0],
     category[ "NT" ][0], category[ "NHOT" ][0], category[ "NW" ][0] 
@@ -114,13 +114,13 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   histTag = "{}_{}_{}_{}".format( variable, lumiStr, categoryTag, process )
   hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doSYST:
-    for syst in config.systematics:
+    for syst in config.systematics[ "MC" ]:
       for shift in [ "UP", "DN" ]:
         histTag = "{}_{}_{}_{}_{}".format( variable, syst.upper() + shift, lumiStr, categoryTag, process )
         hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
-    for i in range( config.pdf_range ):
-      histTag = "{}_PDF{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
+    for i in range( config.params[ "PDF RANGE" ] ):
+      histTag = "{}_PDF{}_{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
       hists[ histTag ] = TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
 				
   # Sumw2() tells the hist to also store the sum of squares of weights
@@ -135,8 +135,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 
   if verbose: print( "  + NOMINAL" )
 
-  if doSYST:
-    for syst in config.systematics:
+  if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
+    for syst in config.systematics[ "MC" ]:
       for shift in [ "UP", "DN" ]:
         histTag = "{}_{}_{}_{}_{}".format( variable, syst.upper() + shift, lumiStr, categoryTag, process )
         if syst.upper() in [ "PILEUP", "PREFIRE", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
@@ -198,7 +198,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     if verbose: print( "  + SYSTEMATICS" ) 
 	
   if doPDF:
-    for i in range( config.pdf_range ):
+    for i in range( config.params[ "PDF RANGE" ] ):
       histTag = "{}pdf{}_{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
       rTree[ process ].Draw( 
         "{} >> {}".format(variableName, histTag ), 

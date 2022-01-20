@@ -10,8 +10,10 @@ parser.add_argument( "-s", "--step", required = True, help = "Options: 1-6" )
 parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16, 17, 18" )
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
+parser.add_argument( "-r", "--region", default = "SR" )
 args = parser.parse_args()
 
+if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid option used for -r (--region). Quitting." )
 
 # this is used in step = 1, 2, 3, 4
 
@@ -33,12 +35,12 @@ def produce_templates():
   os.chdir( "makeTemplates" )
   for training in trainings:
     for variable in training[ "variable" ]:
-      command = "python condor_templates.py -y {} -v {} -p {} -i {} -r {} --categorize".format(
+      command = "python condor_templates.py -y {} -v {} -p {} -i {} -r {}".format(
         training[ "year" ],
         variable,
         training[ "tag" ],
         training[ "path" ],
-        "SR"
+        args.region
       )
       os.system( command ) 
       time.sleep( 1 )
@@ -58,7 +60,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python templates.py -y {} -t {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ] )
+python templates.py -y {} -t {} -v {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], training[ "variable" ] )
     )
     shell.close()
     jdf_name = "condor_config/{}.job".format( step2_name )

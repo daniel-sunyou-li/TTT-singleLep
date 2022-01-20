@@ -12,22 +12,21 @@ parser.add_argument( "-y", "--year", required = True, help = "[16,17,18]" )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-p", "--postfix", default = "test" )
 parser.add_argument( "-r", "--region", required = True, help = "[SR,PS,TTCR,WJCR]" )
-parser.add_argument( "-c", "--categorize", action = "store_true" )
 parser.add_argument( "-i", "--inputdir", required = True )
 args = parser.parse_args()
 
 thisDir = os.getcwd()
 
-if args.categorize:
-  if args.region == "TTCR": 
-    bins = config.hist_bins[ "TEMPLATES" ]
-  elif args.region == "WJCR":
-    bins = config.hist_bins[ "TEMPLATES" ]
-  elif args.region == "SR":
-    bins = config.hist_bins[ "TEMPLATES" ]
-  else:
-    bins = config.hist_bins[ "TEMPLATES" ]
-else: bins = config.hist_bins[ "BASELINE" ]
+if args.region == "TTCR": 
+  bins = config.hist_bins[ "TEMPLATES" ]
+elif args.region == "WJCR":
+  bins = config.hist_bins[ "TEMPLATES" ]
+elif args.region == "SR":
+  bins = config.hist_bins[ "TEMPLATES" ]
+elif args.region == "BASELINE":
+  bins = config.hist_bins[ "BASELINE" ]
+else:
+  quit( "[ERR] Invalid region argument used. Quitting." )
 
 categories = list(
   itertools.product(
@@ -43,7 +42,7 @@ categories = list(
 prefix = "templates"
 if args.region == "TTCR": prefix = "ttbar"
 if args.region == "WJCR": prefix = "wjets"
-if not args.categorize: prefix = "baseline"
+if args.region == "BASELINE": prefix = "baseline"
 subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )

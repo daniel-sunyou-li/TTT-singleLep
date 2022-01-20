@@ -11,6 +11,7 @@ lumi = {
   "17": 41530.,
   "18": 59970.
 }
+lumiStr = { year: str( lumi[ year ] / 1000. ).replace( ".", "p" ) + "fb" for year in lumi }
 
 # Branching ratios
 BR = {
@@ -21,12 +22,30 @@ BR = {
 
 # boolean options that need to be coordinated across template making
 options = {
-  "TEST": True,
+  "TEST": False,
   "JET SHIFTS": False, # JEC/JER shifts for shape 
   "HDAMP": False, 
   "UE": False,
   "PDF": True,
-  "SYSTEMATICS": True
+  "SYSTEMATICS": True,
+  "RENORM PDF": True, # renormalize the PDF weights
+  "SUMMARY": False, # produce summary templates
+  "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
+}
+# non-boolean parameters used in creating templates
+params = {
+  "LUMISCALE": 1,     # scale the luminosity multiplicatively in the templates
+  "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
+  "TTHFSF": 4.7/3.9,  # from TOP-18-002 (v34), set to 1 if no ttHFsf used
+  "TTLFSF": -1.,      # if ttLFsf -1, computed automatically using ttHFsf, else set manually
+  "PDF RANGE": 100    # pdf range to evaluate
+}
+
+region_prefix = {
+  "SR": "templates",
+  "TTCR": "ttbar",
+  "WJCR": "wjets",
+  "BASELINE": "baseline"
 }
 
 # systematic uncertainty sources
@@ -119,10 +138,6 @@ plot_params = {
   "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50} 3t" )
 }
 
-ttHFsf = 4.7/3.9 # from TOP-18-002 (v34), set to 1 if no ttHFsf used
-ttLFsf = -1      # if ttLFsf -1, computed automatically using ttHFsf, else set manually
-
-pdf_range = 100
 
 ratio_threshold = 0.015 # ratio beneath which process / total background a process will be exccluded
 uncertainty_threshold = 0.5 # threshold beneath which a statistical uncertainty is excluded
