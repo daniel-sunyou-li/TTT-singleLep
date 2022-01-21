@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 sys.path.append( os.path.dirname( "../" ) ) 
 
-import analyze
 import utils
 import config
 
@@ -280,7 +279,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 
 def make_hists( groups, group, category ): 
   # only valid group arguments are DATA, SIGNAL, BACKGROUND, TEST
-  doSys = config.options[ "SYSTEMATICS" ] if group in [ "SIGNAL", "BACKGROUND", "TEST" ] else False
+  doSys = config.options[ "GENERAL" ][ "SYSTEMATICS" ] if group in [ "SIGNAL", "BACKGROUND", "TEST" ] else False
   hists = {}
   for process in groups[ group ]:
     process_time = time.time()
@@ -290,14 +289,14 @@ def make_hists( groups, group, category ):
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
           rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
-    hists.update( analyze.analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
+    hists.update( analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees
   if config.options[ "GENERAL" ][ "UE" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "UE" ]:
       process_time = time.time()
       rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
-      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
+      hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   if config.options[ "GENERAL" ][ "HDAMP" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "HD" ]:

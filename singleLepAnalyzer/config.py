@@ -36,7 +36,19 @@ options = {
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
-
+    "BLIND": True,
+    "CR SYST": False,              # add systematic uncertainty to control region
+    "SHAPE SYST": True,            # add systematic uncertainty shapes
+    "SHAPE STAT": True,            # add statistical uncertainty shapes
+    "MURF SHAPES": True,
+    "PS WEIGHTS": True,            # Construct Parton Shower weights
+    "NORM THEORY SYST SIG": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
+    "NORM THEORY SYST BKG": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
+    "SYMM SMOOTHING": True,
+    "SYMM TOP PT": True,
+    "SYMM HOTCLOSURE": True,
+    "SCALE SIGNAL XSEC": False,
+    "ADD SHAPE SYST YIELD": True
   }
 }
 # non-boolean parameters used in creating templates
@@ -44,6 +56,7 @@ params = {
   "GENERAL": {
     "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
+    "PDF RANGE": 100,   # PDF range
   },
   "HISTS": {
     "LUMISCALE": 1,     # scale the luminosity multiplicatively in templates
