@@ -47,10 +47,10 @@ subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )
 
-os.system( "cp ../weightsUL{}.py ../weights.py".format( args.year ) )
-os.system( "cp ../samplesUL{}.py ../samples.py".format( args.year ) )
-os.system( "cp ../analyze.py ../weights.py ../samples.py ../utils.py hists.py condor_templates.py condor_templates.sh {}".format( outputPath ) )
-os.chdir( outputPath )
+#os.system( "cp ../weightsUL{}.py ../weights.py".format( args.year ) )
+#os.system( "cp ../samplesUL{}.py ../samples.py".format( args.year ) )
+#os.system( "cp ../analyze.py ../weights.py ../samples.py ../utils.py hists.py condor_templates.py condor_templates.sh {}".format( outputPath ) )
+#os.chdir( outputPath )
 
 nJobs = 0
 for variable in args.variables:
@@ -73,7 +73,7 @@ for variable in args.variables:
       continue
       
     if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir -vp {}".format( os.path.join( outputPath, categoryTag ) ) )
-    os.chdir( categoryTag )
+    os.chdir( os.path.join( outputPath, categoryTag ) )
 
     jobParams = {
       "VARIABLE": variable,
@@ -84,7 +84,8 @@ for variable in args.variables:
       "NW": category[3],
       "NB": category[4],
       "NJ": category[5],
-      "EXEDIR": os.path.join( thisDir, subDir ) 
+      "EXEDIR": thisDir,
+      "SUBDIR": subDir
     }
 
     jdf = open( "condor_step1_{}.job".format( variable ), "w" )
@@ -99,14 +100,14 @@ Error = condor_step1_%(VARIABLE)s.err
 Log = condor_step1_%(VARIABLE)s.log
 JobBatchName = SLA_step1_3t
 Notification = Error
-Arguments = %(VARIABLE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s
+Arguments = %(VARIABLE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s %(SUBDIR)s
 Queue 1"""%jobParams
     )
     jdf.close()
     os.system( "condor_submit condor_step1_{}.job".format( variable ) )
     os.chdir( ".." )
     nJobs += 1
-    if config.options[ "TEST" ]: 
+    if config.options[ "GENERAL" ][ "TEST" ]: 
       print( "[OPT] Testing one job." )
       break
 

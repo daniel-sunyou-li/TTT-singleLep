@@ -9,6 +9,7 @@ nW=${6}
 nB=${7}
 nJ=${8}
 exeDir=${9}
+subDir=${10}
 condorDir=$PWD
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh
@@ -25,3 +26,4 @@ python -u hists.py \
   -nw $nW \
   -nb $nB \
   -nj $nJ \
+  -sd $subDir

@@ -4,11 +4,9 @@ import os, sys, time, math, datetime, pickle, itertools, getopt
 import numpy as np
 from argparse import ArgumentParser
 
-sys.path.append( os.path.dirname( "../../" ) ) 
+sys.path.append( os.path.dirname( "../" ) ) 
 
-import weights
 import analyze
-import samples
 import utils
 import config
 
@@ -21,7 +19,20 @@ parser.add_argument( "-nt", "--nt", default = "0p" )
 parser.add_argument( "-nw", "--nw", default = "0p" )
 parser.add_argument( "-nb", "--nb", default = "2p" )
 parser.add_argument( "-nj", "--nj", default = "5p" )
+parser.add_argument( "-sd", "--subDir" )
 args = parser.parse_args()
+
+if args.year == "16":
+  import weightsUL16 as weights
+  import samplesUL16 as samples
+elif args.year == "17":
+  import weightsUL17 as weights
+  import samplesUL17 as samples
+elif args.year == "18":
+  import weightsUL18 as weights
+  import samplesUL18 as samples
+else:
+  quit( "[ERR] Invalid -y (--year) option used. Quitting..." )
 
 import ROOT
 
@@ -78,29 +89,29 @@ def make_hists( groups, group, category ):
     process_time = time.time()
     rFiles, rTrees = {}, {} 
     rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ group ][ process ] + "_hadd.root" ) )
-    if config.options[ "JET SHIFTS" ] and group in [ "SIGNAL", "BACKGROUND" ]:
+    if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIGNAL", "BACKGROUND" ]:
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
           rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
-    hists.update( analyze.analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "PDF" ], category, True ) )
+    hists.update( analyze.analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees
-  if config.options[ "UE" ] and group in [ "BACKGROUND" ]:
+  if config.options[ "GENERAL" ][ "UE" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "UE" ]:
       process_time = time.time()
       rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
-      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "PDF" ], category, True ) )
+      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
-  if config.options[ "HDAMP" ] and group in [ "BACKGROUND" ]:
+  if config.options[ "GENERAL" ][ "HDAMP" ] and group in [ "BACKGROUND" ]:
     for process in groups[ "HD" ]:
       process_time = time.time()
       rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
-      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "PDF" ], category, True ) )
+      hists.update( analyze.analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   categoryDir = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0], category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0] )
-  pickle.dump( hists, open( "{}/{}_{}.pkl".format( categoryDir, group, args.variable ), "wb" ) )
+  pickle.dump( hists, open( "{}/{}/{}_{}.pkl".format( args.subDir, categoryDir, group, args.variable ), "wb" ) )
   
-if not config.options[ "TEST" ]:
+if not config.options[ "GENERAL" ][ "TEST" ]:
   for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
     group_time = time.time()
     print( ">> Processing hists for {}".format( group ) )

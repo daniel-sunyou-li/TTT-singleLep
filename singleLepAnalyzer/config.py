@@ -22,23 +22,45 @@ BR = {
 
 # boolean options that need to be coordinated across template making
 options = {
-  "TEST": False,
-  "JET SHIFTS": False, # JEC/JER shifts for shape 
-  "HDAMP": False, 
-  "UE": False,
-  "PDF": True,
-  "SYSTEMATICS": True,
-  "RENORM PDF": True, # renormalize the PDF weights
-  "SUMMARY": False, # produce summary templates
-  "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
+  "GENERAL": {
+    "TEST": False,        # run on limited samples
+    "JET SHIFTS": False,  # JEC/JER shifts for shape 
+    "HDAMP": False,       # hdamp systematics
+    "UE": False,          # ue systematics
+    "PDF": True,          # pdf systematics
+    "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
+  },
+  "HISTS": {
+    "RENORM PDF": True, # renormalize the PDF weights
+    "SUMMARY": False, # produce summary templates
+    "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
+  },
+  "MODIFY BINNING": {
+
+  }
 }
 # non-boolean parameters used in creating templates
 params = {
-  "LUMISCALE": 1,     # scale the luminosity multiplicatively in the templates
-  "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
-  "TTHFSF": 4.7/3.9,  # from TOP-18-002 (v34), set to 1 if no ttHFsf used
-  "TTLFSF": -1.,      # if ttLFsf -1, computed automatically using ttHFsf, else set manually
-  "PDF RANGE": 100    # pdf range to evaluate
+  "GENERAL": {
+    "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
+    "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
+  },
+  "HISTS": {
+    "LUMISCALE": 1,     # scale the luminosity multiplicatively in templates
+    "REBIN": -1,        # rebin histograms to have this number of bins
+    "TTHFSF": 4.7/3.9,  # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
+    "TTLFSF": -1.,      # if ttLFsf -1, compute automatically using ttHFsf, else set manually
+  },
+  "MODIFY BINNING": {
+    "STAT THRESHOLD": 0.3,      # bin statistic minimum threshold for merging
+    "MIN MERGE": 1,             # merge at least this number of bins
+    "ERROR BB": 0.05,           # stat shape uncertainty threshold for inclusion
+    "SMOOTHING ALGO": "lowess",  # smoothing algorithm to use
+    "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
+      "HDAMP", "UE", 
+      "NJET", "NJETSF", "PSWGT", "BTAG"
+    ]
+  }
 }
 
 region_prefix = {
@@ -142,4 +164,3 @@ plot_params = {
 ratio_threshold = 0.015 # ratio beneath which process / total background a process will be exccluded
 uncertainty_threshold = 0.5 # threshold beneath which a statistical uncertainty is excluded
 
-zero = 1e-12
