@@ -59,10 +59,12 @@ params = {
     "PDF RANGE": 100,   # PDF range
   },
   "HISTS": {
-    "LUMISCALE": 1,     # scale the luminosity multiplicatively in templates
-    "REBIN": -1,        # rebin histograms to have this number of bins
-    "TTHFSF": 4.7/3.9,  # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
-    "TTLFSF": -1.,      # if ttLFsf -1, compute automatically using ttHFsf, else set manually
+    "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
+    "REBIN": -1,            # rebin histograms to have this number of bins
+    "TTHFSF": 4.7/3.9,      # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
+    "TTLFSF": -1.,          # if ttLFsf -1, compute automatically using ttHFsf, else set manually
+    "MIN BKG YIELD": 0.00,  # minimum yield threshold for a bkg group to be included in combine analysis 
+    "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis
   },
   "MODIFY BINNING": {
     "STAT THRESHOLD": 0.3,      # bin statistic minimum threshold for merging
@@ -160,20 +162,24 @@ def bins( min_, max_, nbins_ ):
   return np.linspace( min_, max_, nbins_ ).tolist()
 
 plot_params = {
-  "LEPPT": ( "leptonPt_MultiLepCalc", bins( 0, 600, 121 ), ";Lepton p_{T} [GeV]" ),
-  "LEPETA": ( "leptonEta_MultiLepCalc", bins( -2.4, 2.4, 49 ), ";Lepton #eta" ),
-  "JETPT": ( "theJetPt_JetSubCalc_PtOrdered", bins( 0, 1500, 51 ), ";AK4 Jet p_{T} [GeV]" ),
-  "JETETA": ( "theJetEta_JetSubCalc_PtOrdered", bins( -2.4, 2.4, 49 ), ";AK4 Jet #eta" ),
-  "MET": ( "corr_met_MultiLepCalc", bins( 0, 1000, 51 ), ";p_{T}^{miss} [GeV]" ),
-  "HT": ( "AK4HT", bins( 0, 3000, 121 ), ";H_{T} [GeV]" ),
-  "NJETS": ( "NJets_JetSubCalc", bins( 0, 15, 16 ), ";AK4 Jet Multiplicity" ),
-  "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
-  "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
-  "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-  "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50} 3t" )
+  "PLOTTING": {
+    "ONE BAND ERR": True, # combine the various uncertainty bands into one color
+    "SMOOTHING": True,
+    "CR SYST": False,
+    "SCALE SIGNAL": 10, # scale the signal yield to be more visible, put -1 for auto-scaling
+  },
+  "VARIABLES": {
+    "LEPPT": ( "leptonPt_MultiLepCalc", bins( 0, 600, 121 ), ";Lepton p_{T} [GeV]" ),
+    "LEPETA": ( "leptonEta_MultiLepCalc", bins( -2.4, 2.4, 49 ), ";Lepton #eta" ),
+    "JETPT": ( "theJetPt_JetSubCalc_PtOrdered", bins( 0, 1500, 51 ), ";AK4 Jet p_{T} [GeV]" ),
+    "JETETA": ( "theJetEta_JetSubCalc_PtOrdered", bins( -2.4, 2.4, 49 ), ";AK4 Jet #eta" ),
+    "MET": ( "corr_met_MultiLepCalc", bins( 0, 1000, 51 ), ";p_{T}^{miss} [GeV]" ),
+    "HT": ( "AK4HT", bins( 0, 3000, 121 ), ";H_{T} [GeV]" ),
+    "NJETS": ( "NJets_JetSubCalc", bins( 0, 15, 16 ), ";AK4 Jet Multiplicity" ),
+    "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
+    "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
+    "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50} 3t" )
+  }
 }
-
-
-ratio_threshold = 0.015 # ratio beneath which process / total background a process will be exccluded
-uncertainty_threshold = 0.5 # threshold beneath which a statistical uncertainty is excluded
 

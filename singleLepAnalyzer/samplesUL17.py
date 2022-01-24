@@ -95,7 +95,7 @@ groups[ "SIG" ][ "PROCESS" ] = [ "TTTW", "TTTJ" ]
 ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT500", "TTToSemiLeptonicHT500", "TTToSemiLeptonic" ]
 groups[ "BKG" ][ "PROCESS" ] = {
   "WJETS": [ "WJetsMG200", "WJetsMG400", "WJetsMG600", "WJetsMG800", "WJetsMG1200", "WJetsMG2500" ],
-  "DY": [ "DY200", "DY400", "DY600", "DY800", "DY1200", "DY2500" ],
+  "DYM": [ "DYM200", "DYM400", "DYM600", "DYM800", "DYM1200", "DYM2500" ],
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "VV": [ "WW", "WZ", "ZZ" ],
   "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
@@ -112,10 +112,10 @@ groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonic_ttjj" + num for nu
     
 # grouped background processes
 groups[ "BKG" ][ "SUPERGROUP" ] = {
-  "TTNOBB": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).flatten().tolist(),
+  "TTNOBB": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).tolist(),
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
-  "TOP": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] ] ).flatten().tolist(),
-  "EWK": np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DY", "VV" ] ] ).flatten().tolist(),
+  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] ] ).tolist(),
+  "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
   "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ]
 }
   

@@ -97,6 +97,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 
   if process not in list( samples.samples[ "DATA" ].keys() ):
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+    mc_weights[ "NOMINAL" ] = "1" 
 
   if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
     #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
