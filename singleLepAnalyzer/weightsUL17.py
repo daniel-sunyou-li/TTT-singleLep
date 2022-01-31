@@ -240,12 +240,10 @@ mc_stats = {
     "EVENTS": 132018269.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_HDDN" ]
   },
-  
   "TTToSemiLeptonHT500": { 
     "EVENTS": 10179200, 
     "XSEC": 2.251
   },
-  
   "TTToHadronic": { 
     "EVENTS": 233815417., 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ] 
@@ -293,7 +291,7 @@ weights = { key: config.lumi[ "17" ] * mc_stats[ key ][ "XSEC" ] / mc_stats[ key
 
 for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
-    if tt == "SemiLeptonic":
+    if tt == "SemiLeptonic" and fs == "jj":
       for n in [ "1", "2", "3", "4" ]:
         weights[ "TTTo{}_tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
     else:
