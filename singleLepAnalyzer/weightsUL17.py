@@ -21,7 +21,7 @@ filtEff_tt = {
 }
 
 k_factor = {
-  "WJets": 1.21
+  "WJetsMG": 1.21
 }
 
 mc_stats = {
@@ -78,11 +78,11 @@ mc_stats = {
 #    "EVENTS": 0., 
 #    "XSEC": 0.05324
 #  },
-  "TTHBB": { 
+  "TTHB": { 
     "EVENTS": 7661779., 
     "XSEC": 0.5269
   },
-  "TTHnoBB": { 
+  "TTHnoB": { 
     "EVENTS": 4965389., 
     "XSEC": 0.5638
   },
@@ -174,29 +174,29 @@ mc_stats = {
     "XSEC": 0.0045
   },
   
-  "WJets200": { 
+  "WJetsMG200": { 
     "EVENTS": 42602407., 
-    "XSEC": 359.7 * k_factor[ "WJets" ]
+    "XSEC": 359.7 * k_factor[ "WJetsMG" ]
   },
-  "WJets400": { 
+  "WJetsMG400": { 
     "EVENTS": 5437447., 
-    "XSEC": 48.91 * k_factor[ "WJets" ]
+    "XSEC": 48.91 * k_factor[ "WJetsMG" ]
   },
-  "WJets600": { 
+  "WJetsMG600": { 
     "EVENTS": 5545298., 
-    "XSEC": 12.05 * k_factor[ "WJets" ]
+    "XSEC": 12.05 * k_factor[ "WJetsMG" ]
   },
-  "WJets800": { 
+  "WJetsMG800": { 
     "EVENTS": 5088483.0, 
-    "XSEC": 5.501 * k_factor[ "WJets" ]
+    "XSEC": 5.501 * k_factor[ "WJetsMG" ]
   },
-  "WJets1200": { 
+  "WJetsMG1200": { 
     "EVENTS": 4942590., 
-    "XSEC": 1.329 * k_factor[ "WJets" ]
+    "XSEC": 1.329 * k_factor[ "WJetsMG" ]
   },
-  "WJets2500": { 
+  "WJetsMG2500": { 
     "EVENTS": 1185699.0, 
-    "XSEC": 0.03216 * k_factor[ "WJets" ]
+    "XSEC": 0.03216 * k_factor[ "WJetsMG" ]
   },
   
   "TTToSemiLeptonic": { 

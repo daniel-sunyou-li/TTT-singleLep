@@ -4,10 +4,10 @@ import numpy as np
 
 samples = {
   "TEST": {
-    "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
+    #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
-    "DataE": "SingleElectron",
-    "TTToSemiLeptonHT500_ttbb": "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb"
+    #"DataE": "SingleElectron",
+    "TTToSemiLeptonic_ttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
   },
   "DATA": {
     "DataE": "SingleElectron",

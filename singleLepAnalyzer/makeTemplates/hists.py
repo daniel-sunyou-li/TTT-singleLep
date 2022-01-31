@@ -82,9 +82,9 @@ def read_tree( samplePath ):
   return rootFile, rootTree
 
 def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
-  variableName = config.plot_params[ variable ][0]
-  histBins = array( "d", config.plot_params[ variable ][1] )
-  xLabel = config.plot_params[ variable ][2]
+  variableName = config.plot_params[ "VARIABLES" ][ variable ][0]
+  histBins = array( "d", config.plot_params[ "VARIABLES" ][ variable ][1] )
+  xLabel = config.plot_params[ "VARIABLES" ][ variable ][2]
 
   print( ">> Processing {} for 20{} {}".format( variable, year, process ) )
   
@@ -97,7 +97,6 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 
   if process not in list( samples.samples[ "DATA" ].keys() ):
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
-    mc_weights[ "NOMINAL" ] = "1" 
 
   if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
     #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
@@ -194,7 +193,11 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 				
   # Sumw2() tells the hist to also store the sum of squares of weights
   for histTag in hists: hists[ histTag ].Sumw2()
-		
+	
+  if verbose: 
+    print( ">> Applying NOMINAL weights: {}".format( mc_weights[ "NOMINAL" ] ) )
+    print( ">> Applying NOMINAL cuts: {}".format( cuts[ "NOMINAL" ] ) )
+
   # draw histograms
   histTag = "{}_{}_{}_{}".format( variable, lumiStr, categoryTag, process )
   rTree[ process ].Draw( 
@@ -202,7 +205,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
     "GOFF" )
 
-  if verbose: print( "  + NOMINAL" )
+  if verbose: print( "  + NOMINAL: {} --> {}".format( rTree[ process ].GetEntries(), hists[ histTag ].Integral() ) )
 
   if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
     for syst in config.systematics[ "MC" ]:
@@ -306,6 +309,7 @@ def make_hists( groups, group, category ):
       hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   categoryDir = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0], category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0] )
+  if not os.path.exists( "{}/{}".format( args.subDir, categoryDir ) ): os.system( "mkdir -vp {}/{}".format( args.subDir, categoryDir ) )
   pickle.dump( hists, open( "{}/{}/{}_{}.pkl".format( args.subDir, categoryDir, group, args.variable ), "wb" ) )
   
 if not config.options[ "GENERAL" ][ "TEST" ]:

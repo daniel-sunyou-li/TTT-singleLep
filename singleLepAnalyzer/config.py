@@ -23,12 +23,12 @@ BR = {
 # boolean options that need to be coordinated across template making
 options = {
   "GENERAL": {
-    "TEST": False,        # run on limited samples
+    "TEST": True,        # run on limited samples
     "JET SHIFTS": False,  # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
-    "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
+    "SYSTEMATICS": False,  # include other systematics defined in systematics[ "MC" ]
   },
   "HISTS": {
     "RENORM PDF": True, # renormalize the PDF weights
