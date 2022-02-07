@@ -49,40 +49,41 @@ def produce_templates():
 def run_templates():
   trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
-  if not os.path.exists( "condor_config" ): os.system( "mkdir -vp condor_config" )
   for training in trainings:
-    step2_name = "condor_step2_UL{}_{}".format( training[ "year" ], training[ "tag" ] )
-    shell_name = "condor_config/{}.sh".format( step2_name )
-    shell = open( shell_name, "w" )
-    shell.write(
+    for variable in training[ "variable" ]:
+      if not os.path.exists( "condor_log" ): os.system( "mkdir -vp condor_log" )
+      step2_name = "condor_step2_UL{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable )
+      shell_name = "condor_log/{}.sh".format( step2_name )
+      shell = open( shell_name, "w" )
+      shell.write(
 "#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python templates.py -y {} -t {} -v {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], training[ "variable" ] )
-    )
-    shell.close()
-    jdf_name = "condor_config/{}.job".format( step2_name )
-    jdf = open( jdf_name, "w" )
-    jdf.write(
+python templates.py -y {} -t {} -v {} -r {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], variable, args.region )
+      )
+      shell.close()
+      jdf_name = "condor_log/{}.job".format( step2_name )
+      jdf = open( jdf_name, "w" )
+      jdf.write(
 "universe = vanilla \n\
-Executable = {}/{}\n\
+Executable = {}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
 JobBatchName = SLA_step2\n\
 request_memory = 5000\n\
-Output = {}/condor_log/{}.out\n\
-Error = {}/condor_log/{}.err\n\
-Log = {}/condor_log/{}.log\n\
+Output = condor_log/{}.out\n\
+Error = condor_log/{}.err\n\
+Log = condor_log/{}.log\n\
 Notification = Error\n\
 Arguments = \n\
-Queue 1\n".format( os.getcwd(), shell_name, os.getcwd(), step2_name, os.getcwd(), step2_name, os.getcwd(), step2_name ) 
-    )
-    jdf.close()
-    os.system( "condor_submit {}".format( jdf_name ) )
-    time.sleep(1)
-  os.chdir("..")
+Queue 1\n".format( shell_name, step2_name, step2_name, step2_name ) 
+      )
+      jdf.close()
+      os.system( "condor_submit {}".format( jdf_name ) )
+      time.sleep( 1 )
+    os.chdir( "../" )
   
 def produce_binned_plots():
   trainings = get_trainings( args.tags, args.years, args.variables )

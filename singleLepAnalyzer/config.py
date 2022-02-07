@@ -23,12 +23,12 @@ BR = {
 # boolean options that need to be coordinated across template making
 options = {
   "GENERAL": {
-    "TEST": True,        # run on limited samples
+    "TEST": False,        # run on limited samples
     "JET SHIFTS": False,  # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
-    "SYSTEMATICS": False,  # include other systematics defined in systematics[ "MC" ]
+    "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
   },
   "HISTS": {
     "RENORM PDF": True, # renormalize the PDF weights
@@ -63,7 +63,7 @@ params = {
     "REBIN": -1,            # rebin histograms to have this number of bins
     "TTHFSF": 4.7/3.9,      # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
     "TTLFSF": -1.,          # if ttLFsf -1, compute automatically using ttHFsf, else set manually
-    "MIN BKG YIELD": 0.00,  # minimum yield threshold for a bkg group to be included in combine analysis 
+    "MIN BKG YIELD": 0.015, # minimum yield threshold for a bkg group to be included in combine analysis 
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis
   },
   "MODIFY BINNING": {
@@ -149,8 +149,7 @@ event_cuts = {
   "ht": 350
 }
 
-# use isTraining == 3 when running final analysis
-base_cut = "isTraining == 2 && DataPastTriggerX == 1 && MCPastTriggerX == 1 "
+base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
 base_cut += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( event_cuts[ "pt_electron" ], event_cuts[ "pt_muon" ] )
 base_cut += " && AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > 0.4".format( event_cuts[ "ht" ], event_cuts[ "met" ], event_cuts[ "mt" ] )
 mc_weight = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc"
@@ -182,4 +181,3 @@ plot_params = {
     "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50} 3t" )
   }
 }
-

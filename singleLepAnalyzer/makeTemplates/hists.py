@@ -36,16 +36,6 @@ else:
 
 import ROOT
 
-"""
-Note: 
---Each process in step1 (or step2) directories should have the root files hadded! 
---The code will look for <step1Dir>/<process>_hadd.root for nominal trees.
-The uncertainty shape shifted files will be taken from <step1Dir>/../<shape>/<process>_hadd.root,
-where <shape> is for example "JECUp". hadder.py can be used to prepare input files this way! 
---Each process given in the lists below must have a definition in "samples.py"
---Check the set of cuts in "analyze.py"
-"""
-
 ROOT.gROOT.SetBatch(1)
 start_time = time.time()
 
@@ -59,11 +49,11 @@ category = {
 }
 
 groups = {
-  "DATA": [ str( process ) for process in samples.samples[ "DATA" ] ],
-  "SIGNAL": [ str( process ) for process in samples.samples[ "SIGNAL" ] ],
-  "BACKGROUND": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if ( "UE" not in str( process ) and "HD" not in str( process ) ) ],
-  "UE": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "UE" in str( process ) ],
-  "HD": [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "HD" in str( process ) ],
+  "DATA": sorted( [ str( process ) for process in samples.samples[ "DATA" ] ] ),
+  "SIGNAL": sorted( [ str( process ) for process in samples.samples[ "SIGNAL" ] ] ),
+  "BACKGROUND": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if ( "UE" not in str( process ) and "HD" not in str( process ) ) ] ),
+  "UE": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "UE" in str( process ) ] ),
+  "HD": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "HD" in str( process ) ] ),
   "TEST": [ str( process ) for process in samples.samples[ "TEST" ] ]
 }
 
@@ -89,11 +79,15 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   print( ">> Processing {} for 20{} {}".format( variable, year, process ) )
   
   # modify weights
-  mc_weights = { "NOMINAL": "3" if process.startswith( "TTTo" ) else "1" } # weights only applied to MC
+  # scale up MC samples used in DNN/ABCDnn training where dataset partitioned into 40/20/40 so scale isTraining==3 by 2.5 
+  mc_weights = { "NOMINAL": "2.5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in weights.weights.keys():
     mc_weights[ "PROCESS" ] = "{:.10f}".format( weights.weights[ process ] ) 
   else:
     mc_weights[ "PROCESS" ] = "1"
+
+  if process.startswith( "TTTo" ):
+    mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
   if process not in list( samples.samples[ "DATA" ].keys() ):
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
@@ -132,6 +126,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   if "TTToSemiLepton" in process and "HT500" in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==1"
   elif "TTToSemiLepton" in process and "HT500" not in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==0"
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ][:]
+  if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
+    cuts[ "NOMINAL" ] += " && isTraining == 3" # Used isTraining==1 in training and isTraining==2 in validation of training
 
   cuts[ "LEPTON" ] = " && isElectron==1" if category[ "LEPTON" ][0] == "E" else " && isMuon==1"
   cuts[ "NHOT" ] = " && NresolvedTops1pFake {}= {}".format( ">" if "p" in category[ "NHOT" ][0] else "=", category[ "NHOT" ][0][:-1] if "p" in category[ "NHOT" ][0] else category[ "NHOT" ][0] )
@@ -315,13 +311,13 @@ def make_hists( groups, group, category ):
 if not config.options[ "GENERAL" ][ "TEST" ]:
   for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
     group_time = time.time()
-    print( ">> Processing hists for {}".format( group ) )
+    print( "[START] Processing hists for {}".format( group ) )
     for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
     make_hists( groups, group, category )
     print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60, 2 ) ) )
 else:
   test_time = time.time() 
-  print( ">> Processing TEST hists" )
+  print( "[START] Processing TEST hists" )
   for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
   make_hists( groups, "TEST", category )
   print( "[DONE] Finished processing hists for TEST in {} minutes".format( round( ( time.time() - test_time ) / 60, 2 ) ) )

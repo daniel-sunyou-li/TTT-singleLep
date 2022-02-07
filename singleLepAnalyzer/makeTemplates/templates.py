@@ -2,6 +2,7 @@
 
 import os, sys, json, time, math, datetime, pickle, itertools
 sys.path.append( "../" )
+sys.path.append( "../../" )
 from argparse import ArgumentParser
 import numpy as np
 from array import array
@@ -270,7 +271,7 @@ def combine_templates( hists, variable, categories, groups, templateDir ):
     for group in groups[ "BKG" ][ "SUPERGROUP" ]:
       error_group = Double(0)
       yield_group = hists[ "CMB" ][ hist_tag( group, category ) ].IntegralAndError( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins(), error_group )
-      if yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ] or error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]:
+      if ( yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ] or error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ] ):
         if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "[WARN] {} beneath yield threshold, excluding from Combine template".format( group ) )
         if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "[WARN] {} above error threshold, excluding from Combine template".format( group ) )
         continue
