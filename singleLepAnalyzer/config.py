@@ -48,7 +48,8 @@ options = {
     "SYMM TOP PT": True,
     "SYMM HOTCLOSURE": True,
     "SCALE SIGNAL XSEC": False,
-    "ADD SHAPE SYST YIELD": True
+    "ADD SHAPE SYST YIELD": True,
+    "SMOOTH": True,
   }
 }
 # non-boolean parameters used in creating templates
@@ -178,6 +179,6 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50} 3t" )
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" )
   }
 }

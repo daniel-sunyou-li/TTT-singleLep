@@ -1,19 +1,18 @@
 #!/usr/bin/python
 
 import os, sys, time, math, fnmatch
-sys.path.apend( os.path.dirname( os.getcwd() ) )
+sys.path.append( os.path.dirname( os.getcwd() ) )
 from array import array
-import modSyst
 import utils
 import config
-from argparse import ArgumentParser()
+from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", required = True )
 parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True )
 parser.add_argument( "-v", "--variable", required = True )
-args = parser.parse()
+args = parser.parse_args()
 
 if args.year == "16": 
   import samplesUL16 as samples
@@ -175,7 +174,7 @@ def rebinning( file_name ):
     hists[ channel ][ hist_name_dn ].Write()
     
     hists_HOTClosure = {
-      "UP": hists[ channel ][ hist_name_up ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}UP".format( args.year ) ) )
+      "UP": hists[ channel ][ hist_name_up ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}UP".format( args.year ) ) ),
       "DN": hists[ channel ][ hist_name_dn ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}DN".format( args.year ) ) )
     }
     for shift in hists_HOTClosure: hists_HOTClosure[ shift ].Write()
@@ -186,9 +185,10 @@ def rebinning( file_name ):
     
   def add_muRF_shapes( hists, yields, channel, hist_name, groups ): # done
     for process in groups[ "BKG" ][ "PROCESS" ]:
-      if process in groups[ "BKG" ][ "TTBAR_PROCESS" ]: process = "TT"
+      if process in groups[ "BKG" ][ "TTBAR_PROCESS" ]: 
+        process = "TT"
         hist_muRF = {
-          "UP": hists[ channel ][ hist_name ].Clone( hist_name.replace( "MUR", "MURFUP" ) )
+          "UP": hists[ channel ][ hist_name ].Clone( hist_name.replace( "MUR", "MURFUP" ) ),
           "DN": hists[ channel ][ hist_name ].Clone( hist_name.replace( "MUR", "MURFDN" ) )
         }
         hist_renorm = {
@@ -246,7 +246,7 @@ def rebinning( file_name ):
   def add_PS_weights( hists, yields, channel, hist_name ): # done
     for process in groups[ "BKG" ][ "PROCESS" ]:
       if process in groups[ "BKG" ][ "TTBAR_PROCESS" ]: process = "TT"
-      hist_PSWeight = { shift: hists[ channel ][ hist_name ].Clone( hist_name.replace( "ISR" + shift, "PSWEIGHT" + shift ) for shift in [ "UP", "DN" ] }
+      hist_PSWeight = { shift: hists[ channel ][ hist_name ].Clone( hist_name.replace( "ISR" + shift, "PSWEIGHT" + shift ) ) for shift in [ "UP", "DN" ] }
       hist_dict = { "NOMINAL": hists[ channel ][ hist_name ] }
       for syst in [ "ISR", "FSR" ]:
         for shift in [ "UP", "DN" ]:
@@ -292,7 +292,7 @@ def rebinning( file_name ):
         for syst in [ "ISR", "FSR" ]:
           yields[ hist_name.replace( "ISR", syst + shift ) ] = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Integral()
           if ( args.norm_theory_bkg and "SIG" not in hist_name ) or ( args.norm_theory_sig and "SIG" in hist_name ):
-            hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Scale( hists[ channel ][ hist_name[:hist_name.find("_ISR")].Integral() / ( hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Integral() + config.zero ) )
+            hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Scale( hists[ channel ][ hist_name[:hist_name.find("_ISR")] ].Integral() / ( hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Integral() + config.zero ) )
           hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Write()
           
           hist_PS_3 = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Clone( hist_name.replace( "ISR", "{}_{}{}".format( syst, process, shift ) ) )
@@ -302,7 +302,7 @@ def rebinning( file_name ):
           hist_PS_4.Write()
           
   def add_PDF_shapes( hists, yields, channel, hist_name ): # done
-    for process in groups[ "BKG" ][ "PROCESS" ]
+    for process in groups[ "BKG" ][ "PROCESS" ]:
       hist_PDF = { shift: hists[ channel ][ hist_name ].Clone( hist_name.replace( "PDF0", "PDF" + shift ) ) for shift in [ "UP", "DN" ] }
       for i in range( 1, hist_PDF[ "UP" ].GetNbinsX() + 1 ):
         weight_dict = { i: hists[ channel ][ hist_name.replace( "PDF0", "PDF{}".format( i ) ) ].GetBinContent(i) for i in range( config.pdf_range ) }
@@ -452,12 +452,12 @@ def get_shape_uncertainty( hists, process, channel ): # needs some fixes to the 
   total_shift = { shift: 0 for shift in [ "UP", "DN" ] }
   prefix = hist_names[ channel ][ "ALL" ][0][:hist_names[ channel ][ "ALL" ]]
   hist_nominal = hist_names[ channel ][ process ]
-  for syst in config.systematics:
+  for syst in config.systematics["MC"]:
     if syst in systematics_remove or ( args.smoothing and config.smooth_algo not in syst ): continue
     if args.norm_theory_sig and process in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
     if args.norm_theory_bkg and process not in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
     for shift in [ "UP", "DN" ]:
-      hist_shape = prefix + process + "_" syst + shift
+      hist_shape = "{}{}_{}{}".format( prefix, process, syst, shift )
       shift = yields[ channel ][ hist_names[ channel ][ process ].GetName() ] / ( yields[ channel ][ nominal ] + config.zero ) - 1
       if shift > 0: total_shift[ shift ] += shift**2
       if shift < 0: total_shift[ shift ] += shift**2
@@ -478,29 +478,29 @@ def main():
   templateDir = os.path.join( os.getcwd(), "{}_UL{}_{}".format( template_prefix, args.year, args.tag ) )
   
   params = config.params[ "MODIFY BINNING" ].copy()
-  options = config.params[ "MODIFY BINNING" ].copy()
+  options = config.options[ "MODIFY BINNING" ].copy()
   if args.region == "BASELINE":
     print( "[WARN] Running BASELINE region, overriding the following options and parameters:" )
-    print( "   - STAT THRESHOLD: {} --> 1.1".format( params[ "STAT THRESHOLD" ] ) )
-    print( "   - SMOOTHING: {} --> False".format( options[ "SMOOTHING" ] ) )
+    print( "   > STAT THRESHOLD: {} --> 1.1".format( params[ "STAT THRESHOLD" ] ) )
+    print( "   > SMOOTHING: {} --> False".format( options[ "SMOOTH" ] ) )
     params[ "STAT THRESHOLD" ] = 1.1 
-    options[ "SMOOTHING" ] = False
+    options[ "SMOOTH" ] = False
     if args.variable.upper() == "HT" or args.variable.upper() == "LEPPT":
-      print( "   - MIN MERGE ({}): {} --> 4".format( args.variable, params[ "MIN MERGE" ] ) )
+      print( "   > MIN MERGE ({}): {} --> 4".format( args.variable, params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 4
     elif "NJET" in args.variable.upper() or "NBJET" in args.variable.upper() or "NHOT" in args.variable.upper():
-      print( "   - MIN MERGE ({}): {} --> 1".format( args.variable, params[ "MIN MERGE" ] ) )
+      print( "   > MIN MERGE ({}): {} --> 1".format( args.variable, params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 1
-    print( "   - MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
-    params[ "MIN MERGE" ] = 2
+    else:
+      print( "   > MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
+      params[ "MIN MERGE" ] = 2
     
   
   
   categories = get_categories( templateDir )
 
-  
-
-  error_threshold = {}
+  print( categories )
+  quit()
   error_threshold[ "STATISTICAL" ] = 1.1 if "kinematics" in args.templateDir.lower() else float( args.uncertainty )
   doSmoothing = False if "kinematics" in args.templateDir.lower() else args.smoothing 
   minBins = 2 if "kinematics" in args.templateDir.lower() else int( args.minbins )
@@ -512,34 +512,3 @@ def main():
     rebinned_hists[ file_name ], yields[ file_name ], yield_errors[ file_name ] = rebinning( file_name )
     
   print_tables( hists )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
