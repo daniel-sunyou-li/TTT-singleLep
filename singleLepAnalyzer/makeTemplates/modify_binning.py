@@ -40,7 +40,10 @@ def hist_tag( *args ):
   for arg in args[1:]: histTag += "_{}".format( arg )
   return histTag
 
-def rebinning( file_path ):
+
+class Rebin_Template( self ):
+  def __init__()
+  
   def rebin( rFile_in, xBins, hist_name, channel ): # done
     hist = rFile_in.Get( hist_name ).Rebin(
       len( xBins[ channel ] ) - 1,
