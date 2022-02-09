@@ -14,7 +14,12 @@ parser.add_argument( "-r", "--region", required = True )
 parser.add_argument( "-v", "--variable", required = True )
 args = parser.parse_args()
 
-if args.year == "16": 
+import ROOT
+
+if args.year == "16APV": 
+  import samplesUL16APV as samples
+  import weightsUL16APV as weights
+elif args.year == "16":
   import samplesUL16 as samples
   import weightsUL16 as weights
 elif args.year == "17": 
@@ -25,7 +30,6 @@ elif args.year == "18":
   import weightsUL18 as weights
 else: quit( "[ERR] Invalid -y (--year) argument. Quitting" )
 
-import ROOT
 
 def get_categories( directory ):
   categories = [ directory for directory in os.walk( directory ).next()[1] if directory.startswith( "isE" ) or directory.startswith( "isM" ) ]
@@ -36,7 +40,7 @@ def hist_tag( *args ):
   for arg in args[1:]: histTag += "_{}".format( arg )
   return histTag
 
-def rebinning( file_name ):
+def rebinning( file_path ):
   def rebin( rFile_in, xBins, hist_name, channel ): # done
     hist = rFile_in.Get( hist_name ).Rebin(
       len( xBins[ channel ] ) - 1,
@@ -495,20 +499,13 @@ def main():
       print( "   > MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 2
     
-  
-  
   categories = get_categories( templateDir )
 
-  print( categories )
+  file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
+  file_path = os.path.join( templateDir, file_name )
+  rebinned_hists, yields, yield_errors = rebinning( filepath, categories, options, params )
   quit()
-  error_threshold[ "STATISTICAL" ] = 1.1 if "kinematics" in args.templateDir.lower() else float( args.uncertainty )
-  doSmoothing = False if "kinematics" in args.templateDir.lower() else args.smoothing 
-  minBins = 2 if "kinematics" in args.templateDir.lower() else int( args.minbins )
-
-  error_threshold[ "BB" ] = float( args.error_bb )
-
-  rebinned_hists, yields, yield_errors = {}, {}, {}
-  for file_name in file_names:
-    rebinned_hists[ file_name ], yields[ file_name ], yield_errors[ file_name ] = rebinning( file_name )
     
   print_tables( hists )
+
+main()
