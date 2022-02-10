@@ -37,6 +37,7 @@ options = {
   },
   "MODIFY BINNING": {
     "BLIND": True,
+    "PDF": True,                   # add PDF systematic uncertainty
     "CR SYST": False,              # add systematic uncertainty to control region
     "SHAPE SYST": True,            # add systematic uncertainty shapes
     "SHAPE STAT": True,            # add statistical uncertainty shapes
