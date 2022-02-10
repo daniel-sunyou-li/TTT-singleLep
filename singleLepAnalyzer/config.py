@@ -68,7 +68,7 @@ params = {
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis
   },
   "MODIFY BINNING": {
-    "STAT THRESHOLD": 0.3,      # bin statistic minimum threshold for merging
+    "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin
     "MIN MERGE": 1,             # merge at least this number of bins
     "ERROR BB": 0.05,           # stat shape uncertainty threshold for inclusion
     "SMOOTHING ALGO": "lowess",  # smoothing algorithm to use
