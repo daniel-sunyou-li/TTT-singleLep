@@ -81,6 +81,7 @@ params = {
 
 region_prefix = {
   "SR": "templates",
+  "VR": "templates",
   "TTCR": "ttbar",
   "WJCR": "wjets",
   "BASELINE": "baseline"
@@ -123,13 +124,21 @@ systematics = {
 
 # binning configuration for the templates
 hist_bins = {
-  "TEMPLATES": {
+  "SR": {
     "LEPTON": [ "E", "M" ],
     "NHOT": [ "0", "1", "2p" ],
     "NT": [ "0p" ],
     "NW": [ "0", "1p" ],
     "NB": [ "2", "3p" ],
     "NJ": [ "5", "6", "7", "8p" ]
+  },
+  "VR": {
+    "LEPTON": [ "E", "M" ],
+    "NHOT": [ "0p" ],
+    "NT": [ "0p" ],
+    "NW": [ "0p" ],
+    "NB": [ "2", "3p" ],
+    "NJ": [ "4", "5", "6" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],

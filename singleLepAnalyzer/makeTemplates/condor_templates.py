@@ -18,11 +18,13 @@ args = parser.parse_args()
 thisDir = os.getcwd()
 
 if args.region == "TTCR": 
-  bins = config.hist_bins[ "TEMPLATES" ]
+  bins = config.hist_bins[ "VR" ]
 elif args.region == "WJCR":
-  bins = config.hist_bins[ "TEMPLATES" ]
+  bins = config.hist_bins[ "VR" ]
 elif args.region == "SR":
-  bins = config.hist_bins[ "TEMPLATES" ]
+  bins = config.hist_bins[ "SR" ]
+elif args.region == "VR":
+  bins = config.hist_bins[ "VR" ]
 elif args.region == "BASELINE":
   bins = config.hist_bins[ "BASELINE" ]
 else:

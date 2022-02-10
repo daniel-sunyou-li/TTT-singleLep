@@ -12,6 +12,7 @@ parser.add_argument( "-y", "--year", required = True )
 parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True )
 parser.add_argument( "-v", "--variable", required = True )
+parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
 import ROOT
@@ -37,23 +38,23 @@ def hist_tag( *args ):
 
 def overflow( hist ):
   nbins = hist.GetXaxis().GetNbins()
-  yield = hist.GetBinContent( nbins ) + hist.GetBinContent( nbins + 1 )
-  error = math.sqrt( hist.GetBinError( nbins )**2 + hist.GetBinErro( nbins + 1 )**2 )
-  hist.SetBinContent( nbins, yield )
+  yields = hist.GetBinContent( nbins ) + hist.GetBinContent( nbins + 1 )
+  error = math.sqrt( hist.GetBinError( nbins )**2 + hist.GetBinError( nbins + 1 )**2 )
+  hist.SetBinContent( nbins, yields )
   hist.SetBinError( nbins, error )
   hist.SetBinContent( nbins + 1, 0 )
   hist.SetBinError( nbins + 1, 0 )
   
 def underflow( hist ):
   nbins = hist.GetXaxis().GetNbins()
-  yield = hist.GetBinContent( 0 ) + hist.GetBinContent( 1 )
-  error = math.sqrt( hist.GetBinError( 0 )**2 + hist.GetBinErro( 1 )**2 )
-  hist.SetBinContent( 1, yield )
+  yields = hist.GetBinContent( 0 ) + hist.GetBinContent( 1 )
+  error = math.sqrt( hist.GetBinError( 0 )**2 + hist.GetBinError( 1 )**2 )
+  hist.SetBinContent( 1, yields )
   hist.SetBinError( 1, error )
   hist.SetBinContent( 0, 0 )
   hist.SetBinError( 0, 0 ) 
   
-class ModifyTemplate( self ):
+class ModifyTemplate():
   def __init__( self, filepath, options, params, groups, variable ):
     self.filepath = filepath
     self.options = options
@@ -72,12 +73,12 @@ class ModifyTemplate( self ):
     self.categories = list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names ) )
     self.channels = list( set( category[3:] for category in self.categories ) )
     
-    groups_bkg = list( groups[ "BKG" ][ "PROCESS" ].keys() ) + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() )
-    groups_sig = groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]
-    groups_dat = groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]
+    groups_bkg = list( self.groups[ "BKG" ][ "PROCESS" ].keys() ) + list( self.groups[ "BKG" ][ "SUPERGROUP" ].keys() )
+    groups_sig = self.groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]
+    groups_dat = self.groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]
     category_log = { key: [] for key in [ "ALL", "DAT", "BKG", "SIG" ] }
     self.histograms = { key: {} for key in [ "BKG", "SIG", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
-    
+    count = 0 
     for hist_name in self.hist_names:
       syst = False
       parts = hist_name.split( "_" )
@@ -86,14 +87,13 @@ class ModifyTemplate( self ):
         syst_name = parts[len( args.variable.split( "_" ) )]
         if "UP" in syst_name or "DN" in syst_name: syst_name = syst_name[:-2]
         if "PDF" in syst_name: syst_name = syst_name[:3]
-        if syst_name not in syst_list: syst_list.append( syst_name )
       process = parts[-1]
       category = parts[-2]
       if category not in category_log[ "ALL" ]:
         category_log[ "ALL" ].append( category )
 
       if process in groups_dat:
-        if args.verbose: print( "   + DAT: {}".format( hist_name ) )
+        if args.verbose and not syst: print( "   + DAT: {}".format( hist_name ) )
         self.histograms[ "DAT" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
         if category not in category_log[ "DAT" ] and not syst:
           self.histograms[ "TOTAL DAT" ][ category ] = self.histograms[ "DAT" ][ hist_name ].Clone( "TOTAL DAT {}".format( category ) )
@@ -101,16 +101,16 @@ class ModifyTemplate( self ):
         elif not syst:
           self.histograms[ "TOTAL DAT" ][ category ].Add( self.histograms[ "DAT" ][ hist_name ] )
       elif process in groups_bkg:
-        if args.verbose: print( "   + BKG: {}".format( hist_name ) )
-        self.histograms[ "BKG" ][ hist_name ] = rFile.Get( hist_name ).Clone( hist_name )   
+        if args.verbose and not syst: print( "   + BKG: {}".format( hist_name ) )
+        self.histograms[ "BKG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )   
         if category not in category_log[ "BKG" ] and not syst:
           self.histograms[ "TOTAL BKG" ][ category ] = self.histograms[ "BKG" ][ hist_name ].Clone( "TOTAL BKG {}".format( category ) )
           category_log[ "BKG" ].append( category )
         elif not syst:
           self.histograms[ "TOTAL BKG" ][ category ].Add( self.histograms[ "BKG" ][ hist_name ] )
       elif process in groups_sig:
-        if args.verbose: print( "   + SIG: {}".format( hist_name ) )
-        self.histograms[ "SIG" ][ hist_name ] = rFile.Get( hist_name ).Clone( hist_name )
+        if args.verbose and not syst: print( "   + SIG: {}".format( hist_name ) )
+        self.histograms[ "SIG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
         if category not in category_log[ "SIG" ] and not syst:
           self.histograms[ "TOTAL SIG" ][ category ] = self.histograms[ "SIG" ][ hist_name ].Clone( "TOTAL SIG {}".format( category ) )
           category_log[ "SIG" ].append( category )
@@ -122,15 +122,15 @@ class ModifyTemplate( self ):
     
     print( ">> Creating lepton categories" )
     for channel in self.channels:
-      categories[ "ALL" ].append( "isL" + channel )
+      category_log[ "ALL" ].append( "isL" + channel )
     for key in self.histograms:
       print( "   o {}".format( key ) )
       key_hist_names = [ hist_name for hist_name in self.histograms[ key ].keys() if "isE" in hist_name ]
       for hist_name in key_hist_names:
         name_lepton = hist_name.replace( "isE", "isL" )
-        histograms[ key ][ name_lepton ] = histograms[ key ][ hist_name ].Clone( name_lepton )
-        histograms[ key ][ name_lepton ].Add( histograms[ key ][ hist_name.replace( "isE", "isM" ) ] )
-        if "UP_" not in hist_name and "DN_" not in hist_name and "PDF" not in hist_name:  print( "     + {}: {}".format( name_lepton, histograms[ key ][ name_lepton ].Integral() ) )  
+        self.histograms[ key ][ name_lepton ] = self.histograms[ key ][ hist_name ].Clone( name_lepton )
+        self.histograms[ key ][ name_lepton ].Add( self.histograms[ key ][ hist_name.replace( "isE", "isM" ) ] )
+        if "UP_" not in hist_name and "DN_" not in hist_name and "PDF" not in hist_name:  print( "     + {}: {}".format( name_lepton, self.histograms[ key ][ name_lepton ].Integral() ) )  
     
     for hist_key in self.histograms:
       for hist_name in self.histograms[ hist_key ]:
@@ -141,10 +141,10 @@ class ModifyTemplate( self ):
   
   def get_xbins( self ):
     print( "[START] Determining modified histogram binning" )
-    self.xbins = { key: {} for key in [ "OLD", "NEW" ] } # change OLD --> merged and NEW --> limit
+    self.xbins = { key: {} for key in [ "MERGED", "LIMIT", "MODIFY" ] } # change OLD --> merged and NEW --> limit
     for channel in self.channels:
       N_BINS = self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetNbinsX()
-      self.xbins[ "OLD" ][ channel ] = [ self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinUpEdge( nbins ) ) ]
+      self.xbins[ "MERGED" ][ channel ] = [ self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinUpEdge( N_BINS ) ]
       bin_content = {
         key_lep: {
           key_type: {
@@ -152,20 +152,21 @@ class ModifyTemplate( self ):
           } for key_type in [ "TOTAL BKG", "TOTAL DAT" ]
         } for key_lep in [ "isE", "isM" ]
       }
+      N_MERGED = 0
       for i in range( 1, N_BINS + 1 ):
         N_MERGED += 1
         if self.params[ "STAT THRESHOLD" ] > 1.0:
-          if N_MERGED < params[ "MIN MERGE" ]: 
+          if N_MERGED < self.params[ "MIN MERGE" ]: 
             continue
           else:
-            self.xbins[ "OLD" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
+            self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
             N_MERGED = 0
         else:
           for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
             for key_lep in [ "isE", "isM" ]:
                 bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
                 bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
-          if N_MERGED < params[ "MIN MERGE" ]: 
+          if N_MERGED < self.params[ "MIN MERGE" ]: 
             continue
           else:
             if math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ] <= self.params[ "STAT THRESHOLD" ]:
@@ -175,32 +176,32 @@ class ModifyTemplate( self ):
                     for key_stat in [ "YIELD", "ERROR" ]:
                       bin_content[ key_lep ][ key_type ][ key_stat ] = 0
                       N_MERGED = 0
-                      self.xbins[ "OLD" ][ channel ].append( self.histograms[ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
+                      self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
        
       if self.params[ "STAT THRESHOLD" ] <= 1.0:
         if self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) == 0.:
-          if len( self.xbins[ "OLD" ][ channel ] ) > 2: 
-            del self.xbins[ "OLD" ][ channel ][-2]
+          if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
+            del self.xbins[ "MERGED" ][ channel ][-2]
         for key_lep in [ "isE", "isM" ]:
           if self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
-            if len( self.xbins[ "OLD" ][ channel ] ) > 2: 
-              del self.xbins[ "OLD" ][ channel ][-2]
+            if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
+              del self.xbins[ "MERGED" ][ channel ][-2]
               continue
       
-      self.N_NEWBINS = len( self.xbins[ "OLD" ][ channel ] )
-      self.xbins[ "NEW" ][ channel ] = []
+      self.N_NEWBINS = len( self.xbins[ "MERGED" ][ channel ] )
+      self.xbins[ "LIMIT" ][ channel ] = []
       for i in range( self.N_NEWBINS ):
-        self.xbins[ "NEW" ][ channel ].append( self.xbins[ "OLD" ][ channel ][ self.N_NEWBINS - 1 - i ] )
+        self.xbins[ "LIMIT" ][ channel ].append( self.xbins[ "MERGED" ][ channel ][ self.N_NEWBINS - 1 - i ] )
       
-      self.xbins[ "NEW" ][ channel ][0] = max( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "NEW" ][0] )
-      self.xbins[ "NEW" ][ channel ][-1] = min( max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "NEW" ][-1] )
+      self.xbins[ "LIMIT" ][ channel ][0] = max( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][0] )
+      self.xbins[ "LIMIT" ][ channel ][-1] = min( max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][-1] )
       
-      for i in range( 1, len( self.xbins[ "NEW" ][ channel ] ) - 1 ):
-        if self.xbins[ "NEW" ][ channel ][i] <= self.xbins[ "NEW" ][ channel ][0] or self.xbins[ "NEW" ][ channel ][i] >= self.xbins[ "NEW" ][-1]:
-          del self.xbins[ "NEW" ][ channel ][i]
+      for i in range( 1, len( self.xbins[ "LIMIT" ][ channel ] ) - 1 ):
+        if self.xbins[ "LIMIT" ][ channel ][i] <= self.xbins[ "LIMIT" ][ channel ][0] or self.xbins[ "LIMIT" ][ channel ][i] >= self.xbins[ "LIMIT" ][ channel ][-1]:
+          del self.xbins[ "LIMIT" ][ channel ][i]
           
-      self.xbins[ "MODIFY" ][ channel ] = array( "d", self.xbins[ "LIMIT" ] )
-      print( "[DONE] Total bins went from {} -> {} with {} threshold".format( self.N_BINS, self.N_NEWBINS, self.params[ "STAT THRESHOLD" ] ) )
+      self.xbins[ "MODIFY" ][ channel ] = array( "d", self.xbins[ "LIMIT" ][ channel ] )
+      print( "[DONE] Total bins went from {} -> {} with {} threshold".format( N_BINS, self.N_NEWBINS, self.params[ "STAT THRESHOLD" ] ) )
         
   def rebin( self ): # done
     print( "[START] Rebinning histograms" )
@@ -208,7 +209,6 @@ class ModifyTemplate( self ):
       print( ">> Rebinning {}".format( hist_key ) )
       self.rebinned[ hist_key ] = {}
       for hist_name in self.histograms[ hist_key ]:
-        print( "   + {}".format( hist_name ) )
         xbins_channel = None
         for channel in self.xbins[ "MODIFY" ]:
           if channel in hist_name:
@@ -228,7 +228,6 @@ class ModifyTemplate( self ):
           for i in range( zero_bin, max_bin ):
             self.rebinned[ hist_key ][ hist_name ].SetBinContent( i, -100.0 )
     
-        self.rebinned[ hist_key ][ hist_name ].Write()
     print( "[DONE]" )
   
   def symmetrize_topPT_shift( hists, channel, hist_name ): # done
@@ -523,11 +522,11 @@ class ModifyTemplate( self ):
           hist[ "SMOOTH" + shift ] = smooth_shape( hist[ "NOMINAL" ], hist[ "UP" ], hist[ "DN" ], config.smoothing_algo, args.smoothing )
           hist[ "SMOOTH" + shift ].Write()
           yields[ hist[ "SMOOTH" + shift ].GetName() ] = hist[ "SMOOTH" + shift ].Integral()
-          hist[ "NEW" + shift ] = hist[ "SMOOTH" + shift ].Clone( hist[ "SMOOTH" + shift ].GetName().replace( shift, "_{}{}".format( args.year, shift ) ) )
-          hist[ "NEW" + shift ].Write()
+          hist[ "LIMIT" + shift ] = hist[ "SMOOTH" + shift ].Clone( hist[ "SMOOTH" + shift ].GetName().replace( shift, "_{}{}".format( args.year, shift ) ) )
+          hist[ "LIMIT" + shift ].Write()
   
-  def write( self )
-    self.outpath = self.filepath.replace( ".root", "_rebinned_stat{}.root".format( params[ "STAT THRESHOLD" ].replace( ".", "p" ) ) )
+  def write( self ):
+    self.outpath = self.filepath.replace( ".root", "_rebinned_stat{}.root".format( self.params[ "STAT THRESHOLD" ].replace( ".", "p" ) ) )
     print( "[START] Storing modified histograms in {}".format( self.outpath ) )
     self.rFile[ "OUTPUT" ] = ROOT.TFile( self.outpath, "RECREATE" )
     count = 0
@@ -590,7 +589,7 @@ def main():
   file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
   file_path = os.path.join( templateDir, file_name )
 
-  template = ModifyTemplate( file_path, options, params, samples.groups )  
+  template = ModifyTemplate( file_path, options, params, samples.groups, args.variable )  
     
   '''
   print( "  - Processing channel: {}".format( channel ) )
