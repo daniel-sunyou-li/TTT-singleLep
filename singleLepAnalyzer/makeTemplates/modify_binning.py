@@ -36,6 +36,16 @@ def hist_tag( *args ):
   for arg in args[1:]: histTag += "_{}".format( arg )
   return histTag
 
+def syst_parse( hist_name ):
+  parts = hist_name.split( "_" )
+  if len( parts ) == len( args.variable.split( "_" ) ) + 4: 
+    syst_name = parts[len( args.variable.split( "_" ) )]
+    if "UP" in syst_name or "DN" in syst_name: syst_name = syst_name[:-2]
+    if "PDF" in syst_name: syst_name = syst_name[:3]
+    return True, syst_name
+  else:
+    return False, ""
+      
 def overflow( hist ):
   nbins = hist.GetXaxis().GetNbins()
   yields = hist.GetBinContent( nbins ) + hist.GetBinContent( nbins + 1 )
@@ -62,6 +72,13 @@ class ModifyTemplate():
     self.groups = groups
     self.variable = variable
     self.rebinned = {}
+    self.yields = {}
+    print( "[INFO] Running ModifyTemplate() with the following options" )
+    for option in self.options:
+      print( "  + {}: {}".format( option, self.options[ option ] ) )
+    print( "[INFO] Running ModifyTemplate() with the following parameters" )
+    for param in self.params:
+      print( "  + {}: {}".format( param, self.params[ param ] ) )
     self.load_histograms()
     self.get_xbins()
     self.rebin()
@@ -80,13 +97,8 @@ class ModifyTemplate():
     self.histograms = { key: {} for key in [ "BKG", "SIG", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
     count = 0 
     for hist_name in self.hist_names:
-      syst = False
+      syst, syst_name = syst_parse( hist_name )
       parts = hist_name.split( "_" )
-      if len( parts ) == len( args.variable.split( "_" ) ) + 4: 
-        syst = True
-        syst_name = parts[len( args.variable.split( "_" ) )]
-        if "UP" in syst_name or "DN" in syst_name: syst_name = syst_name[:-2]
-        if "PDF" in syst_name: syst_name = syst_name[:3]
       process = parts[-1]
       category = parts[-2]
       if category not in category_log[ "ALL" ]:
@@ -139,7 +151,8 @@ class ModifyTemplate():
     self.rFile[ "INPUT" ].Close()
     print( "[DONE] Found {} histograms".format( count ) )
   
-  def get_xbins( self ):
+  def get_xbins( self ): # done
+  # get the new histogram bins that satisfy the requirement bin error / yield <= threshold
     print( "[START] Determining modified histogram binning" )
     self.xbins = { key: {} for key in [ "MERGED", "LIMIT", "MODIFY" ] } # change OLD --> merged and NEW --> limit
     for channel in self.channels:
@@ -204,6 +217,8 @@ class ModifyTemplate():
       print( "[DONE] Total bins went from {} -> {} with {} threshold".format( N_BINS, self.N_NEWBINS, self.params[ "STAT THRESHOLD" ] ) )
         
   def rebin( self ): # done
+  # merge the histogram bins using an uncertainty threshold requiring bin error / yield <= threshold
+  # the merging requirements are determined in self.get_xbins()
     print( "[START] Rebinning histograms" )
     for hist_key in self.histograms:
       print( ">> Rebinning {}".format( hist_key ) )
@@ -230,6 +245,43 @@ class ModifyTemplate():
     
     print( "[DONE]" )
   
+  def compute_yield_stats(): # done
+  # get the integral yield for each bin as well as the associated error
+    print( "[START] Retrieving yields and errors for each histogram's bins." )
+    for hist_key in self.rebinned:
+      print( ">> Retrieving yields and errors for {}".format( hist_key ) )
+      self.yields[ hist_key ] = {}
+      for hist_name in self.rebinned[ hist_key ]:
+        syst, syst_name = syst_parse( hist_name )
+        self.yields[ hist_key ][ hist_name ] = {
+          "COUNT": self.rebinned[ hist_key ][ hist_name ].Integral(),
+          "ERROR": 0
+        }
+        for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetXaxis().GetNbins() + 1 ):
+          self.yields[ "ERROR" ] += self.rebinned[ hist_key ][ hist_name ].GetBinError(i)**2
+        self.yields[ hist_key ][ hist_name ][ "ERROR" ] = math.sqrt( self.yields[ hist_key ][ hist_name ][ "ERROR" ] )
+        if args.verbose and not syst: 
+          print( "   + {}: {:.2f} pm {:.2f}".format( 
+            hist_name, 
+            self.yields[ hist_key ][ hist_name ][ "COUNT" ],
+            self.yields[ hist_key ][ hist_name ][ "ERROR" ]
+          ) )
+    print( "[DONE]" )  
+          
+  def add_trigger_efficiency(): # done
+  # specify trigger efficiencies for the single leptons
+    print( "[START] Differentiating trigger efficiency histogram naming between lepton flavors" )
+    for hist_key in self.rebinned:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "TRIGEFF" not in hist_name.upper(): continue
+        if "ISE" in hist_name.upper():
+          hist_name_el = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "ELTRIGGEFF" )
+          self.rebinned[ hist_key ][ hist_name_el ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_el )
+        if "ISM" in hist_name.upper():
+          hist_name_mu = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "MUTRIGGEFF" )
+          self.rebinned[ hist_key ][ hist_name_mu ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_mu )
+    print( "[DONE]" )
+    
   def symmetrize_topPT_shift( hists, channel, hist_name ): # done
     for i in range( 1, hists[ channel ][ hist_name ].GetNbinsX() + 1 ):
       hists[ channel ][ hist_name ].SetBinContent( 
@@ -237,34 +289,12 @@ class ModifyTemplate():
         2. * hists[ channel ][ hist_name.replace( "_TOPPTDN", "" ) ].GetBinContent(i) - hists[ channel ][ hist_name.replace( "TOPPTDN", "TOPPTUP" ) ].GetBinContent(i) 
       )
       
-    hists[ channel ][ hist_name ].Write()
-
-  def add_trigger_efficiency( hists, channel, hist_name ): # done
-    # specify trigger efficiencies for the single leptons
-    if "ISE" in hist_name.upper():
-      hist_name_el = hists[ channel ][ hist_name ].GetName().replace( "TRIGEFF", "ELTRIGGEFF" )
-      hists[ channel ][ hist_name_el ] = hists[ channel ][ hist_name ].Clone( hist_name_el )
-      hists[ channel ][ hist_name_el ].Write()
-    if "ISM" in hist_name.upper():
-      hist_name_mu = hists[ channel ][ hist_name ].GetName().replace( "TRIGEFF", "MUTRIGEFF" )
-      hists[ channel ][ hist_name_mu ] = hists[ channel ][ hist_name ].Clone( hist_name_mu )
-      hists[ channel ][ hist_name_mu ].Write()
-      
-
   def uncorrelate_year( hists, channel, hist_name ): # done
     # differentiate the shifts by year
     hist_name_uncorr = hists[ channel ][ hist_name ].GetName().replace( "UP", "{}UP".format( args.year ) ).replace( "DN", "{}DN".format( args.year ) )
     hists[ channel ][ hist_name_uncorr ] = hists[ channel ][ hist_name ].Clone( hist_name_uncorr )
     hists[ channel ][ hist_name_uncorr ].Write()
 
-
-  def get_yield_stats( yields, yield_errors, hists, channel, hist_name ): # done
-    # get the integral yield for each bin as well as the associated error
-    yields[ channel ][ hist_name ] = hists[ channel ][ hist_name ].Integral()
-    yields_errors[ channel ][ hist_name ] = 0
-    for i in range( 1, hists[ channel ][ hist_name ].GetXaxis().GetNbins() + 1 ):
-      yields_errors[ channel ][ hist_name ] += hists[ channel ][ hist_name ].GetBinError( i )**2
-    yields_errors[ channel ][ hist_name ] = math.sqrt( yields_errors[ channel ][ hist_name ] )
   
   def add_statistical_shapes( hists, channel ): # done
     # add shifts to the bin content for the statistical shape uncertainty
@@ -561,8 +591,6 @@ def print_tables():
   table = systematic_tables( table )
   summary_templates()
   
-
-
 def main():
   # parse options and parameters
   template_prefix = config.region_prefix[ args.region ]
@@ -589,64 +617,34 @@ def main():
   file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
   file_path = os.path.join( templateDir, file_name )
 
+  # default rebin/merge histograms
   template = ModifyTemplate( file_path, options, params, samples.groups, args.variable )  
+  
+  # calculate yields
+  template.compute_yield_stats()
+  
+  ## handling systematics
+  #if options[ "TRIGGER EFFICIENCY" ]:
+  #  template.add_trigger_efficiency()
+  #if options[ "UNCORRELATE YEARS" ]:
+  #  template.uncorrelate_years()
+  #if params[ "SYMM TOP PT" ]:
+  #  template.symmetrize_topPT_shift()
+  #if params[ "SYMM HOTCLOSURE" ]:
+  #  template.symmetrize_HOTclosure()
+  #if params[ "SHAPE STAT" ]:
+  #  template.add_statistical_shapes()
+  #if params[ "MURF SHAPES" ]:
+  #  template.add_muRF_shapes()
+  #if params[ "PS WEIGHTS" ]:
+  #  template.add_PS_weights()
+  #if params[ "PDF" ]:
+  #  template.add_PDF_shapes()
+  #if params[ "SMOOTH" ]:
+  #  template.add_smooth_shapes()
     
-  '''
-  print( "  - Processing channel: {}".format( channel ) )
-  rebinned_hists[ channel ] = {}
-  yields[ channel ] = {}
-  yield_errors[ channel ] = {}
-  for hist_name in hist_names[ "ALL" ][ channel ]:
-    if "_PDF" in hist_name.upper() and "UP_" not in hist_name.upper() and "DN_" not in hist_name.upper(): continue
-    for syst in [ "MUR", "MUF", "ISR", "FSR" ]:
-      for shift in [ "UP", "DN" ]:
-        if syst + shift in hist_name.upper(): continue
-    if args.sym_hot_closure_shift and "HOTCLOSURE" in hist_name.upper(): continue
-    if "NH0P" in hist_name.upper() and "HOT" in hist_name.upper(): continue
-    if "NB0P" in hist_name.upper() and ( "BTAG" in hist_name.upper() or "MISTAG" in hist_name.upper() ): continue
-    if "TOPPTDN" in hist_name.upper() and args.sym_top_pt_shift: continue
-
-    rebinned_hists[ channel ][ hist_name ] = rebin( rFile_in, xBins, hist_name, channel )
-
-  # handle exceptions
-  for hist_name in hist_names[ "ALL" ][ channel ]:
-    if "TOPPTDN" in hist_name.upper() and args.sym_top_pt_shift:
-      rebinned_hists = symmetrize_topPT_shift( rebinned_hists, channel, hist_name )
-    if "TRIGEFF" in hist_name.upper():
-      rebinned_hists = add_trigger_efficiency( rebinned_hists, channel, hist_name )
-    if hist_name.upper().endswith( "UP" ) or hist_name.upper().endswith( "DN" ):
-      rebinned_hists = uncorrelate_year( rebinned_hists, channel, hist_name )
-
-  # get yields and yield error
-  for hist_name in hist_names[ "ALL" ][ channel ]:
-    yields, yields_errors = get_yield_stats( yields, yields_errors, hists, channel, hist_name )
-
-  if args.stat_shapes:
-    rebinned_hists = add_statistical_shapes( hists, channel )
-
-  if args.sym_hot_closure_shift:
-    for hist_name in hist_names[ "ALL" ][ channel ]:
-      if "HOTCLOSURE" in hist_name.upper() and "NHOT0P" not in channel.upper():
-        rebinned_hists = symmetrize_HOTclosure( hists, yields, channel, hist_name )
-
-  if args.murf:
-    for hist_name in hist_names[ "ALL" ][ channel ]:
-      add_muRF_shapes( hists, yields, channel, hist_name, groups )
-
-  if args.ps_weights:
-    for hist_name in hist_names[ channel ]:
-      add_PS_weights( hists, yields, channel, hist_name )
-
-  if args.pdf:
-    for hist_name in hist_names[ channel ]:
-      add_PDF_shapes( hists, yields, channel, hist_name )
-
-  if args.smoothing:
-    for hist_name in hist_names[ channel ]:
-      add_smooth_shapes( hists, yields, channel, hist_name )
+  #print_tables( template.table )
         
-    
-  print_tables( hists )
-  '''
+  #template.write()
   
 main()
