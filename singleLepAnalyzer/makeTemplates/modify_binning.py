@@ -36,14 +36,12 @@ def hist_tag( *args ):
   return histTag
 
 class RebinTemplate( self ):
-  def __init__( self, filepath, options, params, groups ):
+  def __init__( self, filepath, options, params, groups, variable ):
     self.filepath = filepath
     self.options = options
     self.params = params
     self.groups = groups
-    self.hists = {}
-    self.yields = {}
-    self.yield_errors = {}
+    self.variable = variable
     print( "[START] Loading histograms from {}".format( self.filepath ) )
     self.load_histograms( self.filepath )
     
