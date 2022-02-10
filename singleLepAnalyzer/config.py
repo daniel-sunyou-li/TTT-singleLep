@@ -51,6 +51,8 @@ options = {
     "SCALE SIGNAL XSEC": False,
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,
+    "UNCORRELATE YEARS": True,
+    "TRIGGER EFFICIENCY": True,
   }
 }
 # non-boolean parameters used in creating templates
