@@ -52,7 +52,7 @@ options = {
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,
     "UNCORRELATE YEARS": True,
-    "TRIGGER EFFICIENCY": True,
+    "TRIGGER EFFICIENCY": False,
   }
 }
 # non-boolean parameters used in creating templates
