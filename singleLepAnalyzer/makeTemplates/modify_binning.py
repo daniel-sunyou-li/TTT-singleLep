@@ -30,21 +30,158 @@ elif args.year == "18":
   import weightsUL18 as weights
 else: quit( "[ERR] Invalid -y (--year) argument. Quitting" )
 
-
-def get_categories( directory ):
-  categories = [ directory for directory in os.walk( directory ).next()[1] if directory.startswith( "isE" ) or directory.startswith( "isM" ) ]
-  return categories
-
 def hist_tag( *args ):
   histTag = args[0]
   for arg in args[1:]: histTag += "_{}".format( arg )
   return histTag
 
+class RebinTemplate( self ):
+  def __init__( self, filepath, options, params, groups ):
+    self.filepath = filepath
+    self.options = options
+    self.params = params
+    self.groups = groups
+    self.hists = {}
+    self.yields = {}
+    self.yield_errors = {}
+    print( "[START] Loading histograms from {}".format( self.filepath ) )
+    self.load_histograms( self.filepath )
+    
+  def load_histograms( self ):
+    self.outpath = self.filepath.replace( ".root", "_rebinned_stat{}.root".format( params[ "STAT THRESHOLD" ].replace( ".", "p" ) ) )
+    print( ">> Storing modified histograms in {}".format( self.outpath ) )
+    self.rFile = {
+      "INPUT":  ROOT.TFile( self.filepath )
+      "OUTPUT": ROOT.TFile( outpath, "RECREATE" )
+    }
+    self.hist_names = [ hist_name.GetName() for hist_name in self.rFile[ "INPUT" ].GetListOfKeys() ]
+    self.categories = list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names ) )
+    self.channels = list( set( category[3:] for category in self.categories ) )
+    
+    groups_bkg = list( groups[ "BKG" ][ "PROCESS" ].keys() ) + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() )
+    groups_sig = groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]
+    groups_dat = groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]
+    category_log = { key: [] for key in [ "ALL", "DAT", "BKG", "SIG" ] }
+    self.histograms = { key: {} for key in [ "BKG", "SIG", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
+    
+    for hist_name in self.hist_names:
+      syst = False
+      parts = hist_name.split( "_" )
+      if len( parts ) == len( args.variable.split( "_" ) ) + 4: 
+        syst = True
+        syst_name = parts[len( args.variable.split( "_" ) )]
+        if "UP" in syst_name or "DN" in syst_name: syst_name = syst_name[:-2]
+        if "PDF" in syst_name: syst_name = syst_name[:3]
+        if syst_name not in syst_list: syst_list.append( syst_name )
+      process = parts[-1]
+      category = parts[-2]
+      if category not in category_log[ "ALL" ]:
+        category_log[ "ALL" ].append( category )
 
-class Rebin_Template( self ):
-  def __init__()
+      if process in groups_dat:
+        if args.verbose: print( "   + DAT: {}".format( hist_name ) )
+        self.histograms[ "DAT" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
+        if category not in category_log[ "DAT" ] and not syst:
+          self.histograms[ "TOTAL DAT" ][ category ] = self.histograms[ "DAT" ][ hist_name ].Clone( "TOTAL DAT {}".format( category ) )
+          category_log[ "DAT" ].append( category )
+        elif not syst:
+          self.histograms[ "TOTAL DAT" ][ category ].Add( self.histograms[ "DAT" ][ hist_name ] )
+      elif process in groups_bkg:
+        if args.verbose: print( "   + BKG: {}".format( hist_name ) )
+        self.histograms[ "BKG" ][ hist_name ] = rFile.Get( hist_name ).Clone( hist_name )   
+        if category not in category_log[ "BKG" ] and not syst:
+          self.histograms[ "TOTAL BKG" ][ category ] = self.histograms[ "BKG" ][ hist_name ].Clone( "TOTAL BKG {}".format( category ) )
+          category_log[ "BKG" ].append( category )
+        elif not syst:
+          self.histograms[ "TOTAL BKG" ][ category ].Add( self.histograms[ "BKG" ][ hist_name ] )
+      elif process in groups_sig:
+        if args.verbose: print( "   + SIG: {}".format( hist_name ) )
+        self.histograms[ "SIG" ][ hist_name ] = rFile.Get( hist_name ).Clone( hist_name )
+        if category not in category_log[ "SIG" ] and not syst:
+          self.histograms[ "TOTAL SIG" ][ category ] = self.histograms[ "SIG" ][ hist_name ].Clone( "TOTAL SIG {}".format( category ) )
+          category_log[ "SIG" ].append( category )
+        elif not syst:
+          self.histograms[ "TOTAL SIG" ][ category ].Add( self.histograms[ "SIG" ][ hist_name ] )
+      else:
+        if args.verbose: print( "[WARN] {} does not belong to any of the groups: BKG, SIG, DAT, excluding...".format( process ) )
+      count += 1
+    print( "[DONE] Found {} histograms".format( count ) )
+    
+    print( "[START] Creating lepton categories" )
+    for channel in self.channels:
+      categories[ "ALL" ].append( "isL" + channel )
+    for key in self.histograms:
+      print( "   o {}".format( key ) )
+      key_hist_names = [ hist_name for hist_name in self.histograms[ key ].keys() if "isE" in hist_name ]
+      for hist_name in key_hist_names:
+        name_lepton = hist_name.replace( "isE", "isL" )
+        histograms[ key ][ name_lepton ] = histograms[ key ][ hist_name ].Clone( name_lepton )
+        histograms[ key ][ name_lepton ].Add( histograms[ key ][ hist_name.replace( "isE", "isM" ) ] )
+        if "UP_" not in hist_name and "DN_" not in hist_name and "PDF" not in hist_name:  print( "     + {}: {}".format( name_lepton, histograms[ key ][ name_lepton ].Integral() ) )  
+    print( "[DONE]" )
   
-  def rebin( rFile_in, xBins, hist_name, channel ): # done
+  def get_xbins( self ):
+    self.xbins = { key: {} for key in [ "OLD", "NEW" ] } # change OLD --> merged and NEW --> limit
+    for channel in self.channels:
+      N_BINS = self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetNbinsX()
+      self.xbins[ "OLD" ][ channel ] = [ self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinUpEdge( nbins ) ) ]
+      bin_content = {
+        key_lep: {
+          key_type: {
+            key_stat: 0. for key_stat in [ "YIELD", "ERROR" ]
+          } for key_type in [ "TOTAL BKG", "TOTAL DAT" ]
+        } for key_lep in [ "isE", "isM" ]
+      }
+      for i in range( 1, N_BINS + 1 ):
+        N_MERGED += 1
+        if self.params[ "STAT THRESHOLD" ] > 1.0:
+          if N_MERGED < params[ "MIN MERGE" ]: 
+            continue
+          else:
+            self.xbins[ "OLD" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
+            N_MERGED = 0
+        else:
+          for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
+            for key_lep in [ "isE", "isM" ]:
+                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
+                bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
+          if N_MERGED < params[ "MIN MERGE" ]: 
+            continue
+          else:
+            if math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ] <= self.params[ "STAT THRESHOLD" ]:
+              if math.sqrt( bin_content[ "isL" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isL" ][ "TOTAL BKG" ][ "YIELD" ] <= self.params[ "STAT THRESHOLD" ]:
+                for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
+                  for key_lep in [ "isE", "isM" ]:
+                    for key_stat in [ "YIELD", "ERROR" ]:
+                      bin_content[ key_lep ][ key_type ][ key_stat ] = 0
+                      N_MERGED = 0
+                      self.xbins[ "OLD" ][ channel ].append( self.histograms[ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
+       
+      if self.params[ "STAT THRESHOLD" ] <= 1.0:
+        if self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) == 0.:
+          if len( self.xbins[ "OLD" ][ channel ] ) > 2: 
+            del self.xbins[ "OLD" ][ channel ][-2]
+        for key_lep in [ "isE", "isM" ]:
+          if self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
+            if len( self.xbins[ "OLD" ][ channel ] ) > 2: 
+              del self.xbins[ "OLD" ][ channel ][-2]
+              continue
+      
+      self.N_NEWBINS = len( self.xbins[ "OLD" ][ channel ] )
+      self.xbins[ "NEW" ][ channel ] = []
+      for i in range( self.N_NEWBINS ):
+        self.xbins[ "NEW" ][ channel ].append( self.xbins[ "OLD" ][ channel ][ self.N_NEWBINS - 1 - i ] )
+      
+      self.xbins[ "NEW" ][ channel ][0] = max( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "NEW" ][0] )
+      self.xbins[ "NEW" ][ channel ][-1] = min( max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "NEW" ][-1] )
+      
+      for i in range( 1, len( self.xbins[ "NEW" ][ channel ] ) - 1 ):
+        if self.xbins[ "NEW" ][ channel ][i] <= self.xbins[ "NEW" ][ channel ][0] or self.xbins[ "NEW" ][ channel ][i] >= self.xbins[ "NEW" ][-1]:
+          del self.xbins[ "NEW" ][ channel ][i]
+          
+      self.xbins[ "MODIFY" ][ channel ] = array( "d", self.xbins[ "LIMIT" ] )
+          
+  def rebin( self ): # done
     hist = rFile_in.Get( hist_name ).Rebin(
       len( xBins[ channel ] ) - 1,
       hist_name,
@@ -502,11 +639,13 @@ def main():
       print( "   > MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 2
     
-  categories = get_categories( templateDir )
 
   file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
   file_path = os.path.join( templateDir, file_name )
-  rebinned_hists, yields, yield_errors = rebinning( filepath, categories, options, params )
+
+  rebin = RebinTemplate( file_path, options, params, samples.groups )
+  
+  rebinned_hists, yields, yield_errors = rebinning( filepath, options, params )
   quit()
     
   print_tables( hists )
