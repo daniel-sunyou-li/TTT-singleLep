@@ -44,7 +44,7 @@ options = {
     "MURF SHAPES": True,
     "PS WEIGHTS": True,            # Construct Parton Shower weights
     "NORM THEORY SYST SIG": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
-    "NORM THEORY SYST BKG": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
+    "NORM THEORY SYST BKG": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
     "SYMM SMOOTHING": True,
     "SYMM TOP PT": True,
     "SYMM HOTCLOSURE": True,
@@ -52,7 +52,7 @@ options = {
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,
     "UNCORRELATE YEARS": True,
-    "TRIGGER EFFICIENCY": False,
+    "TRIGGER EFFICIENCY": True,
   }
 }
 # non-boolean parameters used in creating templates
@@ -93,10 +93,12 @@ region_prefix = {
 # systematic uncertainty sources
 systematics = {
   "MC": [ 
-    "pileup", "muRFcorrd", "muR", "muF", "isr", "fsr", 
+    "pileup", "trigeff",
+    "muRFcorrd", "muR", "muF", "isr", "fsr", 
     "hotstat", "hotcspur", "hotclosure", 
     "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
     "CFerr1", "CFerr2",
+    "toppt", "ht",
     #"JER", "JEC"
   ],
   "LUMI": {
