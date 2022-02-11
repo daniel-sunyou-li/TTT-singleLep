@@ -220,6 +220,7 @@ class ModifyTemplate():
   # merge the histogram bins using an uncertainty threshold requiring bin error / yield <= threshold
   # the merging requirements are determined in self.get_xbins()
     print( "[START] Rebinning histograms" )
+    count = 0
     for hist_key in self.histograms:
       print( ">> Rebinning {}".format( hist_key ) )
       self.rebinned[ hist_key ] = {}
@@ -242,12 +243,14 @@ class ModifyTemplate():
           max_bin = self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1
           for i in range( zero_bin, max_bin ):
             self.rebinned[ hist_key ][ hist_name ].SetBinContent( i, -100.0 )
+        count += 1
     
-    print( "[DONE]" )
+    print( "[DONE] {} histograms rebinned".format( count ) )
   
   def compute_yield_stats(): # done
   # get the integral yield for each bin as well as the associated error
     print( "[START] Retrieving yields and errors for each histogram's bins." )
+    count = 0
     for hist_key in self.rebinned:
       print( ">> Retrieving yields and errors for {}".format( hist_key ) )
       self.yields[ hist_key ] = {}
@@ -266,11 +269,13 @@ class ModifyTemplate():
             self.yields[ hist_key ][ hist_name ][ "COUNT" ],
             self.yields[ hist_key ][ hist_name ][ "ERROR" ]
           ) )
-    print( "[DONE]" )  
+        count += 1
+    print( "[DONE] Calculated yields for {} histograms".format( count ) )  
           
   def add_trigger_efficiency(): # done
   # specify trigger efficiencies for the single leptons
     print( "[START] Differentiating trigger efficiency histogram naming between lepton flavors" )
+    count = 0
     for hist_key in self.rebinned:
       for hist_name in self.rebinned[ hist_key ]:
         if "TRIGEFF" not in hist_name.upper(): continue
@@ -280,84 +285,114 @@ class ModifyTemplate():
         if "ISM" in hist_name.upper():
           hist_name_mu = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "MUTRIGGEFF" )
           self.rebinned[ hist_key ][ hist_name_mu ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_mu )
+        count += 1
+    print( "[DONE] Adjusted trigger naming for {} histograms.".format( count ) )
+    
+  def uncorrelate_year( hists, channel, hist_name ): # done
+  # differentiate the shifts by year
+    print( "[START] Differentiating systematic shifts by year" )
+    for hist_key in self.rebinned:
+      for hist_name in self.rebinned[ hist_key ]:
+        syst, syst_name = syst_parse( hist_name )
+        if syst:
+          hist_name_new = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "UP", "{}UP".format( args.year ) ).replace( "DN", "{}DN".format( args.year ) )
+          self.rebinned[ hist_key ][ hist_name_new ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_new )
     print( "[DONE]" )
     
-  def symmetrize_topPT_shift( hists, channel, hist_name ): # done
-    for i in range( 1, hists[ channel ][ hist_name ].GetNbinsX() + 1 ):
-      hists[ channel ][ hist_name ].SetBinContent( 
-        i, 
-        2. * hists[ channel ][ hist_name.replace( "_TOPPTDN", "" ) ].GetBinContent(i) - hists[ channel ][ hist_name.replace( "TOPPTDN", "TOPPTUP" ) ].GetBinContent(i) 
-      )
-      
-  def uncorrelate_year( hists, channel, hist_name ): # done
-    # differentiate the shifts by year
-    hist_name_uncorr = hists[ channel ][ hist_name ].GetName().replace( "UP", "{}UP".format( args.year ) ).replace( "DN", "{}DN".format( args.year ) )
-    hists[ channel ][ hist_name_uncorr ] = hists[ channel ][ hist_name ].Clone( hist_name_uncorr )
-    hists[ channel ][ hist_name_uncorr ].Write()
+  def symmetrize_topPT_shift(): # done
+  # symmetrize the up and down shifts for toppt systematic
+    print( "[START] Symmetrizing the toppt systematic shifts" )
+    count = 0
+    for hist_key in self.rebinned:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "TOPPTDN" not in hist_name.upper(): continue # adjust TOPPTDN to TOPPTUP
+        for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
+          self.rebinned[ hist_key ][ hist_name ].SetBinContent(
+            i, 2. * self.rebinned[ hist_key ][ hist_name.replace( "_TOPPTDN", "" ) ].GetBinContent(i) - self.rebinned[ hist_key ][ hist_name.replace( "DN", "UP" ) ].GetBinContent(i) 
+          )
+        count += 1
+    print( "[DONE] Adjusted {} toppt histograms".format( count ) )
 
-  
-  def add_statistical_shapes( hists, channel ): # done
-    # add shifts to the bin content for the statistical shape uncertainty
-    def write_statistical_hists( hists, group, channel, hist_name_temp, i, nBB ):
-      if hists[ channel ][ "TOTALBKG" ].GetNbinsX() == 1 or group == "SIG":
-        for process in groups[ group ][ "PROCESS" ]:
-          value = hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].GetBinContent(i)
-          if value == 0: continue
-          error = hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].GetBinError(i)
-          hist_name_err = { shift: "{}__CMS_TTTX_{}_UL{}_{}_BIN{}{}".format(
-            hists[ channel ][ hist_name_ch.replace( "DAT", process ) ].GetName(),
-            channel, args.year, process, i, shift ) for shift in [ "UP", "DN" ] 
+  def add_statistical_shapes(): # done
+  # add shifts to the bin content for the statistical shape uncertainty
+    def write_statistical_hists( category, group, i, nBB ):
+      if self.rebinned[ "TOTAL BKG" ][ hist_name ].GetNbinsX() == 1 or group == "SIG":  
+        for sig_name in self.rebinned[ "SIG" ]:
+          syst, syst_name = syst_parse( sig_name )
+          if syst: continue
+          yields = {
+            "COUNT": self.rebinned[ "SIG" ][ sig_name ].GetBinContent(i),
+            "ERROR": self.rebinned[ "SIG" ][ sig_name ].GetBinError(i)
+          }
+          if yields[ "COUNT" ] == 0: continue
+          shift_name = { 
+            shift: "{}__CMS_TTTX_UL{}_{}_BIN{}{}".format(
+              sig_name.split( "_" )[-1],
+              args.year, category, i, shift  
+            ) for shift in [ "UP", "DN" ] 
           }
           for shift in [ "UP", "DN" ]:
-            hists[ channel ][ hist_name_err[ shift ] ] = hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].Clone( hist_name_err[ shift ] )
-            if shift == "UP": hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value + error )
-            if shift == "DN": hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value - error )
-            if value - error < 0: 
-              print( ">> Correcting negative bin for {} in channel {}".format( hist_name_err[ shift ], channel ) )
-              negative_bin_correction( hists[ channel ][ hist_name_err[ shift ] ] ) # need to update this
-            if value - error == 0: hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value * 0.001 )
-            hists[ channel ][ hist_name_err[ shift ] ].Write()
-            nBB[ group ] += 1
+            self.rebinned[ "SIG" ][ shift_name[ shift ] ] = self.rebinned[ "SIG" ][ sig_name ].Clone( shift_name[ shift ] ) 
+            if shift == "UP": self.rebinned[ "SIG" ][ shift_name[ shift ] ].SetBinContent( i, yields[ "COUNT" ] + yields[ "ERROR" ] )
+            if shift == "DN": self.rebinned[ "SIG" ][ shift_name[ shift ] ].SetBinContent( i, yields[ "COUNT" ] - yields[ "ERROR" ] )
+            if yields[ "COUNT" ] - yields[ "ERROR" ] < 0:
+              print( ">> Correcting negative bin {} for {}".format( i, sig_name ) )
+              negative_bin_correction( self.rebinned[ "SIG" ][ shift_name[ shift ] ] )
+            if yields[ "COUNT" ] - yields[ "ERROR" ] == 0:
+              print( ">> Setting zero bin {} for {} to non-zero value".format( i, sig_name ) )
+              self.rebinned[ "SIG" ][ shift_name[ shift ] ].SetBinContent( i, yields[ "COUNT" ] * 0.001 )
+          nBB[ "SIG" ] += 1
       else:
-        BKG_DOM, value = "", 0
-        for process in groups[ group ][ "PROCESS" ]:
-          if hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].GetBinContent(i) > value:
-            value = hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].GetBinContent(i)
-            BKG_DOM = process
-        error = hists[ channel ].GetBinError(i)
-        hist_name_err = { shift: "{}__CMS_TTTX_{}_UL{}_{}_BIN{}{}".format(
-          hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].GetName(),
-          channel, args.year, process, i, shift ) for shift in [ "UP", "DN" ] 
+        bkg_max = ""
+        count_max = 0
+        for bkg_name in self.rebinned[ "BKG" ]:
+          syst, syst_name = syst_parse( bkg_name )
+          if syst: continue
+          if count_max < self.rebinned[ "BKG" ][ bkg_name ].GetBinContent(i):
+            count_max = self.rebinned[ "BKG" ][ bkg_name ].GetBinContent(i)
+            bkg_max = bkg_name
+        error_max = self.rebinned[ "BKG" ][ bkg_max ].GetBinError(i)
+        print( "   + {} is the dominant background process in bin {}: {:.2f} pm {:.2f}".format(
+          bkg_max, i, count_max, error_max 
+        )
+        shift_name = {
+          shift: "{}__CMS_TTTX_UL{}_{}_BIN{}{}".format(
+            bkg_max.split( "_" )[-1],
+            args.year, category, i, shift
+          ) for shift in [ "UP", "DN" ]
         }
         for shift in [ "UP", "DN" ]:
-          hists[ channel ][ hist_name_err[ shift ] ] = hists[ channel ][ hist_name_temp.replace( "DAT", process ) ].Clone( hist_name_err[ shift ] )
-          if shift == "UP": hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value + error )
-          if shift == "DN": hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value - error )
-          if value - error < 0: negative_bin_correction( hists[ channel ][ hist_name_err[ shift ] ] )
-          if value - error == 0: hists[ channel ][ hist_name_err[ shift ] ].SetBinContent( i, value * 0.001 )
-          hists[ channel ][ hist_name_err[ shift ] ].Write()
-          nBB[ group ] += 1
-      
-      return hists, nBB
-  
+          self.rebinned[ "BKG" ][ shift_name[ shift ] ] = self.rebinned[ "BKG" ][ bkg_max ].Clone( shift_name[ shift ] )
+          if shift == "UP": self.rebinned[ "BKG" ][ shift_name[ shift ] ].SetBinContent( i, count_max + error_max )
+          if shift == "DN": self.rebinned[ "BKG" ][ shift_name[ shift ] ].SetBinContent( i, count_max - error_max )
+          if count_max - error_max < 0:
+            print( ">> Correcting negative bin {} for {}".format( i, bkg_max ) )
+            negative_bin_correction( self.rebinned[ "BKG" ][ shift_name[ shift ] ] )
+          if count_max - error_max == 0:
+            print( ">> Setting zero bin {} for {} to non-zero value".format( i, bkg_max ) )
+            self.rebinned[ "BKG" ][ shift_name[ shift ] ].SetBinContent( i, count_max * 0.001 )
+        nBB[ "BKG" ] += 1
+          
+    print( "[START] Adding statistical shape systematics" )
     nBB = { "BKG": 0, "SIG": 0 }
-    hist_name_temp = [ hist_name for hist_name in hist_names[ "DAT" ] if channel in hist_name ][0]
-    # the TOTALBKG hist does not get written
-    hists[ channel ][ "TOTALBKG" ] = hists[ channel ][ hist_name_temp.replace( "DAT", groups[ "BKG" ][ "PROCESS" ][0] ) ].Clone()
-    for process in groups[ "BKG" ][ "PROCESS" ][1:]:
-      hists[ channel ][ "TOTALBKG" ].Add( hists[ channel ][ hist_name_temp.replace( "DAT", process ) ] )
-    for i in range( 1, hists[ channel ][ "TOTALBKG" ].GetNbinsX() + 1 ):
-      error_ratio = hists[ channel ][ "TOTALBKG" ].GetBinError(i) / hists[ channel ][ "TOTALBKG" ].GetBinContent(i)
-      if error_ratio <= error_threshold[ "BB" ]: 
-        print( ">> Excluding bin {} in {} for statistical shape uncertainty ({:.6f})".format( i, channel, error_ratio ) )
-        continue
-      hists = write_statistical_hists( hists, "BKG", channel, hist_name_temp, i, nBB )
-      hists = write_statistical_hists( hists, "SIG", channel, hist_name_temp, i, nBB )
-    
-    return hists
-  
-  def symmetrize_HOTclosure( hists, yields, channel, hist_name ): # done
+    for hist_name in self.rebinned[ "TOTAL BKG" ]:
+      count = { "INCLUDE": 0, "EXCLUDE": 0 }
+      for i in range( 1, self.rebinned[ "TOTAL BKG" ][ hist_name ] ):
+        error_ratio = self.rebinned[ "TOTAL BKG" ][ hist_nmae ].GetBinError(i) / self.rebinned[ "TOTAL BKG" ][ hist_name ].GetBinContent(i)
+        if error_ratio <= self.params[ "THRESHOLD BB" ]:
+          count[ "EXCLUDE" ] += 1
+          continue
+        write_statistical_hists( hist_name, "SIG", i, nBB )
+        write_statistical_hists( hist_name, "BKG", i, nBB )
+        count[ "INCLUDE" ] += 1
+      print( ">> {}: {}/{} bins excluded".format( hist_name, count[ "EXCLUDE" ], count[ "EXCLUDE" ] + count[ "INCLUDE" ] ) )
+    print( "[DONE] {} Signal BB shapes added, {} Background BB shapes added".format( nBB[ "SIG" ], nBB[ "BKG" ] ) )
+          
+
+  def symmetrize_HOTclosure(): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
+    
+          
     for i in range( 1, hists[ channel ][ hist_name ].GetNbinsX() + 1 ):
       hist_name_up = hist_name.replace( "HOTCLOSURE", "HOTCLOSUREUP" )
       hist_name_dn = hist_name.replace( "HOTCLOSURE", "HOTCLOSUREDN" )
@@ -367,8 +402,6 @@ class ModifyTemplate():
       )
       hists[ channel ][ hist_name_up ].SetBinContent( i, hists[ channel ][ hist_name[:hist_name.find( "_HOTCLOSURE" )] ].GetBinContent(i) + max_shift )
       hists[ channel ][ hist_name_dn ].SetBinContent( i, hists[ channel ][ hist_name[:hist_name.find( "_HOTCLOSURE" )] ].GetBinContent(i) - max_shift )
-    hists[ channel ][ hist_name_up ].Write()
-    hists[ channel ][ hist_name_dn ].Write()
     
     hists_HOTClosure = {
       "UP": hists[ channel ][ hist_name_up ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}UP".format( args.year ) ) ),
@@ -620,9 +653,6 @@ def main():
   # default rebin/merge histograms
   template = ModifyTemplate( file_path, options, params, samples.groups, args.variable )  
   
-  # calculate yields
-  template.compute_yield_stats()
-  
   ## handling systematics
   #if options[ "TRIGGER EFFICIENCY" ]:
   #  template.add_trigger_efficiency()
@@ -642,6 +672,10 @@ def main():
   #  template.add_PDF_shapes()
   #if params[ "SMOOTH" ]:
   #  template.add_smooth_shapes()
+    
+  
+  # calculate yields
+  template.compute_yield_stats()
     
   #print_tables( template.table )
         
