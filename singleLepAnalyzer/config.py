@@ -73,8 +73,8 @@ params = {
   "MODIFY BINNING": {
     "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin
     "MIN MERGE": 1,             # merge at least this number of bins
-    "ERROR BB": 0.05,           # stat shape uncertainty threshold for inclusion
-    "SMOOTHING ALGO": "lowess",  # smoothing algorithm to use
+    "THRESHOLD BB": 0.05,       # stat shape uncertainty threshold for inclusion
+    "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
       "NJET", "NJETSF", "PSWGT", "BTAG"
