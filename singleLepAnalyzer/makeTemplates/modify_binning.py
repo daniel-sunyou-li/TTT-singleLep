@@ -282,22 +282,27 @@ class ModifyTemplate():
         if "ISE" in hist_name.upper():
           hist_name_el = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "ELTRIGGEFF" )
           self.rebinned[ hist_key ][ hist_name_el ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_el )
+          self.rebinned[ hist_key ][ hist_name_el ].SetDirectory(0)
         if "ISM" in hist_name.upper():
           hist_name_mu = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "MUTRIGGEFF" )
           self.rebinned[ hist_key ][ hist_name_mu ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_mu )
+          self.rebinned[ hist_key ][ hist_name_el ].SetDirectory(0)
         count += 1
     print( "[DONE] Adjusted trigger naming for {} histograms.".format( count ) )
     
-  def uncorrelate_year( hists, channel, hist_name ): # done
+  def uncorrelate_year(): # done
   # differentiate the shifts by year
     print( "[START] Differentiating systematic shifts by year" )
+    count = 0
     for hist_key in self.rebinned:
       for hist_name in self.rebinned[ hist_key ]:
         syst, syst_name = syst_parse( hist_name )
         if syst:
           hist_name_new = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "UP", "{}UP".format( args.year ) ).replace( "DN", "{}DN".format( args.year ) )
           self.rebinned[ hist_key ][ hist_name_new ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_new )
-    print( "[DONE]" )
+          self.rebinned[ hist_key ][ hist_name_new ].SetDirectory(0)
+          count += 1
+    print( "[DONE] Adjusted systematic shift names for {} histograms".format( count ) )
     
   def symmetrize_topPT_shift(): # done
   # symmetrize the up and down shifts for toppt systematic
@@ -341,6 +346,7 @@ class ModifyTemplate():
             if yields[ "COUNT" ] - yields[ "ERROR" ] == 0:
               print( ">> Setting zero bin {} for {} to non-zero value".format( i, sig_name ) )
               self.rebinned[ "SIG" ][ shift_name[ shift ] ].SetBinContent( i, yields[ "COUNT" ] * 0.001 )
+            self.rebinned[ "SIG" ][ shift_name[ shift ] ].SetDirectory(0)
           nBB[ "SIG" ] += 1
       else:
         bkg_max = ""
@@ -354,7 +360,7 @@ class ModifyTemplate():
         error_max = self.rebinned[ "BKG" ][ bkg_max ].GetBinError(i)
         print( "   + {} is the dominant background process in bin {}: {:.2f} pm {:.2f}".format(
           bkg_max, i, count_max, error_max 
-        )
+        ) )
         shift_name = {
           shift: "{}__CMS_TTTX_UL{}_{}_BIN{}{}".format(
             bkg_max.split( "_" )[-1],
@@ -371,6 +377,7 @@ class ModifyTemplate():
           if count_max - error_max == 0:
             print( ">> Setting zero bin {} for {} to non-zero value".format( i, bkg_max ) )
             self.rebinned[ "BKG" ][ shift_name[ shift ] ].SetBinContent( i, count_max * 0.001 )
+          self.rebinned[ "BKG" ][ shift_name[ shift ] ].SetDirectory(0)
         nBB[ "BKG" ] += 1
           
     print( "[START] Adding statistical shape systematics" )
@@ -378,7 +385,7 @@ class ModifyTemplate():
     for hist_name in self.rebinned[ "TOTAL BKG" ]:
       count = { "INCLUDE": 0, "EXCLUDE": 0 }
       for i in range( 1, self.rebinned[ "TOTAL BKG" ][ hist_name ] ):
-        error_ratio = self.rebinned[ "TOTAL BKG" ][ hist_nmae ].GetBinError(i) / self.rebinned[ "TOTAL BKG" ][ hist_name ].GetBinContent(i)
+        error_ratio = self.rebinned[ "TOTAL BKG" ][ hist_name ].GetBinError(i) / self.rebinned[ "TOTAL BKG" ][ hist_name ].GetBinContent(i)
         if error_ratio <= self.params[ "THRESHOLD BB" ]:
           count[ "EXCLUDE" ] += 1
           continue
@@ -389,49 +396,43 @@ class ModifyTemplate():
     print( "[DONE] {} Signal BB shapes added, {} Background BB shapes added".format( nBB[ "SIG" ], nBB[ "BKG" ] ) )
           
 
+              
   def symmetrize_HOTclosure(): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
-    
-          
-    for i in range( 1, hists[ channel ][ hist_name ].GetNbinsX() + 1 ):
-      hist_name_up = hist_name.replace( "HOTCLOSURE", "HOTCLOSUREUP" )
-      hist_name_dn = hist_name.replace( "HOTCLOSURE", "HOTCLOSUREDN" )
-      max_shift = max( 
-        abs( hists[ channel ][ hist_name[ :hist_name.find( "_HOTCLOSURE" ) ] ].GetBinContent(i) - hists[ channel ][ hist_name_up ].GetBinContent(i) ),
-        abs( hists[ channel ][ hist_name[ :hist_name.find( "_HOTCLOSURE" ) ] ].GetBinContent(i) - hists[ channel ][ hist_name_dn ].GetBinContent(i) )
-      )
-      hists[ channel ][ hist_name_up ].SetBinContent( i, hists[ channel ][ hist_name[:hist_name.find( "_HOTCLOSURE" )] ].GetBinContent(i) + max_shift )
-      hists[ channel ][ hist_name_dn ].SetBinContent( i, hists[ channel ][ hist_name[:hist_name.find( "_HOTCLOSURE" )] ].GetBinContent(i) - max_shift )
-    
-    hists_HOTClosure = {
-      "UP": hists[ channel ][ hist_name_up ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}UP".format( args.year ) ) ),
-      "DN": hists[ channel ][ hist_name_dn ].Clone( hist_name.replace( "HOTCLOSURE", "HOTCLOSURE_{}DN".format( args.year ) ) )
-    }
-    for shift in hists_HOTClosure: hists_HOTClosure[ shift ].Write()
-    yields[ hists[ channel ][ hist_name_up ].GetName() ] = hists[ channel ][ hist_name_up ].Integral()
-    yields[ hists[ channel ][ hist_name_dn ].GetName() ] = hists[ channel ][ hist_name_dn ].Integral()
-    
-    return hists, yields
-    
-  def add_muRF_shapes( hists, yields, channel, hist_name, groups ): # done
-    for process in groups[ "BKG" ][ "PROCESS" ]:
-      if process in groups[ "BKG" ][ "TTBAR_PROCESS" ]: 
-        process = "TT"
-        hist_muRF = {
-          "UP": hists[ channel ][ hist_name ].Clone( hist_name.replace( "MUR", "MURFUP" ) ),
-          "DN": hists[ channel ][ hist_name ].Clone( hist_name.replace( "MUR", "MURFDN" ) )
+    print( "[START] Symmetrizing the HOT closure systematic down shifts to match the up shifts" )
+    count = 0
+    for hist_key in self.rebinned:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "HOTCLOSUREUP" not in hist_name.upper(): continue
+        HOT_name = {
+          "NOM": hist_name.replace( "_HOTCLOSUREUP", "" ),
+          "UP": hist_name,
+          "DN": hist_name.replace( "UP", "DN" )
         }
-        hist_renorm = {
-          "NOMINAL": hists[ channel ][ hist_name ],
-          "MURUP": hists[ channel ][ hist_name.replace( "MUR", "MURUP" ) ],
-          "MURDN": hists[ channel ][ hist_name.replace( "MUR", "MURDN" ) ],
-          "MUFUP": hists[ channel ][ hist_name.replace( "MUR", "MUR" ) ],
-          "MUFDN": hists[ channel ][ hist_name.replace( "MUR", "MUFDN" ) ],
-          "MURFCORRDUP": hists[ channel ][ hist_name.replace( "MUR", "MURFCORRDUP" ) ],
-          "MURFCORRDDN": hists[ channel ][ hist_name.replace( "MUR", "MURFCORRDDN" ) ]
-        }
-        for i in range( 1, hist_renorm[ "NOMINAL" ].GetNbinsX() + 1 ):
-          weight_dict = { key: hist_renorm[ key ].GetBinContent(i) for key in hist_renorm }
+        for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
+          max_shift = max(
+            abs( self.rebinned[ hist_key ][ HOT_name[ "NOM" ] ].GetBinContent(i) - self.rebinned[ hist_key ][ HOT_name[ "UP" ] ].GetBinContent(i) ),
+            abs( self.rebinned[ hist_key ][ HOT_name[ "NOM" ] ].GetBinContent(i) - self.rebinned[ hist_key ][ HOT_name[ "DN" ] ].GetBinContent(i) )
+          )
+          self.rebinned[ hist_key ][ HOT_name[ "UP" ] ].SetBinContent( i, self.rebinned[ hist_key ][ HOT_name[ "NOM" ] ].GetBinContent(i) + max_shift )
+          self.rebinned[ hist_key ][ HOT_name[ "DN" ] ].SetBinContent( i, self.rebinned[ hist_key ][ HOT_name[ "NOM" ] ].GetBinContent(i) - max_shift )
+        count += 1
+    print( "[DONE] Adjusted the HOT closure systematic shift for {} histograms".format( count ) )    
+    
+  def add_muRF_shapes(): # done
+  # adding MU RF systematic shapes
+    print( "[START] Adding MU RF systematic shapes" )
+    count = 0
+    for hist key in self.rebinned[ "SIG", "BKG" ]:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "MURUP" not in hist_name.upper(): continue
+        hist_muRF = { "NOMINAL": self.rebinned[ hist_key ][ hist_name.replace( "_MURUP", "" ) ].Clone() }
+        for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
+          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_name.replace( "MURUP", syst ) ].Clone()
+        hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name.replace( "MURUP", "MURFUP" ) )
+        hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name.replace( "MURDN", "MURFDN" ) )
+        for i in range( 1, hist_muRF[ "NOMINAL" ].GetNbinsX() + 1 ):
+          weight_dict = { key: hist_muRF[ key ].GetBinContent(i) for key in hist_muRF }
           weight_key = {
             "MAX": "NOMINAL",
             "MIN": "NOMINAL"
@@ -444,7 +445,7 @@ class ModifyTemplate():
             "MAX": weight_dict[ "NOMINAL" ].GetBinError(i),
             "MIN": weight_dict[ "NOMINAL" ].GetBinError(i)
           }
-          for key in hist_renorm:
+          for key in hist_muRF:
             if weight_dict[ key ].GetBinContent(i) > weight_limit[ "MAX" ]: 
               weight_limit[ "MAX" ] = weight_dict[ key ].GetBinContent(i)
               weight_error[ "MAX" ] = weight_dict[ key ].GetBinError(i)
@@ -453,125 +454,160 @@ class ModifyTemplate():
               weight_limit[ "MIN" ] = weight_dict[ key ].GetBinContent(i)
               weight_error[ "MIN" ] = weight_dict[ key ].GetBinError(i)
               weight_key[ "MIN" ] = key
-          
-          hist_muRF[ "UP" ].SetBinContent( i, weight_limit[ "MAX" ] )
-          hist_muRF[ "UP" ].SetBinError( i, weight_error[ "MAX" ] )
-          hist_muRF[ "DN" ].SetBinContent( i, weight_limit[ "MIN" ] )
-          hist_muRF[ "DN" ].SetBinError( i, weight_error[ "MIN" ] )
-          
-        for shift in [ "UP", "DN" ]:
-          yields[ hist_name.replace( "MUR", "MURF" + shift ) ] = hist_muRF[ shift ].Integral()
-          if ( args.norm_theory_bkg and "SIG" not in hist_name ) or ( args.norm_theory_sig and "SIG" in hist_name ):
-            hist_muRF[ shift ].Scale( hist_renorm[ "NOMINAL" ].Integral() / ( hist_muRF[ shift ].Integral() + config.zero ) )
-          hist_muRF[ shift ].Write()
-          hist_muRF_2 = hist_muRF[ shift ].Clone( hist_name.replace( "MUR{}".format( shift ), "MURF_{}{}".format( process, shift ) ) )
-          hist_muRF_2.Write()
-          hist_muRF_3 = hist_muRF[ shift ].Clone( hist_name.replace( "MUR{}".format( shift ), "MURF_{}_{}{}".format( process, args.year, shift ) ) )
-          hist_muRF_3.Write()
-          hist_muRF_4 = hist_muRF[ shift ].Clone( hist_name.replace( "MUR{}".format( shift ), "MURF_{}{}".format( args.year, shift ) ) )
-          hist_muRF_4.Write()
-          
-      return hists
-  
-  def add_PS_weights( hists, yields, channel, hist_name ): # done
-    for process in groups[ "BKG" ][ "PROCESS" ]:
-      if process in groups[ "BKG" ][ "TTBAR_PROCESS" ]: process = "TT"
-      hist_PSWeight = { shift: hists[ channel ][ hist_name ].Clone( hist_name.replace( "ISR" + shift, "PSWEIGHT" + shift ) ) for shift in [ "UP", "DN" ] }
-      hist_dict = { "NOMINAL": hists[ channel ][ hist_name ] }
-      for syst in [ "ISR", "FSR" ]:
-        for shift in [ "UP", "DN" ]:
-          hist_dict[ syst + shift ] = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ]
-      for i in range( 1, hist_dict[ "NOMINAL" ].GetNbinsX() + 1 ):
-        weight_dict = { key: hist_renorm[ key ].GetBinContent(i) for key in hist_renorm }
-        weight_key = {
-          "MAX": "NOMINAL",
-          "MIN": "NOMINAL"
-        }
-        weight_limit = {
-          "MAX": weight_dict[ "NOMINAL" ].GetBinContent(i),
-          "MIN": weight_dict[ "NOMINAL" ].GetBinContent(i)
-        }
-        weight_error = {
-          "MAX": weight_dict[ "NOMINAL" ].GetBinError(i),
-          "MIN": weight_dict[ "NOMINAL" ].GetBinError(i)
-        }
-        for key in hist_renorm:
-          if weight_dict[ key ].GetBinContent(i) > weight_limit[ "MAX" ]: 
-            weight_limit[ "MAX" ] = weight_dict[ key ].GetBinContent(i)
-            weight_error[ "MAX" ] = weight_dict[ key ].GetBinError(i)
-            weight_key[ "MAX" ] = key
-          if weight_dict[ key ].GetBinContent(i) < weight_limit[ "MIN" ]: 
-            weight_limit[ "MIN" ] = weight_dict[ key ].GetBinContent(i)
-            weight_error[ "MIN" ] = weight_dict[ key ].GetBinError(i)
-            weight_key[ "MIN" ] = key
-        
-        #hist_PSWeight[ "UP" ].SetBinContent( i, weight_limit[ "MAX" ] )
-        # symmetrize UP w.r.t. DN to fix large UP shifts due to unphysical LHE weights
-        hist_PSWeight[ "UP" ].SetBinContent( i, 2 * hists[ channel ][ hist_name[:hist_name.find("_ISR")] ].GetBinContent(i) - hist_dict[ weight_key[ "MIN" ] ].GetBinContent(i) )
-        hist_PSWeight[ "UP" ].SetBinError( i, weight_error[ "MAX" ] )
-        hist_PSWeight[ "DN" ].SetBinContent( i, weight_limit[ "MIN" ] )
-        hist_PSWeight[ "DN" ].SetBinError( i, weight_error[ "MIN" ] )
-      
-      for shift in [ "UP", "DN" ]:
-        yields[ hist_PSWeight[ shift ].GetName() ] = hist_PSWeight[ shift ].Integral()
-        if ( args.norm_theory_bkg and "SIG" not in hist_name ) or ( args.norm_theory_sig and "SIG" in hist_name ):
-          hist_PSWeight[ shift ].Scale( hist_dict[ "NOMINAL" ].Integral() / ( hist_PSWeight[ shift ].Integral() + config.zero ) )
-          hist_PSWeight[ shift ].Write()
-          hist_PS_2 = hist_PSWeight[ shift ].Clone( hist_name.replace( "ISR", "{}_{}_{}{}".format( psWeight, process, args.year, shift ) ) )
-          hist_PS_2.Write()
-        for syst in [ "ISR", "FSR" ]:
-          yields[ hist_name.replace( "ISR", syst + shift ) ] = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Integral()
-          if ( args.norm_theory_bkg and "SIG" not in hist_name ) or ( args.norm_theory_sig and "SIG" in hist_name ):
-            hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Scale( hists[ channel ][ hist_name[:hist_name.find("_ISR")] ].Integral() / ( hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Integral() + config.zero ) )
-          hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Write()
-          
-          hist_PS_3 = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Clone( hist_name.replace( "ISR", "{}_{}{}".format( syst, process, shift ) ) )
-          hist_PS_3.Write()
-          
-          hist_PS_4 = hists[ channel ][ hist_name.replace( "ISR", syst + shift ) ].Clone( hist_name.replace( "ISR", "{}_{}_{}{}".format( syst, process, args.year, shift ) ) )
-          hist_PS_4.Write()
-          
-  def add_PDF_shapes( hists, yields, channel, hist_name ): # done
-    for process in groups[ "BKG" ][ "PROCESS" ]:
-      hist_PDF = { shift: hists[ channel ][ hist_name ].Clone( hist_name.replace( "PDF0", "PDF" + shift ) ) for shift in [ "UP", "DN" ] }
-      for i in range( 1, hist_PDF[ "UP" ].GetNbinsX() + 1 ):
-        weight_dict = { i: hists[ channel ][ hist_name.replace( "PDF0", "PDF{}".format( i ) ) ].GetBinContent(i) for i in range( config.pdf_range ) }
-        weight_key = {
-          "MAX": 0,
-          "MIN": 0
-        }
-        weight_limit = {
-          "MAX": weight_dict[ 0 ].GetBinContent(i),
-          "MIN": weight_dict[ 0 ].GetBinContent(i)
-        }
-        weight_error = {
-          "MAX": weight_dict[ 0 ].GetBinError(i),
-          "MIN": weight_dict[ 0 ].GetBinError(i)
-        }
-        for key in hist_renorm:
-          if weight_dict[ key ].GetBinContent(i) > weight_limit[ "MAX" ]: 
-            weight_limit[ "MAX" ] = weight_dict[ key ].GetBinContent(i)
-            weight_error[ "MAX" ] = weight_dict[ key ].GetBinError(i)
-            weight_key[ "MAX" ] = key
-          if weight_dict[ key ].GetBinContent(i) < weight_limit[ "MIN" ]: 
-            weight_limit[ "MIN" ] = weight_dict[ key ].GetBinContent(i)
-            weight_error[ "MIN" ] = weight_dict[ key ].GetBinError(i)
-            weight_key[ "MIN" ] = key
 
-        hist_PDF[ "UP" ].SetBinContent( i, weight_limit[ "MAX" ] )
-        hist_PDF[ "UP" ].SetBinError( i, weight_error[ "MAX" ] )
-        hist_PDF[ "DN" ].SetBinContent( i, weight_limit[ "MIN" ] )
-        hist_PDF[ "DN" ].SetBinError( i, weight_error[ "MIN" ] )
+          hist_muRF[ "MURFUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
+          hist_muRF[ "MURFUP" ].SetBinError( i, weight_error[ "MAX" ] )
+          hist_muRF[ "MURFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
+          hist_muRF[ "MURFDN" ].SetBinError( i, weight_error[ "MIN" ] )
+
+        if self.options[ "NORM THEORY SYST {}".format( hist_key ) ]:
+          hist_muRF[ "MURFUP" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+          hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+
+        process = hist_name.split( "_" )[-1]
+        for shift in [ "UP", "DN" ]:
+          hist_muRF[ "MURF__{}_{}".format( shift, process ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "MURF__{}_{}".format( shift, process ) )
+          hist_muRF[ "MURF__{}_{}_{}".format( shift, process, args.year ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "MURF__{}_{}_{}".format( shift, process, args.year ) )
+          hist_muRF[ "MURF__{}_{}".format( shift, args.year ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "MURF__{}_{}".format( shift, args.year ) )
+
+        for muRF_key in hist_muRF:
+          if muRF_key in self.rebinned[ hist_key ].keys():
+            del self.rebinned[ hist_key ][ muRF_key ]
+          self.rebinned[ hist_key ][ muRF_key ] = hist_muRF[ muRF_key ].Clone( muRF_key )
+          self.rebinned[ hist_key ][ muRF_key ].SetDirectory(0)
+          count += 1  
+    print( "[DONE] Adjusted {} MU R/F histograms".format( count ) ) 
+  
+  def add_PSWeight_shapes(): # done
+    print( "[START] Adding PS weights" )
+    count = 0
+    for hist_key in [ "SIG", "BKG" ]:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "ISRUP" not in hist_name.upper(): continue
+        hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key ][ hist_name.replace( "_ISRUP", "" ) ].Clone( "NOMINAL" ) }
+        hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name.replace( "MURUP", "PSWGTUP" ) )
+        hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name.replace( "MURDN", "PSWGTDN" ) )
+        for syst in [ "ISR", "FSR" ]:
+          for shift in [ "UP", "DN" ]:
+            hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_name.replace( "ISRUP", syst + shift ) ].Clone( syst + shift )
+        for i in range( 1, hist_dict[ "NOMINAL" ].GetNbinsX() + 1 ):
+          weight_key = {
+            "MAX": "NOMINAL",
+            "MIN": "NOMINAL"
+          }
+          weight_limit = {
+            "MAX": hist_PSWeight[ "NOMINAL" ].GetBinContent(i),
+            "MIN": hist_PSWeight[ "NOMINAL" ].GetBinContent(i)
+          }
+          weight_error = {
+            "MAX": hist_PSWeight[ "NOMINAL" ].GetBinError(i),
+            "MIN": hist_PSWeight[ "NOMINAL" ].GetBinError(i)
+          }
+          for key in hist_PSWeight:
+            if hist_PSWeight[ key ].GetBinContent(i) > weight_limit[ "MAX" ]:
+              weight_limit[ "MAX" ] = hist_PSWeight[ key ].GetBinContent(i)
+              weight_error[ "MAX" ] = hist_PSWeight[ key ].GetBinError(i)
+              weight_key[ "MAX" ] = key
+            if hist_dict[ key ].GetBinContent(i) < weight_limit[ "MIN" ]:
+              weight_limit[ "MIN" ] = hist_PSWeight[ key ].GetBinContent(i)
+              weight_error[ "MIN" ] = hist_PSWeight[ key ].GetBinError(i)
+              weight_key[ "MIN" ] = key
+        
+          # in-case symmetrization is needed for PSWGTUP:
+          # hist_PSWeight[ "PSWGTUP" ].SetBinContent( i, 2 * hist_PSWeight[ "NOMINAL" ].GetBinContent(i) - weight_limit[ "MIN" ].GetBinContent(i) )
+          hist_PSWeight[ "PSWGTUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
+          hist_PSWeight[ "PSWGTUP" ].SetBinError( i, weight_error[ "MAX" ] )
+          hist_PSWeight[ "PSWGTDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
+          hist_PSWeight[ "PSWGTDN" ].SetBinError( i, weight_error[ "MIN" ] )
+        
+        if self.options[ "NORM THEORY SYST {}".format( hist_key ) ]:
+          hist_PSWeight[ "PSWGTUP" ].Scale( hist_PSWeight[ "NOMINAL" ].Integral() / ( hist_PSWeight[ "PSWGTUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+          hist_PSWeight[ "PSWGTDN" ].Scale( hist_PSWeight[ "NOMINAL" ].Integral() / ( hist_PSWeight[ "PSWGTDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+        
+        process = hist_name.split( "_" )[-1]
+        for shift in [ "UP", "DN" ]:
+          hist_PSWeight[ "PSWGT__{}_{}".format( shift, process ) ] = hist_PSWeight[ hist_name.replace( "ISRUP", "ISR" + shift ) ].Clone( "PSWGT__{}_{}".format( shift, process ) )
+          hist_PSWeight[ "PSWGT__{}_{}_{}".format( shift, process, args.year ) ] = hist_PSWeight[ hist_name.replace( "ISRUP", "ISR" + shift ) ].Clone( "PSWGT__{}_{}_{}".format( shift, process, args.year ) )
+          hist_PSWeight[ "PSWGT__{}_{}".format( shift, args.year ) ] = hist_PSWeight[ hist_name.replace( "ISRUP", "ISR" + shift ) ].Clone( "PSWGT__{}_{}".format( shift, args.year ) )
+
+        for PSWGT_key in hist_PSWeight:
+          if muRF_key in self.rebinned[ hist_key ].keys():
+            del self.rebinned[ hist_key ][ muRF_key ]
+          self.rebinned[ hist_key ][ PSWGT_key ] = hist_PSWeight[ PSWGT_key ].Clone( PSWGT_key )\
+          self.rebinned[ hist_key ][ PSWGT_key ].SetDirectory(0)
+          count += 1
+    print( "[DONE] Adjusted {} PS Weight histograms".format( count ) )
+          
+  def add_PDF_shapes(): # done
+    print( "[START] Adding PDF shape systematics" )
+    count = 0
+    for hist_key in [ "SIG", "BKG" ]:
+      for hist_name in self.rebinned[ hist_key ]:
+        if "PDF0" not in hist_name: continue
+        hist_PDF = { 
+          "NOMINAL": self.rebinned[ hist_key ][ hist_name.replace( "_PDF0", "" ) ].Clone( "NOMINAL" ),
+          "PDFUP": self.rebinned[ hist_key ][ hist_name ].Clone( "PDFUP" ),
+          "PDFDN": self.rebinned[ hist_key ][ hist_name ].Clone( "PDFDN" )
+        }
+        for i in config.params[ "GENERAL" ][ "PDF RANGE" ]:
+          hist_PDF[ "PDF{}".format(i) ] = self.rebinned[ hist_key ][ hist_name.replace( "PDF0", "PDF{}".format(i) ) ].Clone( "PDF{}".format(i) )
+        for i in range( 1, hist_PDF[ "NOMINAL" ].GetNbinsX() + 1 ):
+          weight_key = {
+            "MAX": "NOMINAL",
+            "MIN": "NOMINAL"
+          }
+          weight_limit = {
+            "MAX": hist_PDF[ "NOMINAL" ].GetBinContent(i),
+            "MIN": hist_PDF[ "NOMINAL" ].GetBinContent(i)
+          }
+          weight_error = {
+            "MAX": hist_PDF[ "NOMINAL" ].GetBinError(i),
+            "MIN": hist_PDF[ "NOMINAL" ].GetBinError(i)
+          }
+          for key in hist_PDF:
+            if hist_PDF[ key ].GetBinContent(i) > weight_limit[ "MAX" ]:
+              weight_limit[ "MAX" ] = hist_PDF[ key ].GetBinContent(i)
+              weight_error[ "MAX" ] = hist_PDF[ key ].GetBinError(i)
+              weight_key[ "MAX" ] = key
+            if hist_PDF[ key ].GetBinContent(i) < weight_limit[ "MIN" ]:
+              weight_limit[ "MIN" ] = hist_PDF[ key ].GetBinContent(i)
+              weight_error[ "MIN" ] = hist_PDF[ key ].GetBinError(i)
+              weight_key[ "MIN" ] = key
+          
+          hist_PDF[ "PDFUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
+          hist_PDF[ "PDFUP" ].SetBinError( i, weight_error[ "MAX" ] )
+          hist_PDF[ "PDFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
+          hist_PDF[ "PDFDN" ].SetBinError( i, weight_error[ "MIN" ] )
+
+        if self.options[ "NORM THEORY SYST {}".format( hist_key ) ]:
+          hist_PDF[ "PDFUP" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+          hist_PDF[ "PDFDN" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
         
         for shift in [ "UP", "DN" ]:
-          yields[ hist_PDF[ shift ].GetName() ] = hist_PDF[ shift ].Integral()
-          if ( args.norm_theory_bkg and "SIG" not in hist_name ) or ( args.norm_theory_sig and "SIG" in hist_name ):
-            hist_PSWeight[ shift ].Scale( hists[ channel ][ hist_name[:hist_name.find( "_PDF" )] ].Integral() / ( hist_PDF[ shift ].Integral() + config.zero ) )
-            hist_PSWeight[ shift ].Write()
-          hist_PDF_2 = hist_PDF[ shift ].Clone( hist_name.replace( "PDF0", "PDF_{}{}".format( args.year, shift ) ) )
-          hist_PDF_2.Write()
+          hist_PDF[ "PDF__{}_{}".format( shift, args.year ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "PDF__{}_{}".format( shift, args.year ) )
+          count += 1
+    print( "[DONE] Adjusted {} PDF systematic histograms".format( count ) )
           
-  def add_smooth_shapes( hists, yields, rFile_out ): # kinda done
+  def add_smooth_shapes(): # kinda done
+    print( "[START] Smoothing systematic shapes using {} smoothing".format( self.params[ "SMOOTHING ALGO" ] ) )
+    count = 0
+    for hist_key in [ "BKG", "SIG" ]:
+      for hist_name in self.rebinned[ hist_key ]:
+        syst, syst_name = syst_parse( hist_name )
+        if syst.upper() + "UP" in hist_name.upper() and syst_name.upper() not in [ syst_exclude.upper() for syst_exclude in self.params[ "EXCLUDE SMOOTH" ] ]:
+          hist_syst = {
+            "NOMINAL": self.rebinned[ hist_key ][ hist_name.replace( "_{}UP".format( syst.upper() ), "" ) ].Clone( "NOMINAL" ),
+            syst.upper() + "UP": self.rebinned[ hist_key ][ hist_name ].Clone( syst.upper() + "UP" ),
+            syst.upper() + "DN": self.rebinned[ hist_key ][ hist_name ].Clone( syst.upper() + "DN" )
+          }
+          smooth_shape( hist_syst, self.params[ "SMOOTHING ALGO" ], self.params[ "SYMM SMOOTHING" ] )
+          
+          for shift in [ "UP", "DN" ]:
+            self.rebinned[ hist_key ][ "{}__{}_{}".format( syst.upper(), shift, args.year ) ] = hist_syst[ syst.upper() + shift ].Clone( "{}__{}_{}".format( syst.upper(), shift, args.year ) )
+            self.rebinned[ hist_key ][ "{}__{}_{}".format( syst.upper(), shift, args.year ) ].SetDirectory(0)
+            count += 1
+      print( "[DONE] Smoothed {} systematic histograms" )
+    
     for process in groups[ "OUTPUT" ]:
       if "DAT" in process: continue
       syst_output = []
