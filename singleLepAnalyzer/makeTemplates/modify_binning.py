@@ -682,6 +682,10 @@ def main():
     else:
       print( "   > MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 2
+  else:
+    if not config.params[ "GENERAL" ][ "FINAL ANALYSIS" ]:
+      print( "[WARN] Running {} region, turning on blinding".format( args.region ) )
+      options[ "BLIND" ] = True
     
   file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
   file_path = os.path.join( templateDir, file_name )
