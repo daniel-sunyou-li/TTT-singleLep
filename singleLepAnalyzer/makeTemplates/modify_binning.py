@@ -64,6 +64,51 @@ def underflow( hist ):
   hist.SetBinContent( 0, 0 )
   hist.SetBinError( 0, 0 ) 
   
+def smooth_shape( hist, hist_n, hist_d, hist_u, algo = "lowess" , symmetrize = True ):
+  hist_name = hist_n.GetName()
+  graph_error = {
+    path: {
+      shift: ROOT.TGraphErrors() for shift in [ "UP", "DN" ]
+    } for path in [ "IN", "OUT" ]
+  }
+  graph_smooth = {
+    shift: ROOT.TGraphSmooth( hist_name + "_{}_{}".format( shift, algo.upper() ) ) for shift in [ "UP", "DOWN" ]
+  }
+  hist = {
+    path: {
+      "UP": hist_u.Clone( "{}__{}".format( hist_n.GetName(), algo.upper() ) ),
+      "DN": hist_d.Clone( "{}__{}".format( hist_d.GetName(), algo.upper() ) )
+    } for path in [ "IN", "OUT" ]
+  }
+  for shift in hist:
+    hist[ "IN" ][ shift ].Divide( hist_n )
+
+  for i in range( 1, hist_n.GetNbinsX() + 1 ):
+    x = ( hist[ "IN" ][ "UP" ].GetBinLowEdge(i) + hist[ "IN" ][ "UP" ].GetBinLowEdge(i+1) ) / 2
+    y = {
+      "UP": hist[ "IN" ][ "UP" ].GetBinContent(i),
+      "DN": hist[ "IN" ][ "DN" ].GetBinContent(i)
+    }
+    for shift in [ "UP", "DN" ]:
+      if symmetrize:
+        graph_error[ "IN" ][ shift ].SetPoint( i - 1, x, 1 + ( y[ "UP" ] + y[ "DN" ] ) / 2 )
+      else:
+        graph_error[ "IN" ][ shift ].SetPoint( i - 1, x, y[ shift ] )
+  for shift in [ "UP", "DN" ]:
+    if algo.upper() == "SUPER":
+      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothSuper( graph_error[ "IN" ][ shift ], "", 9, 0 )
+    elif algo.upper() == "KERN":
+      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothKern( graph_error[ "IN" ][ shift ], "normal", 5.0 )
+    elif algo.upper() == "LOWESS":
+      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", 0.9 )
+    else:
+      
+  
+  for i in range( 1, hist_n.GetNbinsX() + 1 ):
+    for shift in [ "UP", "DN" ]:
+      hist[ "OUT" ][ shift ].SetBinContent( i, hist_n.GetBinContent(i) * graph_error[ "OUT" ][ shift ].GetY()[i-1] )
+  return hist[ "OUT" ]
+
 class ModifyTemplate():
   def __init__( self, filepath, options, params, groups, variable ):
     self.filepath = filepath
