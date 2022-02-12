@@ -78,7 +78,15 @@ params = {
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
       "NJET", "NJETSF", "PSWGT", "BTAG"
+    ],
+    "EXCLUDE SMOOTH": [
+      "TOPPT", "HT" 
     ]
+  },
+  "COMBINE": {
+    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD" ], # TTH?
+    "DATA NAME": "DAT",
+    
   }
 }
 
