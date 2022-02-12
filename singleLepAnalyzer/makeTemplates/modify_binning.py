@@ -101,9 +101,7 @@ def smooth_shape( hist, hist_n, hist_d, hist_u, algo = "lowess" , symmetrize = T
       graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothKern( graph_error[ "IN" ][ shift ], "normal", 5.0 )
     elif algo.upper() == "LOWESS":
       graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", 0.9 )
-    else:
-      
-  
+
   for i in range( 1, hist_n.GetNbinsX() + 1 ):
     for shift in [ "UP", "DN" ]:
       hist[ "OUT" ][ shift ].SetBinContent( i, hist_n.GetBinContent(i) * graph_error[ "OUT" ][ shift ].GetY()[i-1] )
@@ -292,7 +290,7 @@ class ModifyTemplate():
     
     print( "[DONE] {} histograms rebinned".format( count ) )
   
-  def compute_yield_stats(): # done
+  def compute_yield_stats( self ): # done
   # get the integral yield for each bin as well as the associated error
     print( "[START] Retrieving yields and errors for each histogram's bins." )
     count = 0
@@ -317,7 +315,7 @@ class ModifyTemplate():
         count += 1
     print( "[DONE] Calculated yields for {} histograms".format( count ) )  
           
-  def add_trigger_efficiency(): # done
+  def add_trigger_efficiency( self ): # done
   # specify trigger efficiencies for the single leptons
     print( "[START] Differentiating trigger efficiency histogram naming between lepton flavors" )
     count = 0
@@ -335,7 +333,7 @@ class ModifyTemplate():
         count += 1
     print( "[DONE] Adjusted trigger naming for {} histograms.".format( count ) )
     
-  def uncorrelate_year(): # done
+  def uncorrelate_year( self ): # done
   # differentiate the shifts by year
     print( "[START] Differentiating systematic shifts by year" )
     count = 0
@@ -349,7 +347,7 @@ class ModifyTemplate():
           count += 1
     print( "[DONE] Adjusted systematic shift names for {} histograms".format( count ) )
     
-  def symmetrize_topPT_shift(): # done
+  def symmetrize_topPT_shift( self ): # done
   # symmetrize the up and down shifts for toppt systematic
     print( "[START] Symmetrizing the toppt systematic shifts" )
     count = 0
@@ -363,7 +361,7 @@ class ModifyTemplate():
         count += 1
     print( "[DONE] Adjusted {} toppt histograms".format( count ) )
 
-  def add_statistical_shapes(): # done
+  def add_statistical_shapes( self ): # done
   # add shifts to the bin content for the statistical shape uncertainty
     def write_statistical_hists( category, group, i, nBB ):
       if self.rebinned[ "TOTAL BKG" ][ hist_name ].GetNbinsX() == 1 or group == "SIG":  
@@ -442,7 +440,7 @@ class ModifyTemplate():
           
 
               
-  def symmetrize_HOTclosure(): # done
+  def symmetrize_HOTclosure( self ): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
     print( "[START] Symmetrizing the HOT closure systematic down shifts to match the up shifts" )
     count = 0
@@ -464,7 +462,7 @@ class ModifyTemplate():
         count += 1
     print( "[DONE] Adjusted the HOT closure systematic shift for {} histograms".format( count ) )    
     
-  def add_muRF_shapes(): # done
+  def add_muRF_shapes( self ): # done
   # adding MU RF systematic shapes
     print( "[START] Adding MU RF systematic shapes" )
     count = 0
@@ -523,7 +521,7 @@ class ModifyTemplate():
           count += 1  
     print( "[DONE] Adjusted {} MU R/F histograms".format( count ) ) 
   
-  def add_PSWeight_shapes(): # done
+  def add_PSWeight_shapes( self ): # done
     print( "[START] Adding PS weights" )
     count = 0
     for hist_key in [ "SIG", "BKG" ]:
@@ -583,7 +581,7 @@ class ModifyTemplate():
           count += 1
     print( "[DONE] Adjusted {} PS Weight histograms".format( count ) )
           
-  def add_PDF_shapes(): # done
+  def add_PDF_shapes( self ): # done
     print( "[START] Adding PDF shape systematics" )
     count = 0
     for hist_key in [ "SIG", "BKG" ]:
@@ -633,7 +631,7 @@ class ModifyTemplate():
           count += 1
     print( "[DONE] Adjusted {} PDF systematic histograms".format( count ) )
           
-  def add_smooth_shapes(): # kinda done
+  def add_smooth_shapes( self ): # kinda done
     print( "[START] Smoothing systematic shapes using {} smoothing".format( self.params[ "SMOOTHING ALGO" ] ) )
     count = 0
     for hist_key in [ "BKG", "SIG" ]:
@@ -645,30 +643,16 @@ class ModifyTemplate():
             syst.upper() + "UP": self.rebinned[ hist_key ][ hist_name ].Clone( syst.upper() + "UP" ),
             syst.upper() + "DN": self.rebinned[ hist_key ][ hist_name ].Clone( syst.upper() + "DN" )
           }
-          smooth_shape( hist_syst, self.params[ "SMOOTHING ALGO" ], self.params[ "SYMM SMOOTHING" ] )
-          
+          smooth_hist = smooth_shape( hist_syst, self.params[ "SMOOTHING ALGO" ], self.params[ "SYMM SMOOTHING" ] )
           for shift in [ "UP", "DN" ]:
-            self.rebinned[ hist_key ][ "{}__{}_{}".format( syst.upper(), shift, args.year ) ] = hist_syst[ syst.upper() + shift ].Clone( "{}__{}_{}".format( syst.upper(), shift, args.year ) )
-            self.rebinned[ hist_key ][ "{}__{}_{}".format( syst.upper(), shift, args.year ) ].SetDirectory(0)
+            smooth_name = "{}__{}".format( hist_name.replace( "{}UP".format( syst.upper() ), syst.upper() + shift ), self.params[ "SMOOTHING ALGO" ] )
+            self.rebinned[ hist_key ][ smooth_name ] = smooth_hist[ shift ].Clone( smooth_name )
+            self.rebinned[ hist_key ][ "{}_{}".format( smooth_name, args.year ) ] = smooth_hist[ shift ].Clone( "{}_{}".format( smooth_name, args.year ) )
+            self.rebinned[ hist_key ][ smooth_name ].SetDirectory(0)
+            self.rebinned[ hist_key ][ "{}_{}".format( smooth_name, args.year ) ].SetDirectory(0)
             count += 1
-      print( "[DONE] Smoothed {} systematic histograms" )
-    
-    for process in groups[ "OUTPUT" ]:
-      if "DAT" in process: continue
-      syst_output = []
-      for syst in syst_output:
-        hist = {
-          "NOMINAL": rFile_out.Get( "{}_{}".format( bin_name, process ) ),
-          "UP": rFile_out.Get( "{}_{}UP".format( bin_name, process ) ),
-          "DN": rFile_out.Get( "{}_{}DN".format( bin_name, process ) )
-        }
-        for shift in [ "UP", "DN" ]: 
-          hist[ "SMOOTH" + shift ] = smooth_shape( hist[ "NOMINAL" ], hist[ "UP" ], hist[ "DN" ], config.smoothing_algo, args.smoothing )
-          hist[ "SMOOTH" + shift ].Write()
-          yields[ hist[ "SMOOTH" + shift ].GetName() ] = hist[ "SMOOTH" + shift ].Integral()
-          hist[ "LIMIT" + shift ] = hist[ "SMOOTH" + shift ].Clone( hist[ "SMOOTH" + shift ].GetName().replace( shift, "_{}{}".format( args.year, shift ) ) )
-          hist[ "LIMIT" + shift ].Write()
-  
+    print( "[DONE] Smoothed {} systematic histograms".format( count ) )
+      
   def write( self ):
     self.outpath = self.filepath.replace( ".root", "_rebinned_stat{}.root".format( self.params[ "STAT THRESHOLD" ].replace( ".", "p" ) ) )
     print( "[START] Storing modified histograms in {}".format( self.outpath ) )
@@ -757,8 +741,7 @@ def main():
   #  template.add_PDF_shapes()
   #if params[ "SMOOTH" ]:
   #  template.add_smooth_shapes()
-    
-  
+   
   # calculate yields
   template.compute_yield_stats()
     
