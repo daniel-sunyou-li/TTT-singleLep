@@ -29,6 +29,7 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
+    "FINAL ANALYSIS": False
   },
   "HISTS": {
     "RENORM PDF": True, # renormalize the PDF weights
@@ -43,8 +44,8 @@ options = {
     "SHAPE STAT": True,            # add statistical uncertainty shapes
     "MURF SHAPES": True,
     "PS WEIGHTS": True,            # Construct Parton Shower weights
-    "NORM THEORY SYST SIG": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
-    "NORM THEORY SYST BKG": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
+    "NORM THEORY SIG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
+    "NORM THEORY BKG SYST": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
     "SYMM SMOOTHING": True,
     "SYMM TOP PT": True,
     "SYMM HOTCLOSURE": True,
@@ -101,12 +102,12 @@ region_prefix = {
 # systematic uncertainty sources
 systematics = {
   "MC": [ 
-    "pileup", "trigeff",
+    "pileup", #"trigeff",
     "muRFcorrd", "muR", "muF", "isr", "fsr", 
     "hotstat", "hotcspur", "hotclosure", 
     "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
     "CFerr1", "CFerr2",
-    "toppt", "ht",
+    #"toppt", "ht",
     #"JER", "JEC"
   ],
   "LUMI": {
@@ -143,7 +144,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0", "1p" ],
     "NB": [ "2", "3p" ],
-    "NJ": [ "5", "6", "7", "8p" ]
+    "NJ": [ "5", "6", "7p" ]
   },
   "VR": {
     "LEPTON": [ "E", "M" ],
@@ -151,7 +152,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
-    "NJ": [ "4", "5", "6" ]
+    "NJ": [ "5", "6" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],

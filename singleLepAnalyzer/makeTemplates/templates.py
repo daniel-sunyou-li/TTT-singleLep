@@ -269,12 +269,14 @@ def combine_templates( hists, variable, categories, groups, templateDir ):
 
     yield_total = sum( [ hists[ "CMB" ][ hist_tag( group, category ) ].Integral() for group in groups[ "BKG" ][ "SUPERGROUP" ] ] )
     for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+      scale_group = False
       error_group = Double(0)
       yield_group = hists[ "CMB" ][ hist_tag( group, category ) ].IntegralAndError( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins(), error_group )
       if ( yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ] or error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ] ):
-        if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "[WARN] {} beneath yield threshold, excluding from Combine template".format( group ) )
-        if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "[WARN] {} above error threshold, excluding from Combine template".format( group ) )
-        continue
+        scale_group = True
+        if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "[WARN] {} beneath yield threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "[WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        hists[ "CMB" ][ hist_tag( group, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
       hists[ "CMB" ][ hist_tag( group, category ) ].Write()
       if args.verbose: print( "    + BKG SUPERGROUP: {}".format( group ) ) 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
@@ -283,11 +285,15 @@ def combine_templates( hists, variable, categories, groups, templateDir ):
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
             sysTag = syst.upper() + shift
+            if scale_group:
+              hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
             hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Write()
         if args.verbose: print( "    + BKG SUPERGROUP (SYS): {}".format( group ) )
             
       if config.options[ "GENERAL" ][ "PDF" ]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
+          if scale_group:
+            hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
           hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ].Write()
         if args.verbose: print( "    + BKG SUPERGROUP (PDF): {}".format( group ) )
                                    
@@ -400,7 +406,7 @@ def print_tables( tables, categories, groups, variable, templateDir ):
           process: 0 for process in columns
         } for key in [ "YIELD", "ERROR" ]
       }
-      for category in categories:
+      for category in sorted( categories ):
         row = [ category ]
         for process in columns:
           row.append( pm.format(

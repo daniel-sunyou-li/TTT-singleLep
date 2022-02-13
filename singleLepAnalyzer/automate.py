@@ -52,7 +52,7 @@ def run_templates():
   for training in trainings:
     for variable in training[ "variable" ]:
       if not os.path.exists( "condor_log" ): os.system( "mkdir -vp condor_log" )
-      step2_name = "condor_step2_UL{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable )
+      step2_name = "condor_step2_UL{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, args.region )
       shell_name = "condor_log/{}.sh".format( step2_name )
       shell = open( shell_name, "w" )
       shell.write(
@@ -61,7 +61,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python templates.py -y {} -t {} -v {} -r {} \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], variable, args.region )
+python templates.py -y {} -t {} -v {} -r {} --verbose \n".format( cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], variable, args.region )
       )
       shell.close()
       jdf_name = "condor_log/{}.job".format( step2_name )
