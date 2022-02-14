@@ -54,6 +54,9 @@ options = {
     "SMOOTH": True,
     "UNCORRELATE YEARS": True,
     "TRIGGER EFFICIENCY": True,
+  },
+  "COMBINE": {
+    "TTHF SYST": True 
   }
 }
 # non-boolean parameters used in creating templates
@@ -86,9 +89,38 @@ params = {
   },
   "COMBINE": {
     "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD" ], # TTH?
-    "DATA NAME": "DAT",
-    
+    "DATA": [ "data_obs" ],
+    "SIGNALS": [ "TTTW", "TTTJ" ],
+    "MURF NORM": { 
+      "TTNOBB": 1.36,
+      "TTBB": 1.36,
+      "TOP": 1.47,
+      "EWK": 1.31,
+      "QCD": 1.38
+    },
+    "ISR NORM": {
+      "TTNOBB": 1.17,
+      "TTBB": 1.15,
+      "TOP": 1.16,
+      "EWK": 1.00,
+      "QCD": 1.11
+    },
+    "FSR NORM": {
+      "TTNOBB": 1.33,
+      "TTBB": 1.68,
+      "TOP": 1.24,
+      "EWK": 1.00,
+      "QCD": 1.21
+    },
+    "PDF NORM": {
+      "TTNOBB": 1.00,
+      "TTBB": 1.00,
+      "TOP": 1.20,
+      "EWK": 1.00,
+      "QCD": 1.01
+    }
   }
+    
 }
 
 region_prefix = {
