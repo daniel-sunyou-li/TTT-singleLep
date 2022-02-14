@@ -1,18 +1,18 @@
 eosUserName = "dali"
-postfix = "deepJetV1"  #"Winter2021"
-years = [ "16", "17", "18" ]
+postfix = "3T_Spring22"
+years = [ "16APV", "16", "17", "18" ]
 
 ljmetDir = {
   year: {
-    "LPC": "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix ),
-    "BRUX": "/isilon/hadoop/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}".format( eosUserName, year, postfix )
+    "LPC": "/eos/uscms/store/group/lpcljm/FWLJMET106XUL_singleLep20{}UL_RunIISummer20".format( year ),
+    "BRUX": "/isilon/hadoop/store/group/bruxljm/FWLJMET106XUL_singleLep20{}UL_RunIISummer20".format( year )
   } for year in years
 }
 
 step1Dir = {
   year: {
-    "LPC": "/eos/uscms/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( eosUserName, year, postfix ), 
-    "BRUX": "/isilon/hadoop/store/user/{}/FWLJMET106XUL_1lep20{}_3t_{}_step1".format( eosUserName, year, postfix ) 
+    "LPC": "/eos/uscms/store/group/lpcljm/FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step1".format( year, postfix ), 
+    "BRUX": "/isilon/hadoop/store/group/bruxljm/FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step1".format( year, postfix ) 
   } for year in years
 }
 
