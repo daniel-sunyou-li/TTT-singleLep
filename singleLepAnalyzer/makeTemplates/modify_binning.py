@@ -724,6 +724,8 @@ class ModifyTemplate():
     count = 0
     for hist_key in self.rebinned:
       for hist_name in self.rebinned[ hist_key ]:
+        if "DAT" in hist_name:
+          self.rebinned[ hist_key ][ hist_name ].SetName( self.rebinned[ hist_key ][ hist_name ].GetName().replace( "DAT", "data_obs" ) )
         self.rebinned[ hist_key ][ hist_name ].Write()
         count += 1
     print( "[DONE] {} histograms written.".format( count ) )
