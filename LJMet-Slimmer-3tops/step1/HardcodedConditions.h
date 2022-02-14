@@ -99,6 +99,9 @@ private:
     double GetMuonTriggerVlqXSF2017(double pt, double eta);
     double GetMuonTriggerVlqXSF2018(double pt, double eta);
 
+    void GetBtaggingSF2016APV(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
+    void GetCtaggingSF2016APV(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
+    void GetLtaggingSF2016APV(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
     void GetBtaggingSF2016(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
     void GetCtaggingSF2016(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
     void GetLtaggingSF2016(double pt, double eta, double *btagsf, double *btagsfunc, std::string tagger="CSVM");
