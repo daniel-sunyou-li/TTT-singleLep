@@ -2,7 +2,7 @@
 
 import os, sys, math
 from argparse import ArgumentParser
-sys.path.append( "../" )
+sys.path.append( ".." )
 import config
 
 parser = ArgumentParser()
@@ -13,6 +13,7 @@ parser.add_argument( "-v", "--variable", required = True )
 parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
+import CombineHarvester.CombineTools.ch as ch
 import ROOT
 
 
@@ -53,17 +54,17 @@ def hist_parse( hist_name ):
       parse[ "CHANNEL" ] = part[3:]
   return parse
 
-def jet_count( category )
+def jet_count( category ):
   parts = category.split( "n" )
   jet_count = 0
   for part in parts:
     if part.startswith("is"): continue
     elif part.startswith("HOT"): jet_count += int( part[3] )
-    else part.startswith("B"): jet_count += int( part[1] )
+    else: jet_count += int( part[1] )
   return jet_count
 
 class DataCard():
-  def __init__( variable, year, region, tag, params, options, prefix ):
+  def __init__( self, variable, year, region, tag, params, options, prefix ):
     self.harvester = ch.CombineHarvester()
     self.variable = variable
     self.year = year
@@ -210,7 +211,7 @@ class DataCard():
     count = 0
     print( ">> Adding systematics for both signal and background processes:" )
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories][ "ALL" ] ).AddSyst( 
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst( 
       self.harvester, "LUMI_$ERA", "lnN",
       self.harvester.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
     )
@@ -321,14 +322,14 @@ class DataCard():
     print( "[START] Retrieving shape uncertainties from {}".format( self.templateName ) )
     for category in self.categories[ "ALL" ]:
       key_bkg = { 
-        "NOMINAL": "$PROCESS_{}_$BIN".format( category )
+        "NOMINAL": "$PROCESS_{}_$BIN".format( category ),
         "SYST":    "$PROCESS_{}_$BIN_$SYSTEMATIC".format( category )
       }
       self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).backgrounds().ExtractShapes(
         self.templateName, key_bkg[ "NOMINAL" ], key_bkg[ "SYST" ]
       )
       key_sig = { 
-        "NOMINAL": "$PROCESS$MASS_{}_$BIN".format( category )
+        "NOMINAL": "$PROCESS$MASS_{}_$BIN".format( category ),
         "SYST":    "$PROCESS$MASS_{}_$BIN_$SYSTEMATIC".format( category )
       }
       if category not in self.regions[ "CONTROL" ]:
@@ -376,14 +377,14 @@ def main():
     options, 
     "TTTX" 
   )
-  datacard.define_regions()
-  datacard.add_datasets()
-  datacard.add_systematics()
-  datacard.add_TTHF_systematics()
-  datacard.add_shapes()
-  datacard.add_auto_MC_statistics()
-  datacard.rename_and_write()
+  #datacard.define_regions()
+  #datacard.add_datasets()
+  #datacard.add_systematics()
+  #datacard.add_TTHF_systematics()
+  #datacard.add_shapes()
+  #datacard.add_auto_MC_statistics()
+  #datacard.rename_and_write()
   
-  datacard.create_workspace()
+  #datacard.create_workspace()
   
 main()
