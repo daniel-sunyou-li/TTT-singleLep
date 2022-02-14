@@ -15,7 +15,6 @@
 
 using namespace std;
 
-
 HardcodedConditions::HardcodedConditions() {
 }
 
@@ -39,17 +38,22 @@ void HardcodedConditions::GetBtaggingSF(double pt, double eta, double *btagsf, d
   //The main getter for GetBtaggingSF Scale Factors
   *btagsf   = 1.000;
   *btagsfunc = 0.000;
-  if(year==2016){
+  if( year=="2016APV" ){
+  	if      (jetHFlav==5) GetBtaggingSF2016APV(pt, eta, btagsf, btagsfunc, tagger);
+  	else if (jetHFlav==4) GetCtaggingSF2016APV(pt, eta, btagsf, btagsfunc, tagger);
+  	else                  GetLtaggingSF2016APV(pt, eta, btagsf, btagsfunc, tagger);
+  	}
+  else if(year=="2016"){
   	if      (jetHFlav==5) GetBtaggingSF2016(pt, eta, btagsf, btagsfunc, tagger);
   	else if (jetHFlav==4) GetCtaggingSF2016(pt, eta, btagsf, btagsfunc, tagger);
   	else                  GetLtaggingSF2016(pt, eta, btagsf, btagsfunc, tagger);
   	}
-  else if(year==2017){
-  	if      (jetHFlav==5) GetBtaggingSF2017(pt, eta, btagsf, btagsfunc, tagger);
-  	else if (jetHFlav==4) GetCtaggingSF2017(pt, eta, btagsf, btagsfunc, tagger);
-  	else                  GetLtaggingSF2017(pt, eta, btagsf, btagsfunc, tagger);
+  else if(year=="2018"){
+  	if      (jetHFlav==5) GetBtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
+  	else if (jetHFlav==4) GetCtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
+  	else                  GetLtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
   	}
-  else if(year==2018){
+  else if(year=="2018"){
   	if      (jetHFlav==5) GetBtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
   	else if (jetHFlav==4) GetCtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
   	else                  GetLtaggingSF2018(pt, eta, btagsf, btagsfunc, tagger);
