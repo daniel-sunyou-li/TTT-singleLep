@@ -7,9 +7,9 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_3t_{}_
 
 # target lumis in 1/pb for each year
 lumi = {
-  "16": 35867., 
-  "17": 41530.,
-  "18": 59970.
+  "16": 35920., 
+  "17": 41480.,
+  "18": 59830.
 }
 lumiStr = { year: str( lumi[ year ] / 1000. ).replace( ".", "p" ) + "fb" for year in lumi }
 
@@ -111,29 +111,31 @@ systematics = {
     #"JER", "JEC"
   ],
   "LUMI": {
-    "17": 0.023,
-    "18": 0.025
+    "16APV": 1.012,
+    "16": 1.012,
+    "17": 1.023,
+    "18": 1.025
   },
   "TRIG": {
-    "E": 0.0, 
-    "M": 0.0
+    "E": 1.0, 
+    "M": 1.0
   },
   "ID": {
-    "E": 0.03,
-    "M": 0.03
+    "E": 1.03,
+    "M": 1.03
   },
   "ISO": {
     "E": 0.0,
     "M": 0.0
   },
   "XSEC": {
-    "TTBAR": 0.0515,
-    "TTH": 0.20,
-    "TOP": 0.04,
-    "EWK": 0.038
+    "TTBAR": [ 0.945, 1.048 ],
+    "TTH": 1.20,
+    "TOP": 1.04,
+    "EWK": 1.038
   },
-  "TTHF": 0.13,
-  "HDAMP": 0.085
+  "TTHF": 1.13,
+  "HDAMP": 1.085
 }
 
 # binning configuration for the templates
