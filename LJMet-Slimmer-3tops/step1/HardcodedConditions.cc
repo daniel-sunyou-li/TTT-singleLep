@@ -2121,60 +2121,39 @@ void HardcodedConditions::GetTtaggingSF(double pt, double *tau32sf, double *tau3
   else if (year=="2018") GetTtaggingSF2018(pt, tau32sf, tau32sfup, tau32sfdn);
 }//end GetTtaggingSF
 
-void HardcodedConditions::GetTtaggingSF2016APV(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn)
-{
-	// VALUES from the githup repository linked from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-	// CORRESPONDING TO WP5 with tau32<0.80 and 105<mSD<220
-    ptMins= {300,400,480,600,1100};
-    tSFs   = {0.98376977,1.00090742,1.00348091,1.00204241,1.00204241};
-    tSFsUp = {1.02300429,1.02958071,1.03640139,1.05011296,1.09818339};
-    tSFsDn = {0.94453520,9.72234130,9.70560491,9.53971922,9.05901372};
-    int bin = findBin(pt, ptMins);
-    *tau32sf  =tSFs[bin];
-    *tau32sfup=tSFsUp[bin];
-    *tau32sfdn=tSFsDn[bin];
+void HardcodedConditions::GetTtaggingSF2016APV(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn) {
+// copy from 2017, 2016APV in production
+  GetTtaggingSF2017( pt, *tau32sf, *tau32sfup, *tau32sfdn )
 }
 
 void HardcodedConditions::GetTtaggingSF2016(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn)
 {
-	// VALUES from the githup repository linked from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-	// CORRESPONDING TO WP5 with tau32<0.80 and 105<mSD<220
-    ptMins= {300,400,480,600,1100};
-    tSFs   = {0.98376977,1.00090742,1.00348091,1.00204241,1.00204241};
-    tSFsUp = {1.02300429,1.02958071,1.03640139,1.05011296,1.09818339};
-    tSFsDn = {0.94453520,9.72234130,9.70560491,9.53971922,9.05901372};
-    int bin = findBin(pt, ptMins);
-    *tau32sf  =tSFs[bin];
-    *tau32sfup=tSFsUp[bin];
-    *tau32sfdn=tSFsDn[bin];
+// copy from 2017, 2016 in production
+  GetTtaggingSF2017( pt, *tau32sf, *tau32sfup, *tau32sfdn )
 }
 
-void HardcodedConditions::GetTtaggingSF2017(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn)
-{
-	// VALUES from the githup repository linked from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-	// CORRESPONDING TO WP5 with tau32<0.80 and 105<mSD<220
-    ptMins= {300,400,480,600,1100};
-    tSFs   = {0.98331112,0.96821666,0.95967776,1.02111010,1.02111010};
-    tSFsUp = {1.02416270,0.99713147,0.99533176,1.06593850,1.11076690};
-    tSFsDn = {0.94245958,0.93930185,0.92402375,0.97628158,0.93145317};
-    int bin = findBin(pt, ptMins);
-    *tau32sf  =tSFs[bin];
-    *tau32sfup=tSFsUp[bin];
-    *tau32sfdn=tSFsDn[bin];
+void HardcodedConditions::GetTtaggingSF2017(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn) {
+// Will be replaced by RunIISummer20UL version
+  if ( pt < 400.0 ) {
+    *tau32sf   = 1.10981;
+    *tau32sfUp = 1.14199;
+    *tau32sfDn = 1.07812; }
+  else {
+    *tau32sf   = 1.13264;
+    *tau32sfUp = 1.18365;
+    *tau32sfDn = 1.08415; }
 }
 
-void HardcodedConditions::GetTtaggingSF2018(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn)
-{
-	// VALUES from the githup repository linked from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-	// CORRESPONDING TO WP5 with tau32<0.80 and 105<mSD<220
-    ptMins= {300,400,480,600};
-    tSFs   = {0.99998647,1.00215673,0.99631429,0.97337210};
-    tSFsUp = {1.02159548, 1.01967812, 1.01507819, 1.00174773};
-    tSFsDn = {0.97837746, 0.98463523, 0.97755039, 0.94499648};
-    int bin = findBin(pt, ptMins);
-    *tau32sf  =tSFs[bin];
-    *tau32sfup=tSFsUp[bin];
-    *tau32sfdn=tSFsDn[bin];
+void HardcodedConditions::GetTtaggingSF2018(double pt, double *tau32sf, double *tau32sfup, double *tau32sfdn) {
+// will be replaced by RunIISummer20UL version
+if ( pt < 400.0 ) {
+  *tau32sf   = 1.13869;
+  *tau32sfUp = 1.17326;
+  *tau32sfDn = 1.10527; }
+else {
+  *tau32sf   = 1.12333;
+  *tau32sfUp = 1.16340;
+  *tau32sfDn = 1.08492; }
 }
 
 
@@ -2200,22 +2179,15 @@ void HardcodedConditions::GetTtaggingEff(double pt, double *eff, std::string yea
   else if (year=="2018") GetTtaggingEff2018(pt, eff, sample, massIndex);
 }//end GetTtaggingEff
 
-void HardcodedConditions::GetTtaggingEff2016APV(double pt, double *eff, std::string sample, int massIndex)
-{
-
-	GetTtaggingEff2016(pt, eff, sample, massIndex);
-
+void HardcodedConditions::GetTtaggingEff2016APV(double pt, double *eff, std::string sample, int massIndex){
+	GetTtaggingEff2017(pt, eff, sample, massIndex);
 }
 
-void HardcodedConditions::GetTtaggingEff2016(double pt, double *eff, std::string sample, int massIndex)
-{
-
-	GetTtaggingEff2016(pt, eff, sample, massIndex);
-
+void HardcodedConditions::GetTtaggingEff2016(double pt, double *eff, std::string sample, int massIndex){
+	GetTtaggingEff2017(pt, eff, sample, massIndex);
 }
 
-void HardcodedConditions::GetTtaggingEff2017(double pt, double *eff, std::string sample, int massIndex)
-{
+void HardcodedConditions::GetTtaggingEff2017(double pt, double *eff, std::string sample, int massIndex){
     // Top tagging efficiencies updated
     const int Nbin = 9;
     double ptMins[Nbin] = {400,450,500,550,600,700,800,1000,1200};
