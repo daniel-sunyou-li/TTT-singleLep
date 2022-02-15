@@ -2786,248 +2786,235 @@ double HardcodedConditions::GetElectronIdSF(double pt, double eta, std::string y
 }//end GetElectronIdSF
 
 double HardcodedConditions::GetElectronIdSF2016APV(double pt, double eta){
-	// Scale Factor 2: https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/tree/master/POG/EGM/2016preVFP_UL
-	if ( pt < 20.0 ) {
-		if ( eta < -2.0 ) return 1.023;
-		else if ( eta < -1.566 ) return 1.012;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 1.003;
-		else if ( eta < 0.0 ) return 1.003;
-		else if ( eta < 1.0 ) return 0.970;
-		else if ( eta < 1.444 ) return 1.021;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 1.007;
-		else return 1.049; }
-	else if ( pt < 35.0 )
-	{
-		if ( eta < -2.0 ) return 0.994;
-		else if ( eta < -1.566 ) return 0.976;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.969;
-		else if ( eta < 0.0 ) return 0.969;
-		else if ( eta < 1.0 ) return 0.977;
-		else if ( eta < 1.444 ) return 0.983;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.967;
-		else return 0.992; }
-	else if ( pt < 50.0 )
-	{
-		if ( eta < -2.0 ) return 0.995;
-		else if ( eta < -1.566 ) return 0.985;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.979;
-		else if ( eta < 0.0 ) return 0.979;
-		else if ( eta < 1.0 ) return 0.976;
-		else if ( eta < 1.444 ) return 0.985;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.984;
-		else return 0.995; }
-	else if ( pt < 100.0 )
-	{
-		if ( eta < -2.0 ) return 0.998;
-		else if ( eta < -1.566 ) return 0.990;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.980;
-		else if ( eta < 0.0 ) return 0.980;
-		else if ( eta < 1.0 ) return 0.977;
-		else if ( eta < 1.444 ) return 0.985;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.993;
-		else return 0.995; }
-	else
-	{
-		if ( eta < -2.0 ) return 1.015;
-		else if ( eta < -1.566 ) return 1.002;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.992;
-		else if ( eta < 0.0 ) return 0.992;
-		else if ( eta < 1.0 ) return 0.991;
-		else if ( eta < 1.444 ) return 0.995;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.987;
-		else return 1.001; }
+if ( pt < 20.0 ) {
+  if ( eta < -2.0 ) return 1.02326;
+  else if ( eta < -1.566 ) return 1.01186;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 1.00253;
+  else if ( eta < 0.0 ) return 0.95517;
+  else if ( eta < 0.8 ) return 0.97037;
+  else if ( eta < 1.444 ) return 1.02059;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 1.00658;
+  else return 1.04868; }
+else if ( pt < 35.0 ) {
+  if ( eta < -2.0 ) return 0.99368;
+  else if ( eta < -1.566 ) return 0.97646;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96936;
+  else if ( eta < 0.0 ) return 0.96038;
+  else if ( eta < 0.8 ) return 0.97741;
+  else if ( eta < 1.444 ) return 0.98276;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.96650;
+  else return 0.99230; }
+else if ( pt < 50.0 ) {
+  if ( eta < -2.0 ) return 0.99526;
+  else if ( eta < -1.566 ) return 0.98497;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.97919;
+  else if ( eta < 0.0 ) return 0.96686;
+  else if ( eta < 0.8 ) return 0.97619;
+  else if ( eta < 1.444 ) return 0.98497;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98385;
+  else return 0.99520; }
+else if ( pt < 100.0 ) {
+  if ( eta < -2.0 ) return 0.99766;
+  else if ( eta < -1.566 ) return 0.98994;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.98048;
+  else if ( eta < 0.0 ) return 0.96481;
+  else if ( eta < 0.8 ) return 0.97748;
+  else if ( eta < 1.444 ) return 0.98511;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.99329;
+  else return 0.99527; }
+else {
+  if ( eta < -2.0 ) return 1.01458;
+  else if ( eta < -1.566 ) return 1.00219;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.99195;
+  else if ( eta < 0.0 ) return 0.97506;
+  else if ( eta < 0.8 ) return 0.99092;
+  else if ( eta < 1.444 ) return 0.99543;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98701;
+  else return 1.00119; }
 }
 
 double HardcodedConditions::GetElectronIdSF2016(double pt, double eta){
-	if ( pt < 20.0 ) {
-		if ( eta < -2.0 ) return 1.021;
-		else if ( eta < -1.566 ) return 0.986;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.981;
-		else if ( eta < 0.0 ) return 0.981;
-		else if ( eta < 1.0 ) return 0.974;
-		else if ( eta < 1.444 ) return 0.984;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.980;
-		else return 0.985; }
-	else if ( pt < 35.0 )
-	{
-		if ( eta < -2.0 ) return 0.994;
-		else if ( eta < -1.566 ) return 0.954;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.963;
-		else if ( eta < 0.0 ) return 0.963;
-		else if ( eta < 1.0 ) return 0.988;
-		else if ( eta < 1.444 ) return 0.965;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.943;
-		else return 0.956; }
-	else if ( pt < 50.0 )
-	{
-		if ( eta < -2.0 ) return 1.000;
-		else if ( eta < -1.566 ) return 0.968;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.969;
-		else if ( eta < 0.0 ) return 0.969;
-		else if ( eta < 1.0 ) return 0.992;
-		else if ( eta < 1.444 ) return 0.977;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.961;
-		else return 0.968; }
-	else if ( pt < 100.0 )
-	{
-		if ( eta < -2.0 ) return 0.998;
-		else if ( eta < -1.566 ) return 0.981;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.972;
-		else if ( eta < 0.0 ) return 0.972;
-		else if ( eta < 1.0 ) return 0.994;
-		else if ( eta < 1.444 ) return 0.982;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.969;
-		else return 0.978; }
-	else
-	{
-		if ( eta < -2.0 ) return 1.069;
-		else if ( eta < -1.566 ) return 1.003;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 1.023;
-		else if ( eta < 0.0 ) return 1.023;
-		else if ( eta < 1.0 ) return 1.016;
-		else if ( eta < 1.444 ) return 1.000;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.986;
-		else return 1.005; }
+if ( pt < 20.0 ) {
+  if ( eta < -2.0 ) return 1.02086;
+  else if ( eta < -1.566 ) return 0.98577;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.98113;
+  else if ( eta < 0.0 ) return 0.97311;
+  else if ( eta < 0.8 ) return 0.97445;
+  else if ( eta < 1.444 ) return 0.98367;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.97951;
+  else return 0.98520; }
+else if ( pt < 35.0 ) {
+  if ( eta < -2.0 ) return 0.99359;
+  else if ( eta < -1.566 ) return 0.95360;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96252;
+  else if ( eta < 0.0 ) return 0.96956;
+  else if ( eta < 0.8 ) return 0.98824;
+  else if ( eta < 1.444 ) return 0.96493;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.94310;
+  else return 0.95614; }
+else if ( pt < 50.0 ) {
+  if ( eta < -2.0 ) return 1.00000;
+  else if ( eta < -1.566 ) return 0.96800;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96928;
+  else if ( eta < 0.0 ) return 0.97770;
+  else if ( eta < 0.8 ) return 0.99213;
+  else if ( eta < 1.444 ) return 0.97717;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.96149;
+  else return 0.96820; }
+else if ( pt < 100.0 ) {
+  if ( eta < -2.0 ) return 0.99764;
+  else if ( eta < -1.566 ) return 0.98115;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.97182;
+  else if ( eta < 0.0 ) return 0.98009;
+  else if ( eta < 0.8 ) return 0.99442;
+  else if ( eta < 1.444 ) return 0.98188;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.96916;
+  else return 0.97778; }
+else {
+  if ( eta < -2.0 ) return 1.06901;
+  else if ( eta < -1.566 ) return 1.00327;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 1.02273;
+  else if ( eta < 0.0 ) return 1.00333;
+  else if ( eta < 0.8 ) return 1.01577;
+  else if ( eta < 1.444 ) return 1.00000;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98598;
+  else return 1.00465; }
 }
 		
 double HardcodedConditions::GetElectronIdSF2017(double pt, double eta){
-	if ( pt < 20.0 ) {
-		if ( eta < -2.0 ) return 0.995;
-		else if ( eta < -1.566 ) return 0.961;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.987;
-		else if ( eta < 0.0 ) return 0.987;
-		else if ( eta < 1.0 ) return 0.977;
-		else if ( eta < 1.444 ) return 0.990;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.958;
-		else return 1.006; }
-	else if ( pt < 35.0 )
-	{
-		if ( eta < -2.0 ) return 0.958;
-		else if ( eta < -1.566 ) return 0.941;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.965;
-		else if ( eta < 0.0 ) return 0.965;
-		else if ( eta < 1.0 ) return 0.971;
-		else if ( eta < 1.444 ) return 0.969;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.944;
-		else return 0.959; }
-	else if ( pt < 50.0 )
-	{
-		if ( eta < -2.0 ) return 0.973;
-		else if ( eta < -1.566 ) return 0.968;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.975;
-		else if ( eta < 0.0 ) return 0.975;
-		else if ( eta < 1.0 ) return 0.978;
-		else if ( eta < 1.444 ) return 0.977;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.970;
-		else return 0.968; }
-	else if ( pt < 100.0 )
-	{
-		if ( eta < -2.0 ) return 0.969;
-		else if ( eta < -1.566 ) return 0.977;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 0.973;
-		else if ( eta < 0.0 ) return 0.973;
-		else if ( eta < 1.0 ) return 0.977;
-		else if ( eta < 1.444 ) return 0.977;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.983;
-		else return 0.971; }
-	else
-	{
-		if ( eta < -2.0 ) return 0.977;
-		else if ( eta < -1.566 ) return 0.979;
-		else if ( eta < -1.444 ) return 1.000;
-		else if ( eta < -1.0 ) return 1.003;
-		else if ( eta < 0.0 ) return 1.003;
-		else if ( eta < 1.0 ) return 0.991;
-		else if ( eta < 1.444 ) return 0.984;
-		else if ( eta < 1.566 ) return 1.000;
-		else if ( eta < 2.0 ) return 0.976;
-		else return 0.987; }
+if ( pt < 20.0 ) {
+  if ( eta < -2.0 ) return 0.99501;
+  else if ( eta < -1.566 ) return 0.96127;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.98659;
+  else if ( eta < 0.0 ) return 0.98027;
+  else if ( eta < 0.8 ) return 0.97672;
+  else if ( eta < 1.444 ) return 0.99009;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.95765;
+  else return 1.00628; }
+else if ( pt < 35.0 ) {
+  if ( eta < -2.0 ) return 0.95848;
+  else if ( eta < -1.566 ) return 0.94091;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96508;
+  else if ( eta < 0.0 ) return 0.96744;
+  else if ( eta < 0.8 ) return 0.97113;
+  else if ( eta < 1.444 ) return 0.96938;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.94388;
+  else return 0.95935; }
+else if ( pt < 50.0 ) {
+  if ( eta < -2.0 ) return 0.97256;
+  else if ( eta < -1.566 ) return 0.96798;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.97456;
+  else if ( eta < 0.0 ) return 0.97577;
+  else if ( eta < 0.8 ) return 0.97807;
+  else if ( eta < 1.444 ) return 0.97669;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.97005;
+  else return 0.96803; }
+else if ( pt < 100.0 ) {
+  if ( eta < -2.0 ) return 0.96851;
+  else if ( eta < -1.566 ) return 0.97692;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.97271;
+  else if ( eta < 0.0 ) return 0.97503;
+  else if ( eta < 0.8 ) return 0.97727;
+  else if ( eta < 1.444 ) return 0.97697;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98310;
+  else return 0.97056; }
+else {
+  if ( eta < -2.0 ) return 0.97677;
+  else if ( eta < -1.566 ) return 0.97927;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 1.00331;
+  else if ( eta < 0.0 ) return 0.98592;
+  else if ( eta < 0.8 ) return 0.99134;
+  else if ( eta < 1.444 ) return 0.98366;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.97617;
+  else return 0.98664; }
 }
 
 double HardcodedConditions::GetElectronIdSF2018(double pt, double eta){
 if ( pt < 20.0 ) {
-  if ( eta < -2.0 ) return 0.990;
-  else if ( eta < -1.566 ) return 0.972;
-  else if ( eta < -1.444 ) return 1.000;
-  else if ( eta < -1.0 ) return 0.984;
-  else if ( eta < 0.0 ) return 0.984;
-  else if ( eta < 1.0 ) return 0.981;
-  else if ( eta < 1.444 ) return 0.984;
-  else if ( eta < 1.566 ) return 1.000;
-  else if ( eta < 2.0 ) return 0.982;
-  else return 0.962; }
+  if ( eta < -2.0 ) return 0.98977;
+  else if ( eta < -1.566 ) return 0.97193;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.98375;
+  else if ( eta < 0.0 ) return 0.96348;
+  else if ( eta < 0.8 ) return 0.98120;
+  else if ( eta < 1.444 ) return 0.98365;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98242;
+  else return 0.96169; }
 else if ( pt < 35.0 ) {
-  if ( eta < -2.0 ) return 0.959;
-  else if ( eta < -1.566 ) return 0.950;
-  else if ( eta < -1.444 ) return 1.000;
-  else if ( eta < -1.0 ) return 0.951;
-  else if ( eta < 0.0 ) return 0.951;
-  else if ( eta < 1.0 ) return 0.972;
-  else if ( eta < 1.444 ) return 0.953;
-  else if ( eta < 1.566 ) return 1.000;
-  else if ( eta < 2.0 ) return 0.944;
-  else return 0.945; }
+  if ( eta < -2.0 ) return 0.95916;
+  else if ( eta < -1.566 ) return 0.95000;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.95088;
+  else if ( eta < 0.0 ) return 0.96503;
+  else if ( eta < 0.8 ) return 0.97209;
+  else if ( eta < 1.444 ) return 0.95283;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.94413;
+  else return 0.94496; }
 else if ( pt < 50.0 ) {
-  if ( eta < -2.0 ) return 0.972;
-  else if ( eta < -1.566 ) return 0.967;
-  else if ( eta < -1.444 ) return 1.000;
-  else if ( eta < -1.0 ) return 0.968;
-  else if ( eta < 0.0 ) return 0.968;
-  else if ( eta < 1.0 ) return 0.976;
-  else if ( eta < 1.444 ) return 0.969;
-  else if ( eta < 1.566 ) return 1.000;
-  else if ( eta < 2.0 ) return 0.965;
-  else return 0.961; }
+  if ( eta < -2.0 ) return 0.97250;
+  else if ( eta < -1.566 ) return 0.96706;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96792;
+  else if ( eta < 0.0 ) return 0.97247;
+  else if ( eta < 0.8 ) return 0.97574;
+  else if ( eta < 1.444 ) return 0.96882;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.96489;
+  else return 0.96137; }
 else if ( pt < 100.0 ) {
-  if ( eta < -2.0 ) return 0.971;
-  else if ( eta < -1.566 ) return 0.975;
-  else if ( eta < -1.444 ) return 1.000;
-  else if ( eta < -1.0 ) return 0.968;
-  else if ( eta < 0.0 ) return 0.968;
-  else if ( eta < 1.0 ) return 0.975;
-  else if ( eta < 1.444 ) return 0.968;
-  else if ( eta < 1.566 ) return 1.000;
-  else if ( eta < 2.0 ) return 0.972;
-  else return 0.963; }
+  if ( eta < -2.0 ) return 0.97059;
+  else if ( eta < -1.566 ) return 0.97484;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.96824;
+  else if ( eta < 0.0 ) return 0.97388;
+  else if ( eta < 0.8 ) return 0.97495;
+  else if ( eta < 1.444 ) return 0.96806;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.97170;
+  else return 0.96280; }
 else {
-  if ( eta < -2.0 ) return 0.998;
-  else if ( eta < -1.566 ) return 0.992;
-  else if ( eta < -1.444 ) return 1.000;
-  else if ( eta < -1.0 ) return 0.991;
-  else if ( eta < 0.0 ) return 0.991;
-  else if ( eta < 1.0 ) return 0.986;
-  else if ( eta < 1.444 ) return 0.988;
-  else if ( eta < 1.566 ) return 1.000;
-  else if ( eta < 2.0 ) return 0.984;
-  else return 0.966; }
+  if ( eta < -2.0 ) return 0.99777;
+  else if ( eta < -1.566 ) return 0.99162;
+  else if ( eta < -1.444 ) return 1.00000;
+  else if ( eta < -0.8 ) return 0.99126;
+  else if ( eta < 0.0 ) return 0.98060;
+  else if ( eta < 0.8 ) return 0.98598;
+  else if ( eta < 1.444 ) return 0.98794;
+  else if ( eta < 1.566 ) return 1.00000;
+  else if ( eta < 2.0 ) return 0.98428;
+  else return 0.96563; }
 }
 
 /*.-----------------------------------------------------------------.
@@ -3893,116 +3880,159 @@ double HardcodedConditions::GetMuonIdSF(double pt, double eta, int year)
   else return 0.;
 }//end GetMuonIdSF
 
-double HardcodedConditions::GetMuonIdSF2016(double pt, double eta)
+double HardcodedConditions::GetMuonIdSF2016APV(double pt, double eta)
 {
-	// Cut based tight id
-	if (fabs(eta) < 2.10 && fabs(eta) > 1.20) {
-	    if (pt < 25.0 && pt > 20.0) return 0.9924252719877384;
-	    else if (pt < 60.0 && pt > 50.0) return 0.9906364222943529;
-	    else if (pt < 30.0 && pt > 25.0) return 0.9890884461284933;
-	    else if (pt < 120.0 && pt > 60.0) return 0.9920464322143979;
-	    else if (pt < 40.0 && pt > 30.0) return 0.9946469069883841;
-	    else if (pt < 50.0 && pt > 40.0) return 0.9926528825155183; }
-	else if (fabs(eta) < 2.40 && pt > 2.10) {
-	    if (pt < 25.0 && pt > 20.0) return 0.9758095839531763;
-	    else if (pt < 60.0 && pt > 50.0) return 0.9673568416097894;
-	    else if (pt < 30.0 && pt > 25.0) return 0.9745153594179884;
-	    else if (pt < 120.0 && pt > 60.0) return 0.9766311856731202;
-	    else if (pt < 40.0 && pt > 30.0) return 0.9787410500158746;
-	    else if (pt < 50.0 && pt > 40.0) return 0.978189122919501; }
-	else if (fabs(eta) < 1.20 && fabs(eta) > 0.90) {
-	    if (pt < 25.0 && pt > 20.0) return 0.9927389275515244;
-	    else if (pt < 60.0 && pt > 50.0) return 0.9839056384760008;
-	    else if (pt < 30.0 && pt > 25.0) return 0.985063939762512;
-	    else if (pt < 120.0 && pt > 60.0) return 0.984060403143468;
-	    else if (pt < 40.0 && pt > 30.0) return 0.9865359464182247;
-	    else if (pt < 50.0 && pt > 40.0) return 0.984913093101493; }
-	else if (fabs(eta) < 0.90 && fabs(eta) > 0.0) {
-	    if (pt < 25.0 && pt > 20.0) return 0.9910777627756951;
-	    else if (pt < 60.0 && pt > 50.0) return 0.9855545160334763;
-	    else if (pt < 30.0 && pt > 25.0) return 0.987410468262084;
-	    else if (pt < 120.0 && pt > 60.0) return 0.9898057377093389;
-	    else if (pt < 40.0 && pt > 30.0) return 0.9907753279135898;
-	    else if (pt < 50.0 && pt > 40.0) return 0.9892483588952047; }
-	else{
-	  std::cerr << "The pt=" << pt << ",eta=" << eta << " range is not coded into GetMuonIdSF2016!" << std::endl;
-	  return 0;}		    
+  if ( pt < 20.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98775;
+    else if ( fabs(eta) < 1.2 ) return 0.98230;
+    else if ( fabs(eta) < 2.1 ) return 0.98923;
+    else return 0.97500; }
+  else if ( pt < 25.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99042;
+    else if ( fabs(eta) < 1.2 ) return 0.98039;
+    else if ( fabs(eta) < 2.1 ) return 0.98965;
+    else return 0.97554; }
+  else if ( pt < 30.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98907;
+    else if ( fabs(eta) < 1.2 ) return 0.97903;
+    else if ( fabs(eta) < 2.1 ) return 0.98953;
+    else return 0.97582; }
+  else if ( pt < 40.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98784;
+    else if ( fabs(eta) < 1.2 ) return 0.98102;
+    else if ( fabs(eta) < 2.1 ) return 0.99051;
+    else return 0.97562; }
+  else if ( pt < 50.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98805;
+    else if ( fabs(eta) < 1.2 ) return 0.97988;
+    else if ( fabs(eta) < 2.1 ) return 0.99091;
+    else return 0.97397; }
+  else if ( pt < 60.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98710;
+    else if ( fabs(eta) < 1.2 ) return 0.97994;
+    else if ( fabs(eta) < 2.1 ) return 0.98991;
+    else return 0.97316; }
+  else {
+    if ( fabs(eta) < 0.9 ) return 0.98642;
+    else if ( fabs(eta) < 1.2 ) return 0.97912;
+    else if ( fabs(eta) < 2.1 ) return 0.98955;
+    else return 0.96618; }	    
+}
+
+double HardcodedConditions::GetMuonIdSF2016( double pt, double eta ){
+  if ( pt < 20.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98943;
+    else if ( fabs(eta) < 1.2 ) return 0.97899;
+    else if ( fabs(eta) < 2.1 ) return 0.99012;
+    else return 0.97577; }
+  else if ( pt < 25.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98763;
+    else if ( fabs(eta) < 1.2 ) return 0.97658;
+    else if ( fabs(eta) < 2.1 ) return 0.98945;
+    else return 0.97531; }
+  else if ( pt < 30.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98792;
+    else if ( fabs(eta) < 1.2 ) return 0.98151;
+    else if ( fabs(eta) < 2.1 ) return 0.99097;
+    else return 0.97610; }
+  else if ( pt < 40.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98650;
+    else if ( fabs(eta) < 1.2 ) return 0.97872;
+    else if ( fabs(eta) < 2.1 ) return 0.99050;
+    else return 0.97594; }
+  else if ( pt < 50.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98673;
+    else if ( fabs(eta) < 1.2 ) return 0.97925;
+    else if ( fabs(eta) < 2.1 ) return 0.99152;
+    else return 0.97642; }
+  else if ( pt < 60.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.98517;
+    else if ( fabs(eta) < 1.2 ) return 0.97903;
+    else if ( fabs(eta) < 2.1 ) return 0.99063;
+    else return 0.97201; }
+  else {
+    if ( fabs(eta) < 0.9 ) return 0.98463;
+    else if ( fabs(eta) < 1.2 ) return 0.97832;
+    else if ( fabs(eta) < 2.1 ) return 0.99049;
+    else return 0.96955; } 
 }
 
 double HardcodedConditions::GetMuonIdSF2017(double pt, double eta)
 {
-	// Cut based tight id
-	// Scale Factor 3: https://twiki.cern.ch/twiki/pub/CMS/MuonReferenceEffs2017/RunBCDEF_SF_ID.json
-	if (fabs(eta) < 0.90) {
-            if(pt<20) return 0.988973745094469;
-            else if(pt<25) return 0.9901639639283745;
-            else if(pt<30) return 0.9894505622634719;
-            else if(pt<40) return 0.9890587934386978;
-            else if(pt<50) return 0.988569587464391;
-            else if(pt<60) return 0.9881735800442727;
-            else return 0.9871638011006827;}
-	else if (fabs(eta) < 1.20) {
-            if(pt<20) return 0.9838660835619908;  
-            else if(pt<25) return 0.9820592893628324;
-            else if(pt<30) return 0.9816256211978136;
-            else if(pt<40) return 0.9826795261832795;
-            else if(pt<50) return 0.9832114785473719;
-            else if(pt<60) return 0.9824017821465342;
-            else return 0.9826989601771537;}
-	else if (fabs(eta) < 2.10) {
-            if(pt<20) return 0.9897274594905875;
-            else if(pt<25) return 0.9894166761673087;
-            else if(pt<30) return 0.9908099250187937;
-            else if(pt<40) return 0.9909172603300768;
-            else if(pt<50) return 0.9913614742306379;
-            else if(pt<60) return 0.9901265754533497;
-            else return 0.9893528963937902;}
-	else {
-            if(pt<20) return 0.9729565235238601;
-            else if(pt<25) return 0.9740614475300607;
-            else if(pt<30) return 0.9760309076915114;
-            else if(pt<40) return 0.9753358818465124;
-            else if(pt<50) return 0.9752601512900863;
-            else if(pt<60) return 0.970358299873981;
-            else return 0.9677621936001002;}
-
+if ( pt < 20.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.98897;
+  else if ( fabs(eta) < 1.2 ) return 0.98387;
+  else if ( fabs(eta) < 2.1 ) return 0.98973;
+  else return 0.97296; }
+else if ( pt < 25.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.99016;
+  else if ( fabs(eta) < 1.2 ) return 0.98206;
+  else if ( fabs(eta) < 2.1 ) return 0.98942;
+  else return 0.97406; }
+else if ( pt < 30.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.98945;
+  else if ( fabs(eta) < 1.2 ) return 0.98163;
+  else if ( fabs(eta) < 2.1 ) return 0.99081;
+  else return 0.97603; }
+else if ( pt < 40.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.98906;
+  else if ( fabs(eta) < 1.2 ) return 0.98268;
+  else if ( fabs(eta) < 2.1 ) return 0.99092;
+  else return 0.97534; }
+else if ( pt < 50.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.98857;
+  else if ( fabs(eta) < 1.2 ) return 0.98321;
+  else if ( fabs(eta) < 2.1 ) return 0.99136;
+  else return 0.97526; }
+else if ( pt < 60.0 ) {
+  if ( fabs(eta) < 0.9 ) return 0.98817;
+  else if ( fabs(eta) < 1.2 ) return 0.98240;
+  else if ( fabs(eta) < 2.1 ) return 0.99013;
+  else return 0.97036; }
+else {
+  if ( fabs(eta) < 0.9 ) return 0.98716;
+  else if ( fabs(eta) < 1.2 ) return 0.98270;
+  else if ( fabs(eta) < 2.1 ) return 0.98935;
+  else return 0.96776; }
 }
 
 double HardcodedConditions::GetMuonIdSF2018(double pt, double eta)
 {
-    //cut based tight id: https://gitlab.cern.ch/cms-muonPOG/MuonReferenceEfficiencies/blob/master/EfficienciesStudies/2018/jsonfiles/RunABCD_SF_ID.json
-	if (fabs(eta) > 0.00 && fabs(eta) < 0.90) {
-	    if (pt >20.00 && pt < 25.00) return 0.9913892461286353;
-        else if (pt > 25.00 && pt < 30.00) return 0.991434774563006;
-        else if (pt > 30.00 && pt < 40.00) return 0.99137555469275;
-        else if (pt > 40.00 && pt < 50.00) return 0.9914412620030336;
-        else if (pt > 50.00 && pt < 60.00) return 0.9916861853024751;
-        else {return 0.9905799448514033;}  
-        }
-    else if (fabs(eta) > 0.90 && fabs(eta) < 1.20) {
-        if (pt >20.00 && pt < 25.00) return 0.985987369423937;
-        else if (pt > 25.00 && pt < 30.00) return 0.983987818122965;
-        else if (pt > 30.00 && pt < 40.00) return 0.983823809537526;
-        else if (pt > 40.00 && pt < 50.00) return 0.9842166496308641;
-        else if (pt > 50.00 && pt < 60.00) return 0.9830003119378048;
-        else {return 0.9816888807775153;}
-        }
-    else if (fabs(eta) > 1.20 && fabs(eta) < 2.10) {
-        if (pt >20.00 && pt < 25.00) return 0.991472765372932;
-        else if (pt > 25.00 && pt < 30.00) return 0.991184702552688;
-        else if (pt > 30.00 && pt < 40.00) return 0.9907979966866818;
-        else if (pt > 40.00 && pt < 50.00) return 0.98999331286624;
-        else if (pt > 50.00 && pt < 60.00) return 0.9907796746368196;
-        else {return 0.9886366722532979;}
-        }
-    else{
-        if (pt >20.00 && pt < 25.00) return 0.9762336613870103;
-        else if (pt > 25.00 && pt < 30.00) return 0.9735941110201962;
-        else if (pt > 30.00 && pt < 40.00) return 0.973964994647057;
-        else if (pt > 40.00 && pt < 50.00) return 0.9738877279555861;
-        else if (pt > 50.00 && pt < 60.00) return 0.9737076412350453;
-        else {return 0.9677501192438909;}
-        }
+  if ( pt < 20.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99159;
+    else if ( fabs(eta) < 1.2 ) return 0.98433;
+    else if ( fabs(eta) < 2.1 ) return 0.99002;
+    else return 0.97497; }
+  else if ( pt < 25.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99339;
+    else if ( fabs(eta) < 1.2 ) return 0.98319;
+    else if ( fabs(eta) < 2.1 ) return 0.99000;
+    else return 0.97239; }
+  else if ( pt < 30.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99251;
+    else if ( fabs(eta) < 1.2 ) return 0.98308;
+    else if ( fabs(eta) < 2.1 ) return 0.98982;
+    else return 0.97306; }
+  else if ( pt < 40.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99233;
+    else if ( fabs(eta) < 1.2 ) return 0.98436;
+    else if ( fabs(eta) < 2.1 ) return 0.99000;
+    else return 0.97180; }
+  else if ( pt < 50.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99195;
+    else if ( fabs(eta) < 1.2 ) return 0.98399;
+    else if ( fabs(eta) < 2.1 ) return 0.99039;
+    else return 0.97227; }
+  else if ( pt < 60.0 ) {
+    if ( fabs(eta) < 0.9 ) return 0.99151;
+    else if ( fabs(eta) < 1.2 ) return 0.98317;
+    else if ( fabs(eta) < 2.1 ) return 0.98974;
+    else return 0.96830; }
+  else {
+    if ( fabs(eta) < 0.9 ) return 0.99101;
+    else if ( fabs(eta) < 1.2 ) return 0.98234;
+    else if ( fabs(eta) < 2.1 ) return 0.98867;
+    else return 0.96598; }
 }
 
 /*.-----------------------------------------------------------------.
