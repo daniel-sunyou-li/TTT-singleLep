@@ -30,7 +30,7 @@ TRandom3 Rand;
 const double MTOP  = 173.5;
 const double MW    = 80.4; 
 
-bool step1::applySF(bool& isTagged, float tag_SF, float tag_eff){
+bool step1::applySF( bool& isTagged, float tag_SF, float tag_eff){
   bool newTag = isTagged;
   if (tag_SF == 1) return newTag; //no correction needed 
   //throw die
@@ -78,14 +78,16 @@ wgthist->Write();
 void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationForLJMet* calib = NULL, const BTagCalibrationForLJMet* calib_dj = NULL)
 {
   // btagCalibration initialization -csv reshaping
-  if (calib == NULL)
-  {
-    std::string btagcsvfile( "btag_sf/DeepCSV_106XUL17SF_V2p1.csv" );
-    if ( Year == 2018 ) {
-      btagcsvfile = "btag_sf/DeepCSV_106XUL18SF_V1p1.csv"; 
+  if ( calib == NULL){
+    std::string btagcsvfile( "btag_sf/reshaping_deepCSV_106XUL17_v3.csv" );
+    if ( Year == "2018" ) {
+      btagcsvfile = "btag_sf/reshaping_deepCSV_106XUL18_v2.csv"; 
     }
-	  if ( Year == 2016 ) {
-      btagcsvfile = "btag_sf/DeepCSV_106XUL16SF.csv"; 
+	  if ( Year == "2016" ) {
+      btagcsvfile = "btag_sf/reshaping_deepCSV_106XUL16postVFP_v3.csv"; 
+    }
+    if ( Year == "2016APV" ) {
+      btagcsvfile = "btag_sf/reshaping_deepCSV_106XUL16preVFP_v2.csv";
     }
     cout << ">> CSV reshaping file: " << btagcsvfile << endl;
     calib = new const BTagCalibrationForLJMet( "DeepCSV", btagcsvfile ); 
@@ -93,12 +95,15 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
 
   if ( calib_dj == NULL )
   {
-    std::string btagdjcsvfile( "btag_sf/DeepJet_106XUL17SF_V2p1.csv" );
-    if ( Year == 2018 ) {
-      btagdjcsvfile = "btag_sf/DeepJet_106XUL18SF_V1p1.csv"; 
+    std::string btagdjcsvfile( "btag_sf/reshaping_deepJet_106XUL17_v3.csv" );
+    if ( Year == "2018" ) {
+      btagdjcsvfile = "btag_sf/reshaping_deepJet_106XUL18_v2.csv"; 
     }
-    if ( Year == 2016 ) {
-      btagdjcsvfile = "btag_sf/DeepJet_106XUL16SF.csv"; 
+    if ( Year == "2016" ) {
+      btagdjcsvfile = "btag_sf/reshaping_deepJet_106XULpostVFP_v3.csv"; 
+    }
+    if( Year == "2016APV" ){
+      btagdjcsvfile = "btag_sf/reshaping_deepJet_106XUL16preVFP_v2.csv"; 
     }
     cout << ">> DeepJet reshaping file: " << btagdjcsvfile << endl;
     calib_dj = new const BTagCalibrationForLJMet( "DeepJet", btagdjcsvfile );
@@ -785,15 +790,20 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
   poly2D->SetParameter(5, 7.51924e-18); 
   poly2D->SetParameter(6,0.351156);
 
-  float btagWPdjet = 0.3040; // 2017 WP
-  float btagWPdcsv = 0.4506; // 2017 WP
-  if(Year==2016){
-  btagWPdjet = 0.3093; // 2016 WP
-  btagWPdcsv = 0.6321; // 2016 WP
+  // medium WP
+  float btagWPdjet = 0.3040; 
+  float btagWPdcsv = 0.4506; 
+  if( Year == "2016" ){
+    btagWPdjet = 0.2489; 
+    btagWPdcsv = 0.5847; 
+    
+  if( Year == "2016APV" ){
+     btagWPdjet = 0.2598; 
+     btagWPdcsv = 0.6001; 
   }
-  if(Year==2018){
-  btagWPdjet = 0.2770; // 2018 WP
-  btagWPdcsv = 0.4184; // 2018 WP
+  if( Year == "2018" ){
+  btagWPdjet = 0.2783;
+  btagWPdcsv = 0.4168;
   }
   
   // ----------------------------------------------------------------------------
@@ -1776,728 +1786,303 @@ void step1::Loop(TString inTreeName, TString outTreeName, const BTagCalibrationF
     if(DETtmp >= 0) {
       nuPz_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
       nuPz_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
-      TLorentzVector Nulv_1(metpx,metpy,nuPz_1,TMath::Sqrt((metpt)*(metpt)+(nuPz_1)*(nuPz_1)));
-      TLorentzVector Nulv_2(metpx,metpy,nuPz_2,TMath::Sqrt((metpt)*(metpt)+(nuPz_2)*(nuPz_2)));
-      Wlv_1 = Nulv_1+lepton_lv;
-      Wlv_2 = Nulv_2+lepton_lv;
-    }
-    if(DETtmp < 0) {
-      nuPz_1 = (-Btmp)/(2.0*Atmp);
-      nuPz_2 = (-Btmp)/(2.0*Atmp);
-      double alpha = (lepton_lv.Px())*(metpx)/(metpt)+(lepton_lv.Py())*(metpy)/(metpt);
-      double Delta = (MW*MW)-(lepM*lepM);
-      Atmp = 4.0*((lepton_lv.Pz())*(lepton_lv.Pz())-(lepton_lv.Energy())*(lepton_lv.Energy())+(alpha*alpha));
-      Btmp = 4.0*alpha*Delta;
-      Ctmp = Delta*Delta;
-      DETtmp = Btmp*Btmp-4.0*Atmp*Ctmp;
-      double pTnu_1 = (-Btmp+TMath::Sqrt(DETtmp))/(2.0*Atmp);
-      double pTnu_2 = (-Btmp-TMath::Sqrt(DETtmp))/(2.0*Atmp);
-      TLorentzVector Nulv_1(metpx*(pTnu_1)/(metpt),metpy*(pTnu_1)/(metpt),nuPz_1,TMath::Sqrt((pTnu_1)*(pTnu_1)+(nuPz_1)*(nuPz_1)));
-      TLorentzVector Nulv_2(metpx*(pTnu_2)/(metpt),metpy*(pTnu_2)/(metpt),nuPz_2,TMath::Sqrt((pTnu_2)*(pTnu_2)+(nuPz_2)*(nuPz_2)));
-      Wlv_1 = Nulv_1+lepton_lv;
-      Wlv_2 = Nulv_2+lepton_lv;
-      if (fabs(Wlv_1.M()-MW) < fabs(Wlv_2.M()-MW)) Wlv_2 = Wlv_1;
-      else Wlv_1 = Wlv_2;
-    }
+	    	   if(abs(topWID_TTbarMassCalc->at(2*igtop))>5) continue; // select hadronically decaying tops
+	    	   trueTop.SetPtEtaPhiE(topPt_TTbarMassCalc->at(igtop),topEta_TTbarMassCalc->at(igtop),topPhi_TTbarMassCalc->at(igtop),topEnergy_TTbarMassCalc->at(igtop));
+	    	   if(resolvedTop.DeltaR(trueTop) < minDRtop){
+	    	     minDRtop = resolvedTop.DeltaR(trueTop);
+	    	     trueTopD1.SetPtEtaPhiE(topbPt_TTbarMassCalc->at(igtop),topbEta_TTbarMassCalc->at(igtop),topbPhi_TTbarMassCalc->at(igtop),topbEnergy_TTbarMassCalc->at(igtop));
+	    	     trueTopD2.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(2*igtop),topWEta_TTbarMassCalc->at(2*igtop),topWPhi_TTbarMassCalc->at(2*igtop),topWEnergy_TTbarMassCalc->at(2*igtop));
+	    	     trueTopD3.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(2*igtop+1),topWEta_TTbarMassCalc->at(2*igtop+1),topWPhi_TTbarMassCalc->at(2*igtop+1),topWEnergy_TTbarMassCalc->at(2*igtop+1));
+	    	     
+	    	     minDRtopDs[0] = resolvedTopD1.DeltaR(trueTopD1);
+	    	     minDRtopDs[1] = resolvedTopD1.DeltaR(trueTopD2);
+	    	     minDRtopDs[2] = resolvedTopD1.DeltaR(trueTopD3);
+	    	     std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
+	    	     minDRtopD1 = minDRtopDs.at(0);
+	    	     minDRtopDs[0] = resolvedTopD2.DeltaR(trueTopD1);
+	    	     minDRtopDs[1] = resolvedTopD2.DeltaR(trueTopD2);
+	    	     minDRtopDs[2] = resolvedTopD2.DeltaR(trueTopD3);
+	    	     std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
+	    	     minDRtopD2 = minDRtopDs.at(0);
+	    	     minDRtopDs[0] = resolvedTopD3.DeltaR(trueTopD1);
+	    	     minDRtopDs[1] = resolvedTopD3.DeltaR(trueTopD2);
+	    	     minDRtopDs[2] = resolvedTopD3.DeltaR(trueTopD3);
+	    	     std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
+	    	     minDRtopD3 = minDRtopDs.at(0);
+	    	     }
+          	   }
+         	
+          	double TopTagSF1p = 1.0;
+          	double TopTagSF2p = 1.0;
+          	double TopTagSF5p = 1.0;
+          	double TopTagSF10p = 1.0;
+          	double TopTagSF1pStat = 0.0;
+          	double TopTagSF2pStat = 0.0;
+          	double TopTagSF5pStat = 0.0;
+          	double TopTagSF10pStat = 0.0;
+          	double TopTagSF1pCSpur = 0.0;
+          	double TopTagSF2pCSpur = 0.0;
+          	double TopTagSF5pCSpur = 0.0;
+          	double TopTagSF10pCSpur = 0.0;
+          	double TopTagSF1pClosure = 0.0;
+          	double TopTagSF2pClosure = 0.0;
+          	double TopTagSF5pClosure = 0.0;
+          	double TopTagSF10pClosure = 0.0;
+          	int NdaughterMatch = (minDRtopD1 < 0.4) + (minDRtopD2 < 0.4) + (minDRtopD3 < 0.4);
+          	bool isGenMatched = ( (minDRtop < 0.6) && (NdaughterMatch > 1) ); //Requires >=2 daughters matching, in line with the calculated efficiencies. Changing this to =3 daughters matching requires updating the efficiencies!
+          	hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF1p, &TopTagSF1pStat, &TopTagSF1pCSpur, &TopTagSF1pClosure, Year, isGenMatched, "1pfake");
+          	hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF2p, &TopTagSF2pStat, &TopTagSF2pCSpur, &TopTagSF2pClosure, Year, isGenMatched, "2pfake");
+          	hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF5p, &TopTagSF5pStat, &TopTagSF5pCSpur, &TopTagSF5pClosure, Year, isGenMatched, "5pfake");
+          	hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF10p,&TopTagSF10pStat,&TopTagSF10pCSpur,&TopTagSF10pClosure,Year, isGenMatched, "10pfake");
+          	double TopTagEff1p = 1.0;
+          	double TopTagEff2p = 1.0;
+          	double TopTagEff5p = 1.0;
+          	double TopTagEff10p = 1.0;
+          	
+          	std::string sample_hot;
+          	if(isTTTT) sample_hot = "tttt";
+          	else if(isST) sample_hot = "singletop";
+          	else if(isTTVV) sample_hot = "TTVV";
+          	else if(isTTTX) sample_hot = "TTTX";
+          	else if(isTT) sample_hot = "ttbar";
+          	else if(isTTToSemiLeptonHT500Njet9) sample_hot = "ttbarHT500Njet9";
+          	else if(isTTV) sample_hot = "ttVjets";
+          	else if(isTTHnonbb) sample_hot = "ttHToNonbb";
+          	else if(isTTHbb) sample_hot = "ttHTobb";
 
-    // ----------------------------------------------------------------------------
-    // top --> W b --> l nu b using W from above
-    // ----------------------------------------------------------------------------
+          	hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff1p, Year, sample_hot, isGenMatched, "1pfake");
+          	hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff2p, Year, sample_hot, isGenMatched, "2pfake");
+          	hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff5p, Year, sample_hot, isGenMatched, "5pfake");
+          	hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff10p,Year, sample_hot, isGenMatched, "10pfake");
+          	bool isTtagged1p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.95;
+          	bool isTtagged2p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.92;
+          	bool isTtagged5p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.85;
+          	bool isTtagged10p= topDiscriminator_HOTTaggerCalc->at(itop) > 0.75;
+          	NresolvedTops1pFakeNoSF += isTtagged1p;
+          	NresolvedTops2pFakeNoSF += isTtagged2p;
+          	NresolvedTops5pFakeNoSF += isTtagged5p;
+          	NresolvedTops10pFakeNoSF += isTtagged10p;
+          	int tag_top_1p = applySF(isTtagged1p,TopTagSF1p,TopTagEff1p);
+          	int tag_top_2p = applySF(isTtagged2p,TopTagSF2p,TopTagEff2p);
+          	int tag_top_5p = applySF(isTtagged5p,TopTagSF5p,TopTagEff5p);
+          	int tag_top_10p = applySF(isTtagged10p,TopTagSF10p,TopTagEff10p);
 
-    double dMTOP = 1e8;
-    unsigned int topIndex = 0;
-    bool firstW = true;
-    double MTop_1, MTop_2;
-    for(unsigned int ijet=0; ijet < theJetPt_JetSubCalc_PtOrdered.size(); ijet++){
-      jet_lv.SetPtEtaPhiE(theJetPt_JetSubCalc_PtOrdered.at(ijet),theJetEta_JetSubCalc_PtOrdered.at(ijet),theJetPhi_JetSubCalc_PtOrdered.at(ijet),theJetEnergy_JetSubCalc_PtOrdered.at(ijet));
-      MTop_1 = (jet_lv + Wlv_1).M();
-      MTop_2 = (jet_lv + Wlv_2).M();
-      if(fabs(MTop_1 - MTOP) < dMTOP) {
-        if(fabs(MTop_1 - MTOP) < fabs(MTop_2 - MTOP)) {
-          firstW = true;
-          topIndex = ijet;
-          dMTOP = fabs(MTop_1 - MTOP);
+          	int tag_top_1p_statup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pStat,TopTagEff1p);
+          	int tag_top_1p_statdn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pStat,TopTagEff1p);
+          	int tag_top_2p_statup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pStat,TopTagEff2p);
+          	int tag_top_2p_statdn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pStat,TopTagEff2p);
+          	int tag_top_5p_statup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pStat,TopTagEff5p);
+          	int tag_top_5p_statdn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pStat,TopTagEff5p);
+          	int tag_top_10p_statup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pStat,TopTagEff10p);
+          	int tag_top_10p_statdn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pStat,TopTagEff10p);
+
+          	int tag_top_1p_cspurup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pCSpur,TopTagEff1p);
+          	int tag_top_1p_cspurdn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pCSpur,TopTagEff1p);
+          	int tag_top_2p_cspurup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pCSpur,TopTagEff2p);
+          	int tag_top_2p_cspurdn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pCSpur,TopTagEff2p);
+          	int tag_top_5p_cspurup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pCSpur,TopTagEff5p);
+          	int tag_top_5p_cspurdn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pCSpur,TopTagEff5p);
+          	int tag_top_10p_cspurup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pCSpur,TopTagEff10p);
+          	int tag_top_10p_cspurdn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pCSpur,TopTagEff10p);
+
+          	int tag_top_1p_closureup = tag_top_1p;
+          	int tag_top_1p_closuredn = tag_top_1p;
+          	int tag_top_2p_closureup = tag_top_2p;
+          	int tag_top_2p_closuredn = tag_top_2p;
+          	int tag_top_5p_closureup = tag_top_5p;
+          	int tag_top_5p_closuredn = tag_top_5p;
+          	int tag_top_10p_closureup = tag_top_10p;
+          	int tag_top_10p_closuredn = tag_top_10p;
+          	if(!isGenMatched){ //Closure uncertainty is applied to fake tops only
+          		tag_top_1p_closureup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pClosure,TopTagEff1p);
+          		tag_top_1p_closuredn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pClosure,TopTagEff1p);
+          		tag_top_2p_closureup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pClosure,TopTagEff2p);
+          		tag_top_2p_closuredn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pClosure,TopTagEff2p);
+          		tag_top_5p_closureup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pClosure,TopTagEff5p);
+          		tag_top_5p_closuredn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pClosure,TopTagEff5p);
+          		tag_top_10p_closureup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pClosure,TopTagEff10p);
+          		tag_top_10p_closuredn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pClosure,TopTagEff10p);
+          	}
+
+          	NresolvedTops1pFake += tag_top_1p;
+          	NresolvedTops2pFake += tag_top_2p;
+          	NresolvedTops5pFake += tag_top_5p;
+          	NresolvedTops10pFake += tag_top_10p;
+          	NresolvedTops1pFake_shifts[0] += tag_top_1p_statup;
+          	NresolvedTops1pFake_shifts[1] += tag_top_1p_statdn;
+          	NresolvedTops2pFake_shifts[0] += tag_top_2p_statup;
+          	NresolvedTops2pFake_shifts[1] += tag_top_2p_statdn;
+          	NresolvedTops5pFake_shifts[0] += tag_top_5p_statup;
+          	NresolvedTops5pFake_shifts[1] += tag_top_5p_statdn;
+          	NresolvedTops10pFake_shifts[0] += tag_top_10p_statup;
+          	NresolvedTops10pFake_shifts[1] += tag_top_10p_statdn;
+          	NresolvedTops1pFake_shifts[2] += tag_top_1p_cspurup;
+          	NresolvedTops1pFake_shifts[3] += tag_top_1p_cspurdn;
+          	NresolvedTops2pFake_shifts[2] += tag_top_2p_cspurup;
+          	NresolvedTops2pFake_shifts[3] += tag_top_2p_cspurdn;
+          	NresolvedTops5pFake_shifts[2] += tag_top_5p_cspurup;
+          	NresolvedTops5pFake_shifts[3] += tag_top_5p_cspurdn;
+          	NresolvedTops10pFake_shifts[2] += tag_top_10p_cspurup;
+          	NresolvedTops10pFake_shifts[3] += tag_top_10p_cspurdn;
+          	NresolvedTops1pFake_shifts[4] += tag_top_1p_closureup;
+          	NresolvedTops1pFake_shifts[5] += tag_top_1p_closuredn;
+          	NresolvedTops2pFake_shifts[4] += tag_top_2p_closureup;
+          	NresolvedTops2pFake_shifts[5] += tag_top_2p_closuredn;
+          	NresolvedTops5pFake_shifts[4] += tag_top_5p_closureup;
+          	NresolvedTops5pFake_shifts[5] += tag_top_5p_closuredn;
+          	NresolvedTops10pFake_shifts[4] += tag_top_10p_closureup;
+          	NresolvedTops10pFake_shifts[5] += tag_top_10p_closuredn;
+          	}  
+
+        else{ // Data
+        	if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.75) NresolvedTops10pFake+=1;
+        	if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.85) NresolvedTops5pFake+=1;
+        	if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.92) NresolvedTops2pFake+=1;
+        	if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.95) NresolvedTops1pFake+=1;
+          	}
         }
-        else {
-          firstW = false;
-          topIndex = ijet;
-          dMTOP = fabs(MTop_2 - MTOP);
-        }
-      }
-      else if(fabs(MTop_2 - MTOP) < dMTOP) {
-        firstW = false;
-        topIndex = ijet;
-        dMTOP = fabs(MTop_2 - MTOP);
-      }
-    }
-
-    if(firstW) {Wlv = Wlv_1;}
-    else{Wlv = Wlv_2;}
-
-    jet_lv.SetPtEtaPhiE(theJetPt_JetSubCalc_PtOrdered.at(topIndex),theJetEta_JetSubCalc_PtOrdered.at(topIndex),theJetPhi_JetSubCalc_PtOrdered.at(topIndex),theJetEnergy_JetSubCalc_PtOrdered.at(topIndex));
-    lvTop = jet_lv + Wlv; //Top LV
-
-    recLeptonicTopPt = lvTop.Pt();
-    recLeptonicTopEta = lvTop.Eta();
-    recLeptonicTopPhi = lvTop.Phi();
-    recLeptonicTopMass = lvTop.M();
-    recLeptonicTopJetIdx = topIndex;
-
-    // ----------------------------------------------------------------------------
-    // Apply pt ordering to AK8 vectors 
-    // ----------------------------------------------------------------------------
-
-    //Pt ordering for AK8
-    std::sort(jetak8ptindpair.begin(), jetak8ptindpair.end(), comparepair);
-
-    maxProb_JetSubCalc_PtOrdered.clear();
-    theJetAK8DoubleB_JetSubCalc_PtOrdered.clear();
-    theJetAK8SDSubjetNDeepCSVMSF_JetSubCalc_PtOrdered.clear();
-    theJetAK8SDSubjetNDeepCSVL_JetSubCalc_PtOrdered.clear();
-    theJetAK8SDSubjetIndex_JetSubCalc_PtOrdered.clear();
-    theJetAK8SDSubjetSize_JetSubCalc_PtOrdered.clear();
-    theJetAK8Pt_JetSubCalc_PtOrdered.clear();
-    theJetAK8Eta_JetSubCalc_PtOrdered.clear();
-    theJetAK8Phi_JetSubCalc_PtOrdered.clear();
-    theJetAK8Energy_JetSubCalc_PtOrdered.clear();
-    theJetAK8Mass_JetSubCalc_PtOrdered.clear();
-    theJetAK8CHSPrunedMass_JetSubCalc_PtOrdered.clear();
-    theJetAK8CHSSoftDropMass_JetSubCalc_PtOrdered.clear();
-    theJetAK8SoftDropRaw_JetSubCalc_PtOrdered.clear();
-    theJetAK8SoftDropCorr_JetSubCalc_PtOrdered.clear();
-    theJetAK8SoftDrop_JetSubCalc_PtOrdered.clear();
-    theJetAK8SoftDrop_JetSubCalc_JMRup_PtOrdered.clear();
-    theJetAK8SoftDrop_JetSubCalc_JMRdn_PtOrdered.clear();
-    theJetAK8SoftDrop_JetSubCalc_JMSup_PtOrdered.clear();
-    theJetAK8SoftDrop_JetSubCalc_JMSdn_PtOrdered.clear();
-    theJetAK8NjettinessTau1_JetSubCalc_PtOrdered.clear();
-    theJetAK8NjettinessTau2_JetSubCalc_PtOrdered.clear();
-    theJetAK8NjettinessTau3_JetSubCalc_PtOrdered.clear();
-    theJetAK8CHSTau1_JetSubCalc_PtOrdered.clear();
-    theJetAK8CHSTau2_JetSubCalc_PtOrdered.clear();
-    theJetAK8CHSTau3_JetSubCalc_PtOrdered.clear();
-    theJetAK8Indx_Wtagged.clear();
-    for(unsigned int ijet=0; ijet < jetak8ptindpair.size(); ijet++){
-      maxProb_JetSubCalc_PtOrdered.push_back(maxProb_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8DoubleB_JetSubCalc_PtOrdered.push_back(theJetAK8DoubleB_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SDSubjetIndex_JetSubCalc_PtOrdered.push_back(theJetAK8SDSubjetIndex_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SDSubjetSize_JetSubCalc_PtOrdered.push_back(theJetAK8SDSubjetSize_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SDSubjetNDeepCSVMSF_JetSubCalc_PtOrdered.push_back(theJetAK8SDSubjetNDeepCSVMSF_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SDSubjetNDeepCSVL_JetSubCalc_PtOrdered.push_back(theJetAK8SDSubjetNDeepCSVL_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8Pt_JetSubCalc_PtOrdered.push_back(theJetAK8Pt_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8Eta_JetSubCalc_PtOrdered.push_back(theJetAK8Eta_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8Phi_JetSubCalc_PtOrdered.push_back(theJetAK8Phi_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8Energy_JetSubCalc_PtOrdered.push_back(theJetAK8Energy_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8Mass_JetSubCalc_PtOrdered.push_back(theJetAK8Mass_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDropRaw_JetSubCalc_PtOrdered.push_back(theJetAK8SoftDropRaw_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDropCorr_JetSubCalc_PtOrdered.push_back(theJetAK8SoftDropCorr_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDrop_JetSubCalc_PtOrdered.push_back(theJetAK8SoftDrop_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDrop_JetSubCalc_JMRup_PtOrdered.push_back(theJetAK8SoftDrop_JMRup_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDrop_JetSubCalc_JMRdn_PtOrdered.push_back(theJetAK8SoftDrop_JMRdn_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDrop_JetSubCalc_JMSup_PtOrdered.push_back(theJetAK8SoftDrop_JMSup_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8SoftDrop_JetSubCalc_JMSdn_PtOrdered.push_back(theJetAK8SoftDrop_JMSdn_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8NjettinessTau1_JetSubCalc_PtOrdered.push_back(theJetAK8NjettinessTau1_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8NjettinessTau2_JetSubCalc_PtOrdered.push_back(theJetAK8NjettinessTau2_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8NjettinessTau3_JetSubCalc_PtOrdered.push_back(theJetAK8NjettinessTau3_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8CHSTau1_JetSubCalc_PtOrdered.push_back(theJetAK8CHSTau1_JetSubCalc->at(jetak8ptindpair[ijet].second));      	
-      theJetAK8CHSTau2_JetSubCalc_PtOrdered.push_back(theJetAK8CHSTau2_JetSubCalc->at(jetak8ptindpair[ijet].second));
-      theJetAK8CHSTau3_JetSubCalc_PtOrdered.push_back(theJetAK8CHSTau3_JetSubCalc->at(jetak8ptindpair[ijet].second));
-    }
-
-    // ----------------------------------------------------------------------------
-    // AK8 Jet - lepton associations, Top and W taggging
-    // ----------------------------------------------------------------------------
-
-    NJetsWtagged = 0;
-    NJetsTtagged = 0;
-    deltaR_lepAK8s.clear();
-    minDR_lepAK8 = 1000;
-    minDR_leadAK8otherAK8 = 1000;
-    if(theJetAK8Pt_JetSubCalc_PtOrdered.size() < 1) minDR_lepAK8 = -99.0;      
-    if(theJetAK8Pt_JetSubCalc_PtOrdered.size() < 2) minDR_leadAK8otherAK8 = -99.0;
-    WJetLeadPt = -99.0;
-    TJetLeadPt = -99.0;
-
-    theJetAK8Wmatch_JetSubCalc_PtOrdered.clear();
-    theJetAK8Tmatch_JetSubCalc_PtOrdered.clear();
-    theJetAK8MatchedPt_JetSubCalc_PtOrdered.clear();
-    theJetAK8Truth_JetSubCalc_PtOrdered.clear();
-    NJetsWtagged_shifts.clear();
-    NJetsTtagged_shifts.clear();
-
-    wjet1_lv.SetPtEtaPhiM(0,0,0,0);
-    tjet1_lv.SetPtEtaPhiM(0,0,0,0);
-    ak8_lv.SetPtEtaPhiM(0,0,0,0);
-    TLorentzVector leadak8;
-    leadak8.SetPtEtaPhiM(0,0,0,0);
-
-    for(int i = 0; i < 8; i++){
-      NJetsWtagged_shifts.push_back(0);
-      NJetsTtagged_shifts.push_back(0);
-    }
-
-    for(unsigned int ijet=0; ijet < theJetAK8Pt_JetSubCalc_PtOrdered.size(); ijet++){
 
       // ----------------------------------------------------------------------------
-      // AK8 - lepton and AK8 -- AK8 associations
+      // PDF and Matrix Element energy scale weights
       // ----------------------------------------------------------------------------
+      
+      std::vector<double> renorm;
+      std::vector<double> pdf;
+      renormWeights.clear();
+      renormPSWeights.clear();
+      pdfWeights.clear();
+      pdfNewWeights.clear();
+      pdfNewNominalWeight = 1.0;
 
-      ak8_lv.SetPtEtaPhiE(theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet),theJetAK8Eta_JetSubCalc_PtOrdered.at(ijet),theJetAK8Phi_JetSubCalc_PtOrdered.at(ijet),theJetAK8Energy_JetSubCalc_PtOrdered.at(ijet));
-      if(ijet == 0) leadak8 = ak8_lv;
-
-      deltaR_lepAK8s.push_back(lepton_lv.DeltaR(ak8_lv));
-      if(lepton_lv.DeltaR(ak8_lv) < minDR_lepAK8){
-        minDR_lepAK8 = lepton_lv.DeltaR(ak8_lv);
-        ptRel_lepAK8 = lepton_lv.P()*(ak8_lv.Vect().Cross(lepton_lv.Vect()).Mag()/ak8_lv.P()/lepton_lv.P());
+      //PSWEIGHTS
+      //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopModGen
+      //https://github.com/cms-sw/cmssw/commits/master/Configuration/Generator/python/PSweightsPythia/PythiaPSweightsSettings_cfi.py
+      // 2 = isrRedHi isr:muRfac=0.707, 3 = fsrRedHi fsr:muRfac=0.707, 4 = isrRedLo isr:muRfac=1.414, 5 = fsrRedLo fsr:muRfac=1.414, 
+      // 6 = isrDefHi isr:muRfac=0.5, 7 = fsrDefHi fsr:muRfac=0.5,  8 = isrDefLo isr:muRfac=2.0,   9 = fsrDefLo fsr:muRfac=2.0, 
+      // 10 = isrConHi isr:muRfac=0.25, 11 = fsrConHi fsr:muRfac=0.25, 12 = isrConLo isr:muRfac=4.0, 13 = fsrConLo fsr:muRfac=4.0
+      double the_ps_weight=1.0;
+      if (evtWeightsMC_MultiLepCalc->size()>=14)
+         for(auto & i: {6,7,8,9})
+         {
+            the_ps_weight = evtWeightsMC_MultiLepCalc->at(i)/evtWeightsMC_MultiLepCalc->at(0);
+            if (fabs(the_ps_weight)>100)
+               renormPSWeights.push_back(1.0);
+            else
+               renormPSWeights.push_back(the_ps_weight);
+         }
+      else renormPSWeights={1,1,1,1};
+      
+      //std::cout<<"yes 2"<<std::endl;
+      //ME-PS
+      if(isSig && !isSig && !isTTTT){
+	pdfNewNominalWeight = NewPDFweights_MultiLepCalc->at(0);
+	// SEEMS TO APPLY TO ALL B2G MG+PYTHIA SIGNALS. NNLO 4-FLAVOR PDF
+	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
+	  if(i > 0 && i < 101) pdfNewWeights.push_back(NewPDFweights_MultiLepCalc->at(i));
+	  if(LHEweightids_MultiLepCalc->at(i) > 1 && LHEweightids_MultiLepCalc->at(i) < 10){
+	    if(LHEweightids_MultiLepCalc->at(i) == 6 || LHEweightids_MultiLepCalc->at(i) == 8) continue;
+	    renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) > 474 && LHEweightids_MultiLepCalc->at(i) < 575){
+	    pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	}
       }
-
-      if(ijet > 0){
-        float tempdr = leadak8.DeltaR(ak8_lv);
-        if(tempdr < minDR_leadAK8otherAK8){
-          minDR_leadAK8otherAK8 = tempdr;
-        }
+      
+      else if(isTTTT){
+	// 
+	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
+	  if(LHEweightids_MultiLepCalc->at(i) > 1001 && LHEweightids_MultiLepCalc->at(i) < 1010){
+	    if(LHEweightids_MultiLepCalc->at(i) == 1006 || LHEweightids_MultiLepCalc->at(i) == 1008) continue;
+	    renorm.push_back(LHEweights_MultiLepCalc->at(i));
+	    renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) > 1009 && LHEweightids_MultiLepCalc->at(i) < 1111){
+	    pdf.push_back(LHEweights_MultiLepCalc->at(i));
+	    pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) == 1111 || LHEweightids_MultiLepCalc->at(i) == 1112){
+	    alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	}
       }
-
-      // ----------------------------------------------------------------------------
-      // W & top tagging on MC
-      // ----------------------------------------------------------------------------
-
-      float tau21WP = 0.45; //WP from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-      float tau32WP = 0.80; //WP5 from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetTopTagging#13_TeV_Working_Points_and_Scale
-
-      float tau21 = theJetAK8NjettinessTau2_JetSubCalc_PtOrdered.at(ijet)/theJetAK8NjettinessTau1_JetSubCalc_PtOrdered.at(ijet);
-      float tau32 = theJetAK8NjettinessTau3_JetSubCalc_PtOrdered.at(ijet)/theJetAK8NjettinessTau2_JetSubCalc_PtOrdered.at(ijet);
-
-      float massSD = theJetAK8SoftDropCorr_JetSubCalc_PtOrdered.at(ijet);
-      float massSD_JMSup = theJetAK8SoftDrop_JetSubCalc_JMSup_PtOrdered.at(ijet);
-      float massSD_JMSdn = theJetAK8SoftDrop_JetSubCalc_JMSdn_PtOrdered.at(ijet);
-      float massSD_JMRup = theJetAK8SoftDrop_JetSubCalc_JMRup_PtOrdered.at(ijet);
-      float massSD_JMRdn = theJetAK8SoftDrop_JetSubCalc_JMRdn_PtOrdered.at(ijet);
-
-      // ------------------------------------------------------------------------------------------------------------------
-      // MC Calculation first
-      // ------------------------------------------------------------------------------------------------------------------
-
-      if(isMC){
-
-        // ------------------------------------------------------------------------------------------------------------------
-        // TRUTH MATCHING
-        // ------------------------------------------------------------------------------------------------------------------
-        float minDR = 1000;
-        float matchedPt= -99;
-        int matchedID = 0;
-        bool isWmatched = false;
-        bool isHmatched = false;
-        bool isZmatched = false;
-        bool isTmatched = false;
-        bool isJmatched = false;
-        bool isBmatched = false;
-        TLorentzVector trueW,d1,d2,d3;
-
-        for(unsigned int iW = 0; iW < HadronicVHtPt_JetSubCalc->size(); iW++){
-          trueW.SetPtEtaPhiE(HadronicVHtPt_JetSubCalc->at(iW),HadronicVHtEta_JetSubCalc->at(iW),HadronicVHtPhi_JetSubCalc->at(iW),HadronicVHtEnergy_JetSubCalc->at(iW));
-
-          if(ak8_lv.DeltaR(trueW) < minDR){
-            minDR = ak8_lv.DeltaR(trueW);
-            matchedPt = HadronicVHtPt_JetSubCalc->at(iW);
-            matchedID = abs(HadronicVHtID_JetSubCalc->at(iW));	      
-            d1.SetPtEtaPhiE(HadronicVHtD0Pt_JetSubCalc->at(iW),HadronicVHtD0Eta_JetSubCalc->at(iW),HadronicVHtD0Phi_JetSubCalc->at(iW),HadronicVHtD0E_JetSubCalc->at(iW));
-            d2.SetPtEtaPhiE(HadronicVHtD1Pt_JetSubCalc->at(iW),HadronicVHtD1Eta_JetSubCalc->at(iW),HadronicVHtD1Phi_JetSubCalc->at(iW),HadronicVHtD1E_JetSubCalc->at(iW));
-            d3.SetPtEtaPhiE(HadronicVHtD2Pt_JetSubCalc->at(iW),HadronicVHtD2Eta_JetSubCalc->at(iW),HadronicVHtD2Phi_JetSubCalc->at(iW),HadronicVHtD2E_JetSubCalc->at(iW));
-          }
-        }	 
-
-        bool WallDsInJet = false;
-        bool TallDsInJet = false;
-        if(matchedID != 6 && ak8_lv.DeltaR(d1) < 0.8 && ak8_lv.DeltaR(d2) < 0.8) WallDsInJet = true;
-        if(matchedID == 6 && ak8_lv.DeltaR(d1) < 0.8 && ak8_lv.DeltaR(d2) < 0.8 && ak8_lv.DeltaR(d3) < 0.8) TallDsInJet = true;
-        if(minDR < 0.8 && matchedID == 24 && WallDsInJet) isWmatched = true;
-        if(minDR < 0.8 && matchedID == 25 && WallDsInJet) isHmatched = true;
-        if(minDR < 0.8 && matchedID == 23 && WallDsInJet) isZmatched = true;
-        if(minDR < 0.8 && matchedID == 6 && TallDsInJet) isTmatched = true;
-
-        theJetAK8Wmatch_JetSubCalc_PtOrdered.push_back(isWmatched);
-        theJetAK8Hmatch_JetSubCalc_PtOrdered.push_back(isHmatched);
-        theJetAK8Zmatch_JetSubCalc_PtOrdered.push_back(isZmatched);
-        theJetAK8Tmatch_JetSubCalc_PtOrdered.push_back(isTmatched);
-        if(isWmatched || isZmatched || isHmatched || isTmatched) theJetAK8MatchedPt_JetSubCalc_PtOrdered.push_back(matchedPt);
-        else theJetAK8MatchedPt_JetSubCalc_PtOrdered.push_back(-99.0);
-
-        if (not (isWmatched && matchedPt > 200) && not (isZmatched && matchedPt > 200) && not (isTmatched && matchedPt > 400) && not (isHmatched && matchedPt > 300)) {
-          int firstsub = theJetAK8SDSubjetIndex_JetSubCalc_PtOrdered.at(ijet);
-          int nsubs = theJetAK8SDSubjetSize_JetSubCalc_PtOrdered.at(ijet);
-          for(int isub = firstsub; isub < firstsub + nsubs; isub++){
-            if( theJetAK8SDSubjetHFlav_JetSubCalc->at(isub) == 5 ) isBmatched = true;
-          }
-          if ( not isBmatched ) isJmatched = true;
-        }
-
-        if(isJmatched) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(0);
-        if(isTmatched && matchedPt > 400) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(1);
-        if(isHmatched && matchedPt > 300) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(2);
-        if(isZmatched && matchedPt > 200) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(3);
-        if(isWmatched && matchedPt > 200) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(4);
-        if(isBmatched) theJetAK8Truth_JetSubCalc_PtOrdered.push_back(5);
-
-        // ------------------------------------------------------------------------------------------------------------------
-        // TOP TAGGING
-        // ------------------------------------------------------------------------------------------------------------------
-        double tau32SF = 1.0;
-        double tau32SFup = 1.0;
-        double tau32SFdn = 1.0;
-        double tau32eff = 1.0;
-        if(isTmatched && matchedPt >= 400){	    
-          hardcodedConditions.GetTtaggingSF(matchedPt, &tau32SF, &tau32SFup, &tau32SFdn, Year);
-          // Use matched T to find the efficiency -- EWK/QCD will almost never pass here (use ttbar eff when they do)
-            if(isTTTT) {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "tttt");}
-            else if(isTT) {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "ttbar");}
-            else {hardcodedConditions.GetTtaggingEff(matchedPt, &tau32eff, Year, "singletop");}
-        }
-
-        // Set the initial tagged/untagged state
-        bool isTtagged = (massSD > 105) && (massSD < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-        bool isTtagged_JMSup = (massSD_JMSup > 105) && (massSD_JMSup < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-        bool isTtagged_JMSdn = (massSD_JMSdn > 105) && (massSD_JMSdn < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-        bool isTtagged_JMRup = (massSD_JMRup > 105) && (massSD_JMRup < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-        bool isTtagged_JMRdn = (massSD_JMRdn > 105) && (massSD_JMRdn < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-
-        // IF THE JET IS NOT TRUTH-MATCHED, THESE IFS WILL DO NOTHING, SF == 1
-        int tag_top = applySF(isTtagged,tau32SF,tau32eff);
-        int tag_top_tau32up = applySF(isTtagged,tau32SFup,tau32eff);
-        int tag_top_tau32dn = applySF(isTtagged,tau32SFdn,tau32eff);
-        int tag_top_JMSup = applySF(isTtagged_JMSup,tau32SF,tau32eff);
-        int tag_top_JMSdn = applySF(isTtagged_JMSdn,tau32SF,tau32eff);
-        int tag_top_JMRup = applySF(isTtagged_JMRup,tau32SF,tau32eff);
-        int tag_top_JMRdn = applySF(isTtagged_JMRdn,tau32SF,tau32eff);
-
-        // Now increase the tag count in the right variable	  
-        NJetsTtagged += tag_top;
-        NJetsTtagged_shifts[0] += tag_top_tau32up;
-        NJetsTtagged_shifts[1] += tag_top_tau32dn;
-        NJetsTtagged_shifts[2] += tag_top_JMSup;
-        NJetsTtagged_shifts[3] += tag_top_JMSdn;
-        NJetsTtagged_shifts[4] += tag_top_JMRup;
-        NJetsTtagged_shifts[5] += tag_top_JMRdn;
-
-        if(tag_top && theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) > TJetLeadPt){ TJetLeadPt = theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet); }
-
-        // ------------------------------------------------------------------------------------------------------------------
-        // W TAGGING
-        // ------------------------------------------------------------------------------------------------------------------
-
-        double tau21SF = 1.0;
-        double tau21SFup = 1.0;
-        double tau21SFdn = 1.0;
-        double tau21ptSFup = 1.0;
-        double tau21ptSFdn = 1.0;
-        double tau21eff = 1.0;
-        if(isWmatched && matchedPt >= 175 && massSD > 65 && massSD < 105 && theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200){	    
-          hardcodedConditions.GetWtaggingSF(theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet), &tau21SF, &tau21SFup, &tau21SFdn, &tau21ptSFup, &tau21ptSFdn, Year);
-          // Use matched W to find the efficiency -- EWK/QCD will almost never pass here (use ttbar eff when they do)
-          if(isTTTX) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "tttx");}
-          else if(isTTTT) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "tttt");}
-          else if(isTT) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "ttbar");}
-          else if(isSTt) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "singletopt");}
-          else if(isSTtW) {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "singletoptW");}
-          else {hardcodedConditions.GetWtaggingEff(matchedPt, &tau21eff, Year, "WV");}
-        }
-
-        // Set the initial tagged/untagged state
-        bool isWtagged = (massSD > 65) && (massSD < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        bool isWtagged_JMSup = (massSD_JMSup > 65) && (massSD_JMSup < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        bool isWtagged_JMSdn = (massSD_JMSdn > 65) && (massSD_JMSdn < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        bool isWtagged_JMRup = (massSD_JMRup > 65) && (massSD_JMRup < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        bool isWtagged_JMRdn = (massSD_JMRdn > 65) && (massSD_JMRdn < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        if(isWtagged) { theJetAK8Indx_Wtagged.push_back(ijet); }
-
-        // IF THE JET IS NOT TRUTH-MATCHED, THESE IFS WILL DO NOTHING, SF == 1
-        int tag_W = applySF(isWtagged,tau21SF,tau21eff);
-        int tag_W_tau21up = applySF(isWtagged,tau21SFup,tau21eff);
-        int tag_W_tau21dn = applySF(isWtagged,tau21SFdn,tau21eff);
-        int tag_W_JMSup = applySF(isWtagged_JMSup,tau21SF,tau21eff);
-        int tag_W_JMSdn = applySF(isWtagged_JMSdn,tau21SF,tau21eff);
-        int tag_W_JMRup = applySF(isWtagged_JMRup,tau21SF,tau21eff);
-        int tag_W_JMRdn = applySF(isWtagged_JMRdn,tau21SF,tau21eff);
-        int tag_W_tau21ptup = applySF(isWtagged,tau21ptSFup,tau21eff);
-        int tag_W_tau21ptdn = applySF(isWtagged,tau21ptSFdn,tau21eff);
-
-        // Now increase the tag count in the right variable	  
-        NJetsWtagged += tag_W;
-        NJetsWtagged_shifts[0] += tag_W_tau21up;
-        NJetsWtagged_shifts[1] += tag_W_tau21dn;
-        NJetsWtagged_shifts[2] += tag_W_JMSup;
-        NJetsWtagged_shifts[3] += tag_W_JMSdn;
-        NJetsWtagged_shifts[4] += tag_W_JMRup;
-        NJetsWtagged_shifts[5] += tag_W_JMRdn;
-        NJetsWtagged_shifts[6] += tag_W_tau21ptup;
-        NJetsWtagged_shifts[7] += tag_W_tau21ptdn;
-
-        if(tag_W && theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) > WJetLeadPt){ WJetLeadPt = theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet); }
-      }//end of isMC
-      // ------------------------------------------------------------------------------------------------------------------
-      // DATA Calculation second
-      // ------------------------------------------------------------------------------------------------------------------
+      else if(isMadgraphBkg){
+	// SEEMS TO APPLY TO OTHER MG+PYTHIA BACKGROUNDS. LEADING ORDER 5-FLAVOR PDF
+	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
+	  if(LHEweightids_MultiLepCalc->at(i) > 1 && LHEweightids_MultiLepCalc->at(i) < 10){
+	    if(LHEweightids_MultiLepCalc->at(i) == 6 || LHEweightids_MultiLepCalc->at(i) == 8) continue;
+	    renorm.push_back(LHEweights_MultiLepCalc->at(i));
+	    renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) > 10 && LHEweightids_MultiLepCalc->at(i) < 111){
+	    pdf.push_back(LHEweights_MultiLepCalc->at(i));
+	    pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) == 111 || LHEweightids_MultiLepCalc->at(i) == 112){
+	    alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	}
+      }
       else{
-        theJetAK8Wmatch_JetSubCalc_PtOrdered.push_back(0);
-        theJetAK8Tmatch_JetSubCalc_PtOrdered.push_back(0);
-
-        bool isWtagged = (massSD > 65)  && (massSD < 105) && (tau21 < tau21WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 200);
-        bool isTtagged = (massSD > 105) && (massSD < 220) && (tau32 < tau32WP) && (theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) >= 400);
-
-        NJetsWtagged += isWtagged;
-        NJetsTtagged += isTtagged;
-
-        if(isWtagged){
-          theJetAK8Indx_Wtagged.push_back(ijet);
-          if(theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) > WJetLeadPt) { WJetLeadPt = theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet); }
-        }
-        else if(isTtagged){
-          if(theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet) > TJetLeadPt) { TJetLeadPt = theJetAK8Pt_JetSubCalc_PtOrdered.at(ijet); }
-        }
+	// SEEMS TO APPLY TO ALL POWHEG AND MC@NLO BACKGROUNDS. NLO PDFs
+	for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
+	  if(LHEweightids_MultiLepCalc->at(i) > 1001 && LHEweightids_MultiLepCalc->at(i) < 1010){
+	    if(LHEweightids_MultiLepCalc->at(i) == 1006 || LHEweightids_MultiLepCalc->at(i) == 1008) continue;
+	    renorm.push_back(LHEweights_MultiLepCalc->at(i));
+	    renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) > 2000 && LHEweightids_MultiLepCalc->at(i) < 2101){
+	    pdf.push_back(LHEweights_MultiLepCalc->at(i));
+	    pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	  if(LHEweightids_MultiLepCalc->at(i) == 2101 || LHEweightids_MultiLepCalc->at(i) == 2102){
+	    alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
+	  }
+	}
       }
-    }
-
-    // ----------------------------------------------------------------------------
-    // HOT TAGGER -- SCALE FACTORS TO BE ADDED!!!
-    // !!!! THIS SHOULD BE UPDATED WHEN FWLJMET NTUPLES ARE AVAILABLE WITH UPDATED HOTTAGGERCALC; i.e., WITH getBestGenTopMatch !!!!!!!
-    // ----------------------------------------------------------------------------
-    NresolvedTops1pFakeNoSF = 0;
-    NresolvedTops2pFakeNoSF = 0;
-    NresolvedTops5pFakeNoSF = 0;
-    NresolvedTops10pFakeNoSF = 0;
-    NresolvedTops1pFake = 0;
-    NresolvedTops2pFake = 0;
-    NresolvedTops5pFake = 0;
-    NresolvedTops10pFake = 0;
-    NresolvedTops1pFake_shifts.clear();
-    NresolvedTops2pFake_shifts.clear();
-    NresolvedTops5pFake_shifts.clear();
-    NresolvedTops10pFake_shifts.clear();
-    for(int i = 0; i < 6; i++){
-      NresolvedTops1pFake_shifts.push_back(0);
-      NresolvedTops2pFake_shifts.push_back(0);
-      NresolvedTops5pFake_shifts.push_back(0);
-      NresolvedTops10pFake_shifts.push_back(0);
-    }
-
-    unsigned int idjet1,idjet2,idjet3;
-    TLorentzVector resolvedTop,resolvedTopD1,resolvedTopD2,resolvedTopD3;
-    TLorentzVector trueTop,trueTopD1,trueTopD2,trueTopD3;
-    std::vector<float> minDRtopDs;
-    minDRtopDs.clear();
-    for(int i = 0; i < 3; i++){ minDRtopDs.push_back(0); }
-    for(unsigned int itop=0; itop < topDiscriminator_HOTTaggerCalc->size(); itop++){
-      if(isMC && !isSig){
-        // ------------------------------------------------------------------------------------------------------------------
-        // TRUTH MATCHING
-        // ------------------------------------------------------------------------------------------------------------------
-        float minDRtop = 1000;
-        float minDRtopD1 = 1000;
-        float minDRtopD2 = 1000;
-        float minDRtopD3 = 1000;
-        idjet1 = topJet1Index_HOTTaggerCalc->at(itop);
-        idjet2 = topJet2Index_HOTTaggerCalc->at(itop);
-        idjet3 = topJet3Index_HOTTaggerCalc->at(itop);
-        resolvedTop.SetPtEtaPhiM(topPt_HOTTaggerCalc->at(itop),topEta_HOTTaggerCalc->at(itop),topPhi_HOTTaggerCalc->at(itop),topMass_HOTTaggerCalc->at(itop));
-        resolvedTopD1.SetPtEtaPhiE(theJetPt_JetSubCalc->at(idjet1),theJetEta_JetSubCalc->at(idjet1),theJetPhi_JetSubCalc->at(idjet1),theJetEnergy_JetSubCalc->at(idjet1));
-        resolvedTopD2.SetPtEtaPhiE(theJetPt_JetSubCalc->at(idjet2),theJetEta_JetSubCalc->at(idjet2),theJetPhi_JetSubCalc->at(idjet2),theJetEnergy_JetSubCalc->at(idjet2));
-        resolvedTopD3.SetPtEtaPhiE(theJetPt_JetSubCalc->at(idjet3),theJetEta_JetSubCalc->at(idjet3),theJetPhi_JetSubCalc->at(idjet3),theJetEnergy_JetSubCalc->at(idjet3));
-        //cout<<"DEBUGGING: "<<topPt_TTbarMassCalc->size()<<" "<<topbPt_TTbarMassCalc->size()<<" "<<topWPt_TTbarMassCalc->size()<<endl;
-        for(unsigned int igtop=0; igtop < topPt_TTbarMassCalc->size(); igtop++){
-          if(2*igtop>=topWPt_TTbarMassCalc->size()) continue; // DEBUGGING TEMPORARY EDITION
-          if(abs(topWID_TTbarMassCalc->at(2*igtop))>5) continue; // select hadronically decaying tops
-          trueTop.SetPtEtaPhiE(topPt_TTbarMassCalc->at(igtop),topEta_TTbarMassCalc->at(igtop),topPhi_TTbarMassCalc->at(igtop),topEnergy_TTbarMassCalc->at(igtop));
-          if(resolvedTop.DeltaR(trueTop) < minDRtop){
-            minDRtop = resolvedTop.DeltaR(trueTop);
-            trueTopD1.SetPtEtaPhiE(topbPt_TTbarMassCalc->at(igtop),topbEta_TTbarMassCalc->at(igtop),topbPhi_TTbarMassCalc->at(igtop),topbEnergy_TTbarMassCalc->at(igtop));
-            trueTopD2.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(2*igtop),topWEta_TTbarMassCalc->at(2*igtop),topWPhi_TTbarMassCalc->at(2*igtop),topWEnergy_TTbarMassCalc->at(2*igtop));
-            trueTopD3.SetPtEtaPhiE(topWPt_TTbarMassCalc->at(2*igtop+1),topWEta_TTbarMassCalc->at(2*igtop+1),topWPhi_TTbarMassCalc->at(2*igtop+1),topWEnergy_TTbarMassCalc->at(2*igtop+1));
-
-            minDRtopDs[0] = resolvedTopD1.DeltaR(trueTopD1);
-            minDRtopDs[1] = resolvedTopD1.DeltaR(trueTopD2);
-            minDRtopDs[2] = resolvedTopD1.DeltaR(trueTopD3);
-            std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
-            minDRtopD1 = minDRtopDs.at(0);
-            minDRtopDs[0] = resolvedTopD2.DeltaR(trueTopD1);
-            minDRtopDs[1] = resolvedTopD2.DeltaR(trueTopD2);
-            minDRtopDs[2] = resolvedTopD2.DeltaR(trueTopD3);
-            std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
-            minDRtopD2 = minDRtopDs.at(0);
-            minDRtopDs[0] = resolvedTopD3.DeltaR(trueTopD1);
-            minDRtopDs[1] = resolvedTopD3.DeltaR(trueTopD2);
-            minDRtopDs[2] = resolvedTopD3.DeltaR(trueTopD3);
-            std::sort(minDRtopDs.begin(), minDRtopDs.end(), comparefloat);
-            minDRtopD3 = minDRtopDs.at(0);
-          }
-        }
-
-        double TopTagSF1p = 1.0;
-        double TopTagSF2p = 1.0;
-        double TopTagSF5p = 1.0;
-        double TopTagSF10p = 1.0;
-        double TopTagSF1pStat = 0.0;
-        double TopTagSF2pStat = 0.0;
-        double TopTagSF5pStat = 0.0;
-        double TopTagSF10pStat = 0.0;
-        double TopTagSF1pCSpur = 0.0;
-        double TopTagSF2pCSpur = 0.0;
-        double TopTagSF5pCSpur = 0.0;
-        double TopTagSF10pCSpur = 0.0;
-        double TopTagSF1pClosure = 0.0;
-        double TopTagSF2pClosure = 0.0;
-        double TopTagSF5pClosure = 0.0;
-        double TopTagSF10pClosure = 0.0;
-        int NdaughterMatch = (minDRtopD1 < 0.4) + (minDRtopD2 < 0.4) + (minDRtopD3 < 0.4);
-        bool isGenMatched = ( (minDRtop < 0.6) && (NdaughterMatch > 1) ); //Requires >=2 daughters matching, in line with the calculated efficiencies. Changing this to =3 daughters matching requires updating the efficiencies!
-        hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF1p, &TopTagSF1pStat, &TopTagSF1pCSpur, &TopTagSF1pClosure, Year, isGenMatched, "1pfake");
-        hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF2p, &TopTagSF2pStat, &TopTagSF2pCSpur, &TopTagSF2pClosure, Year, isGenMatched, "2pfake");
-        hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF5p, &TopTagSF5pStat, &TopTagSF5pCSpur, &TopTagSF5pClosure, Year, isGenMatched, "5pfake");
-        hardcodedConditions.GetHOTtaggingSF(topPt_HOTTaggerCalc->at(itop), topNAK4_HOTTaggerCalc, &TopTagSF10p,&TopTagSF10pStat,&TopTagSF10pCSpur,&TopTagSF10pClosure,Year, isGenMatched, "10pfake");
-        double TopTagEff1p = 1.0;
-        double TopTagEff2p = 1.0;
-        double TopTagEff5p = 1.0;
-        double TopTagEff10p = 1.0;
-
-        std::string sample_hot;
-        if(isTTTT) sample_hot = "tttt";
-        else if(isST) sample_hot = "singletop";
-        else if(isTTVV) sample_hot = "TTVV";
-        else if(isTTTX) sample_hot = "TTTX";
-        else if(isTT) sample_hot = "ttbar";
-        else if(isTTToSemiLeptonHT500Njet9) sample_hot = "ttbarHT500Njet9";
-        else if(isTTV) sample_hot = "ttVjets";
-        else if(isTTHnonbb) sample_hot = "ttHToNonbb";
-        else if(isTTHbb) sample_hot = "ttHTobb";
-
-        hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff1p, Year, sample_hot, isGenMatched, "1pfake");
-        hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff2p, Year, sample_hot, isGenMatched, "2pfake");
-        hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff5p, Year, sample_hot, isGenMatched, "5pfake");
-        hardcodedConditions.GetHOTtaggingEff(topPt_HOTTaggerCalc->at(itop), &TopTagEff10p,Year, sample_hot, isGenMatched, "10pfake");
-        bool isTtagged1p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.95;
-        bool isTtagged2p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.92;
-        bool isTtagged5p = topDiscriminator_HOTTaggerCalc->at(itop) > 0.85;
-        bool isTtagged10p= topDiscriminator_HOTTaggerCalc->at(itop) > 0.75;
-        NresolvedTops1pFakeNoSF += isTtagged1p;
-        NresolvedTops2pFakeNoSF += isTtagged2p;
-        NresolvedTops5pFakeNoSF += isTtagged5p;
-        NresolvedTops10pFakeNoSF += isTtagged10p;
-        int tag_top_1p = applySF(isTtagged1p,TopTagSF1p,TopTagEff1p);
-        int tag_top_2p = applySF(isTtagged2p,TopTagSF2p,TopTagEff2p);
-        int tag_top_5p = applySF(isTtagged5p,TopTagSF5p,TopTagEff5p);
-        int tag_top_10p = applySF(isTtagged10p,TopTagSF10p,TopTagEff10p);
-
-        int tag_top_1p_statup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pStat,TopTagEff1p);
-        int tag_top_1p_statdn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pStat,TopTagEff1p);
-        int tag_top_2p_statup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pStat,TopTagEff2p);
-        int tag_top_2p_statdn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pStat,TopTagEff2p);
-        int tag_top_5p_statup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pStat,TopTagEff5p);
-        int tag_top_5p_statdn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pStat,TopTagEff5p);
-        int tag_top_10p_statup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pStat,TopTagEff10p);
-        int tag_top_10p_statdn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pStat,TopTagEff10p);
-
-        int tag_top_1p_cspurup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pCSpur,TopTagEff1p);
-        int tag_top_1p_cspurdn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pCSpur,TopTagEff1p);
-        int tag_top_2p_cspurup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pCSpur,TopTagEff2p);
-        int tag_top_2p_cspurdn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pCSpur,TopTagEff2p);
-        int tag_top_5p_cspurup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pCSpur,TopTagEff5p);
-        int tag_top_5p_cspurdn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pCSpur,TopTagEff5p);
-        int tag_top_10p_cspurup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pCSpur,TopTagEff10p);
-        int tag_top_10p_cspurdn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pCSpur,TopTagEff10p);
-
-        int tag_top_1p_closureup = tag_top_1p;
-        int tag_top_1p_closuredn = tag_top_1p;
-        int tag_top_2p_closureup = tag_top_2p;
-        int tag_top_2p_closuredn = tag_top_2p;
-        int tag_top_5p_closureup = tag_top_5p;
-        int tag_top_5p_closuredn = tag_top_5p;
-        int tag_top_10p_closureup = tag_top_10p;
-        int tag_top_10p_closuredn = tag_top_10p;
-        if(!isGenMatched){ //Closure uncertainty is applied to fake tops only
-          tag_top_1p_closureup = applySF(isTtagged1p,TopTagSF1p+TopTagSF1pClosure,TopTagEff1p);
-          tag_top_1p_closuredn = applySF(isTtagged1p,TopTagSF1p-TopTagSF1pClosure,TopTagEff1p);
-          tag_top_2p_closureup = applySF(isTtagged2p,TopTagSF2p+TopTagSF2pClosure,TopTagEff2p);
-          tag_top_2p_closuredn = applySF(isTtagged2p,TopTagSF2p-TopTagSF2pClosure,TopTagEff2p);
-          tag_top_5p_closureup = applySF(isTtagged5p,TopTagSF5p+TopTagSF5pClosure,TopTagEff5p);
-          tag_top_5p_closuredn = applySF(isTtagged5p,TopTagSF5p-TopTagSF5pClosure,TopTagEff5p);
-          tag_top_10p_closureup = applySF(isTtagged10p,TopTagSF10p+TopTagSF10pClosure,TopTagEff10p);
-          tag_top_10p_closuredn = applySF(isTtagged10p,TopTagSF10p-TopTagSF10pClosure,TopTagEff10p);
-        }
-
-        NresolvedTops1pFake += tag_top_1p;
-        NresolvedTops2pFake += tag_top_2p;
-        NresolvedTops5pFake += tag_top_5p;
-        NresolvedTops10pFake += tag_top_10p;
-        NresolvedTops1pFake_shifts[0] += tag_top_1p_statup;
-        NresolvedTops1pFake_shifts[1] += tag_top_1p_statdn;
-        NresolvedTops2pFake_shifts[0] += tag_top_2p_statup;
-        NresolvedTops2pFake_shifts[1] += tag_top_2p_statdn;
-        NresolvedTops5pFake_shifts[0] += tag_top_5p_statup;
-        NresolvedTops5pFake_shifts[1] += tag_top_5p_statdn;
-        NresolvedTops10pFake_shifts[0] += tag_top_10p_statup;
-        NresolvedTops10pFake_shifts[1] += tag_top_10p_statdn;
-        NresolvedTops1pFake_shifts[2] += tag_top_1p_cspurup;
-        NresolvedTops1pFake_shifts[3] += tag_top_1p_cspurdn;
-        NresolvedTops2pFake_shifts[2] += tag_top_2p_cspurup;
-        NresolvedTops2pFake_shifts[3] += tag_top_2p_cspurdn;
-        NresolvedTops5pFake_shifts[2] += tag_top_5p_cspurup;
-        NresolvedTops5pFake_shifts[3] += tag_top_5p_cspurdn;
-        NresolvedTops10pFake_shifts[2] += tag_top_10p_cspurup;
-        NresolvedTops10pFake_shifts[3] += tag_top_10p_cspurdn;
-        NresolvedTops1pFake_shifts[4] += tag_top_1p_closureup;
-        NresolvedTops1pFake_shifts[5] += tag_top_1p_closuredn;
-        NresolvedTops2pFake_shifts[4] += tag_top_2p_closureup;
-        NresolvedTops2pFake_shifts[5] += tag_top_2p_closuredn;
-        NresolvedTops5pFake_shifts[4] += tag_top_5p_closureup;
-        NresolvedTops5pFake_shifts[5] += tag_top_5p_closuredn;
-        NresolvedTops10pFake_shifts[4] += tag_top_10p_closureup;
-        NresolvedTops10pFake_shifts[5] += tag_top_10p_closuredn;
-      } else { // Data
-        if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.75) NresolvedTops10pFake+=1;
-        if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.85) NresolvedTops5pFake+=1;
-        if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.92) NresolvedTops2pFake+=1;
-        if(topDiscriminator_HOTTaggerCalc->at(itop) > 0.95) NresolvedTops1pFake+=1;
+      if(renormWeights.size() == 0){
+	if(isVV){
+	  renormWeights.push_back(0.85);
+	  renormWeights.push_back(1.15);
+	  renormWeights.push_back(0.85);
+	  renormWeights.push_back(0.85);
+	  renormWeights.push_back(1.15);
+	  renormWeights.push_back(1.15);
+	}else{
+	  for(int irn = 0; irn < 6; irn++){
+	    renormWeights.push_back(1.0);
+	  }
+	}
       }
-    }
-
-    // ----------------------------------------------------------------------------
-    // PDF and Matrix Element energy scale weights
-    // ----------------------------------------------------------------------------
-
-    std::vector<double> renorm;
-    std::vector<double> pdf;
-    renormWeights.clear();
-    renormPSWeights.clear();
-    pdfWeights.clear();
-    pdfNewWeights.clear();
-    pdfNewNominalWeight = 1.0;
-
-    //PSWEIGHTS
-    //https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopModGen
-    //https://github.com/cms-sw/cmssw/commits/master/Configuration/Generator/python/PSweightsPythia/PythiaPSweightsSettings_cfi.py
-    // 2 = isrRedHi isr:muRfac=0.707, 3 = fsrRedHi fsr:muRfac=0.707, 4 = isrRedLo isr:muRfac=1.414, 5 = fsrRedLo fsr:muRfac=1.414, 
-    // 6 = isrDefHi isr:muRfac=0.5, 7 = fsrDefHi fsr:muRfac=0.5,  8 = isrDefLo isr:muRfac=2.0,   9 = fsrDefLo fsr:muRfac=2.0, 
-    // 10 = isrConHi isr:muRfac=0.25, 11 = fsrConHi fsr:muRfac=0.25, 12 = isrConLo isr:muRfac=4.0, 13 = fsrConLo fsr:muRfac=4.0
-    double the_ps_weight=1.0;
-    if (evtWeightsMC_MultiLepCalc->size()>=14)
-    for(auto & i: {6,7,8,9}) {
-      the_ps_weight = evtWeightsMC_MultiLepCalc->at(i)/evtWeightsMC_MultiLepCalc->at(0);
-      if (fabs(the_ps_weight)>100) renormPSWeights.push_back(1.0);
-      else renormPSWeights.push_back(the_ps_weight);
-    }
-    else renormPSWeights = {1,1,1,1};
-
-    //std::cout<<"yes 2"<<std::endl;
-    //ME-PS
-    if(isSig && !isTTTT){
-      pdfNewNominalWeight = NewPDFweights_MultiLepCalc->at(0);
-      // SEEMS TO APPLY TO ALL B2G MG+PYTHIA SIGNALS. NNLO 4-FLAVOR PDF
-      for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
-        if(i > 0 && i < 101) pdfNewWeights.push_back(NewPDFweights_MultiLepCalc->at(i));
-        if(LHEweightids_MultiLepCalc->at(i) > 1 && LHEweightids_MultiLepCalc->at(i) < 10){
-          if(LHEweightids_MultiLepCalc->at(i) == 6 || LHEweightids_MultiLepCalc->at(i) == 8) continue;
-          renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) > 474 && LHEweightids_MultiLepCalc->at(i) < 575){
-          pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
+      if(pdfWeights.size() == 0){
+	for(int ipdf = 0; ipdf < 100; ipdf++){
+	  pdfWeights.push_back(1.0);
+	}
       }
-    }
 
-    else if(isTTTT){
-      // 
-      for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
-        if(LHEweightids_MultiLepCalc->at(i) > 1001 && LHEweightids_MultiLepCalc->at(i) < 1010){
-          if(LHEweightids_MultiLepCalc->at(i) == 1006 || LHEweightids_MultiLepCalc->at(i) == 1008) continue;
-          renorm.push_back(LHEweights_MultiLepCalc->at(i));
-          renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) > 1009 && LHEweightids_MultiLepCalc->at(i) < 1111){
-          pdf.push_back(LHEweights_MultiLepCalc->at(i));
-          pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) == 1111 || LHEweightids_MultiLepCalc->at(i) == 1112){
-          alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-      }
-    }
-    else if(isMadgraphBkg){
-      // SEEMS TO APPLY TO OTHER MG+PYTHIA BACKGROUNDS. LEADING ORDER 5-FLAVOR PDF
-      for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
-        if(LHEweightids_MultiLepCalc->at(i) > 1 && LHEweightids_MultiLepCalc->at(i) < 10){
-          if(LHEweightids_MultiLepCalc->at(i) == 6 || LHEweightids_MultiLepCalc->at(i) == 8) continue;
-          renorm.push_back(LHEweights_MultiLepCalc->at(i));
-          renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) > 10 && LHEweightids_MultiLepCalc->at(i) < 111){
-          pdf.push_back(LHEweights_MultiLepCalc->at(i));
-          pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) == 111 || LHEweightids_MultiLepCalc->at(i) == 112){
-          alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-      }
-    }
-    else{
-    // SEEMS TO APPLY TO ALL POWHEG AND MC@NLO BACKGROUNDS. NLO PDFs
-      for(unsigned int i = 0; i < LHEweightids_MultiLepCalc->size(); i++){
-        if(LHEweightids_MultiLepCalc->at(i) > 1001 && LHEweightids_MultiLepCalc->at(i) < 1010){
-          if(LHEweightids_MultiLepCalc->at(i) == 1006 || LHEweightids_MultiLepCalc->at(i) == 1008) continue;
-          renorm.push_back(LHEweights_MultiLepCalc->at(i));
-          renormWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) > 2000 && LHEweightids_MultiLepCalc->at(i) < 2101){
-          pdf.push_back(LHEweights_MultiLepCalc->at(i));
-          pdfWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-        if(LHEweightids_MultiLepCalc->at(i) == 2101 || LHEweightids_MultiLepCalc->at(i) == 2102){
-          alphaSWeights.push_back(LHEweights_MultiLepCalc->at(i));
-        }
-      }
-    }
-    if(renormWeights.size() == 0){
-      if(isVV){
-        renormWeights.push_back(0.85);
-        renormWeights.push_back(1.15);
-        renormWeights.push_back(0.85);
-        renormWeights.push_back(0.85);
-        renormWeights.push_back(1.15);
-        renormWeights.push_back(1.15);
-      } else {
-        for(int irn = 0; irn < 6; irn++){
-          renormWeights.push_back(1.0);
-        }
-      }
-    }
-    if(pdfWeights.size() == 0){
-      for(int ipdf = 0; ipdf < 100; ipdf++){
-        pdfWeights.push_back(1.0);
-      }
-    }
+      // ----------------------------------------------------------------------------
+      // DONE!! Write the tree
+      // ----------------------------------------------------------------------------
+      
+      outputTree->Fill();
+   }
+   std::cout<<"Nelectrons      = "<<Nelectrons<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_ElEta   = "<<npass_ElEta<<" / "<<nentries<<std::endl;
+   std::cout<<"Nmuons          = "<<Nmuons<<" / "<<nentries<<std::endl;
+   std::cout<<"NrelIsoFail     = "<<NrelIsoFail<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_MuEta   = "<<npass_MuEta<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_nAK8Jets= "<<npass_nAK8jets<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_Trigger = "<<npass_trigger<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_MET     = "<<npass_met<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_lepPt   = "<<npass_lepPt<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_HT      = "<<npass_ht<<" / "<<nentries<<std::endl;
+   std::cout<<"npass_Njets     = "<<npass_Njets<<" / "<<nentries<<std::endl;
+   std::cout<<"Npassed_ALL     = "<<npass_all<<" / "<<nentries<<std::endl;
 
-    // ----------------------------------------------------------------------------
-    // DONE!! Write the tree
-    // ----------------------------------------------------------------------------
-
-    outputTree->Fill();
-  }
-  
-  std::cout<<"Nelectrons      = "<<Nelectrons<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_ElEta   = "<<npass_ElEta<<" / "<<nentries<<std::endl;
-  std::cout<<"Nmuons          = "<<Nmuons<<" / "<<nentries<<std::endl;
-  std::cout<<"NrelIsoFail     = "<<NrelIsoFail<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_MuEta   = "<<npass_MuEta<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_nAK8Jets= "<<npass_nAK8jets<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_Trigger = "<<npass_trigger<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_MET     = "<<npass_met<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_lepPt   = "<<npass_lepPt<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_HT      = "<<npass_ht<<" / "<<nentries<<std::endl;
-  std::cout<<"npass_Njets     = "<<npass_Njets<<" / "<<nentries<<std::endl;
-  std::cout<<"Npassed_ALL     = "<<npass_all<<" / "<<nentries<<std::endl;
-
-  outputTree->Write();
-  delete outputTree;
-  delete poly2;
-  delete poly2U;
-  delete poly2D;
+   outputTree->Write();
+   delete outputTree;
+   delete poly2;
+   delete poly2U;
+   delete poly2D;
 
 }
