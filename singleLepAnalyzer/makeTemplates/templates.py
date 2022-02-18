@@ -19,6 +19,8 @@ args = parser.parse_args()
 
 # parse options
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid region argument used. Quiting..." )
+if args.year == "16APV":
+  import samplesUL16APV as samples
 if args.year == "16":
   import samplesUL16 as samples
 elif args.year == "17":
