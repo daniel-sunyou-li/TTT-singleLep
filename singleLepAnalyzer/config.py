@@ -8,7 +8,7 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_3t_{}_
 # target lumis in 1/pb for each year
 lumi = {
   "16": 35920., 
-  "17": 41480.,
+  "17": 41530.,
   "18": 59830.
 }
 lumiStr = { year: str( lumi[ year ] / 1000. ).replace( ".", "p" ) + "fb" for year in lumi }

@@ -177,7 +177,8 @@ class ModifyTemplate():
     category_log = { key: [] for key in [ "ALL", "DAT", "BKG", "SIG" ] }
     syst_log = { key: [] for key in [ "SIG SYST", "BKG SYST" ] }
     self.histograms = { key: {} for key in [ "BKG", "BKG SYST", "SIG", "SIG SYST", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
-    count = 0 
+    count = 0
+    print( "[INFO] Found {} histograms".format( len( self.hist_names ) ) ) 
     for hist_name in sorted( self.hist_names ):
       parse = hist_parse( hist_name ) 
       if parse[ "CATEGORY" ] not in category_log[ "ALL" ]:
@@ -723,7 +724,10 @@ class ModifyTemplate():
     self.rFile[ "OUTPUT" ] = ROOT.TFile( self.outpath, "RECREATE" )
     count = 0
     for hist_key in self.rebinned:
+      print( "   + {}".format( hist_key ) )
       for hist_name in self.rebinned[ hist_key ]:
+        if "TOTAL" in hist_key: 
+          self.rebinned[ hist_key ][ hist_name ].SetName( "TOTAL_{}_{}".format( hist_key.split( " " )[-1], hist_name ) )
         if "DAT" in hist_name:
           self.rebinned[ hist_key ][ hist_name ].SetName( self.rebinned[ hist_key ][ hist_name ].GetName().replace( "DAT", "data_obs" ) )
         self.rebinned[ hist_key ][ hist_name ].Write()
@@ -809,7 +813,7 @@ def main():
     template.add_smooth_shapes()
    
   # calculate yields
-  template.compute_yield_stats()
+  #template.compute_yield_stats()
     
   #print_tables( template.table )
         

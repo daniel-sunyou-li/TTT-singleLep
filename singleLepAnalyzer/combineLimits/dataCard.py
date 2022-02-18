@@ -10,12 +10,26 @@ parser.add_argument( "-y", "--year", required = True, help = "16APV,16,17,18" )
 parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True, help = ",".join( list( config.region_prefix.keys() ) ) )
 parser.add_argument( "-v", "--variable", required = True )
+parser.add_argument( "-m", "--mode", default = 0, help = "0,1,2,3" )
 parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
 import CombineHarvester.CombineTools.ch as ch
 import ROOT
 
+if args.year == "16APV": 
+  import samplesUL16APV as samples
+  import weightsUL16APV as weights
+elif args.year == "16":
+  import samplesUL16 as samples
+  import weightsUL16 as weights
+elif args.year == "17": 
+  import samplesUL17 as samples
+  import weightsUL17 as weights
+elif args.year == "18": 
+  import samplesUL18 as samples
+  import weightsUL18 as weights
+else: quit( "[ERR] Invalid -y (--year) argument. Quitting" ) 
 
 def hist_parse( hist_name ):
   parse = {
@@ -29,7 +43,7 @@ def hist_parse( hist_name ):
   parts = hist_name.split( "_" )
   for part in parts:
     # handle process first
-    if part in samples.groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]:
+    if part in samples.groups[ "SIG" ][ "PROCESS" ]:
       parse[ "PROCESS" ] = part
       parse[ "GROUP" ] = "SIG"
     elif part in samples.groups[ "BKG" ][ "PROCESS" ].keys():
@@ -38,7 +52,7 @@ def hist_parse( hist_name ):
     elif part in samples.groups[ "BKG" ][ "SUPERGROUP" ].keys():
       parse[ "PROCESS" ] = part
       parse[ "GROUP" ] = "BKG"
-    elif part in samples.groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]:
+    elif part in samples.groups[ "DAT" ][ "PROCESS" ] + [ "data_obs", "DAT" ]:
       parse[ "PROCESS" ] = part
       parse[ "GROUP" ] = "DAT"
     # handle systematic
@@ -96,13 +110,14 @@ class DataCard():
      
     self.templatePath = os.path.join( self.templateDir, self.templateName )
     self.limitPath = "limits_UL{}_{}_{}_{}/".format( self.year, self.variable, self.region, self.tag )
-    os.system( "cp -vp {} ./{}".format( self.templatePath, self.limitPath ) )
+    if not os.path.exists( self.limitPath ): os.system( "mkdir -v {}".format( self.limitPath ) )
+    os.system( "cp -vp {} {}".format( self.templatePath, os.path.join( os.getcwd(), self.limitPath ) ) )
     
-    templateFile = ROOT.TFile( templateName )
-    self.hist_names = [ rKey.GetName() for rKey in self.templateFile.GetListOfKeys() if not hist_parse( rKey.GetName() )[ "IS SYST" ] ]
+    templateFile = ROOT.TFile( os.path.join( self.limitPath, self.templateName ) )
+    self.hist_names = [ rKey.GetName() for rKey in templateFile.GetListOfKeys() if not hist_parse( rKey.GetName() )[ "IS SYST" ] ]
     templateFile.Close()
     
-    self.categories = { "ALL": list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names ) ) }
+    self.categories = { "ALL": list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names if ( "isE" in hist_name.split( "_" )[-2] or "isM" in hist_name.split( "_" )[-2] ) ) ) }
     self.categories[ "E" ] =   [ category for category in self.categories[ "ALL" ] if "isE" in category ]
     self.categories[ "M" ] =   [ category for category in self.categories[ "ALL" ] if "isM" in category ]
     self.categories[ "B" ] =   [ category for category in self.categories[ "ALL" ] if "nB0p" not in category ]
@@ -112,6 +127,10 @@ class DataCard():
 
     for nJ in range( 4, 11 ):
       self.categories[ "NJ{}".format( nJ ) ] = [ category for category in self.categories if "nJ{}".format( nJ ) in category ]
+
+    print( "[INFO] Found {} categories:".format( len( self.categories[ "ALL" ] ) ) )
+    for category in sorted( self.categories[ "ALL" ] ):
+      print( "   + {}".format( category ) )
     
     self.signals = self.params[ "SIGNALS" ]
     self.backgrounds = self.params[ "BACKGROUNDS" ]
@@ -145,14 +164,15 @@ class DataCard():
             self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
         else: 
           if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ].keys():
-            self.hist_groups[ "BKL" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
           else:
             self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
-      else:
+      elif parse[ "GROUP" ] == "DAT":
         if parse[ "CATEGORY" ] not in self.hist_groups[ "DAT" ].keys():
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
         else:
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+    
           
     self.masses = ch.ValsFromRange( "690" )
     
@@ -162,8 +182,8 @@ class DataCard():
   # mode 2: make only the lowermost region the "CONTROL REGION"
   # mode 3: make all regions "CONTROL REGION"
     print( "[START] Defining signal and control regions using mode {}".format( mode ) )
-    min_category = jet_count[ self.categories[ "ALL" ][0] ]
-    max_category = jet_count[ self.categories[ "ALL" ][0] ]
+    min_category = jet_count( self.categories[ "ALL" ][0] )
+    max_category = jet_count( self.categories[ "ALL" ][0] )
     for category in self.categories[ "ALL" ]:
       min_category = min( min_category, jet_count( category ) )
       max_category = max( max_category, jet_count( category ) )
@@ -213,42 +233,42 @@ class DataCard():
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst( 
       self.harvester, "LUMI_$ERA", "lnN",
-      self.harvester.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
     )
     print( "   + Luminosity {}: {} (lnN)".format( self.year, config.systematics[ "LUMI" ][ self.year ] ) )
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "E" ] ).AddSyst( 
       self.harvester, "SF_EL_$ERA", "lnN",
-      self.harvester.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
     )
     print( "   + Trigger (el) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "M" ] ).AddSyst( 
       self.harvester, "SF_MU_$ERA", "lnN",
-      self.harvester.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
     )
     print( "   + Trigger (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
     count += 1
     
     self.harvester.cp().process( [ bkg for bkg in self.backgrounds if "TT" in bkg ] ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, "xsec_ttbar", "lnN",
-      self.harvester.SystMap()( config.systematics[ "XSEC" ][ "TTBAR" ] )
+      ch.SystMap()( config.systematics[ "XSEC" ][ "TTBAR" ] )
     )
     print( "   + TTBAR: {} (lnN)".format( config.systematics[ "XSEC" ][ "TTBAR" ] ) )
     count += 1
     
     self.harvester.cp().process( [ "EWK" ] ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, "xsec_ewk", "lnN",
-      self.harvester.SystMap()( config.systematics[ "XSEC" ][ "EWK" ] )
+      ch.SystMap()( config.systematics[ "XSEC" ][ "EWK" ] )
     )
     print( "   + EWK: {} (lnN)".format( config.systematics[ "XSEC" ][ "EWK" ] ) )
     count += 1
     
     self.harvester.cp().process( [ "TOP" ] ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, "xsec_top", "lnN",
-      self.harvester.SystMap()( config.systematics[ "XSEC" ][ "TOP" ] )
+      ch.SystMap()( config.systematics[ "XSEC" ][ "TOP" ] )
     )
     print( "   + TOP: {} (lnN)".format( config.systematics[ "XSEC" ][ "TOP" ] ) )
     count += 1
@@ -272,35 +292,35 @@ class DataCard():
       
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, jec_tag, "shape",
-      self.harvester.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + JEC: 1.0 (shape)" )
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, jer_tag, "shape",
-      self.harvester.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + JER: 1.0 (shape)" ) 
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, hf_tag, "shape",
-      self.harvester.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + HF: 1.0 (shape)" ) 
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, lf_tag, "shape",
-      self.harvester.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + LF: 1.0 (shape)" )     
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, hfstat1_tag, "shape",
-      self.harvester.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + HFSTAT1: 1.0 (shape)" ) 
     count += 1
@@ -312,29 +332,29 @@ class DataCard():
       print( "[START] Adding heavy flavor (TTBB) systematics" )
       self.harvester.cp().process( [ "TTBB" ] ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, "TTHF", "lnN",
-        self.harvester.SystMap()( config.systematics[ "TTHF" ] )
+        ch.SystMap()( config.systematics[ "TTHF" ] )
       )
       print( "[DONE] Added TTHF: {} (lnN)".format( config.systematics[ "TTHF" ] ) )
     else:
       pass
   
   def add_shapes( self ):
-    print( "[START] Retrieving shape uncertainties from {}".format( self.templateName ) )
+    print( "[START] Retrieving histograms from {}".format( self.templateName ) )
     for category in self.categories[ "ALL" ]:
       key_bkg = { 
-        "NOMINAL": "$PROCESS_{}_$BIN".format( category ),
-        "SYST":    "$PROCESS_{}_$BIN_$SYSTEMATIC".format( category )
+        "NOMINAL": "{}_{}_{}$BIN_$PROCESS".format( self.variable, self.lumistr, category ),
+        "SYST":    "{}_$SYSTEMATIC_{}_{}$BIN_$PROCESS".format( self.variable, self.lumistr, category )
       }
       self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).backgrounds().ExtractShapes(
-        self.templateName, key_bkg[ "NOMINAL" ], key_bkg[ "SYST" ]
+        os.path.join( self.limitPath, self.templateName ), key_bkg[ "NOMINAL" ], key_bkg[ "SYST" ]
       )
       key_sig = { 
-        "NOMINAL": "$PROCESS$MASS_{}_$BIN".format( category ),
-        "SYST":    "$PROCESS$MASS_{}_$BIN_$SYSTEMATIC".format( category )
+        "NOMINAL": "{}_{}_{}$BIN_$PROCESS$MASS".format( self.variable, self.lumistr, category ),
+        "SYST":    "{}_$SYSTEMATIC_{}_{}$BIN_$PROCESS$MASS".format( self.variable, self.lumistr, category )
       }
       if category not in self.regions[ "CONTROL" ]:
         self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).signals().ExtractShapes(
-          self.templateName, key_sig[ "NOMINAL" ], key_sig[ "SYST" ]
+          os.path.join( self.limitPath, self.templateName ), key_sig[ "NOMINAL" ], key_sig[ "SYST" ]
         )
     print( "[DONE]" )
   
@@ -377,14 +397,14 @@ def main():
     options, 
     "TTTX" 
   )
-  #datacard.define_regions()
-  #datacard.add_datasets()
-  #datacard.add_systematics()
+  datacard.define_regions( args.mode )
+  datacard.add_datasets()
+  datacard.add_systematics()
   #datacard.add_TTHF_systematics()
-  #datacard.add_shapes()
-  #datacard.add_auto_MC_statistics()
-  #datacard.rename_and_write()
+  datacard.add_shapes()
+  datacard.add_auto_MC_statistics()
+  datacard.rename_and_write()
   
-  #datacard.create_workspace()
+  datacard.create_workspace()
   
 main()
