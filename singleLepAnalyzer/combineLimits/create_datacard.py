@@ -59,7 +59,7 @@ def hist_parse( hist_name ):
     if part.endswith( "UP" ) or part.endswith( "DN" ):
       parse[ "SYST" ] = part[:-2]
       parse[ "IS SYST" ] = True
-    elif "PDF" in part:
+    if "PDF" in part:
       parse[ "SYST" ] = "PDF"
       parse[ "IS SYST" ] = True
     # handle category
@@ -226,10 +226,9 @@ class DataCard():
         count[ "CR" ] += 1
     print( "[DONE] Added {} categories to SR and {} categories to CR".format( count[ "SR" ], count[ "CR" ] ) )
   
-  def add_systematics( self ):
-    print( "[START] Retrieving systematic uncertainties from {}".format( self.templateName ) )
+  def add_yield_systematics( self ):
+    print( "[START] Retrieving yield systematics from {}".format( self.templateName ) )
     count = 0
-    print( ">> Adding systematics for both signal and background processes:" )
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst( 
       self.harvester, "LUMI_$ERA", "lnN",
@@ -253,42 +252,73 @@ class DataCard():
     count += 1
     
     self.harvester.cp().process( [ bkg for bkg in self.backgrounds if "TT" in bkg ] ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, "xsec_ttbar", "lnN",
+      self.harvester, "XSEC_TTBAR", "lnN",
       ch.SystMap()( config.systematics[ "XSEC" ][ "TTBAR" ] )
     )
     print( "   + TTBAR: {} (lnN)".format( config.systematics[ "XSEC" ][ "TTBAR" ] ) )
     count += 1
     
     self.harvester.cp().process( [ "EWK" ] ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, "xsec_ewk", "lnN",
+      self.harvester, "XSEC_EWK", "lnN",
       ch.SystMap()( config.systematics[ "XSEC" ][ "EWK" ] )
     )
     print( "   + EWK: {} (lnN)".format( config.systematics[ "XSEC" ][ "EWK" ] ) )
     count += 1
     
     self.harvester.cp().process( [ "TOP" ] ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, "xsec_top", "lnN",
+      self.harvester, "XSEC_TOP", "lnN",
       ch.SystMap()( config.systematics[ "XSEC" ][ "TOP" ] )
     )
     print( "   + TOP: {} (lnN)".format( config.systematics[ "XSEC" ][ "TOP" ] ) )
     count += 1
     
+    print( "[DONE] Added {} yield systematics".format( count ) )
+    
+  def add_shape_systematics( self ):
+    print( "[START] Retrieving shape systematics from {}".format( self.templateName ) )
+    count = 0
+    
     if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
-      jec_tag = "JEC_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      jer_tag = "JER_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hf_tag = "HF_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lf_tag = "LF_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hfstat1_tag = "HFSTAT1_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lfstat1_tag = "LFSTAT1_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      cfstat1_tag = "CFSTAT1_{}_$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      pileup_tag = "PILEUP{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      prefire_tag = "PREFIRE{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      jec_tag = "JEC{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      jer_tag = "JER{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      hf_tag = "HF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      lf_tag = "LF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      hfstat1_tag = "HFSTAT1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      hfstat2_tag = "HFSTAT2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      lfstat1_tag = "LFSTAT1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      lfstat2_tag = "LFSTAT2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      cferr1_tag = "CFERR1{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      cferr2_tag = "CFERR2{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
     else:
-      jec_tag = "JEC_$ERA"
-      jer_tag = "JER_$ERA"
-      hf_tag = "HF_$ERA"
-      lf_tag = "LF_$ERA"
-      hfstat1_tag = "HFSTAT1_$ERA"
-      lfstat1_tag = "LFSTAT1_$ERA"
-      cfstat1_tag = "CFSTAT1_$ERA"
+      pileup_tag = "PILEUP"
+      prefire_tag = "PREFIRE$ERA"
+      jec_tag = "JEC$ERA"
+      jer_tag = "JER$ERA"
+      hf_tag = "HF"
+      lf_tag = "LF"
+      hfstat1_tag = "HFSTAT1$ERA"
+      hfstat2_tag = "HFSTAT2$ERA"
+      lfstat1_tag = "LFSTAT1$ERA"
+      lfstat2_tag = "LFSTAT2$ERA"
+      cferr1_tag = "CFERR1"
+      cferr2_tag = "CFERR2"
+      
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, pileup_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    print( "   + Pileup: 1.0 (shape)" )
+    count += 1
+      
+    if self.year in [ "16APV", "16", "17" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, prefire_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + Prefire: 1.0 (shape)" )
+      count += 1
       
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, jec_tag, "shape",
@@ -325,8 +355,88 @@ class DataCard():
     print( "   + HFSTAT1: 1.0 (shape)" ) 
     count += 1
     
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, lfstat1_tag, "shape",
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    )
+    print( "   + LFSTAT1: 1.0 (shape)" ) 
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, cfstat1_tag, "shape",
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    )
+    print( "   + CFERR1: 1.0 (shape)" ) 
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, hfstat2_tag, "shape",
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    )
+    print( "   + HFSTAT2: 1.0 (shape)" ) 
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, lfstat2_tag, "shape",
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    )
+    print( "   + LFSTAT2: 1.0 (shape)" ) 
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, cfstat2_tag, "shape",
+      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    )
+    print( "   + CFERR2: 1.0 (shape)" ) 
+    count += 1
+    
     print( "[DONE] Added {} standard systematics".format( count ) )
     
+  def add_theory_systematics( self ):
+    print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
+    count = 0
+    
+    if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
+      pdf_tag = "PDF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      murf_tag = "MURF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      isr_tag = "ISR{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      fsr_tag = "FSR{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+    else:
+      pdf_tag = "PDF"
+      murf_tag = "MURF"
+      isr_tag = "ISR"
+      fsr_tag = "FSR"
+   
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, pdf_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    print( "   + PDF: 1.0 (shape)" )
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, pdf_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    print( "   + MURF: 1.0 (shape)" )
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, pdf_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    print( "   + ISR: 1.0 (shape)" )
+    count += 1
+    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, pdf_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    print( "   + FSR: 1.0 (shape)" )
+    count += 1
+  
+    print( "[DONE] Added {} theoretical systematics".format( count ) )
+  
   def add_TTHF_systematics( self ):
     if self.params[ "TTHF SYST" ]:
       print( "[START] Adding heavy flavor (TTBB) systematics" )
@@ -342,15 +452,15 @@ class DataCard():
     print( "[START] Retrieving histograms from {}".format( self.templateName ) )
     for category in self.categories[ "ALL" ]:
       key_bkg = { 
-        "NOMINAL": "{}_{}_{}$BIN_$PROCESS".format( self.variable, self.lumistr, category ),
-        "SYST":    "{}_$SYSTEMATIC_{}_{}$BIN_$PROCESS".format( self.variable, self.lumistr, category )
+        "NOMINAL": "$PROCESS_{}$BIN_NOMINAL".format( category ),
+        "SYST":    "$PROCESS_{}$BIN_$SYSTEMATIC".format( category )
       }
       self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).backgrounds().ExtractShapes(
         os.path.join( self.limitPath, self.templateName ), key_bkg[ "NOMINAL" ], key_bkg[ "SYST" ]
       )
       key_sig = { 
-        "NOMINAL": "{}_{}_{}$BIN_$PROCESS$MASS".format( self.variable, self.lumistr, category ),
-        "SYST":    "{}_$SYSTEMATIC_{}_{}$BIN_$PROCESS$MASS".format( self.variable, self.lumistr, category )
+        "NOMINAL": "$PROCESS$MASS_{}$BIN_NOMINAL".format( category ),
+        "SYST":    "$PROCESS$MASS_{}$BIN_$SYSTEMATIC".format( category )
       }
       if category not in self.regions[ "CONTROL" ]:
         self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).signals().ExtractShapes(
