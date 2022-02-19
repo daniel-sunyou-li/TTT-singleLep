@@ -30,6 +30,48 @@ def hist_tag( *args ):
   histTag = args[0]
   for arg in args[1:]: histTag += "_{}".format( arg )
   return histTag
+
+def hist_parse( hist_name ):
+  parse = {
+    "PROCESS": "",
+    "GROUP": "",
+    "SYST": "",
+    "SHIFT": "",
+    "IS SYST": False,
+    "CATEGORY": "",
+    "CHANNEL": ""
+  }
+  parts = hist_name.split( "_" )
+  for part in parts:
+    # handle process first
+    if part in samples.groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]:
+      parse[ "PROCESS" ] = part
+      parse[ "GROUP" ] = "SIG"
+    elif part in samples.groups[ "BKG" ][ "PROCESS" ].keys():
+      parse[ "PROCESS" ] = part
+      parse[ "GROUP" ] = "BKG"
+    elif part in samples.groups[ "BKG" ][ "SUPERGROUP" ].keys():
+      parse[ "PROCESS" ] = part
+      parse[ "GROUP" ] = "BKG"
+    elif part in samples.groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]:
+      parse[ "PROCESS" ] = part
+      parse[ "GROUP" ] = "DAT"
+    
+    # handle systematic
+    if part.endswith( "UP" ) or part.endswith( "DN" ):
+      parse[ "SHIFT" ] = part[-2:]
+      parse[ "SYST" ] = part[:-2]
+      parse[ "IS SYST" ] = True
+    if "PDF" in part:
+      parse[ "SHIFT" ] = part[-2:]
+      parse[ "SYST" ] = "PDF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() ) if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in part else "PDF"
+      parse[ "IS SYST" ] = True
+    # handle category
+    if part.startswith( "isE" ) or part.startswith( "isM" ) or part.startswith( "isL" ):
+      parse[ "CATEGORY" ] = part
+      parse[ "CHANNEL" ] = part[3:]
+  return parse
+
 def modeling_systematics( categories, groups ):
   systematics = {}
   for category in categories:
@@ -133,34 +175,27 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   count = 0
   syst_list = []
   for hist_name in rFile.GetListOfKeys():
-    syst = False
-    parts = hist_name.GetName().split( "_" )
-    if len( parts ) == len( args.variable.split( "_" ) ) + 4: 
-      syst = True
-      syst_name = parts[len( args.variable.split( "_" ) )]
-      if "UP" in syst_name or "DN" in syst_name: syst_name = syst_name[:-2]
-      if "PDF" in syst_name: syst_name = syst_name[:3]
-      if syst_name not in syst_list: syst_list.append( syst_name )
-    process = parts[-1]
-    category = parts[-2]
+    parse = hist_parse( hist_name )
+    category = parse[ "CATEGORY" ]
+    process = parse[ "PROCESS" ]
+    syst = parse[ "SYST" ]
     if category not in categories[ "ALL" ]:
       categories[ "ALL" ].append( category )
-
     if process in groups_dat:
       if args.verbose: print( "   + DAT: {}".format( hist_name.GetName() ) )
       histograms[ "DAT" ][ hist_name.GetName() ] = rFile.Get( hist_name.GetName() ).Clone( hist_name.GetName() )
-      if category not in categories[ "DAT" ] and not syst:
+      if category not in categories[ "DAT" ]:
         histograms[ "TOTAL DAT" ][ category ] = histograms[ "DAT" ][ hist_name.GetName() ].Clone( "TOTAL DAT {}".format( category ) )
         categories[ "DAT" ].append( category )
-      elif not syst:
+      else:
         histograms[ "TOTAL DAT" ][ category ].Add( histograms[ "DAT" ][ hist_name.GetName() ] )
     elif process in groups_bkg:
       if args.verbose: print( "   + BKG: {}".format( hist_name.GetName()) )
       histograms[ "BKG" ][ hist_name.GetName() ] = rFile.Get( hist_name.GetName() ).Clone( hist_name.GetName() )   
-      if category not in categories[ "BKG" ] and not syst:
+      if category not in categories[ "BKG" ] and not parse[ "IS SYST" ]:
         histograms[ "TOTAL BKG" ][ category ] = histograms[ "BKG" ][ hist_name.GetName() ].Clone( "TOTAL BKG {}".format( category ) )
         categories[ "BKG" ].append( category )
-      elif not syst:
+      elif not parse[ "IS SYST" ]:
         histograms[ "TOTAL BKG" ][ category ].Add( histograms[ "BKG" ][ hist_name.GetName() ] )
     elif process in groups_sig:
       if args.verbose: print( "   + SIG: {}".format( hist_name.GetName() ) )
@@ -169,10 +204,10 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
       if scale_signal_xsec: scale *= weights.weights[ process ]
       histograms[ "SIG" ][ hist_name.GetName() ] = rFile.Get( hist_name.GetName() ).Clone( hist_name.GetName() )
       histograms[ "SIG" ][ hist_name.GetName() ].Scale( scale )
-      if category not in categories[ "SIG" ] and not syst:
+      if category not in categories[ "SIG" ] and not parse[ "IS SYST" ]:
         histograms[ "TOTAL SIG" ][ category ] = histograms[ "SIG" ][ hist_name.GetName() ].Clone( "TOTAL SIG {}".format( category ) )
         categories[ "SIG" ].append( category )
-      elif not syst:
+      elif not parse[ "IS SYST" ]:
         histograms[ "TOTAL SIG" ][ category ].Add( histograms[ "SIG" ][ hist_name.GetName() ] )
 
     else:
