@@ -6,8 +6,8 @@ cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_6_19/src"
 cmsswbase = os.path.join( os.getcwd(), ".." )
 
 parser = ArgumentParser()
-parser.add_argument( "-s", "--step", required = True, help = "Options: 1-6" )
-parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16, 17, 18" )
+parser.add_argument( "-s", "--step", required = True, help = "Options: 1-5" )
+parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16APV, 16, 17, 18" )
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-r", "--region", default = "SR" )
@@ -72,7 +72,7 @@ Executable = {}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
 JobBatchName = SLA_step2\n\
-request_memory = 5000\n\
+request_memory = 1024\n\
 Output = condor_log/{}.out\n\
 Error = condor_log/{}.err\n\
 Log = condor_log/{}.log\n\
@@ -129,7 +129,7 @@ Queue 1""".format(
       jdf.close()
       os.system( "condor_submit {}".format( jdf_name ) )
       os.chdir( ".." )
-  
+ 
 def run_combine():
   trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "combine" )

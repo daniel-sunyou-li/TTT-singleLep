@@ -312,27 +312,27 @@ class DataCard():
     print( "   + Pileup: 1.0 (shape)" )
     count += 1
       
-    if self.year in [ "16APV", "16", "17" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, prefire_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      print( "   + Prefire: 1.0 (shape)" )
-      count += 1
+    #if self.year in [ "16APV", "16", "17" ]:
+    #  self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+    #    self.harvester, prefire_tag, "shape",
+    #    ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    #  )
+    #  print( "   + Prefire: 1.0 (shape)" )
+    #  count += 1
       
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, jec_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + JEC: 1.0 (shape)" )
-    count += 1
+    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+    #  self.harvester, jec_tag, "shape",
+    #  ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    #)
+    #print( "   + JEC: 1.0 (shape)" )
+    #count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, jer_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + JER: 1.0 (shape)" ) 
-    count += 1
+    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+    #  self.harvester, jer_tag, "shape",
+    #  ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    #)
+    #print( "   + JER: 1.0 (shape)" ) 
+    #count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
       self.harvester, hf_tag, "shape",
@@ -363,7 +363,7 @@ class DataCard():
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, cfstat1_tag, "shape",
+      self.harvester, cferr1_tag, "shape",
       ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + CFERR1: 1.0 (shape)" ) 
@@ -384,7 +384,7 @@ class DataCard():
     count += 1
     
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, cfstat2_tag, "shape",
+      self.harvester, cferr2_tag, "shape",
       ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
     )
     print( "   + CFERR2: 1.0 (shape)" ) 
@@ -509,7 +509,9 @@ def main():
   )
   datacard.define_regions( args.mode )
   datacard.add_datasets()
-  datacard.add_systematics()
+  datacard.add_yield_systematics()
+  datacard.add_shape_systematics()
+  datacard.add_theory_systematics()
   #datacard.add_TTHF_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
