@@ -30,6 +30,7 @@ options = {
     "UE": False,            # ue systematics
     "PDF": True,            # pdf systematics
     "SYSTEMATICS": True,    # include other systematics defined in systematics[ "MC" ]
+    "ABCDNN": False,        # using ABCDnn data-driven background estimation for ttbar
     "FINAL ANALYSIS": False # run binned-analysis on data
   },
   "HISTS": {
@@ -120,8 +121,7 @@ params = {
       "EWK": 1.00,
       "QCD": 1.01
     }
-  }
-    
+  }  
 }
 
 region_prefix = {
@@ -130,6 +130,7 @@ region_prefix = {
   "TTCR": "ttbar",
   "WJCR": "wjets",
   "BASELINE": "baseline"
+  "ABCDNN": "acbdnn"
 }
 
 # systematic uncertainty sources
@@ -196,6 +197,14 @@ hist_bins = {
     "NW": [ "0p" ],
     "NB": [ "2p" ],
     "NJ": [ "5p" ]
+  },
+  "ABCDNN": {
+    "LEPTON": [ "E", "M" ],
+    "NHOT": [ "0", "1", "2p" ],
+    "NT": [ "0" ],
+    "NW": [ "0" ],
+    "NB": [ "3p" ],
+    "NJ": [ "7p" ] 
   }
 }
 
