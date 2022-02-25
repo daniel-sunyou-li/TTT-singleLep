@@ -90,7 +90,11 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
   if process not in list( samples.samples[ "DATA" ].keys() ):
-    mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+    if not config.options[ "GENERAL" ][ "ABCDNN" ]:
+      mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+    else:
+      abcdnn_sum = sum( [ weights.weights[ abcdnn_process ] for abcdnn_process in config.params[ "ABCDNN PROCESS" ] ] )
+      mc_weights[ "NOMINAL" ] += " *transfer_{}*{}/{}".format( config.params[ "ABCDNN TAG" ], mc_weights[ "PROCESS" ], abcdnn_sum )
 
   if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
     #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
