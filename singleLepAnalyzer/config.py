@@ -67,6 +67,14 @@ params = {
     "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
+    "ABCDNN PROCESS": [ # background processes that abcdnn will be applied to
+      "TTJJ",
+      "TTCC",
+      "TTBB",
+      "TT1B",
+      "TT2B",
+      "QCD"
+    ]
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
