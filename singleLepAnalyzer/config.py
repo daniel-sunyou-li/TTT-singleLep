@@ -1,12 +1,13 @@
 import numpy as np
 
-years = [ "16", "17", "18" ]
+years = [ "16APV", "16", "17", "18" ]
 
 postfix = "deepJetV1"
 inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_3t_{}_step3/".format( year, postfix ) for year in years }
 
 # target lumis in 1/pb for each year
 lumi = {
+  "16APV": 35920.,
   "16": 35920., 
   "17": 41530.,
   "18": 59830.
@@ -23,18 +24,18 @@ BR = {
 # boolean options that need to be coordinated across template making
 options = {
   "GENERAL": {
-    "TEST": False,        # run on limited samples
-    "JET SHIFTS": False,  # JEC/JER shifts for shape 
-    "HDAMP": False,       # hdamp systematics
-    "UE": False,          # ue systematics
-    "PDF": True,          # pdf systematics
-    "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "FINAL ANALYSIS": False
+    "TEST": False,          # run on limited samples
+    "JET SHIFTS": False,    # JEC/JER shifts for shape 
+    "HDAMP": False,         # hdamp systematics
+    "UE": False,            # ue systematics
+    "PDF": True,            # pdf systematics
+    "SYSTEMATICS": True,    # include other systematics defined in systematics[ "MC" ]
+    "FINAL ANALYSIS": False # run binned-analysis on data
   },
   "HISTS": {
-    "RENORM PDF": True, # renormalize the PDF weights
-    "SUMMARY": False, # produce summary templates
-    "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
+    "RENORM PDF": True,           # renormalize the PDF weights
+    "SUMMARY": False,             # produce summary templates
+    "SCALE SIGNAL 1PB": False,    # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
     "BLIND": True,
@@ -134,12 +135,12 @@ region_prefix = {
 # systematic uncertainty sources
 systematics = {
   "MC": [ 
-    "pileup", #"trigeff",
+    "pileup", "trigeff",
     "muRFcorrd", "muR", "muF", "isr", "fsr", 
     "hotstat", "hotcspur", "hotclosure", 
     "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
     "CFerr1", "CFerr2",
-    #"toppt", "ht",
+    "toppt", "ht",
     #"JER", "JEC"
   ],
   "LUMI": {
@@ -236,6 +237,8 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" )
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" ),
+    "DNN_ABCDnn_SR": ( "DNN_ABCDnn_SR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" ),
+    "DNN_ABCDnn_CR": ( "DNN_ABCDnn_CR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" )
   }
 }
