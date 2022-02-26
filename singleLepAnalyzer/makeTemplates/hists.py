@@ -93,18 +93,15 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     if not config.options[ "GENERAL" ][ "ABCDNN" ]:
       mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
     else:
-      abcdnn_process = []
-      for group in config.params[ "GENERAL" ][ "ABCDNN GROUP" ]:
-        for process_temp in samples.groups[ "BKG" ][ "PROCESS" ][ group ]:
-          abcdnn_process.append( process_temp )
-      mc_weights[ "NOMINAL" ] += "*transfer*{}".format( mc_weights[ "PROCESS" ] )
+      mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] )
 
   if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
     #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
     #                           "DN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
     if config.options[ "GENERAL" ][ "ABCDNN" ]:
-      mc_weights[ "TRANSFER" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "transfer", "(transfer+transfer_err") ),
-                                   "DN": mc_weights[ "NOMINAL" ].replace( "transfer", "(transfer-transfer_err") ) }
+      abcdnn_tag = config.params[ "GENERAL" ][ "ABCDNN TAG" ]
+      mc_weights[ "TRANSFER" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}+transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ),
+                                   "DN": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}-transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ) }
     if "pileup" in config.systematics[ "MC" ]:
       mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
                                  "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
