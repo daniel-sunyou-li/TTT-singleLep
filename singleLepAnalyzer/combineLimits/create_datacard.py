@@ -278,6 +278,19 @@ class DataCard():
     print( "[START] Retrieving shape systematics from {}".format( self.templateName ) )
     count = 0
     
+    apply_samples = []
+    
+    if config.options[ "GENERAL" ][ "ABCDNN" ]:
+      apply_groups += self.signals
+      exclude_groups = config.params[ "GENERAL" ][ "ABCDNN GROUP" ]
+      for group in self.backgrounds:
+        if group not in exclude_groups:
+          apply_groups.append( group )
+        else:
+          print( "[INFO] Running ABCDnn variables, excluding yield systematics for group: {}".format( group ) )
+    else:
+      apply_groups += self.signals + self.backgrounds
+    
     if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
       pileup_tag = "PILEUP{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       prefire_tag = "PREFIRE{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
@@ -305,90 +318,101 @@ class DataCard():
       cferr1_tag = "CFERR1"
       cferr2_tag = "CFERR2"
       
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, pileup_tag, "shape",
-      ch.SystMap()( 1.0 )
-    )
-    print( "   + Pileup: 1.0 (shape)" )
-    count += 1
+    if "pileup" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, pileup_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + Pileup: 1.0 (shape)" )
+      count += 1
       
-    #if self.year in [ "16APV", "16", "17" ]:
-    #  self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-    #    self.harvester, prefire_tag, "shape",
-    #    ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    #  )
-    #  print( "   + Prefire: 1.0 (shape)" )
-    #  count += 1
+    if self.year in [ "16APV", "16", "17" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, prefire_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + Prefire: 1.0 (shape)" )
+      count += 1
       
-    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-    #  self.harvester, jec_tag, "shape",
-    #  ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    #)
-    #print( "   + JEC: 1.0 (shape)" )
-    #count += 1
+    if "JEC" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, jec_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + JEC: 1.0 (shape)" )
+      count += 1
     
-    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-    #  self.harvester, jer_tag, "shape",
-    #  ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    #)
-    #print( "   + JER: 1.0 (shape)" ) 
-    #count += 1
+    if "JER" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, jer_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + JER: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, hf_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + HF: 1.0 (shape)" ) 
-    count += 1
+    if "HF" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, hf_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HF: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, lf_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + LF: 1.0 (shape)" )     
-    count += 1
+    if "LF" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, lf_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + LF: 1.0 (shape)" )     
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, hfstat1_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + HFSTAT1: 1.0 (shape)" ) 
-    count += 1
+    if "HFstat1" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, hfstat1_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HFSTAT1: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, lfstat1_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + LFSTAT1: 1.0 (shape)" ) 
-    count += 1
+    if "LFstat1" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, lfstat1_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + LFSTAT1: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, cferr1_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + CFERR1: 1.0 (shape)" ) 
-    count += 1
+    if "CFerr1" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, cferr1_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + CFERR1: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, hfstat2_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + HFSTAT2: 1.0 (shape)" ) 
-    count += 1
+    if "HFstat2" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, hfstat2_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HFSTAT2: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, lfstat2_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + LFSTAT2: 1.0 (shape)" ) 
-    count += 1
+    if "LFstat2" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, lfstat2_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + LFSTAT2: 1.0 (shape)" ) 
+      count += 1
     
-    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, cferr2_tag, "shape",
-      ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    )
-    print( "   + CFERR2: 1.0 (shape)" ) 
-    count += 1
+    if "CFerr2" in config.systematics[ "MC" ]:
+      self.harvester.cp().process( apply_samples ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, cferr2_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + CFERR2: 1.0 (shape)" ) 
+      count += 1
     
     print( "[DONE] Added {} standard systematics".format( count ) )
     
