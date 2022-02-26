@@ -72,7 +72,7 @@ params = {
       "TTBB",
       "QCD"
     ],
-    "ABCDNN TAG": { year: "{}_SR".format( year ) for year in years } 
+    "ABCDNN TAG": "SR" 
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
