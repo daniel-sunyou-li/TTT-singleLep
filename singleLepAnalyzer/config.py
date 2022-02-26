@@ -68,11 +68,8 @@ params = {
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
     "ABCDNN GROUP": [ # background processes that abcdnn will be applied to
-      "TTJJ",
-      "TTCC",
+      "TTNOBB",
       "TTBB",
-      "TT1B",
-      "TT2B",
       "QCD"
     ],
     "ABCDNN TAG": { year: "{}_SR".format( year ) for year in years } 
