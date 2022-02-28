@@ -1,4 +1,4 @@
-# Search for three top quarks decaying to the single-lepton plus jets final state
+# Search for three top quarks to the single-lepton final state
 Full framework of running the three top quark to single-lepton final state search analysis. Begins with running the `FWLJMET` EDAnalyzer to produce the `LJMet` ntuples and ends with evaluating the expected/observed significance and cross section limits for three top quark production. The subdirectories listed here are derived from other repositories that are used by other analyses. The steps specific to the search for three top quarks begin with "Variable Importance" where the first three steps are applicable to any analysis ending in the single-lepton final state. A description of each of the steps is provided below, and, where relevant, the associated template repositories are linked.
 
 The overall steps throughout the analysis framework are as follows:
