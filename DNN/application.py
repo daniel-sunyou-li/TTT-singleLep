@@ -11,20 +11,19 @@ execfile( "EOSSafeUtils.py" )
 
 # read in arguments
 parser = ArgumentParser()
-parser.add_argument("-y","--year",required=True,help="The sample year (2017 or 2018)")
+parser.add_argument("-y","--year",required=True,help="[16APV,16,17,18]")
 parser.add_argument("folders", nargs="+", help="Folders where model/weights, results are stored")
 parser.add_argument("-l","--log",default="application_log_" + datetime.now().strftime("%d.%b.%Y"),help="Condor job log folder")
-parser.add_argument("-v","--verbose", action="store_true", help="Verbosity option")
-parser.add_argument("-t","--test", action="store_true", help="If true, produce step3 file for only one sample")
-parser.add_argument("-sys","--systematics", action="store_true", help="Include systematic samples")
-parser.add_argument("-s","--split",action="store_true",help="Split step2 files into # parts")
+parser.add_argument("--verbose", action="store_true", help="Verbosity option")
+parser.add_argument("--test", action="store_true", help="If true, produce step3 file for only one sample")
+parser.add_argument("--systematics", action="store_true", help="Include systematic samples")
 parser.add_argument("-r","--resubmit",default=None,help="Identify failed jobs from Condor logs within the input directory")
 
 args = parser.parse_args()
 
 # start message
 if args.verbose:
-    print(">> Running step 3 application for the .tf DNN, producing new step3 ROOT files...")
+    print("[START] Running step3 application for the .tf DNN, producing new step3 ROOT files...")
 
 # set some paths
 condorDir   = config.step2DirEOS[ args.year ] # location where samples stored on EOS
@@ -33,21 +32,15 @@ step3Sample = config.step3Sample[ args.year ]
 files_step2 = {}
 files_step3 = {}
 
-# test on one signal and one background sample
-if args.test:
-  files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTTJ" ] ]
-  #files_step2[ "nominal" ] = [ config.all_samples[ args.year ][ "TTJetsSemiLepNjet9binTTjj" ][0] ]
-  #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTW" ][0] )
-  #files_step2[ "nominal" ].append( config.all_samples[ args.year ][ "TTTT" ][0] )
-else:
-  files_step2[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step2Sample ), shell = True ).split("\n")[:-1]
-  if args.resubmit != None: files_step3[ "nominal" ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/nominal/".format( config.eosUserName, step3Sample ),shell=True).split("\n")[:-1]
-  if args.systematics:
-    for syst in [ "JEC", "JER" ]:
-      for dir in [ "up", "down" ]:
-        files_step2[ syst+dir ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/{}{}/".format( config.eosUserName, step2Sample, syst, dir ), shell=True).split("\n")[:-1]
-        if args.resubmit != None: files_step3[ syst+dir ] = subprocess.check_output("eos root://cmseos.fnal.gov ls /store/user/{}/{}/{}{}/".format( config.eosUserName, step3Sample, syst, dir ), shell=True).split("\n")[:-1]
+shifts = [ "nominal" ] if not args.systematics else [ "nominal", "JECup", "JECdown", "JERup", "JERdown" ]
 
+# get list of samples to run on
+for shift in shifts:
+  eos_dir = os.path.join( "/eos/uscms/", config.step2DirEOS[ args.year ].split( "///" )[1] )
+  files_step2[ shift ] = EOSlistdir( os.path.join( eos_dir, config.step2Sample[ args.year ], shift ) )
+  if args.resubmit != None:
+    files_step3[ shift ] = EOSlistdir( os.path.join( eos_dir, config.step3Sample[ args.year ], shift ) )
+  
 submit_files = {}
 if args.verbose: print( ">> Converting the following samples to step3:" )
 if args.resubmit != None:
@@ -94,12 +87,12 @@ if args.resubmit != None:
     sys.exit()   
 
 else:
-    for key in files_step2:
-        submit_files[key] = []
-        print(">> {} samples to submit:".format( key ))
-        for i, file in enumerate( files_step2[key] ):
-            print("   {:<4} {}".format( str(i+1) + ".", file )) 
-            submit_files[key].append(file)
+  for key in files_step2:
+    submit_files[key] = []
+    print(">> {} samples to submit:".format( key ))
+    for i, file in enumerate( files_step2[key] ):
+      print("   {:<4} {}".format( str(i+1) + ".", file ) ) 
+      submit_files[key].append(file)
 
 resultDir    = args.folders                      # location where model/weights stored and where new files are output
 logDir       = args.log                          # location where condor job outputs are stored
@@ -201,18 +194,13 @@ Queue 1"""%dict
     
 def submit_jobs( files, key, condorDir, logrDir, sampleDir ):
   os.system( "mkdir -p " + logrDir )
-  outputDir = sampleDir.replace("step2","step3").replace("4t","3t") + "/" + key
+  outputDir = sampleDir.replace("step2","step3") + "/" + key
   if args.verbose: print( ">> Making new EOS directory: store/user/{}/{}/".format( config.eosUserName, outputDir ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, sampleDir.replace( "step2","step3" ) ) )
   os.system( "eos root://cmseos.fnal.gov mkdir store/user/{}/{}/".format( config.eosUserName, outputDir ) ) 
-  step3_files = EOSlistdir( "eos/uscms/store/user/{}/{}/{}".format(
-    config.eosUserName,
-    config.step3Sample[ args.year ],
-    key
-  ) )
   jobCount = 0
   for file in files[key]:
-    if file in step3_files: continue
+    if file in files_step3: continue
     if args.verbose: print( ">> Submitting Condor job for {}/{}".format( key, file ) )
     condor_job( file.split(".")[0], condorDir, outputDir, logDir, key )
     jobCount += 1
