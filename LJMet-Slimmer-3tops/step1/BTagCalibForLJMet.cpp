@@ -28,21 +28,26 @@ BTagEntryForLJMet::Parameters::Parameters(
   discrMin(discr_min),
   discrMax(discr_max)
 {
-  std::transform(measurementType.begin(), measurementType.end(),
-                 measurementType.begin(), ::tolower);
-  std::transform(sysType.begin(), sysType.end(),
-                 sysType.begin(), ::tolower);
+  std::transform(
+    measurementType.begin(), 
+    measurementType.end(),
+    measurementType.begin(), 
+    ::tolower);
+  std::transform(
+    sysType.begin(), 
+    sysType.end(),
+    sysType.begin(), 
+    ::tolower);
 }
 
-BTagEntryForLJMet::BTagEntryForLJMet(const std::string &csvLine)
-{
+BTagEntryForLJMet::BTagEntryForLJMet(const std::string &csvLine){
   // make tokens
   std::stringstream buff(csvLine);
   std::vector<std::string> vec;
   std::string token;
-  while (std::getline(buff, token, ","[0])) {
+  while( std::getline( buff, token, ","[0] ) ){
     token = BTagEntryForLJMet::trimStr(token);
-    if (token.empty()) {
+    if (token.empty()){
       continue;
     }
     vec.push_back(token);
@@ -66,26 +71,26 @@ throw std::exception();
   formula = vec[10];
   TF1 f1("", formula.c_str());  // compile formula to check validity
   if (f1.IsZombie()) {
-std::cerr << "ERROR in BTagCalibrationForLJMet: "
-          << "Invalid csv line; formula does not compile: "
-          << csvLine;
-throw std::exception();
+    std::cerr << "ERROR in BTagCalibrationForLJMet: "
+              << "Invalid csv line; formula does not compile: "
+              << csvLine;
+    throw std::exception();
   }
 
   // make parameters
   unsigned op = stoi(vec[0]);
   if (op > 3) {
-std::cerr << "ERROR in BTagCalibrationForLJMet: "
-          << "Invalid csv line; OperatingPoint > 3: "
-          << csvLine;
-throw std::exception();
+    std::cerr << "ERROR in BTagCalibrationForLJMet: "
+              << "Invalid csv line; OperatingPoint > 3: "
+              << csvLine;
+    throw std::exception();
   }
   unsigned jf = stoi(vec[3]);
   if (jf > 2) {
-std::cerr << "ERROR in BTagCalibrationForLJMet: "
-          << "Invalid csv line; JetFlavor > 2: "
-          << csvLine;
-throw std::exception();
+    std::cerr << "ERROR in BTagCalibrationForLJMet: "
+              << "Invalid csv line; JetFlavor > 2: "
+              << csvLine;
+    throw std::exception();
   }
   params = BTagEntryForLJMet::Parameters(
     BTagEntryForLJMet::OperatingPoint(op),
@@ -107,10 +112,10 @@ BTagEntryForLJMet::BTagEntryForLJMet(const std::string &func, BTagEntryForLJMet:
 {
   TF1 f1("", formula.c_str());  // compile formula to check validity
   if (f1.IsZombie()) {
-std::cerr << "ERROR in BTagCalibrationForLJMet: "
-          << "Invalid func string; formula does not compile: "
-          << func;
-throw std::exception();
+    std::cerr << "ERROR in BTagCalibrationForLJMet: "
+              << "Invalid func string; formula does not compile: "
+              << func;
+    throw std::exception();
   }
 }
 
@@ -119,10 +124,10 @@ BTagEntryForLJMet::BTagEntryForLJMet(const TF1* func, BTagEntryForLJMet::Paramet
   params(p)
 {
   if (func->IsZombie()) {
-std::cerr << "ERROR in BTagCalibrationForLJMet: "
-          << "Invalid TF1 function; function is zombie: "
-          << func->GetName();
-throw std::exception();
+    std::cerr << "ERROR in BTagCalibrationForLJMet: "
+              << "Invalid TF1 function; function is zombie: "
+              << func->GetName();
+    throw std::exception();
   }
 }
 

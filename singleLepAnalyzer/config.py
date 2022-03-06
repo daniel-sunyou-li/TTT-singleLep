@@ -7,9 +7,13 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_ste
 
 # target lumis in 1/pb for each year
 lumi = {
+<<<<<<< HEAD
   "16APV": 10000.,
+=======
+  "16APV": 35920.,
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   "16": 35920., 
-  "17": 41480.,
+  "17": 41530.,
   "18": 59830.
 }
 lumiStr = { year: str( lumi[ year ] / 1000. ).replace( ".", "p" ) + "fb" for year in lumi }
@@ -24,6 +28,7 @@ BR = {
 # boolean options that need to be coordinated across template making
 options = {
   "GENERAL": {
+<<<<<<< HEAD
     "TEST": False,        # run on limited samples
     "JET SHIFTS": False,  # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
@@ -37,6 +42,21 @@ options = {
     "RENORM PDF": True, # renormalize the PDF weights
     "SUMMARY": False,   # produce summary templates
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
+=======
+    "TEST": False,          # run on limited samples
+    "JET SHIFTS": False,    # JEC/JER shifts for shape 
+    "HDAMP": False,         # hdamp systematics
+    "UE": False,            # ue systematics
+    "PDF": True,            # pdf systematics
+    "SYSTEMATICS": True,    # include other systematics defined in systematics[ "MC" ]
+    "ABCDNN": False,        # using ABCDnn data-driven background estimation for ttbar
+    "FINAL ANALYSIS": False # run binned-analysis on data
+  },
+  "HISTS": {
+    "RENORM PDF": True,           # renormalize the PDF weights
+    "SUMMARY": False,             # produce summary templates
+    "SCALE SIGNAL 1PB": False,    # Scale the signal xsec to 1 PB for future studies
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   },
   "MODIFY BINNING": {
     "BLIND": True,
@@ -67,7 +87,16 @@ params = {
     "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
+<<<<<<< HEAD
     "ABCDNN TAG": "SR"
+=======
+    "ABCDNN GROUP": [ # background processes that abcdnn will be applied to
+      "TTNOBB",
+      "TTBB",
+      "QCD"
+    ],
+    "ABCDNN TAG": "SR" 
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -122,8 +151,7 @@ params = {
       "EWK": 1.00,
       "QCD": 1.01
     }
-  }
-    
+  }  
 }
 
 region_prefix = {
@@ -132,10 +160,12 @@ region_prefix = {
   "TTCR": "ttbar",
   "WJCR": "wjets",
   "BASELINE": "baseline"
+  "ABCDNN": "acbdnn"
 }
 
 # systematic uncertainty sources
 systematics = {
+<<<<<<< HEAD
   "MC": {
     "pileup": True, 
     "trigeff": False,
@@ -165,6 +195,17 @@ systematics = {
     "HD": False,
     "UE": False
   },
+=======
+  "MC": [ 
+    "pileup", "trigeff",
+    "muRFcorrd", "muR", "muF", "isr", "fsr", 
+    "hotstat", "hotcspur", "hotclosure", 
+    "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
+    "CFerr1", "CFerr2",
+    "toppt", "ht",
+    #"JER", "JEC"
+  ],
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   "LUMI": {
     "16APV": 1.012,
     "16": 1.012,
@@ -218,6 +259,14 @@ hist_bins = {
     "NW": [ "0p" ],
     "NB": [ "2p" ],
     "NJ": [ "5p" ]
+  },
+  "ABCDNN": {
+    "LEPTON": [ "E", "M" ],
+    "NHOT": [ "0", "1", "2p" ],
+    "NT": [ "0" ],
+    "NW": [ "0" ],
+    "NB": [ "3p" ],
+    "NJ": [ "7p" ] 
   }
 }
 
@@ -253,6 +302,12 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
+<<<<<<< HEAD
     "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), "DNN_{1-50}" )
+=======
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" ),
+    "DNN_ABCDnn_SR": ( "DNN_ABCDnn_SR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" ),
+    "DNN_ABCDnn_CR": ( "DNN_ABCDnn_CR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" )
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   }
 }

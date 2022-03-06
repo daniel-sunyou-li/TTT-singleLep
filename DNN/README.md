@@ -13,34 +13,13 @@ Sign-in to the LPC using your FNAL [username]
 
     kinit -f [username]@FNAL.GOV
     ssh -xy [username]@cmslpc-sl7.fnal.gov
-
-Retrieve the CMSSW environment (BASH #TCSH)
-
-    cd nobackup/
     
-    export SCRAM_ARCH=slc7_amd64_gcc630
-    # setenv SCRAM_ARCH slc7_amd64_gcc630
-    source /cvmfs/cms.cern.ch/cmsset_default.sh
-    # source /cvmfs/cms.cern.ch/cmsset_default.csh
-    
-Clone the repository
+Install `scikit-optimize` (`skopt`) for hyper parameter optimization:
 
-    cd CMSSW_9_4_6_patch1/src/
-    cmsenv
-    git clone https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN.git
-    cd ./TTTT_TMVA_DNN/
-    chmod u+rwx *
-    
-Edit the `varsList.py` file to set your usernames and the sample date:
-* `bruxUserName`
-* `lpcUserName`
-* `eosUserName`
-* `date` 
-    
-Setup the repository.  This will take some time. There are two possible choices for the year: 2017 or 2018.  The settings used below are for general-use, refer to [`description.md`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/description.md) for a detailed explanation of all the options.
+    pip install --user scikit-optimize  
 
-    pip install --user scikit-optimize
-    python ./setup/setup.py -y 2017 -sys -r -t -eos -v
+Edit `config.py` to define user and variable parameters. Make sure that the following are in agreement with your `step2` samples:
+* `postfix`
     
 ## Submit Variable Importance Condor Jobs
 Setup the environment for submitting the Condor jobs

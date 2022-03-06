@@ -86,6 +86,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   if process.startswith( "TTTo" ):
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
+<<<<<<< HEAD
   if process not in groups[ "DAT" ]:
     if config.options[ "GENERAL" ][ "ABCDNN" ] and process.startswith( "TTTo" ):
       mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] ) 
@@ -123,6 +124,48 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
       mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
                                "DN": mc_weights[ "NOMINAL" ] }
     if config.systematics[ "MC" ][ "njetsf" ]:
+=======
+  if process not in list( samples.samples[ "DATA" ].keys() ):
+    if not config.options[ "GENERAL" ][ "ABCDNN" ]:
+      mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+    else:
+      mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] )
+
+  if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
+    #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
+    #                           "DN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
+    if config.options[ "GENERAL" ][ "ABCDNN" ]:
+      abcdnn_tag = config.params[ "GENERAL" ][ "ABCDNN TAG" ]
+      mc_weights[ "TRANSFER" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}+transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ),
+                                   "DN": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}-transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ) }
+    if "pileup" in config.systematics[ "MC" ]:
+      mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
+                                 "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
+    mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
+                                "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDn_CommonCalc") }
+    if "murfcorrd" in config.systematics[ "MC" ]:
+      mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
+                                    "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if "muR" in config.systematics[ "MC" ]:
+      mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if "muF" in config.systematics[ "MC" ]:
+      mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if "isr" in config.systematics[ "MC" ]:
+      mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if "fsr" in config.systematics[ "MC" ]:
+      mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if "toppt" in config.systematics[ "MC" ]:
+      mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
+                                "DN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ) }
+    if "njet" in config.systematics[ "MC" ]:
+      mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
+                               "DN": mc_weights[ "NOMINAL" ] }
+    if "njetsf" in config.systematics[ "MC" ]:
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
       mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
                                  "DN": mc_weights[ "NOMINAL" ] }
     # deep jet related systematics

@@ -27,6 +27,8 @@ elif args.region == "VR":
   bins = config.hist_bins[ "VR" ]
 elif args.region == "BASELINE":
   bins = config.hist_bins[ "BASELINE" ]
+elif args.region == "ABCDNN":
+  bins = config.hist_bins[ "ABCDNN" ]
 else:
   quit( "[ERR] Invalid region argument used. Quitting." )
 
@@ -41,14 +43,14 @@ categories = list(
   )
 )
 	
+<<<<<<< HEAD
 subDir = "{}_UL{}_{}".format( config.region_prefix[ args.region ], args.year, args.postfix )
+=======
+prefix = config.region_prefix[ args.region ]
+subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
+>>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )
-
-#os.system( "cp ../weightsUL{}.py ../weights.py".format( args.year ) )
-#os.system( "cp ../samplesUL{}.py ../samples.py".format( args.year ) )
-#os.system( "cp ../analyze.py ../weights.py ../samples.py ../utils.py hists.py condor_templates.py condor_templates.sh {}".format( outputPath ) )
-#os.chdir( outputPath )
 
 nJobs = 0
 for variable in args.variables:
