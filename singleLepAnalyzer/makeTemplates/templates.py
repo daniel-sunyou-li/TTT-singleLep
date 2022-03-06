@@ -6,7 +6,7 @@ sys.path.append( "../../" )
 from argparse import ArgumentParser
 import numpy as np
 from array import array
-import utils
+from utils import hist_parse, hist_tag
 import config
 
 parser = ArgumentParser()
@@ -19,7 +19,9 @@ args = parser.parse_args()
 
 # parse options
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid region argument used. Quiting..." )
-if args.year == "16":
+if args.year == "16APV":
+  import samplesUL16APV as samples
+elif args.year == "16":
   import samplesUL16 as samples
 elif args.year == "17":
   import samplesUL17 as samples
@@ -36,40 +38,47 @@ def get_categories( directory ):
   categories = [ directory for directory in os.walk( directory ).next()[1] if directory.startswith( "isE" ) or directory.startswith( "isM" ) ]
   return categories
   
-def hist_tag( *args ):
-  histTag = args[0]
-  for arg in args[1:]: histTag += "_{}".format( arg )
-  return histTag
-        
 def load_histograms( variable, templateDir, categories ): 
-  hists =  { key: {} for key in [ "DAT", "BKG", "SIG", "CMB", "TEST" ] }
+  print( "[START] Loading histograms from {} for {}".format( templateDir, variable ) )
+  sTime = time.time()
+  hists =  {}
   
   for category in categories:
+    if args.verbose: print( "  >> Loading category: {}".format( category ) )
     categoryDir = os.path.join( templateDir, category )
-    if config.options[ "GENERAL" ][ "TEST" ]:
-      hists[ "TEST" ].update( pickle.load( open( os.path.join( categoryDir, "TEST_{}.pkl".format( variable ) ), "rb" ) ) )
-    else:
-      hists[ "DAT" ].update( pickle.load( open( os.path.join( categoryDir, "DATA_{}.pkl".format( variable ) ), "rb" ) ) )
-      hists[ "BKG" ].update( pickle.load( open( os.path.join( categoryDir, "BACKGROUND_{}.pkl".format( variable ) ), "rb" ) ) )
-      hists[ "SIG" ].update( pickle.load( open( os.path.join( categoryDir, "SIGNAL_{}.pkl".format( variable ) ), "rb" ) ) )
-    
+    hist_keys = [ filename.split( "_" )[0] for filename in os.listdir( categoryDir ) if filename.endswith( ".pkl" ) ]
+    for hist_key in hist_keys:
+      if hist_key == "TEST" and not config.options[ "GENERAL" ][ "TEST" ]: continue
+      if hist_key not in hists: hists[ hist_key ] = {}
+      hists[ hist_key ].update( pickle.load( open( os.path.join( categoryDir, "{}_{}.pkl".format( hist_key, variable ) ), "rb" ) ) ) 
+  count = 0
+  for hist_key in hists:
+    count += len( hists[ hist_key ].keys() )
+
+  print( "[DONE] Finished loading {} histograms in {:.2f} minutes".format( count, ( time.time() - sTime ) / 60 ) )
   return hists
   
-def modify_histograms( hists, hist_key, scale, rebin ):
+def clean_histograms( hists, hist_key, scale, rebin ):
   def scale_luminosity( hists_, hist_key, scale ):
-    if args.verbose: print( ">> Re-scaling {} MC luminosity by factor: {}".format( hist_key, scale ) )
+    print( "  [START] Scaling {} MC luminosity by factor: {}".format( hist_key, scale ) )
+    count = 0
     for hist_name in hists_[ hist_key ]:
-      process = hist_name.split( "_" )[-1]
-      if process in samples.samples[ "SIGNAL" ].keys() or process in samples.samples[ "BACKGROUND" ].keys():
+      parse = hist_parse( hist_name, samples )
+      if parse[ "GROUP" ] in [ "BKG", "SIG" ]:
         if args.verbose: print( "  + {}".format( hist_name ) )
         hists_[ hist_name ].Scale( scale )
+        count += 1
+    print( "  [DONE] {} histograms scaled".format( count ) )
     return hists_
   
   def rebinning( hists_, hist_key, rebin ):
-    if args.verbose: print( ">> Re-binning {} histogram bins by: {}".format( hist_key, rebin ) )
+    print( "  [START] Re-binning {} histogram bins by: {}".format( hist_key, rebin ) )
+    count = 0
     for hist_name in hists_[ hist_key ]:
       if args.verbose: print( "  + {}".format( hist_name ) )
       hists_[ hist_key ][ hist_name ].Rebin( rebin )
+      count += 1
+    print( "  [DONE] Re-binned {} histograms".format( count ) )
     return hists_
   
   def negative_correction( hists_, hist_key ):
@@ -84,12 +93,15 @@ def modify_histograms( hists, hist_key, scale, rebin ):
       if hist_.Integral() != 0 and integral > 0: hist_.Scale( integral / hist_.Integral() )
       return hist_, change
       
-    if args.verbose: print( ">>  Correcting negative {} histogram bins".format( hist_key ) )
+    print( "  [START] Correcting negative {} histogram bins".format( hist_key ) )
+    count = 0
     for hist_name in hists_[ hist_key ]:
-      process = hist_name.split( "_" )[-1]
-      if process in samples.samples[ "SIGNAL" ].keys() or process in samples.samples[ "BACKGROUND" ].keys():
+      parse = hist_parse( hist_name, samples )
+      if parse[ "GROUP" ] in [ "SIG", "BKG" ]:
         hists_[ hist_key ][ hist_name ], change = function( hists_[ hist_key ][ hist_name ] )
-        if change and args.verbose: print( "  + {}".format( hist_name ) )
+        if change: 
+          count += 1
+    print( "  [DONE] Corrected {} negative bins".format( count ) )
     return hists_
   
   def bin_correction( hists_, hist_key ):
@@ -112,160 +124,124 @@ def modify_histograms( hists, hist_key, scale, rebin ):
       hist_.SetBinError( 0, 0 )
       return hist_
     
-    if args.verbose: print( ">>  Correcting {} over/under-flow bins".format( hist_key ) )
+    if args.verbose: print( "  [START] Correcting {} over/under-flow bins".format( hist_key ) )
     for hist_name in hists_[ hist_key ]:
       hists_[ hist_key ][ hist_name ] = overflow( hists_[ hist_key ][ hist_name ] )
       hists_[ hist_key ][ hist_name ] = underflow( hists_[ hist_key ][ hist_name ] )
     
+    print( "  [DONE]" )
     return hists_
-  
+ 
+  sTime = time.time()
+  print( "[START] Cleaning {} histograms".format( hist_key ) )
   if scale != 1.: hists = scale_luminosity( hists, hist_key, scale )
   if rebin > 0: hists = rebinning( hists, hist_key, rebin )
   hists = negative_correction( hists, hist_key )
   hists = bin_correction( hists, hist_key )
-  
+  print( "[DONE] Finished cleaning histograms in {:.2f} minutes".format( ( time.time() - sTime ) / 60. ) )
   return hists
   
-def consolidate_histograms( hists, variable, categories, groups ):
+def combine_histograms( hists, variable, categories, groups ):
   def scale_ttbar( hists_, scaleHF, scaleLF ):
-    if args.verbose: print( ">> Scaling CMB ttbb histograms by a factor of {:.3f}".format( scaleHF ) )
-    for category in categories:
-      if hist_tag( variable, category, "TTBB" ) not in hists_[ "CMB" ].keys(): continue
+    print( "  [START] Scaling CMB ttbb histograms by a factor of {:.3f}".format( scaleHF ) )
+    count = 0
+    for category in sorted( categories ):
+      if hist_tag( "TTBB", category ) not in hists_[ "CMB" ].keys(): continue
       N = {
-        "TTBB": hists[ "CMB" ][ hist_tag( variable, category, "TTBB" ) ].Integral(),
-        "TTNOBB": hists[ "CMB" ][ hist_tag( variable, category, "TTNOBB" ) ].Integral()
+        "TTBB": hists[ "CMB" ][ hist_tag( "TTBB", category ) ].Integral(),
+        "TTNOBB": hists[ "CMB" ][ hist_tag( "TTNOBB", category ) ].Integral()
       }
-      if scaleLF == -1:
-        try: scaleLF = 1. + ( 1. - scaleLF ) * ( N[ "TTBB" ] / N[ "TTNOBB" ] )
+      if scaleLF < 0:
+        try: scaleLF = max( 0, 1. + ( 1. - scaleHF ) * ( N[ "TTBB" ] / N[ "TTNOBB" ] ) )
         except ZeroDivisionError: scaleLF = 1.
-      
-      hists_[ "CMB" ][ hist_tag( variable, category, "TTBB" ) ].Scale( scaleHF )
-      hists_[ "CMB" ][ hist_tag( variable, category, "TTNOBB" ) ].Scale( scaleLF )
-      
+      if args.verbose: print( "     + {} ({:.3f}): {} --> {}:".format( category, scaleLF, N[ "TTNOBB" ], N[ "TTNOBB" ] * scaleLF ) )
+
+      hists_[ "CMB" ][ hist_tag( "TTBB", category ) ].Scale( scaleHF )
+      hists_[ "CMB" ][ hist_tag( "TTNOBB", category ) ].Scale( scaleLF )
+      count += 1
+
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-        for syst in config.systematics[ "MC" ] + [ "HD", "UE" ]:
-          if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
-          if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
+        for syst in config.systematics[ "MC" ].keys():
+          if not config.systematics[ "MC" ][ syst ]: continue
+          if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
+          if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
-            hists_[ "CMB" ][ hist_tag( variable, category, syst.upper() + shift, "TTBB" ) ].Scale( scaleHF )
-            hists_[ "CMB" ][ hist_tag( variable, category, syst.upper() + shift, "TTNOBB" ) ].Scale( scaleLF )
+            hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
+            hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
+            count += 1
       if config.options[ "GENERAL" ][ "PDF" ]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-          hists_[ "CMB" ][ hist_tag( variable, category, "PDF" + str(i), "TTBB" ) ].Scale( scaleHF )
-          hists_[ "CMB" ][ hist_tag( variable, category, "PDF" + str(i), "TTNOBB" ) ].Scale( scaleLF )
-          
+          hists_[ "CMB" ][ hist_tag( "TTBB", category, "PDF" + str(i) ) ].Scale( scaleHF )
+          hists_[ "CMB" ][ hist_tag( "TTNOBB", category, "PDF" + str(i) ) ].Scale( scaleLF )
+          count += 1
+    print( "  [DONE] Scaled {} ttbb (ttnobb) histograms by {:.3f}".format( count, scaleHF ) )
     return hists_
     
   def set_zero( hists_, categories, zero ):
+    print( "  [START] Setting 0 bins to be non-trivial ({:.3e}) in histograms".format( zero ) )
+    count = 0
     for hist_key in hists_:
-      if args.verbose: print( ">> Setting {} 0 bins to be non-trivial ({:.3e}) in histograms".format( hist_key, zero ) )
-      for category in categories:
-        for hist_name in hists_[ hist_key ]:
-          process = hist_name.split( "_" )[-1]
-          if process in list( samples.samples[ "DATA" ].keys() ): continue
-          if hists_[ hist_key ][ hist_name ].Integral() == 0: 
-            hists_[ hist_key ][ hist_name ].SetBinContent( 1, zero )
+      for hist_name in hists_[ hist_key ]:
+        parse = hist_parse( hist_name, samples )
+        if parse[ "GROUP" ] == "DAT": continue
+        if hists_[ hist_key ][ hist_name ].Integral() == 0: 
+          hists_[ hist_key ][ hist_name ].SetBinContent( 1, zero )
+          count += 1
+    print( "  [DONE] Set {} 0 bins to be non-trivial".format( count ) )
     return hists_
 
-  if args.verbose: print( ">> Consolidating histograms by their grouping of: DAT, BKG and SIG" )
-  for category in categories:
-    prefix = "{}_{}_{}".format( variable, config.lumiStr[ args.year ], category )
+  print( "[START] Consolidating histograms by Higgs Combine grouping" )
+  sTime = time.time()
+  count = {}
+  hists[ "CMB" ] = {}
+  for hist_key in hists:
+    if hist_key == "CMB": continue
+    print( "  + {}".format( hist_key ) )
+    count[ hist_key ] = 0
+    for hist_name in hists[ hist_key ]:
+      parse = hist_parse( hist_name, samples )
+      if parse[ "IS SYST" ]:
+        try: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+        except: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
+      else:
+        try: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+        except: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) )
+      count[ hist_key ] += 1
 
-    # combine SIG, DAT and TEST histograms into the CMB histogram
-    for hist_key in hists:
-      if hist_key == "CMB" or hist_key == "BKG": continue
-      if hists[ hist_key ].keys() == []: continue
-      if args.verbose: print( ">> Combining {} histograms".format( hist_key ) )
-      hists[ "CMB" ][ hist_tag( hist_key, category ) ] = hists[ hist_key ][ hist_tag( prefix, groups[ hist_key ][ "PROCESS" ][0] ) ].Clone( hist_tag( prefix, hist_key ) )
-      for process in groups[ hist_key ][ "PROCESS" ][1:]: hists[ "CMB" ][ hist_tag( hist_key, category ) ].Add( hists[ hist_key ][ hist_tag( prefix, process ) ] )
-    
-    # combine background hists
-    for group in groups[ "BKG" ][ "PROCESS" ]:
-      if args.verbose: print( ">> Combining group {} histograms".format( group ) )
-      i = 0
-      while hist_tag( prefix, groups[ "BKG" ][ "PROCESS" ][ group ][i] ) not in hists[ "BKG" ].keys():
-        print( "[WARN] {} is empty, skipping...".format( groups[ "BKG" ][ "PROCESS" ][ group ][i] ) )
-        i += 1
-      hists[ "CMB" ][ hist_tag( group, category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "PROCESS" ][ group ][i] ) ].Clone( hist_tag( prefix, group ) )
-      for process in groups[ "BKG" ][ "PROCESS" ][ group ][i:]: 
-        if hist_tag( prefix, process ) not in hists[ "BKG" ].keys(): 
-          print( "[WARN] {} is empty, skipping...".format( process ) )
-          continue
-        hists[ "CMB" ][ hist_tag( group, category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-    
-    for group in groups[ "BKG" ][ "SUPERGROUP" ]:
-      print( ">> Combining super group {} histograms".format( group ) )
-      hists[ "CMB" ][ hist_tag( group, category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( hist_tag( prefix, group ) )
-      for process in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:]: hists[ "CMB" ][ hist_tag( group, category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-        
-    if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-      for syst in config.systematics[ "MC" ] + [ "HD", "UE" ]:
-        if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
-        if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-        for shift in [ "UP", "DN" ]:
-          sysTag = syst.upper() + shift
-          prefix = "{}_{}_{}_{}".format( variable, sysTag, config.lumiStr[ args.year ], category )
-          
-          if args.verbose: print( ">> Combining {} SIG histograms".format( syst.upper() + shift ) )
-          hists[ "CMB" ][ hist_tag( "SIG", sysTag, category ) ] = hists[ "SIG" ][ hist_tag( prefix, groups[ "SIG" ][ "PROCESS" ][0] ) ].Clone( hist_tag( prefix, "SIG" ) )
-          for process in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ hist_tag( "SIG", sysTag, category ) ].Add( hists[ "SIG" ][ hist_tag( prefix, process ) ] )
-          if args.verbose: print( ">> Combining {} BKG group histograms".format( syst.upper() + shift ) )
-          for group in groups[ "BKG" ][ "PROCESS" ]:
-            hists[ "CMB" ][ hist_tag( group, sysTag, category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "PROCESS" ][ group ][0] ) ].Clone( hist_tag( prefix, group ) )
-            for process in groups[ "BKG" ][ "PROCESS" ][ group ][1:]: hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-          
-          for group in groups[ "BKG" ][ "SUPERGROUP" ]:
-            hists[ "CMB" ][ hist_tag( group, sysTag, category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( hist_tag( prefix, group ) )
-            for process in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:]: hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-     
-    if config.options[ "GENERAL" ][ "PDF" ]:
-      for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-        prefix = "{}_PDF{}_{}_{}".format( variable, i, config.lumiStr[ args.year ], category )
-        if args.verbose: print( ">> Combining PDF SIG histograms" )
-        hists[ "CMB" ][ hist_tag( "SIG", "PDF" + str(i), category ) ] = hists[ "SIG" ][ hist_tag( prefix, groups[ "SIG" ][ "PROCESS" ][0] ) ].Clone( hist_tag( prefix, "SIG" )  )
-        for process in groups[ "SIG" ][ "PROCESS" ][1:]: hists[ "CMB" ][ hist_tag( "SIG", "PDF" + str(i), category ) ].Add( hists[ "SIG" ][ hist_tag( prefix, process ) ] )
-        
-        for group in groups[ "BKG" ][ "PROCESS" ]:
-          if args.verbose: print( ">> Combining PDF {} group histograms".format( group ) )
-          hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "PROCESS" ][ group ][0] ) ].Clone( hist_tag( prefix, group ) )
-          for process in groups[ "BKG" ][ "PROCESS" ][ group ][1:]: hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-          
-        for group in groups[ "BKG" ][ "SUPERGROUP" ]:
-          if args.verbose: print( ">> Combining PDF {} supergroup histograms".format( group ) )
-          hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ] = hists[ "BKG" ][ hist_tag( prefix, groups[ "BKG" ][ "SUPERGROUP" ][ group ][0] ) ].Clone( hist_tag( prefix, group ) )
-          for process in groups[ "BKG" ][ "SUPERGROUP" ][ group ][1:]: hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ].Add( hists[ "BKG" ][ hist_tag( prefix, process ) ] )
-                                                                                                                                                     
   for key in hists[ "CMB" ]: hists[ "CMB" ][ key ].SetDirectory(0)
-  if config.params[ "HISTS" ][ "TTHFSF" ] != 1 and "TTBB" in groups[ "BKG" ][ "TTBAR_GROUPS" ].keys(): hists = scale_ttbar( hists, config.params[ "HISTS" ][ "TTHFSF" ], config.params[ "HISTS" ][ "TTLFSF" ] )
+  if config.params[ "HISTS" ][ "TTHFSF" ] != 1: hists = scale_ttbar( hists, config.params[ "HISTS" ][ "TTHFSF" ], config.params[ "HISTS" ][ "TTLFSF" ] )
   hists = set_zero( hists, categories, config.params[ "GENERAL" ][ "ZERO" ] )
- 
+  print( "[DONE] Consolidated histograms into Combine groupings in {:.2f} minutes:".format( ( time.time() - sTime ) / 60. ) )
+  for key in count:
+    print( "   + {}: {}".format( key, count[ key ] ) )
   return hists
 
-def combine_templates( hists, variable, categories, groups, templateDir ):
-  print( ">> Writing Combine templates" )
+def write_combine( hists, variable, categories, groups, templateDir ):
+  print( "[START] Writing Combine templates" )
+  sTime = time.time()
   combine_name = "{}/template_combine_{}_UL{}.root".format( templateDir, variable, args.year )
   combine_file = TFile( combine_name, "RECREATE" )
-  lumiStr = config.lumiStr[ args.year ]
+
   for category in categories:
-    print( ">> Writing Combine templates for category: {}".format( category ) )
-    hists[ "CMB" ][ hist_tag( "DAT", category ) ].Write()
-    if args.verbose: print( "    + DAT: {}".format( hist_tag( "DAT", category ) ) )
-    
+    print( ">> Writing category: {}".format( category ) )
+    hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Write()
+    if args.verbose: print( "   + DAT > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
+
     for process in groups[ "SIG" ][ "PROCESS" ]:
-      hists[ "SIG" ][ hist_tag( variable, lumiStr, category, process ) ].Write()
-      if args.verbose: print( "    + SIG: {}".format( hist_tag( variable, lumiStr, category, process ) ) )
+      hists[ "CMB" ][ hist_tag( process, category ) ].Write()
+      if args.verbose: print( "   + SIG > {}: {}".format( hist_tag( process, category ), hists[ "CMB" ][ hist_tag( process, category ) ].Integral() ) )
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-        for syst in config.systematics[ "MC" ] + [ "HD", "UE" ]:
-          if args.verbose: print( "    + SIG (SYS): {}".format( process ) )
+        if args.verbose: print( "   + SIG (SYST): {}".format( hist_tag( process, category ) ) )
+        for syst in config.systematics[ "MC" ].keys():
+          if not config.systematics[ "MC" ][ syst ]: continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-          if syst.upper() == "TOPPT" or syst.upper() == "HT": continue
           for shift in [ "UP", "DN" ]:
-            hists[ "SIG" ][ hist_tag( variable, syst.upper() + shift, lumiStr, category, process ) ].Write()
+            hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
       if config.options[ "GENERAL" ][ "PDF" ]:
-        if args.verbose: print( "    + SIG (PDF): {}".format( process ) )
+        if args.verbose: print( "   + SIG (PDF): {}".format( hist_tag( process, category ) ) )
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-          hists[ "SIG" ][ hist_tag( variable, "PDF" + str(i), lumiStr, category, process ) ].Write()
+          hists[ "CMB" ][ hist_tag( process, category, "PDF" + str(i) ) ].Write()
 
     yield_total = sum( [ hists[ "CMB" ][ hist_tag( group, category ) ].Integral() for group in groups[ "BKG" ][ "SUPERGROUP" ] ] )
     for group in groups[ "BKG" ][ "SUPERGROUP" ]:
@@ -278,28 +254,27 @@ def combine_templates( hists, variable, categories, groups, templateDir ):
         if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "[WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
         hists[ "CMB" ][ hist_tag( group, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
       hists[ "CMB" ][ hist_tag( group, category ) ].Write()
-      if args.verbose: print( "    + BKG SUPERGROUP: {}".format( group ) ) 
+      if args.verbose: print( "    + BKG SUPERGROUP > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-        for syst in config.systematics[ "MC" ] + [ "HD", "UE" ]:
-          if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
-          if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
+        for syst in config.systematics[ "MC" ].keys():
+          if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
+          if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
             sysTag = syst.upper() + shift
             if scale_group:
-              hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
-            hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Write()
+              hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+            hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
         if args.verbose: print( "    + BKG SUPERGROUP (SYS): {}".format( group ) )
             
       if config.options[ "GENERAL" ][ "PDF" ]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           if scale_group:
-            hists[ "CMB" ][ hist_tag( group, sysTag, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
-          hists[ "CMB" ][ hist_tag( group, "PDF" + str(i), category ) ].Write()
+            hists[ "CMB" ][ hist_tag( group, category, "PDF" + str(i) ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+          hists[ "CMB" ][ hist_tag( group, category, "PDF" + str(i) ) ].Write()
         if args.verbose: print( "    + BKG SUPERGROUP (PDF): {}".format( group ) )
                                    
   combine_file.Close()
-  print( "[DONE] Finished writing Combine templates." )        
-
+  print( "[DONE] Finished writing Combine templates in {:.2f} minutes".format( ( time.time() - sTime ) / 60. ) ) 
    
 def make_tables( hists, categories, groups, variable, templateDir, lumiStr ):
   def initialize():
@@ -307,79 +282,70 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr ):
     for category in categories:
       for stat in yield_table: yield_table[ stat ][ category ] = {}
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-        for syst in config.systematics[ "MC" ] + [ "hd", "ue" ]:
+        for syst in config.systematics[ "MC" ].keys():
+          if not config.systematics[ "MC" ][ syst ]: continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
-            for stat in yield_table: yield_table[ stat ][ hist_tag( syst.upper() + shift, category ) ] = {}
+            for stat in yield_table: yield_table[ stat ][ hist_tag( category, syst.upper() + shift ) ] = {}
     return yield_table
   
   def fill_yield( tables ):
-    def get_yield( table, group, category ):
+    def get_yield( table, hist_key, group, category ):
       for process in group: 
         if args.verbose: ( "   + {}".format( process ) )
-        if process in groups[ "SIG" ][ "PROCESS" ]:
-          table[ "YIELD" ][ category ][ process ] = hists[ "SIG" ][ hist_tag( variable, lumiStr, category, process ) ].Integral()
-        else:
-          table[ "YIELD" ][ category ][ process ] = hists[ "CMB" ][ hist_tag( process, category ) ].Integral()
-        if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and process not in [ "DAT" ]:
-          for syst in config.systematics[ "MC" ] + [ "hd", "ue" ]:
+        table[ "YIELD" ][ category ][ process ] = hists[ hist_key ][ hist_tag( process, category ) ].Integral()
+        if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
+          for syst in config.systematics[ "MC" ].keys():
+            if not config.systematics[ "MC" ][ syst ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
             if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
             for shift in [ "UP", "DN" ]:
-              for stat in table: 
-                if process in groups[ "SIG" ][ "PROCESS" ]:
-                  table[ stat ][ hist_tag( syst.upper() + shift, category ) ][ process ] = hists[ "SIG" ][ hist_tag( variable, lumiStr, category, process ) ]
-                else:
-                  table[ stat ][ hist_tag( syst.upper() + shift, category ) ][ process ] = hists[ "CMB" ][ hist_tag( process, syst.upper() + shift, category ) ].Integral()
+              table[ "YIELD" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
       return table
 
     for category in categories:
       if args.verbose: print( ">> Computing yields for DATA histograms" )
-      tables = get_yield( tables, [ "DAT" ], category )
+      tables = get_yield( tables, "CMB", [ "data_obs" ], category )
       if args.verbose: print( ">> Computing yields for SIGNAL histograms" )
-      tables = get_yield( tables, groups[ "SIG" ][ "PROCESS" ], category )
-      if args.verbose: print( ">> Computing yields for BACKGROUND physics groups" )
-      tables = get_yield( tables, groups[ "BKG" ][ "PROCESS" ].keys(), category )
+      tables = get_yield( tables, "CMB", groups[ "SIG" ][ "PROCESS" ], category )
+      #if args.verbose: print( ">> Computing yields for BACKGROUND physics groups" )
+      #tables = get_yield( tables, "BKG", groups[ "BKG" ][ "PROCESS" ].keys(), category )
       if args.verbose: print( ">> Computing yields for BACKGROUND Combine groups" )
-      tables = get_yield( tables, groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
+      tables = get_yield( tables, "CMB", groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
       
-      tables[ "YIELD" ][ category ][ "TOTAL BKG" ] = sum( [ hists[ "CMB" ][ hist_tag( process, category ) ].Integral() for process in groups[ "BKG" ][ "PROCESS" ] ] )
-      tables[ "YIELD" ][ category ][ "DATA:BKG" ] = tables[ "YIELD" ][ category ][ "DAT" ] / ( tables[ "YIELD" ][ category ][ "TOTAL BKG" ] + config.params[ "GENERAL" ][ "ZERO" ] )
+      tables[ "YIELD" ][ category ][ "TOTAL BKG" ] = sum( [ hists[ "CMB" ][ hist_tag( process, category ) ].Integral() for process in groups[ "BKG" ][ "SUPERGROUP" ] ] )
+      tables[ "YIELD" ][ category ][ "DATA:BKG" ] = tables[ "YIELD" ][ category ][ "data_obs" ] / ( tables[ "YIELD" ][ category ][ "TOTAL BKG" ] + config.params[ "GENERAL" ][ "ZERO" ] )
    
     return tables
   
   def fill_error( tables ):
-    def get_error( table, group, category ):
+    def get_error( table, hist_key, group, category ):
       for process in group:
         if args.verbose: print( "   + {}".format( process ) )
         table[ "ERROR" ][ category ][ process ] = 0
-        if process in groups[ "SIG" ][ "PROCESS" ]:
-          for i in range( 1, hists[ "SIG" ][ hist_tag( variable, lumiStr, category, groups[ "SIG" ][ "PROCESS" ][0] ) ].GetXaxis().GetNbins() + 1 ):
-            table[ "ERROR" ][ category ][ process ] += hists[ "SIG" ][ hist_tag( variable, lumiStr, category, process ) ].GetBinError(i)**2
-        else:
-          for i in range( 1, hists[ "CMB" ][ hist_tag( list( group )[0], category ) ].GetXaxis().GetNbins() + 1 ):
-            table[ "ERROR" ][ category ][ process ] += hists[ "CMB" ][ hist_tag( process, category ) ].GetBinError(i)**2
+        for i in range( 1, hists[ hist_key ][ hist_tag( process, category ) ].GetXaxis().GetNbins() + 1 ):
+          table[ "ERROR" ][ category ][ process ] += hists[ hist_key ][ hist_tag( process, category ) ].GetBinError(i)**2
         table[ "ERROR" ][ category ][ process ] = math.sqrt( table[ "ERROR" ][ category ][ process ] )
       return table
 
     for category in categories:
       if args.verbose: print( ">> Computing errors for DATA histograms" )
-      tables = get_error( tables, [ "DAT" ], category )
+      tables = get_error( tables, "CMB", [ "data_obs" ], category )
       if args.verbose: print( ">> Computing errors for SIGNAL histograms" )
-      tables = get_error( tables, groups[ "SIG" ][ "PROCESS" ], category )
-      if args.verbose: print( ">> Computing errors for BACKGROUND physics groups" )
-      tables = get_error( tables, groups[ "BKG" ][ "PROCESS" ].keys(), category )
+      tables = get_error( tables, "CMB", groups[ "SIG" ][ "PROCESS" ], category )
+      #if args.verbose: print( ">> Computing errors for BACKGROUND physics groups" )
+      #tables = get_error( tables, "BKG", groups[ "BKG" ][ "PROCESS" ].keys(), category )
       if args.verbose: print( ">> Computing errors for BACKGROUND Combine groups" )
-      tables = get_error( tables, groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
+      tables = get_error( tables, "CMB", groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
      
       tables[ "ERROR" ][ category ][ "TOTAL BKG" ] = 0
       tables[ "ERROR" ][ category ][ "DATA:BKG" ] = 0
-      for i in range( 1, hists[ "CMB" ][ hist_tag( list( groups[ "BKG" ][ "SUPERGROUP" ].keys() )[0], category ) ].GetXaxis().GetNbins() + 1 ):
-        for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+      for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+        for i in range( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins() + 1 ):
           tables[ "ERROR" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( group, category ) ].GetBinError(i)**2
       tables[ "ERROR" ][ category ][ "TOTAL BKG" ] = math.sqrt( tables[ "ERROR" ][ category ][ "TOTAL BKG" ] ) 
-      yield_d = tables[ "YIELD" ][ category ][ "DAT" ] 
+      yield_d = tables[ "YIELD" ][ category ][ "data_obs" ] 
       yield_b = tables[ "YIELD" ][ category ][ "TOTAL BKG" ]
       error_d = math.sqrt( yield_d )
       error_b = math.sqrt( yield_b )
@@ -432,8 +398,8 @@ def print_tables( tables, categories, groups, variable, templateDir ):
     print( ">> Printing out the nominal table" )
     table = []
 
-    table = format_section( table, "PHYSICS PROCESS", [ "DAT" ] + list( groups[ "BKG" ][ "PROCESS" ].keys() ), "2" )
-    table = format_section( table, "COMBINE ANALYSIS", [ "DAT" ] + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ), "2" )
+    #table = format_section( table, "PHYSICS PROCESS", [ "DAT" ] + list( groups[ "BKG" ][ "PROCESS" ].keys() ), "2" )
+    table = format_section( table, "COMBINE ANALYSIS", [ "data_obs" ] + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ), "2" )
     table = format_section( table, "SIGNAL", groups[ "SIG" ][ "PROCESS" ], "3" )
     table = format_section( table, "SUMMARY", [ "TOTAL BKG", "DATA:BKG" ], "4" )
 
@@ -487,13 +453,6 @@ def print_tables( tables, categories, groups, variable, templateDir ):
   print_table( yield_table(), "YIELD:", open( os.path.join( templateDir, "tables/", "yield_table.txt" ), "w" ) )
 
 
-'''
-def theta_templates( hists ):
-
-def summary_templates( hists ):
-
-'''
-
 def main():
   start_time = time.time()
 
@@ -501,20 +460,16 @@ def main():
   templateDir = os.path.join( os.getcwd(), "{}_UL{}_{}".format( template_prefix, args.year, args.tag ) )
   categories = get_categories( templateDir )
   groups = samples.groups 
-  systematics = config.systematics[ "MC" ]
-  #if args.year in [ "16", "17" ]: systematics += [ "prefire" ]
+  systematics = [ str(syst) for syst in config.systematics[ "MC" ].keys() if config.systematics[ "MC" ][ syst ] ]
+  if args.year in [ "16APV", "16", "17" ]: systematics += [ "prefire" ]
 
   for variable in args.variables:
-    print( ">> Producing histograms and tables for: {}".format( variable ) )
     hists = load_histograms( variable, templateDir, categories )
     for hist_key in hists:
       if hists[ hist_key ].keys() == []: continue
-      print( ">> Modifying {} histograms".format( hist_key ) )
-      hists = modify_histograms( hists, hist_key, config.params[ "HISTS" ][ "LUMISCALE" ], config.params[ "HISTS" ][ "REBIN" ] )
-    hists = consolidate_histograms( hists, variable, categories, groups )
-    #theta_templates( hists )
-    combine_templates( hists, variable, categories, groups, templateDir )
-    #summary_templates( hists )
+      hists = clean_histograms( hists, hist_key, config.params[ "HISTS" ][ "LUMISCALE" ], config.params[ "HISTS" ][ "REBIN" ] )
+    hists = combine_histograms( hists, variable, categories, groups )
+    write_combine( hists, variable, categories, groups, templateDir )
     tables = make_tables( hists, categories, groups, variable, templateDir, config.lumiStr[ args.year ] )
     print_tables( tables, categories, groups, variable, templateDir )
     del hists

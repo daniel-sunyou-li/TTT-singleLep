@@ -14,10 +14,10 @@ BR = {
 
 filtEff_tt = {
   "Njet9": 0.00617938417682763,
-  "Njet9_HDDN": 0.005645170035947885,
-  "Njet9_HDUP": 0.006711348259851689,
-  "Njet9_UEDN": 0.006108623095875414,
-  "Njet9_UEUP": 0.0062286452403598055 
+  "Njet9HDDN": 0.005645170035947885,
+  "Njet9HDUP": 0.006711348259851689,
+  "Njet9UEDN": 0.006108623095875414,
+  "Njet9UEUP": 0.0062286452403598055 
 }
 
 k_factor = {
@@ -203,42 +203,42 @@ mc_stats = {
     "EVENTS": 352212660.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9" ] )
   },
-  "TTToSemiLeptonic_UEUP": { 
+  "TTToSemiLeptonicUEUP": { 
     "EVENTS": 137475034.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_UEUP" ] )
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9UEUP" ] )
   },
-  "TTToSemiLeptonic_UEDN": { 
+  "TTToSemiLeptonicUEDN": { 
     "EVENTS": 131182302.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_UEDN" ] )
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9UEDN" ] )
   },
-  "TTToSemiLeptonic_HDUP": { 
+  "TTToSemiLeptonicHDUP": { 
     "EVENTS": 132383014.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_HDUP" ] )
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9HDUP" ] )
   },
-  "TTToSemiLeptonic_HDDN": { 
+  "TTToSemiLeptonicHDDN": { 
     "EVENTS": 132018269.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9_HDDN" ] )
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9HDDN" ] )
   },
   
   "TTToSemiLeptonicHT500": { 
     "EVENTS": 352212660, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9" ] 
   },
-  "TTToSemiLeptonicHT500_UEUP": { 
+  "TTToSemiLeptonicHT500UEUP": { 
     "EVENTS": 137475034.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_UEUP" ]
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9UEUP" ]
   },
-  "TTToSemiLeptonicHT500_UEDN": { 
+  "TTToSemiLeptonicHT500UEDN": { 
     "EVENTS": 131182302.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_UEDN" ]
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9UEDN" ]
   },
-  "TTToSemiLeptonicHT500_HDUP": { 
+  "TTToSemiLeptonicHT500HDUP": { 
     "EVENTS": 132383014.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_HDUP" ]
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDUP" ]
   },
-  "TTToSemiLeptonicHT500_HDDN": { 
+  "TTToSemiLeptonicHT500HDDN": { 
     "EVENTS": 132018269.0, 
-    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9_HDDN" ]
+    "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDDN" ]
   },
   "TTToSemiLeptonHT500": { 
     "EVENTS": 10179200, 
@@ -248,19 +248,19 @@ mc_stats = {
     "EVENTS": 233815417., 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ] 
   },
-  "TTToHadronic_UEUP": { 
+  "TTToHadronicUEUP": { 
     "EVENTS": 95498399.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
   },
-  "TTToHadronic_UEDN": { 
+  "TTToHadronicUEDN": { 
     "EVENTS": 94308036.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
   },
-  "TTToHadronic_HDUP": { 
+  "TTToHadronicHDUP": { 
     "EVENTS": 99030356.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
   },
-  "TTToHadronic_HDDN": { 
+  "TTToHadronicHDDN": { 
     "EVENTS": 93721302.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ]
   },
@@ -269,19 +269,19 @@ mc_stats = {
     "EVENTS": 44580106. + 28515514. + 51439568. + 47012288. + 25495972., 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   },
-  "TTTo2L2Nu_UEUP": { 
+  "TTTo2L2NuUEUP": { 
     "EVENTS": 42495090.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   },
-  "TTTo2L2Nu_UEDN": { 
+  "TTTo2L2NuUEDN": { 
     "EVENTS": 39078720.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   },
-  "TTTo2L2Nu_HDUP":{ 
+  "TTTo2L2NuHDUP":{ 
     "EVENTS": 40026124.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   },
-  "TTTo2L2Nu_HDDN": { 
+  "TTTo2L2NuHDDN": { 
     "EVENTS": 39960772.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   }
@@ -293,10 +293,10 @@ for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", 
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
     if tt == "SemiLeptonic" and fs == "jj":
       for n in [ "1", "2", "3", "4" ]:
-        weights[ "TTTo{}_tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
+        weights[ "TTTo{}tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
     else:
-      weights[ "TTTo{}_tt{}".format( tt, fs ) ] = weights[ "TTTo{}".format( tt ) ]
+      weights[ "TTTo{}tt{}".format( tt, fs ) ] = weights[ "TTTo{}".format( tt ) ]
     if tt in [ "SemiLeptonic", "SemiLeptonicHT500", "Hadronic", "2L2Nu" ]:
       for syst in [ "UE", "HD" ]:
         for shift in [ "DN", "UP" ]:
-          weights[ "TTTo{}_{}{}_tt{}".format( tt, syst, shift, fs ) ] = weights[ "TTTo{}_{}{}".format( tt, syst, shift ) ]
+          weights[ "TTTo{}{}{}tt{}".format( tt, syst, shift, fs ) ] = weights[ "TTTo{}{}{}".format( tt, syst, shift ) ]

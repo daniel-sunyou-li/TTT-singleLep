@@ -7,17 +7,17 @@ samples = {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
-    "TTToSemiLeptonic_ttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
+    #"TTToSemiLeptonic_ttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
   },
-  "DATA": {
+  "DAT": {
     "DataE": "SingleElectron",
     "DataM": "SingleMuon",
   },
-  "SIGNAL": {
+  "SIG": {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
   },
-  "BACKGROUND": {
+  "BKG": {
     "WW": "WW_TuneCP5_13TeV-pythia8",
     "WZ": "WZ_TuneCP5_13TeV-pythia8",
     "ZZ": "ZZ_TuneCP5_13TeV-pythia8",
@@ -47,13 +47,13 @@ samples = {
 }
 
 for DYM_HT in [ "200to400", "400to600", "600to800", "800to1200", "1200to2500", "2500toInf" ]: 
-  samples[ "BACKGROUND" ][ "DYM" + DYM_HT.split( "to" )[0] ] = "DYJetsToLL_M-50_HT-{}_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8".format( DYM_HT )
+  samples[ "BKG" ][ "DYM" + DYM_HT.split( "to" )[0] ] = "DYJetsToLL_M-50_HT-{}_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8".format( DYM_HT )
 
 for WJets_HT in [ "200To400", "400To600", "600To800", "800To1200", "1200To2500", "2500ToInf" ]: 
-  samples[ "BACKGROUND" ][ "WJetsMG" + WJets_HT.split( "To" )[0] ] = "WJetsToLNu_HT-{}_TuneCP5_13TeV-madgraphMLM-pythia8".format( WJets_HT )
+  samples[ "BKG" ][ "WJetsMG" + WJets_HT.split( "To" )[0] ] = "WJetsToLNu_HT-{}_TuneCP5_13TeV-madgraphMLM-pythia8".format( WJets_HT )
   
 for QCD_HT in [ "200to300", "300to500", "500to700", "700to1000", "1000to1500", "1500to2000", "2000toInf" ]: 
-  samples[ "BACKGROUND" ][ "QCD" + QCD_HT.split( "to" )[0] ] = "QCD_HT{}_TuneCP5_PSWeights_13TeV-madgraph-pythia8".format( QCD_HT ) 
+  samples[ "BKG" ][ "QCD" + QCD_HT.split( "to" )[0] ] = "QCD_HT{}_TuneCP5_PSWeights_13TeV-madgraph-pythia8".format( QCD_HT ) 
   
 shifts = {
   "TuneCP5": "",
@@ -70,17 +70,24 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
         if shift == "TuneCP5":
           if fs == "jj":
             for n in [ "1", "2", "3", "4" ]:
-              samples[ "BACKGROUND" ][ "TTTo{}{}_tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
+              samples[ "BKG" ][ "TTTo{}{}tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
           else:
-            samples[ "BACKGROUND" ][ "TTTo{}{}_tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}".format( tt, shift, fs )
-          samples[ "BACKGROUND" ][ "TTTo{}HT500{}_tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT500Njet9_tt{}".format( tt, shift, fs )
-        else:
-          samples[ "BACKGROUND" ][ "TTTo{}{}_tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+            samples[ "BKG" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}".format( tt, shift, fs )
+          samples[ "BKG" ][ "TTTo{}HT500{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT500Njet9_tt{}".format( tt, shift, fs )
+        elif "HD" in shifts[ shift ]:
+          samples[ "HD" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+        elif "UE" in shifts[ shift ]:
+          samples[ "UE" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
       elif tt == "SemiLepton":
         if shift != "TuneCP5": continue
-        samples[ "BACKGROUND" ][ "TTTo{}HT500_tt{}".format( tt, fs ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+        samples[ "BKG" ][ "TTTo{}HT500tt{}".format( tt, fs ) ] = "TTTo{}_HT500Njet9_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
       else:
-        samples[ "BACKGROUND" ][ "TTTo{}{}_tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+        if shift == "TuneCP5":
+          samples[ "BKG" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+        elif "HD" in shifts[ shift ]:
+          samples[ "HD" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+        elif "UE" in shifts[ shift ]:
+          samples[ "UE" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
 
 # define groups
 
@@ -101,22 +108,26 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
   "TTV": [ "TTWl", "TTZlM10", "TTHB", "TTHnoB" ], # TTZlM1to10 in-progress
   "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
-  "TTJJ": [ tt + "_ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
-  "TTCC": [ tt + "_ttcc" for tt in ttbar ],
-  "TT1B": [ tt + "_tt1b" for tt in ttbar ],
-  "TT2B": [ tt + "_tt2b" for tt in ttbar ],
-  "TTBB": [ tt + "_ttbb" for tt in ttbar ]
+  "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
+  "TTCC": [ tt + "ttcc" for tt in ttbar ],
+  "TT1B": [ tt + "tt1b" for tt in ttbar ],
+  "TT2B": [ tt + "tt2b" for tt in ttbar ],
+  "TTBB": [ tt + "ttbb" for tt in ttbar ]
 }
-  
-groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonic_ttjj" + num for num in [ "1", "2", "3", "4" ] ]
+
+
+groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicttjj" + num for num in [ "1", "2", "3", "4" ] ]
+
+groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in groups[ "BKG" ][ "PROCESS" ].keys() ] )
     
 # grouped background processes
 groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTNOBB": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).tolist(),
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
-  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] ] ).tolist(),
+  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ]
+  "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ],
+  "TTH": [ "TTHB", "TTHnoB" ]
 }
   
 groups[ "BKG" ][ "TTBAR_GROUPS" ] = {

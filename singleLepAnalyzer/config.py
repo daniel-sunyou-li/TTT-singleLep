@@ -1,12 +1,13 @@
 import numpy as np
 
-years = [ "16", "17", "18" ]
+years = [ "16APV", "16", "17", "18" ]
 
-postfix = "deepJetV1"
-inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_3t_{}_step3/".format( year, postfix ) for year in years }
+postfix = "3t_deepJetV1"
+inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_step3/".format( year, postfix ) for year in years }
 
 # target lumis in 1/pb for each year
 lumi = {
+  "16APV": 10000.,
   "16": 35920., 
   "17": 41480.,
   "18": 59830.
@@ -29,11 +30,12 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
+    "ABCDNN": False,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
     "RENORM PDF": True, # renormalize the PDF weights
-    "SUMMARY": False, # produce summary templates
+    "SUMMARY": False,   # produce summary templates
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
@@ -65,6 +67,7 @@ params = {
     "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
+    "ABCDNN TAG": "SR"
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -88,7 +91,7 @@ params = {
     ]
   },
   "COMBINE": {
-    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD" ], # TTH?
+    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD", "TTH" ], # TTH?
     "DATA": [ "data_obs" ],
     "SIGNALS": [ "TTTW", "TTTJ" ],
     "MURF NORM": { 
@@ -124,8 +127,8 @@ params = {
 }
 
 region_prefix = {
-  "SR": "templates",
-  "VR": "templates",
+  "SR": "templates_SR",
+  "VR": "templates_VR",
   "TTCR": "ttbar",
   "WJCR": "wjets",
   "BASELINE": "baseline"
@@ -133,15 +136,35 @@ region_prefix = {
 
 # systematic uncertainty sources
 systematics = {
-  "MC": [ 
-    "pileup", #"trigeff",
-    "muRFcorrd", "muR", "muF", "isr", "fsr", 
-    "hotstat", "hotcspur", "hotclosure", 
-    "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
-    "CFerr1", "CFerr2",
-    #"toppt", "ht",
-    #"JER", "JEC"
-  ],
+  "MC": {
+    "pileup": True, 
+    "trigeff": False,
+    "muRFcorrd": True, 
+    "muR": True, 
+    "muF": True, 
+    "isr": True, 
+    "fsr": True, 
+    "hotstat": True, 
+    "hotcspur": True, 
+    "hotclosure": True,
+    "njet": False,
+    "njetsf": False,
+    "LF": True, 
+    "lfstats1": True, 
+    "lfstats2": True, 
+    "HF": True, 
+    "hfstats1": True, 
+    "hfstats2": True, 
+    "cferr1": True, 
+    "cferr2": True,
+    "jes": True,
+    "toppt": True, 
+    "ht": False,
+    "JER": False, 
+    "JEC": False,
+    "HD": False,
+    "UE": False
+  },
   "LUMI": {
     "16APV": 1.012,
     "16": 1.012,
@@ -176,7 +199,7 @@ hist_bins = {
     "LEPTON": [ "E", "M" ],
     "NHOT": [ "0", "1", "2p" ],
     "NT": [ "0p" ],
-    "NW": [ "0", "1p" ],
+    "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
     "NJ": [ "5", "6", "7p" ]
   },
@@ -219,12 +242,6 @@ def bins( min_, max_, nbins_ ):
   return np.linspace( min_, max_, nbins_ ).tolist()
 
 plot_params = {
-  "PLOTTING": {
-    "ONE BAND ERR": True, # combine the various uncertainty bands into one color
-    "SMOOTHING": True,
-    "CR SYST": False,
-    "SCALE SIGNAL": 10, # scale the signal yield to be more visible, put -1 for auto-scaling
-  },
   "VARIABLES": {
     "LEPPT": ( "leptonPt_MultiLepCalc", bins( 0, 600, 121 ), ";Lepton p_{T} [GeV]" ),
     "LEPETA": ( "leptonEta_MultiLepCalc", bins( -2.4, 2.4, 49 ), ";Lepton #eta" ),
@@ -236,6 +253,6 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" )
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), "DNN_{1-50}" )
   }
 }

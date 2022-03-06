@@ -3,7 +3,7 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": False,
+  "REBINNED": True,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
   "COMPARE SHAPES": False,
@@ -11,14 +11,16 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "REAL PULL": False,
   "BLIND": False,
-  "Y LOG": True
+  "Y LOG": True,
+  "SMOOTH": False,
 }
 
 params = {
   "POSTFIX TEXT": "Preliminary",
   "INCLUDE LEP": [ "L" ], # E,M,L
   "ERROR BAND": [ "ALL" ], # "SHAPE ONLY", "SHAPE + NORM"
-  "SCALE SIGNAL YIELD": 10,
+  "EXCLUDE SYST": [],
+  "SCALE SIGNAL YIELD": 100,
   "DAT COLOR": ROOT.kBlack,
   "SIG COLOR": ROOT.kBlack,
   "SIG PULL COLOR": 2,
@@ -30,6 +32,7 @@ params = {
     "TTJJ": ROOT.kRed - 7,
     "TTNOBB": ROOT.kRed - 7,
     "TOP": ROOT.kBlue,
+    "TTH": ROOT.kGreen,
     "EWK": ROOT.kMagenta - 2,
     "QCD": ROOT.kOrange + 5,
     "TTBAR": ROOT.kRed,
@@ -37,7 +40,7 @@ params = {
   },
   "Y DIV": 0.35,
   "CANVAS": {
-    "H REF": 600,
+    "H REF": 700,
     "W REF": 800,
     "I PERIOD": 4,
     "I POSITION": 11,
@@ -58,6 +61,6 @@ params[ "CANVAS" ][ "R" ] = 0.04 * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "W" ] = 1. * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "H" ] = 1. * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "TAG X" ] = 0.82
-params[ "CANVAS" ][ "TAG Y" ] = 0.66 if options[ "BLIND" ] else 0.49
+params[ "CANVAS" ][ "TAG Y" ] = 0.66 if options[ "BLIND" ] else 0.60
 
 params[ "LATEX SIZE" ] = 0.03 if options[ "BLIND" ] else 0.04

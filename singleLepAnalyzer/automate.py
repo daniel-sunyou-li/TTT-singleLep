@@ -2,7 +2,6 @@ import os, time
 import config
 from argparse import ArgumentParser
 
-cmsswbase = "/home/dli50/TTT_1lep/CMSSW_10_6_19/src"
 cmsswbase = os.path.join( os.getcwd(), ".." )
 
 parser = ArgumentParser()
@@ -14,8 +13,6 @@ parser.add_argument( "-r", "--region", default = "SR" )
 args = parser.parse_args()
 
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid option used for -r (--region). Quitting." )
-
-# this is used in step = 1, 2, 3, 4
 
 def get_trainings( tags, years, variables ):
   trainings = []

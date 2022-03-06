@@ -41,11 +41,7 @@ categories = list(
   )
 )
 	
-prefix = "templates"
-if args.region == "TTCR": prefix = "ttbar"
-if args.region == "WJCR": prefix = "wjets"
-if args.region == "BASELINE": prefix = "baseline"
-subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
+subDir = "{}_UL{}_{}".format( config.region_prefix[ args.region ], args.year, args.postfix )
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )
 
@@ -58,7 +54,6 @@ nJobs = 0
 for variable in args.variables:
   print( ">> Generating templates for {}".format( variable ) )
   for category in categories:
-    if utils.skip( category ): continue 
     categoryTag = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( 
       category[0],
       category[1],
@@ -70,9 +65,9 @@ for variable in args.variables:
     if ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > int(category[5][0]):
       print( "[WARN] {} is not topologically possible, skipping...".format( categoryTag ) )
       continue
-    if ( int(category[5][0]) == 5 ) and ( ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > 3 ): 
-      print( "[WARN] {} has too few signal yield, skipping...".format( categoryTag ) )
-      continue
+    #if ( int(category[5][0]) == 5 ) and ( ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > 3 ): 
+    #  print( "[WARN] {} has too few signal yield, skipping...".format( categoryTag ) )
+    #  continue
       
     if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir -vp {}".format( os.path.join( outputPath, categoryTag ) ) )
     os.chdir( os.path.join( outputPath, categoryTag ) )

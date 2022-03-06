@@ -3,7 +3,7 @@
 import os, sys, time, math, fnmatch
 sys.path.append( os.path.dirname( os.getcwd() ) )
 from array import array
-import utils
+from utils import hist_tag, hist_parse
 import config
 from argparse import ArgumentParser
 
@@ -30,49 +30,6 @@ elif args.year == "18":
   import samplesUL18 as samples
   import weightsUL18 as weights
 else: quit( "[ERR] Invalid -y (--year) argument. Quitting" )
-
-def hist_tag( *args ):
-  histTag = args[0]
-  for arg in args[1:]: histTag += "_{}".format( arg )
-  return histTag
-
-def hist_parse( hist_name ):
-  parse = {
-    "PROCESS": "",
-    "GROUP": "",
-    "SYST": "",
-    "IS SYST": False,
-    "CATEGORY": "",
-    "CHANNEL": ""
-  }
-  parts = hist_name.split( "_" )
-  for part in parts:
-    # handle process first
-    if part in samples.groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]:
-      parse[ "PROCESS" ] = part
-      parse[ "GROUP" ] = "SIG"
-    elif part in samples.groups[ "BKG" ][ "PROCESS" ].keys():
-      parse[ "PROCESS" ] = part
-      parse[ "GROUP" ] = "BKG"
-    elif part in samples.groups[ "BKG" ][ "SUPERGROUP" ].keys():
-      parse[ "PROCESS" ] = part
-      parse[ "GROUP" ] = "BKG"
-    elif part in samples.groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]:
-      parse[ "PROCESS" ] = part
-      parse[ "GROUP" ] = "DAT"
-    # handle systematic
-    if part.endswith( "UP" ) or part.endswith( "DN" ):
-      parse[ "SYST" ] = part[:-2]
-      parse[ "IS SYST" ] = True
-    elif "PDF" in part:
-      parse[ "SYST" ] = "PDF"
-      parse[ "IS SYST" ] = True
-    # handle category
-    if part.startswith( "isE" ) or part.startswith( "isM" ) or part.startswith( "isL" ):
-      parse[ "CATEGORY" ] = part
-      parse[ "CHANNEL" ] = part[3:]
-  return parse
-
 
 def overflow( hist ):
   nbins = hist.GetXaxis().GetNbins()
@@ -102,7 +59,7 @@ def negative_bin_correction( hist ):
     hist.Scale( integral / hist.Integral() )
 
 
-def smooth_shape( hist_n, hist_d, hist_u, algo = "lowess" , symmetrize = True ):
+def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess" , symmetrize = True ):
   hist_name = hist_n.GetName()
   graph_error = {
     path: {
@@ -110,12 +67,12 @@ def smooth_shape( hist_n, hist_d, hist_u, algo = "lowess" , symmetrize = True ):
     } for path in [ "IN", "OUT" ]
   }
   graph_smooth = {
-    shift: ROOT.TGraphSmooth( hist_name + "_{}_{}".format( shift, algo.upper() ) ) for shift in [ "UP", "DN" ]
+    shift: ROOT.TGraphSmooth( hist_name + "_{}{}{}".format( syst, algo.upper(), shift ) ) for shift in [ "UP", "DN" ]
   }
   hist = {
     path: {
-      "UP": hist_u.Clone( "{}__{}".format( hist_n.GetName(), algo.upper() ) ),
-      "DN": hist_d.Clone( "{}__{}".format( hist_d.GetName(), algo.upper() ) )
+      "UP": hist_u.Clone(),
+      "DN": hist_d.Clone()
     } for path in [ "IN", "OUT" ]
   }
   for shift in [ "UP", "DN" ]:
@@ -168,72 +125,73 @@ class ModifyTemplate():
     print( "[START] Loading histograms from {}".format( self.filepath ) )
     self.rFile = { "INPUT":  ROOT.TFile( self.filepath ) }
     self.hist_names = [ hist_name.GetName() for hist_name in self.rFile[ "INPUT" ].GetListOfKeys() ]
-    self.categories = list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names ) )
+    self.categories = list( set( hist_parse( hist_name, samples )[ "CATEGORY" ] for hist_name in self.hist_names ) )
     self.channels = list( set( category[3:] for category in self.categories ) )
     
-    groups_bkg = list( self.groups[ "BKG" ][ "PROCESS" ].keys() ) + list( self.groups[ "BKG" ][ "SUPERGROUP" ].keys() )
-    groups_sig = self.groups[ "SIG" ][ "PROCESS" ] + [ "SIG" ]
-    groups_dat = self.groups[ "DAT" ][ "PROCESS" ] + [ "DAT" ]
-    category_log = { key: [] for key in [ "ALL", "DAT", "BKG", "SIG" ] }
     syst_log = { key: [] for key in [ "SIG SYST", "BKG SYST" ] }
     self.histograms = { key: {} for key in [ "BKG", "BKG SYST", "SIG", "SIG SYST", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
-    count = 0 
+    count = { key: 0 for key in [ "BKG", "DAT", "SIG", "BKG SYST", "SIG SYST" ] } 
     for hist_name in sorted( self.hist_names ):
-      parse = hist_parse( hist_name ) 
-      if parse[ "CATEGORY" ] not in category_log[ "ALL" ]:
-        category_log[ "ALL" ].append( parse[ "CATEGORY" ] )
-
+      parse = hist_parse( hist_name, samples ) 
       if parse[ "GROUP" ] == "DAT":
-        if args.verbose and not parse[ "IS SYST" ]: print( "   + DAT: {}".format( hist_name ) )
+        if args.verbose: print( "   + data_obs: {}".format( hist_name ) )
         self.histograms[ "DAT" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
-        if parse[ "CATEGORY" ] not in category_log[ "DAT" ]:
-          self.histograms[ "TOTAL DAT" ][ parse[ "CATEGORY" ] ] = self.histograms[ "DAT" ][ hist_name ].Clone( "DAT_TOTAL_{}".format( parse[ "CATEGORY" ] ) )
-          category_log[ "DAT" ].append( parse[ "CATEGORY" ] )
-        else:
+        try:
           self.histograms[ "TOTAL DAT" ][ parse[ "CATEGORY" ] ].Add( self.histograms[ "DAT" ][ hist_name ] )
+        except:
+          self.histograms[ "TOTAL DAT" ][ parse[ "CATEGORY" ] ] = self.histograms[ "DAT" ][ hist_name ].Clone( hist_tag( "DAT", parse[ "CATEGORY" ] ) )
+        count[ "DAT" ] += 1
+
       elif parse[ "GROUP" ] == "BKG":
         if args.verbose and not parse[ "IS SYST" ]: print( "   + BKG: {}".format( hist_name ) )
         if parse[ "IS SYST" ]:
           self.histograms[ "BKG SYST" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
           if parse[ "SYST" ] not in syst_log[ "BKG SYST" ]: syst_log[ "BKG SYST" ].append( parse[ "SYST" ] )
+          count[ "BKG SYST" ] += 1
         else:
-          self.histograms[ "BKG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )   
-          if parse[ "CATEGORY" ] not in category_log[ "BKG" ]:
-            self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "BKG" ][ hist_name ].Clone( "BKG_TOTAL_{}".format( parse[ "CATEGORY" ] ) )
-            category_log[ "BKG" ].append( parse[ "CATEGORY" ] )
-          else:
+          self.histograms[ "BKG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
+          try:
             self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ].Add( self.histograms[ "BKG" ][ hist_name ] )
+          except:
+            self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "BKG" ][ hist_name ].Clone( hist_tag( "BKG", parse[ "CATEGORY" ] ) )
+          count[ "BKG" ] += 1
+
       elif parse[ "GROUP" ] == "SIG":
         if args.verbose and not parse[ "IS SYST" ]: print( "   + SIG: {}".format( hist_name ) )
         if parse[ "IS SYST" ]:
           self.histograms[ "SIG SYST" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
           if parse[ "SYST" ] not in syst_log[ "SIG SYST" ]: syst_log[ "SIG SYST" ].append( parse[ "SYST" ] )
+          count[ "SIG SYST" ] += 1
         else:
           self.histograms[ "SIG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
-          if parse[ "CATEGORY" ] not in category_log[ "SIG" ]:
-            self.histograms[ "TOTAL SIG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "SIG" ][ hist_name ].Clone( "SIG_TOTAL_{}".format( parse[ "CATEGORY" ] ) )
-            category_log[ "SIG" ].append( parse[ "CATEGORY" ] )
-          else:
+          try:
             self.histograms[ "TOTAL SIG" ][ parse[ "CATEGORY" ] ].Add( self.histograms[ "SIG" ][ hist_name ] )
+          except:
+            self.histograms[ "TOTAL SIG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "SIG" ][ hist_name ].Clone( hist_tag( "SIG", parse[ "CATEGORY" ] ) )
+          count[ "SIG" ] += 1
       else:
-        if args.verbose: print( "[WARN] {} does not belong to any of the groups: BKG, SIG, DAT, excluding...".format( process ) )
-      count += 1
-    
-    print( ">> Creating lepton categories" )
-    for channel in self.channels:
-      category_log[ "ALL" ].append( "isL" + channel )
+        if args.verbose: print( "  [WARN] {} does not belong to any of the groups: BKG, SIG, DAT, excluding...".format( hist_name ) )
+    print( "  [DONE] Loaded {} histograms:".format( sum( [ count[ key ] for key in count ] ) ) )
+    for key in count:
+      print( "    + {}: {}".format( key, count[ key ] ) )
+    print( "  [INFO] Total yields by category:" )
+    for key in [ "TOTAL BKG", "TOTAL DAT", "SIG" ]:
+      for category in sorted( self.histograms[ key ].keys() ):
+        print( "    + {} > {}: {}".format( key, category, self.histograms[ key ][ category ].Integral() ) )
+    print( "  [START] Creating lepton categories" )
+    count = 0
     for key in self.histograms:
       print( "   o {}".format( key ) )
-      key_hist_names = [ hist_name for hist_name in self.histograms[ key ].keys() if "isE" in hist_name ]
-      for hist_name in key_hist_names:
+      hist_names = [ hist_name for hist_name in self.histograms[ key ].keys() if "isE" in hist_name ]
+      for hist_name in sorted( hist_names ):
         name_lepton = hist_name.replace( "isE", "isL" )
-        parse = hist_parse( name_lepton )
+        parse = hist_parse( name_lepton, samples )
         self.histograms[ key ][ name_lepton ] = self.histograms[ key ][ hist_name ].Clone( name_lepton )
         self.histograms[ key ][ name_lepton ].Add( self.histograms[ key ][ hist_name.replace( "isE", "isM" ) ] )
         if not parse[ "IS SYST" ]: print( "     + {}: {}".format( name_lepton, self.histograms[ key ][ name_lepton ].Integral() ) )  
-      if "SYST" in key:
-        for syst in syst_log[ key ]:
-          print( "    + {}".format( syst ) )
+        count += 1
+    print( "   [DONE] Created {} lepton categories".format( count ) )
+
     total_count = 0
     for hist_key in self.histograms:
       for hist_name in self.histograms[ hist_key ]:
@@ -241,13 +199,14 @@ class ModifyTemplate():
         total_count += 1
 
     self.rFile[ "INPUT" ].Close()
-    print( "[DONE] Found {} histograms, loaded {} histograms".format( count, total_count ) )
+    print( "[DONE] Adding {} histograms to modified Combine template".format( count, total_count ) )
   
   def get_xbins( self ): # done
   # get the new histogram bins that satisfy the requirement bin error / yield <= threshold
     print( "[START] Determining modified histogram binning" )
     self.xbins = { key: {} for key in [ "MERGED", "LIMIT", "MODIFY" ] } 
-    for channel in self.channels:
+    for channel in sorted( self.channels ):
+      print( "   + Channel: {}".format( channel ) )
       N_BINS = self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetNbinsX()
       self.xbins[ "MERGED" ][ channel ] = [ self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinUpEdge( N_BINS ) ]
       bin_content = {
@@ -269,13 +228,15 @@ class ModifyTemplate():
         else:
           for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
             for key_lep in [ "isE", "isM" ]:
-                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
-                bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
+              bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
+              bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
           if N_MERGED < self.params[ "MIN MERGE" ]: 
             continue
           else:
-            if math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ] <= self.params[ "STAT THRESHOLD" ]:
-              if math.sqrt( bin_content[ "isM" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ] <= self.params[ "STAT THRESHOLD" ]:
+            if bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ] > 0 and bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ] > 0:    
+              ratio_e = math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ]
+              ratio_m = math.sqrt( bin_content[ "isM" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ]
+              if ratio_e <= self.params[ "STAT THRESHOLD" ] and ratio_m <= self.params[ "STAT THRESHOLD" ]:
                 for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
                   for key_lep in [ "isE", "isM" ]:
                     for key_stat in [ "YIELD", "ERROR" ]:
@@ -300,7 +261,6 @@ class ModifyTemplate():
       self.xbins[ "LIMIT" ][ channel ][0] = max( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][0] )
       self.xbins[ "LIMIT" ][ channel ][-1] = min( max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][-1] )
       i = 1
-      print( ">> {} original binning: [{},{}] ({})".format( channel, self.xbins[ "LIMIT" ][ channel ][0], self.xbins[ "LIMIT" ][ channel ][-1], N_BINS ) )
       while i < len( self.xbins[ "LIMIT" ][ channel ] ) - 1:
         if self.xbins[ "LIMIT" ][ channel ][i] <= self.xbins[ "LIMIT" ][ channel ][0] or self.xbins[ "LIMIT" ][ channel ][i] >= self.xbins[ "LIMIT" ][ channel ][-1]:
           del self.xbins[ "LIMIT" ][ channel ][i]
@@ -335,11 +295,6 @@ class ModifyTemplate():
         overflow( self.rebinned[ hist_key ][ hist_name ] )
         underflow( self.rebinned[ hist_key ][ hist_name ] )
         
-        if self.options[ "BLIND" ] and "DAT" in hist_key:
-          zero_bin = self.rebinned[ hist_key ][ hist_name ].FindBin(0)
-          max_bin = self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1
-          for i in range( zero_bin, max_bin ):
-            self.rebinned[ hist_key ][ hist_name ].SetBinContent( i, -100.0 )
         count += 1
     
     print( "[DONE] {} histograms rebinned".format( count ) )
@@ -353,7 +308,7 @@ class ModifyTemplate():
       self.yields[ hist_key ] = {}
       hist_names = sorted( self.rebinned[ hist_key ].keys() )
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
+        parse = hist_parse( hist_name, samples )
         self.yields[ hist_key ][ hist_name ] = {
           "COUNT": self.rebinned[ hist_key ][ hist_name ].Integral(),
           "ERROR": 0
@@ -377,7 +332,7 @@ class ModifyTemplate():
     for hist_key in [ "BKG SYST", "SIG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
+        parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ].upper() !=  "TRIGEFF": continue
         if parse[ "CATEGORY" ].startswith( "isE" ):
           hist_name_el = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "ELTRIGGEFF" )
@@ -387,7 +342,7 @@ class ModifyTemplate():
         if parse[ "CATEGORY" ].startswith( "isM" ):
           hist_name_mu = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "TRIGEFF", "MUTRIGGEFF" )
           self.rebinned[ hist_key ][ hist_name_mu ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_mu )
-          self.rebinned[ hist_key ][ hist_name_el ].SetDirectory(0)
+          self.rebinned[ hist_key ][ hist_name_mu ].SetDirectory(0)
           count += 1
     print( "[DONE] Adjusted trigger naming for {} histograms.".format( count ) )
     
@@ -398,9 +353,9 @@ class ModifyTemplate():
     for hist_key in [ "BKG SYST", "SIG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
+        parse = hist_parse( hist_name, samples )
         if parse[ "IS SYST" ]:
-          hist_name_new = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "UP_", "{}UP_".format( args.year ) ).replace( "DN_", "{}DN_".format( args.year ) )
+          hist_name_new = self.rebinned[ hist_key ][ hist_name ].GetName().replace( "{}UP".format( parse[ "SYST" ] ), "{}{}UP".format( parse[ "SYST" ], args.year ) ).replace( "{}DN".format( parse[ "SYST" ] ), "{}{}DN".format( parse[ "SYST" ], args.year ) )
           self.rebinned[ hist_key ][ hist_name_new ] = self.rebinned[ hist_key ][ hist_name ].Clone( hist_name_new )
           self.rebinned[ hist_key ][ hist_name_new ].SetDirectory(0)
           count += 1
@@ -413,10 +368,11 @@ class ModifyTemplate():
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        if "TOPPTDN" not in hist_name.upper(): continue # adjust TOPPTDN to TOPPTUP
+        parse = hist_parse( hist_name, samples )
+        if parse[ "SYST" ] != "TOPPT" and parse[ "SHIFT" ] != "DN": continue # adjust TOPPTDN to TOPPTUP
         for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
           self.rebinned[ hist_key ][ hist_name ].SetBinContent(
-            i, 2. * self.rebinned[ hist_key ][ hist_name.replace( "_TOPPTDN", "" ) ].GetBinContent(i) - self.rebinned[ hist_key ][ hist_name.replace( "DN", "UP" ) ].GetBinContent(i) 
+            i, 2. * self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].GetBinContent(i) - self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].GetBinContent(i) 
           )
         count += 1
     print( "[DONE] Adjusted {} toppt histograms".format( count ) )
@@ -428,15 +384,15 @@ class ModifyTemplate():
       if self.rebinned[ "TOTAL BKG" ][ category ].GetNbinsX() == 1 or group == "SIG":  
         hist_names = self.rebinned[ group ].keys()
         for hist_name in sorted( hist_names ):
-          parse = hist_parse( hist_name )
-          if parse[ "IS SYST" ]: continue
+          parse = hist_parse( hist_name, samples )
+          if parse[ "IS SYST" ] or parse[ "CATEGORY" ] != category: continue
           yields = {
             "COUNT": self.rebinned[ group ][ hist_name ].GetBinContent(i),
             "ERROR": self.rebinned[ group ][ hist_name ].GetBinError(i)
           }
           if yields[ "COUNT" ] == 0: continue
           shift_name = { 
-            shift: "{}_{}_BIN{}_{}".format( parse[ "PROCESS" ], category, i, shift ) for shift in [ "UP", "DN" ] 
+            shift: "{}_{}_BIN{}{}".format( parse[ "PROCESS" ], category, i, shift ) for shift in [ "UP", "DN" ] 
           }
           for shift in [ "UP", "DN" ]:
             self.rebinned[ group ][ shift_name[ shift ] ] = self.rebinned[ group ][ hist_name ].Clone( shift_name[ shift ] ) 
@@ -455,15 +411,15 @@ class ModifyTemplate():
         count_max = 0
         bkg_names = self.rebinned[ "BKG" ].keys()
         for bkg_name in bkg_names:
-          parse = hist_parse( bkg_name )
+          parse = hist_parse( bkg_name, samples )
           if parse[ "IS SYST" ]: continue
           if count_max < self.rebinned[ "BKG" ][ bkg_name ].GetBinContent(i):
             count_max = self.rebinned[ "BKG" ][ bkg_name ].GetBinContent(i)
             bkg_max = bkg_name
         error_max = self.rebinned[ "BKG" ][ bkg_max ].GetBinError(i)
-        parse = hist_parse( bkg_max )
+        parse = hist_parse( bkg_max, samples )
         shift_name = {
-          shift: "{}_{}_BIN{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], i, shift ) for shift in [ "UP", "DN" ]
+          shift: "{}_{}_BIN{}{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], i, shift ) for shift in [ "UP", "DN" ]
         }
         count = { key: 0 for key in [ "NEGATIVE", "ZERO" ] }
         for shift in [ "UP", "DN" ]:
@@ -496,7 +452,7 @@ class ModifyTemplate():
         write_statistical_hists( category, "SIG", i, nBB )
         write_statistical_hists( category, "BKG", i, nBB )
         count[ "INCLUDE" ] += 1
-      print( "[INFO] {}: {}/{} bins shapes included".format( category, count[ "INCLUDE" ], count[ "EXCLUDE" ] + count[ "INCLUDE" ] ) )
+      if args.verbose: print( "[INFO] {}: {}/{} bins shapes included".format( category, count[ "INCLUDE" ], count[ "EXCLUDE" ] + count[ "INCLUDE" ] ) )
     print( "[DONE] {} Signal bin shapes added, {} Background bin shapes added".format( nBB[ "SIG" ], nBB[ "BKG" ] ) )
       
 
@@ -507,11 +463,13 @@ class ModifyTemplate():
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        if "HOTCLOSUREUP" not in hist_name.upper(): continue
+        parse = hist_parse( hist_name, samples )
+        if "HOTCLOSURE" not in parse[ "SYST" ] and parse[ "SHIFT" ] != "UP": continue
+        count += 1
         HOT_name = {
-          "NOM": hist_name.replace( "_HOTCLOSUREUP", "" ),
-          "UP": hist_name,
-          "DN": hist_name.replace( "UP", "DN" )
+          "NOM": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ),
+          "UP": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ),
+          "DN": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" )
         }
         for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
           max_shift = max(
@@ -520,7 +478,6 @@ class ModifyTemplate():
           )
           self.rebinned[ hist_key ][ HOT_name[ "UP" ] ].SetBinContent( i, self.rebinned[ hist_key.split( " " )[0] ][ HOT_name[ "NOM" ] ].GetBinContent(i) + max_shift )
           self.rebinned[ hist_key ][ HOT_name[ "DN" ] ].SetBinContent( i, self.rebinned[ hist_key.split( " " )[0] ][ HOT_name[ "NOM" ] ].GetBinContent(i) - max_shift )
-        count += 1
     print( "[DONE] Adjusted the HOT closure systematic shift for {} histograms".format( count ) )    
     
   def add_muRF_shapes( self ): # done
@@ -530,13 +487,14 @@ class ModifyTemplate():
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
-        if "MURUP" not in hist_name.upper(): continue
-        hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_name.replace( "_MURUP", "" ) ].Clone() }
+        parse = hist_parse( hist_name, samples )
+        if parse[ "SYST" ] != "MUR" and parse[ "SHIFT" ] != "UP": continue 
+        count += 1 
+        hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
-          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_name.replace( "MURUP", syst ) ].Clone()
-        hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key ][ hist_name ].Clone()
-        hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key ][ hist_name ].Clone()
+          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst ) ].Clone()
+        hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
         for i in range( 1, hist_muRF[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_dict = { key: hist_muRF[ key ].Clone() for key in hist_muRF }
           weight_key = {
@@ -571,11 +529,8 @@ class ModifyTemplate():
           hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
 
         for shift in [ "UP", "DN" ]:
-          self.rebinned[ hist_key ][ "{}_{}_MURF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
-          self.rebinned[ hist_key ][ "{}_{}_MURF_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) )
-          self.rebinned[ hist_key ][ "{}_{}_MURF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
-          self.rebinned[ hist_key ][ "{}_{}_MURF_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) ].SetDirectory(0)
-          count += 2 
+          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
+          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
     print( "[DONE] Created {} MU R+F histograms".format( count ) ) 
   
   def add_PSWeight_shapes( self ): # done
@@ -584,14 +539,15 @@ class ModifyTemplate():
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
-        if "ISRUP" not in hist_name.upper(): continue
-        hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_name.replace( "_ISRUP", "" ) ].Clone() }
-        hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key ][ hist_name ].Clone()
-        hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key ][ hist_name ].Clone()
+        parse = hist_parse( hist_name, samples )
+        if parse[ "SYST" ] != "ISR" and parse[ "SHIFT" ] != "UP": continue 
+        count += 1
+        hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
+        hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
         for syst in [ "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
-            hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_name.replace( "ISRUP", syst + shift ) ].Clone()
+            hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ].Clone()
         for i in range( 1, hist_PSWeight[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_key = {
             "MAX": "NOMINAL",
@@ -630,10 +586,7 @@ class ModifyTemplate():
         for syst in [ "PSWGT", "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) )
-            self.rebinned[ hist_key ][ "{}_{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift, args.year ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift, args.year ) )
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
-            self.rebinned[ hist_key ][ "{}_{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift, args.year ) ].SetDirectory(0)
-            count += 2
 
     print( "[DONE] Created {} PS Weight histograms".format( count ) )
           
@@ -643,20 +596,17 @@ class ModifyTemplate():
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        parse = hist_parse( hist_name )
+        parse = hist_parse( hist_name, samples )
         if "PDF0" not in hist_name: continue
+        count += 1
         hist_PDF = { 
-          "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_name.replace( "_PDF0", "" ) ].Clone(),
-          "PDFUP": self.rebinned[ hist_key ][ hist_name ].Clone(),
-          "PDFDN": self.rebinned[ hist_key ][ hist_name ].Clone()
+          "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
+          "PDFUP": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
+          "PDFDN": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
         }
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-          hist_PDF[ "PDF{}".format(i) ] = self.rebinned[ hist_key ][ hist_name.replace( "PDF0", "PDF{}".format(i) ) ].Clone( "PDF{}".format(i) )
+          hist_PDF[ "PDF{}".format(i) ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], "PDF" + str(i) ) ].Clone( "PDF{}".format(i) )
         for i in range( 1, hist_PDF[ "NOMINAL" ].GetNbinsX() + 1 ):
-          weight_key = {
-            "MAX": "PDF0",
-            "MIN": "PDF0"
-          }
           weight_limit = {
             "MAX": hist_PDF[ "PDF0" ].GetBinContent(i),
             "MIN": hist_PDF[ "PDF0" ].GetBinContent(i)
@@ -669,11 +619,9 @@ class ModifyTemplate():
             if hist_PDF[ "PDF{}".format(j) ].GetBinContent(i) > weight_limit[ "MAX" ]:
               weight_limit[ "MAX" ] = hist_PDF[ "PDF{}".format(j) ].GetBinContent(i)
               weight_error[ "MAX" ] = hist_PDF[ "PDF{}".format(j) ].GetBinError(i)
-              weight_key[ "MAX" ] = key
             if hist_PDF[ "PDF{}".format(j) ].GetBinContent(i) < weight_limit[ "MIN" ]:
               weight_limit[ "MIN" ] = hist_PDF[ "PDF{}".format(j) ].GetBinContent(i)
               weight_error[ "MIN" ] = hist_PDF[ "PDF{}".format(j) ].GetBinError(i)
-              weight_key[ "MIN" ] = key
           
           hist_PDF[ "PDFUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
           hist_PDF[ "PDFUP" ].SetBinError( i, weight_error[ "MAX" ] )
@@ -685,36 +633,35 @@ class ModifyTemplate():
           hist_PDF[ "PDFDN" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
         
         for shift in [ "UP", "DN" ]:
-          self.rebinned[ hist_key ][ "{}_{}_PDF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
-          self.rebinned[ hist_key ][ "{}_{}_PDF_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) )
-          self.rebinned[ hist_key ][ "{}_{}_PDF_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
-          self.rebinned[ hist_key ][ "{}_{}_PDF_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift, args.year ) ].SetDirectory(0)
-          count += 2
+          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
+          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
 
     print( "[DONE] Adjusted {} PDF systematic histograms".format( count ) )
           
   def add_smooth_shapes( self ): # done
     print( "[START] Smoothing systematic shapes using {} smoothing".format( self.params[ "SMOOTHING ALGO" ] ) )
+    sTime = time.time()
     count = 0
     for hist_key in [ "BKG SYST", "SIG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
-        if "UP_" not in hist_name: continue
-        parse = hist_parse( hist_name )
+        parse = hist_parse( hist_name, samples )
+        if parse[ "SHIFT" ] != "UP": continue
         if parse[ "SYST" ].upper() in [ syst_exclude.upper() for syst_exclude in self.params[ "EXCLUDE SMOOTH" ] ]: continue
-        hist_syst = {
-          "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( args.variable, config.lumiStr[ args.year ], parse[ "CATEGORY" ], parse[ "PROCESS" ] ) ].Clone(),
-          "UP": self.rebinned[ hist_key ][ hist_name ].Clone(),
-          "DN": self.rebinned[ hist_key ][ hist_name.replace( "UP_", "DN_" ) ].Clone()
-        }
-        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], algo = self.params[ "SMOOTHING ALGO" ] , symmetrize = self.options[ "SYMM SMOOTHING" ] )
+        try:
+          hist_syst = {
+            "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
+            "UP": self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].Clone(),
+            "DN": self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" ) ].Clone()
+          }
+        except:
+          continue
+        count += 1
+        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ] , symmetrize = self.options[ "SYMM SMOOTHING" ] )
         for shift in [ "UP", "DN" ]:
-          smooth_name = "{}_{}".format( hist_name.replace( "{}UP".format( parse[ "SYST" ].upper() ), parse[ "SYST" ].upper() + shift ), self.params[ "SMOOTHING ALGO" ] )
+          smooth_name = hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + self.params[ "SMOOTHING ALGO" ].upper() + shift ) 
           self.rebinned[ hist_key ][ smooth_name ] = smooth_hist[ shift ].Clone( smooth_name )
-          self.rebinned[ hist_key ][ "{}_{}".format( smooth_name, args.year ) ] = smooth_hist[ shift ].Clone( "{}_{}".format( smooth_name, args.year ) )
           self.rebinned[ hist_key ][ smooth_name ].SetDirectory(0)
-          self.rebinned[ hist_key ][ "{}_{}".format( smooth_name, args.year ) ].SetDirectory(0)
-          count += 2
     print( "[DONE] Added {} smoothed systematic histograms".format( count ) )
       
   def write( self ):
@@ -723,6 +670,7 @@ class ModifyTemplate():
     self.rFile[ "OUTPUT" ] = ROOT.TFile( self.outpath, "RECREATE" )
     count = 0
     for hist_key in self.rebinned:
+      if "TOTAL" in hist_key: continue
       for hist_name in self.rebinned[ hist_key ]:
         if "DAT" in hist_name:
           self.rebinned[ hist_key ][ hist_name ].SetName( self.rebinned[ hist_key ][ hist_name ].GetName().replace( "DAT", "data_obs" ) )
@@ -737,7 +685,8 @@ def get_shape_uncertainty( hists, process, channel ): # needs some fixes to the 
   total_shift = { shift: 0 for shift in [ "UP", "DN" ] }
   prefix = hist_names[ channel ][ "ALL" ][0][:hist_names[ channel ][ "ALL" ]]
   hist_nominal = hist_names[ channel ][ process ]
-  for syst in config.systematics["MC"]:
+  for syst in config.systematics[ "MC" ].keys():
+    if not config.systematics[ "MC" ][ syst ]: continue
     if syst in systematics_remove or ( args.smoothing and config.smooth_algo not in syst ): continue
     if args.norm_theory_sig and process in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
     if args.norm_theory_bkg and process not in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
@@ -763,11 +712,11 @@ def main():
   params = config.params[ "MODIFY BINNING" ].copy()
   options = config.options[ "MODIFY BINNING" ].copy()
   if args.region == "BASELINE":
-    print( "[WARN] Running BASELINE region, overriding the following options and parameters:" )
-    print( "   > STAT THRESHOLD: {} --> 1.1".format( params[ "STAT THRESHOLD" ] ) )
-    print( "   > SMOOTHING: {} --> False".format( options[ "SMOOTH" ] ) )
-    params[ "STAT THRESHOLD" ] = 1.1 
-    options[ "SMOOTH" ] = False
+    #print( "[WARN] Running BASELINE region, overriding the following options and parameters:" )
+    #print( "   > STAT THRESHOLD: {} --> 1.1".format( params[ "STAT THRESHOLD" ] ) )
+    #print( "   > SMOOTHING: {} --> False".format( options[ "SMOOTH" ] ) )
+    #params[ "STAT THRESHOLD" ] = 1.1 
+    #options[ "SMOOTH" ] = False
     if args.variable.upper() == "HT" or args.variable.upper() == "LEPPT":
       print( "   > MIN MERGE ({}): {} --> 4".format( args.variable, params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 4
@@ -793,8 +742,6 @@ def main():
     template.symmetrize_topPT_shift()
   if options[ "TRIGGER EFFICIENCY" ]:
     template.add_trigger_efficiency()
-  if options[ "UNCORRELATE YEARS" ]:
-    template.uncorrelate_years()
   if options[ "SHAPE STAT" ]:
     template.add_statistical_shapes()
   if options[ "SYMM HOTCLOSURE" ]:
@@ -807,6 +754,8 @@ def main():
     template.add_PDF_shapes()
   if options[ "SMOOTH" ]:
     template.add_smooth_shapes()
+  if options[ "UNCORRELATE YEARS" ]:
+    template.uncorrelate_years()
    
   # calculate yields
   template.compute_yield_stats()
@@ -814,5 +763,5 @@ def main():
   #print_tables( template.table )
         
   template.write()
-  
+
 main()

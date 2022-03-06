@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 sys.path.append( os.path.dirname( "../" ) ) 
 
-import utils
+from utils import hist_tag
 import config
 
 parser = ArgumentParser()
@@ -22,7 +22,10 @@ parser.add_argument( "-nj", "--nj", default = "5p" )
 parser.add_argument( "-sd", "--subDir" )
 args = parser.parse_args()
 
-if args.year == "16":
+if args.year == "16APV":
+  import weightsUL16APV as weights
+  import samplesUL16APV as samples 
+elif args.year == "16":
   import weightsUL16 as weights
   import samplesUL16 as samples
 elif args.year == "17":
@@ -49,20 +52,14 @@ category = {
 }
 
 groups = {
-  "DATA": sorted( [ str( process ) for process in samples.samples[ "DATA" ] ] ),
-  "SIGNAL": sorted( [ str( process ) for process in samples.samples[ "SIGNAL" ] ] ),
-  "BACKGROUND": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if ( "UE" not in str( process ) and "HD" not in str( process ) ) ] ),
-  "UE": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "UE" in str( process ) ] ),
-  "HD": sorted( [ str( process ) for process in samples.samples[ "BACKGROUND" ] if "HD" in str( process ) ] ),
+  "DAT": sorted( [ str( process ) for process in samples.samples[ "DAT" ] ] ),
+  "SIG": sorted( [ str( process ) for process in samples.samples[ "SIG" ] ] ),
+  "BKG": sorted( [ str( process ) for process in samples.samples[ "BKG" ] ] ),
+  "UE": sorted( [ str( process ) for process in samples.samples[ "UE" ] ] ),
+  "HD": sorted( [ str( process ) for process in samples.samples[ "HD" ] ] ),
   "TEST": [ str( process ) for process in samples.samples[ "TEST" ] ]
 }
 
-backgrounds = list( samples.samples[ "BACKGROUND" ].keys() )
-hdamp = list( samples.samples[ "HD" ].keys() )
-ue = list( samples.samples[ "UE" ].keys() )
-signals = list( samples.samples[ "SIGNAL" ].keys() )
-data = list( samples.samples[ "DATA" ].keys() )
-         		
 def read_tree( samplePath ):
   if not os.path.exists( samplePath ):
     print("[ERR] {} does not exist.  Exiting program...".format( samplePath ) )
@@ -80,7 +77,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   
   # modify weights
   # scale up MC samples used in DNN/ABCDnn training where dataset partitioned into 40/20/40 so scale isTraining==3 by 2.5 
-  mc_weights = { "NOMINAL": "2.5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
+  mc_weights = { "NOMINAL": "2.5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) or process.startswith( "TTTT" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in weights.weights.keys():
     mc_weights[ "PROCESS" ] = "{:.10f}".format( weights.weights[ process ] ) 
   else:
@@ -89,44 +86,58 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   if process.startswith( "TTTo" ):
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
-  if process not in list( samples.samples[ "DATA" ].keys() ):
-    mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
-
-  if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
+  if process not in groups[ "DAT" ]:
+    if config.options[ "GENERAL" ][ "ABCDNN" ] and process.startswith( "TTTo" ):
+      mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] ) 
+    else:
+      mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+    
+  if process not in groups[ "DAT" ] and doSYST:
     #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
     #                           "DN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
-    mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
-                               "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
-    mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
-                                "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDn_CommonCalc") }
-    mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
-                                  "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
-                            "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
-                            "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
-                            "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
-                            "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
-                              "DN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ) }
-    mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
-                             "DN": mc_weights[ "NOMINAL" ] }
-    mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
+    if config.systematics[ "MC" ][ "pileup" ]:
+      mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
+                                 "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
+    if year in [ "16APV", "16", "17" ]:
+      mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
+                                  "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
+    if config.systematics[ "MC" ][ "muRFcorrd" ]:
+      mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
+                                    "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "muR" ]:
+      mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "muF" ]:
+      mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "isr" ]:
+      mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "fsr" ]:
+      mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
+                              "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "toppt" ]:
+      mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
+                                "DN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ) }
+    if config.systematics[ "MC" ][ "njet" ]:
+      mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
                                "DN": mc_weights[ "NOMINAL" ] }
+    if config.systematics[ "MC" ][ "njetsf" ]:
+      mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
+                                 "DN": mc_weights[ "NOMINAL" ] }
     # deep jet related systematics
     for syst in [ "LF", "lfstats1", "lfstats2", "HF", "hfstats1", "hfstats2", "cferr1", "cferr2", "jes" ]:
-      mc_weights[ syst.upper() ] = {}
-      for shift in [ "up", "dn" ]:
-        mc_weights[ syst.upper() ][ shift.upper() ] = mc_weights[ "NOMINAL" ].replace( "btagDeepJetWeight", "btagDeepJetWeight_" + syst + shift ).replace( "btagDeepJet2DWeight_HTnj", "btagDeepJet2DWeight_HTnj_" + syst + shift )
+      if config.systematics[ "MC" ][ syst ]:
+        mc_weights[ syst.upper() ] = {}
+        for shift in [ "up", "dn" ]:
+          mc_weights[ syst.upper() ][ shift.upper() ] = mc_weights[ "NOMINAL" ].replace( "btagDeepJetWeight", "btagDeepJetWeight_" + syst + shift ).replace( "btagDeepJet2DWeight_HTnj", "btagDeepJet2DWeight_HTnj_" + syst + shift )
   
   # modify cuts
   cuts = { "BASE": config.base_cut }
   if "TTToSemiLepton" in process and "HT500" in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==1"
   elif "TTToSemiLepton" in process and "HT500" not in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==0"
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ][:]
-  if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
+  if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) or process.startswith( "TTTT" ) ) and "DNN" in variable ):
     cuts[ "NOMINAL" ] += " && isTraining == 3" # Used isTraining==1 in training and isTraining==2 in validation of training
 
   cuts[ "LEPTON" ] = " && isElectron==1" if category[ "LEPTON" ][0] == "E" else " && isMuon==1"
@@ -139,10 +150,10 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   cuts[ "NOMINAL" ] += cuts[ "LEPTON" ] + cuts[ "NHOT" ] + cuts[ "NT" ] + cuts[ "NW" ] + cuts[ "NB" ] + cuts[ "NJ" ]
     
   # modify the cuts for shifts
-  cuts[ "BTAG" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSVwithSF_JetSubCalc_bSFup" ),
-                     "DN": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSVwithSF_JetSubCalc_bSFdn" ) }
-  cuts[ "MISTAG" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSVwithSF_JetSubCalc_lSFup" ),
-                       "DN": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSVwithSF_JetSubCalc_lSFdn" ) }
+  cuts[ "BTAG" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSV_JetSubCalc_bSFup" ),
+                     "DN": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSV_JetSubCalc_bSFdn" ) }
+  cuts[ "MISTAG" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSV_JetSubCalc_lSFup" ),
+                       "DN": cuts[ "NOMINAL" ].replace( "NJetsCSV_JetSubCalc", "NJetsCSV_JetSubCalc_lSFdn" ) }
   cuts[ "TAU21" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[0]" ),
                       "DN": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[1]" ) }
   cuts[ "JMSW" ] = { "UP": cuts[ "NOMINAL" ].replace( "NJetsWtagged", "NJetsWtagged_shifts[2]" ),
@@ -170,21 +181,20 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     
   # declare histograms
   hists = {}
-  lumiStr = config.lumiStr[ year ] # 1/fb  
   categoryTag = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format(
     category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0],
     category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0]
   )
-  histTag = "{}_{}_{}_{}".format( variable, lumiStr, categoryTag, process )
+  histTag = hist_tag( process, categoryTag )
   hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doSYST:
-    for syst in config.systematics[ "MC" ]:
+    for syst in config.systematics[ "MC" ].keys():
       for shift in [ "UP", "DN" ]:
-        histTag = "{}_{}_{}_{}_{}".format( variable, syst.upper() + shift, lumiStr, categoryTag, process )
+        histTag = hist_tag( process, categoryTag, syst.upper() + shift )
         hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
     for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-      histTag = "{}_PDF{}_{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
+      histTag = hist_tag( process, categoryTag, "PDF" + str(i) ) 
       hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
 				
   # Sumw2() tells the hist to also store the sum of squares of weights
@@ -195,7 +205,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
     print( ">> Applying NOMINAL cuts: {}".format( cuts[ "NOMINAL" ] ) )
 
   # draw histograms
-  histTag = "{}_{}_{}_{}".format( variable, lumiStr, categoryTag, process )
+  histTag = hist_tag( process, categoryTag )
   rTree[ process ].Draw( 
     "{} >> {}".format( variableName, histTag ), 
     "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
@@ -203,11 +213,18 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
 
   if verbose: print( "  + NOMINAL: {} --> {}".format( rTree[ process ].GetEntries(), hists[ histTag ].Integral() ) )
 
-  if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
-    for syst in config.systematics[ "MC" ]:
+  if process not in groups[ "DAT" ] and doSYST:
+    if year in [ "16APV", "16", "17" ]:
       for shift in [ "UP", "DN" ]:
-        histTag = "{}_{}_{}_{}_{}".format( variable, syst.upper() + shift, lumiStr, categoryTag, process )
-        if syst.upper() in [ "PILEUP", "PREFIRE", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
+        rTree[ process ].Draw(
+          "{} >> {}".format( variableName, hist_tag( process, categoryTag, "PREFIRE" + shift ) ),
+          "{} * ({})".format( mc_weights[ "PREFIRE" ][ shift ], cuts[ "NOMINAL" ] ),
+          "GOFF" )
+    for syst in config.systematics[ "MC" ].keys():
+      if not config.systematics[ "MC" ][ syst ]: continue
+      for shift in [ "UP", "DN" ]:
+        histTag = hist_tag( process, categoryTag, syst.upper() + shift )
+        if syst.upper() in [ "PILEUP", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
           rTree[ process ].Draw( 
             "{} >> {}".format( variableName, histTag ), 
             "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ), 
@@ -244,32 +261,24 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
             "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
             "GOFF" )
         # b-tagging plots
-        if ( syst.upper() in [ "BTAG", "MISTAG" ] ) and ( category[ "NB" ][0] != "0p" ):
-          if "csvwithsf" in variableName.lower() or "htag" in variableName.lower() or "mleppb" in variableName.lower() or "bjetlead" in variableName.lower() or "minmlb" in variableName.lower():
-            if syst.upper() == "BTAG": rTree[ process ].Draw( 
-              "{}_bSF{} >> {}".format( variableName, shift.lower(), histTag ), 
-              "{} * ({})".format( mc_weights[ "NOMINAL" ], cut[ syst.upper() ][ shift ] ), 
-              "GOFF" )
-            if syst.upper() == "MISTAG": rTree[ process ].Draw( 
-              "{}_lSF{} >> {}".format( variableName, shift.lower(), histTag ), 
-              "{} * ({})".format( mc_weights[ "NOMINAL" ], cut[ syst.upper() ][ shift ] ), 
-              "GOFF" )
-          else: rTree[ process ].Draw( 
+        if ( syst.upper() in [ "LF", "LFSTAT1", "LFSTAT2", "HF", "HFSTAT1", "HFSTAT2", "CFERR1", "CFERR2" ] ) and ( category[ "NB" ][0] != "0p" ):
+          rTree[ process ].Draw(
             "{} >> {}".format( variableName, histTag ), 
-            "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ syst.upper() ][ shift ] ), 
+            "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ), 
             "GOFF" )
         # process jec and jer
-        if ( syst in [ "JEC", "JER" ] ) and rTree[ process + syst.upper() + shift.upper() ]: rTree.Draw( 
-          "{} >> {}".format( variableName, histTag ), 
-          "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
-          "GOFF" )
+        if ( syst.upper() in [ "JEC", "JER" ] ): 
+          rTree[ process ].Draw( 
+            "{} >> {}".format( variableName, histTag ), 
+            "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
+            "GOFF" )
     if verbose: print( "  + SYSTEMATICS" ) 
 	
   if doPDF:
     for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-      histTag = "{}pdf{}_{}_{}_{}".format( variable, i, lumiStr, categoryTag, process )
+      histTag = hist_tag( process, categoryTag, "PDF" + str(i) )
       rTree[ process ].Draw( 
-        "{} >> {}".format(variableName, histTag ), 
+        "{} >> {}".format( variableName, histTag ), 
         "pdfWeights[{}] * {} * ({})".format( i, mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
         "GOFF" )
     if verbose: print( "  + PDF" )
@@ -278,48 +287,51 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   return hists
 
 def make_hists( groups, group, category ): 
-  # only valid group arguments are DATA, SIGNAL, BACKGROUND, TEST
-  doSys = config.options[ "GENERAL" ][ "SYSTEMATICS" ] if group in [ "SIGNAL", "BACKGROUND", "TEST" ] else False
+  # only valid group arguments are DAT, SIG, BKG, TEST
+  doSys = config.options[ "GENERAL" ][ "SYSTEMATICS" ] if group in [ "SIG", "BKG", "TEST" ] else False
   hists = {}
   for process in groups[ group ]:
     process_time = time.time()
     rFiles, rTrees = {}, {} 
     rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ group ][ process ] + "_hadd.root" ) )
-    if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIGNAL", "BACKGROUND" ]:
+    if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIG", "BKG" ]:
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
           rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
     hists.update( analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees
-  if config.options[ "GENERAL" ][ "UE" ] and group in [ "BACKGROUND" ]:
+  if config.options[ "GENERAL" ][ "UE" ] and group in [ "UE" ]:
     for process in groups[ "UE" ]:
       process_time = time.time()
-      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
+      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BKG" ][ process ] + "_hadd.root" ) )
       hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
-  if config.options[ "GENERAL" ][ "HDAMP" ] and group in [ "BACKGROUND" ]:
+  if config.options[ "GENERAL" ][ "HDAMP" ] and group in [ "HD" ]:
     for process in groups[ "HD" ]:
       process_time = time.time()
-      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BACKGROUND" ][ process ] + "_hadd.root" ) )
+      rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BKG" ][ process ] + "_hadd.root" ) )
       hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   categoryDir = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0], category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0] )
   if not os.path.exists( "{}/{}".format( args.subDir, categoryDir ) ): os.system( "mkdir -vp {}/{}".format( args.subDir, categoryDir ) )
   pickle.dump( hists, open( "{}/{}/{}_{}.pkl".format( args.subDir, categoryDir, group, args.variable ), "wb" ) )
-  
-if not config.options[ "GENERAL" ][ "TEST" ]:
-  for group in [ "DATA", "BACKGROUND", "SIGNAL" ]:
-    group_time = time.time()
-    print( "[START] Processing hists for {}".format( group ) )
-    for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
-    make_hists( groups, group, category )
-    print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60, 2 ) ) )
-else:
-  test_time = time.time() 
-  print( "[START] Processing TEST hists" )
-  for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
-  make_hists( groups, "TEST", category )
-  print( "[DONE] Finished processing hists for TEST in {} minutes".format( round( ( time.time() - test_time ) / 60, 2 ) ) )
 
-print( "[DONE] Finished making hists in {}".format( round( ( time.time() - start_time ) / 60, 2 ) ) )
+def main():
+  if not config.options[ "GENERAL" ][ "TEST" ]:
+    for group in [ "DAT", "BKG", "SIG" ]:
+      group_time = time.time()
+      print( "[START] Processing hists for {}".format( group ) )
+      for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
+      make_hists( groups, group, category )
+      print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60, 2 ) ) )
+  else:
+    test_time = time.time() 
+    print( "[START] Processing TEST hists" )
+    for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
+    make_hists( groups, "TEST", category )
+    print( "[DONE] Finished processing hists for TEST in {} minutes".format( round( ( time.time() - test_time ) / 60, 2 ) ) )
+
+  print( "[DONE] Finished making hists in {}".format( round( ( time.time() - start_time ) / 60, 2 ) ) )
+
+main()
