@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 sys.path.append( os.path.dirname( "../" ) ) 
 
-from utils import hist_tag
+from utils import contains_category, hist_tag
 import config
 
 parser = ArgumentParser()
@@ -68,10 +68,13 @@ def read_tree( samplePath ):
   rootTree = rootFile.Get( "ljmet" )
   return rootFile, rootTree
 
-def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
+def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, verbose ):
   variableName = config.plot_params[ "VARIABLES" ][ variable ][0]
   histBins = array( "d", config.plot_params[ "VARIABLES" ][ variable ][1] )
   xLabel = config.plot_params[ "VARIABLES" ][ variable ][2]
+
+  if doABCDNN:
+    variableName += "_ABCDNN_{}".format( config.params[ "ABCDNN" ][ "TAG" ] )
 
   print( ">> Processing {} for 20{} {}".format( variable, year, process ) )
   
@@ -83,19 +86,16 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   else:
     mc_weights[ "PROCESS" ] = "1"
 
-  if process.startswith( "TTTo" ):
+  if process.startswith( "TTTo" ) and not doABCDNN:
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
-<<<<<<< HEAD
   if process not in groups[ "DAT" ]:
-    if config.options[ "GENERAL" ][ "ABCDNN" ] and process.startswith( "TTTo" ):
-      mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] ) 
+    if doABCDNN:
+      mc_weights[ "NOMINAL" ] += "*transfer_ABCDNN_{}".format( config.params[ "ABCDNN" ][ "TAG" ] ) 
     else:
       mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
     
   if process not in groups[ "DAT" ] and doSYST:
-    #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
-    #                           "DN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
     if config.systematics[ "MC" ][ "pileup" ]:
       mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
                                  "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
@@ -124,50 +124,11 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
       mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
                                "DN": mc_weights[ "NOMINAL" ] }
     if config.systematics[ "MC" ][ "njetsf" ]:
-=======
-  if process not in list( samples.samples[ "DATA" ].keys() ):
-    if not config.options[ "GENERAL" ][ "ABCDNN" ]:
-      mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
-    else:
-      mc_weights[ "NOMINAL" ] += "*transfer_{}*{}".format( config.params[ "GENERAL" ][ "ABCDNN TAG" ], mc_weights[ "PROCESS" ] )
-
-  if process not in list( samples.samples[ "DATA" ].keys() ) and doSYST:
-    #mc_weights[ "TRIGGER" ] = { "UP": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF+triggerXSFUncert)" ),
-    #                           "DN": weights[ "NOMINAL" ].replace( "triggerXSF", "(triggerXSF-triggerXSFUncert)" ) }
-    if config.options[ "GENERAL" ][ "ABCDNN" ]:
-      abcdnn_tag = config.params[ "GENERAL" ][ "ABCDNN TAG" ]
-      mc_weights[ "TRANSFER" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}+transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ),
-                                   "DN": mc_weights[ "NOMINAL" ].replace( "transfer_{}".format( abcdnn_tag ), "(transfer_{}-transfer_err_{}".format( abcdnn_tag, abcdnn_tag ) ) }
-    if "pileup" in config.systematics[ "MC" ]:
-      mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
-                                 "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
-    mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
-                                "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDn_CommonCalc") }
-    if "murfcorrd" in config.systematics[ "MC" ]:
-      mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
-                                    "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if "muR" in config.systematics[ "MC" ]:
-      mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
-                              "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if "muF" in config.systematics[ "MC" ]:
-      mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
-                              "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if "isr" in config.systematics[ "MC" ]:
-      mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
-                              "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if "fsr" in config.systematics[ "MC" ]:
-      mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
-                              "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if "toppt" in config.systematics[ "MC" ]:
-      mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
-                                "DN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ) }
-    if "njet" in config.systematics[ "MC" ]:
-      mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
-                               "DN": mc_weights[ "NOMINAL" ] }
-    if "njetsf" in config.systematics[ "MC" ]:
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
       mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
                                  "DN": mc_weights[ "NOMINAL" ] }
+    if config.systematics[ "MC" ][ "ABCDNN" ]:
+      mc_weights[ "ABCDNN" ] = { "UP": "( transfer_ABCDNN_{} + transfer_err_ABCDNN_{} ) * {}".format( config.params[ "ABCDNN" ][ "TAG" ], config.params[ "ABCDNN" ][ "TAG" ], mc_weights[ "NOMINAL" ] ), 
+                                 "DN": "( transfer_ABCDNN_{} - transfer_err_ABCDNN_{} ) * {}".format( config.params[ "ABCDNN" ][ "TAG" ], config.params[ "ABCDNN" ][ "TAG" ], mc_weights[ "NOMINAL" ] ) }
     # deep jet related systematics
     for syst in [ "LF", "lfstats1", "lfstats2", "HF", "hfstats1", "hfstats2", "cferr1", "cferr2", "jes" ]:
       if config.systematics[ "MC" ][ syst ]:
@@ -329,32 +290,39 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, category, verbose ):
   for key in hists: hists[ key ].SetDirectory(0)
   return hists
 
-def make_hists( groups, group, category ): 
+def make_hists( groups, group, category, useABCDnn ): 
   # only valid group arguments are DAT, SIG, BKG, TEST
   doSys = config.options[ "GENERAL" ][ "SYSTEMATICS" ] if group in [ "SIG", "BKG", "TEST" ] else False
   hists = {}
   for process in groups[ group ]:
     process_time = time.time()
     rFiles, rTrees = {}, {} 
-    rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ group ][ process ] + "_hadd.root" ) )
+    variable = args.variable
+    if useABCDnn and args.variable in config.params[ "ABCDNN" ][ "TRANSFER VARIABLES" ] and process in samples.groups[ "BKG" ][ "ABCDNN" ] and contains_category( category, config.hist_bins[ "ABCDNN" ] ):
+      print( "[OPT] Using ABCDnn sample" )
+      useABCDNN = True
+      rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ].replace( "step3", "step3_ABCDnn" ), "nominal/", samples.samples[ group ][ process ] + "_ABCDnn_hadd.root" ) ) 
+    else:
+      useABCDNN = False
+      rFiles[ process ], rTrees[ process ] = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ group ][ process ] + "_hadd.root" ) )
     if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIG", "BKG" ]:
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
           rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
-    hists.update( analyze( rTrees, args.year, process, args.variable, doSys, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
+    hists.update( analyze( rTrees, args.year, process, variable, doSys, config.options[ "GENERAL" ][ "PDF" ], useABCDNN, category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees
   if config.options[ "GENERAL" ][ "UE" ] and group in [ "UE" ]:
     for process in groups[ "UE" ]:
       process_time = time.time()
       rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BKG" ][ process ] + "_hadd.root" ) )
-      hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
+      hists.update( analyze( rTree, args.year, process, variable, False, config.options[ "GENERAL" ][ "PDF" ], False, category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   if config.options[ "GENERAL" ][ "HDAMP" ] and group in [ "HD" ]:
     for process in groups[ "HD" ]:
       process_time = time.time()
       rTree = read_tree( os.path.join( config.inputDir[ args.year ], "nominal/", samples.samples[ "BKG" ][ process ] + "_hadd.root" ) )
-      hists.update( analyze( rTree, args.year, process, args.variable, False, config.options[ "GENERAL" ][ "PDF" ], category, True ) )
+      hists.update( analyze( rTree, args.year, process, variable, False, config.options[ "GENERAL" ][ "PDF" ], False, category, True ) )
       print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60, 2 ) ) )
   categoryDir = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[ "LEPTON" ][0], category[ "NHOT" ][0], category[ "NT" ][0], category[ "NW" ][0], category[ "NB" ][0], category[ "NJ" ][0] )
   if not os.path.exists( "{}/{}".format( args.subDir, categoryDir ) ): os.system( "mkdir -vp {}/{}".format( args.subDir, categoryDir ) )
@@ -366,13 +334,13 @@ def main():
       group_time = time.time()
       print( "[START] Processing hists for {}".format( group ) )
       for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
-      make_hists( groups, group, category )
+      make_hists( groups, group, category, config.options[ "GENERAL" ][ "ABCDNN" ] )
       print( "[DONE] Finished processing hists for {} in {} minutes".format( group, round( ( time.time() - group_time ) / 60, 2 ) ) )
   else:
     test_time = time.time() 
     print( "[START] Processing TEST hists" )
     for key in category: print( "  - {}: {}".format( key, category[ key ] ) )
-    make_hists( groups, "TEST", category )
+    make_hists( groups, "TEST", category, config.options[ "GENERAL" ][ "ABCDNN" ] )
     print( "[DONE] Finished processing hists for TEST in {} minutes".format( round( ( time.time() - test_time ) / 60, 2 ) ) )
 
   print( "[DONE] Finished making hists in {}".format( round( ( time.time() - start_time ) / 60, 2 ) ) )

@@ -7,11 +7,7 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_ste
 
 # target lumis in 1/pb for each year
 lumi = {
-<<<<<<< HEAD
   "16APV": 10000.,
-=======
-  "16APV": 35920.,
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   "16": 35920., 
   "17": 41530.,
   "18": 59830.
@@ -28,35 +24,19 @@ BR = {
 # boolean options that need to be coordinated across template making
 options = {
   "GENERAL": {
-<<<<<<< HEAD
     "TEST": False,        # run on limited samples
     "JET SHIFTS": False,  # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": False,
+    "ABCDNN": True,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
     "RENORM PDF": True, # renormalize the PDF weights
     "SUMMARY": False,   # produce summary templates
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
-=======
-    "TEST": False,          # run on limited samples
-    "JET SHIFTS": False,    # JEC/JER shifts for shape 
-    "HDAMP": False,         # hdamp systematics
-    "UE": False,            # ue systematics
-    "PDF": True,            # pdf systematics
-    "SYSTEMATICS": True,    # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": False,        # using ABCDnn data-driven background estimation for ttbar
-    "FINAL ANALYSIS": False # run binned-analysis on data
-  },
-  "HISTS": {
-    "RENORM PDF": True,           # renormalize the PDF weights
-    "SUMMARY": False,             # produce summary templates
-    "SCALE SIGNAL 1PB": False,    # Scale the signal xsec to 1 PB for future studies
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   },
   "MODIFY BINNING": {
     "BLIND": True,
@@ -68,7 +48,7 @@ options = {
     "PS WEIGHTS": True,            # Construct Parton Shower weights
     "NORM THEORY SIG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
     "NORM THEORY BKG SYST": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
-    "SYMM SMOOTHING": True,
+    "SYMM SMOOTHING": False,
     "SYMM TOP PT": True,
     "SYMM HOTCLOSURE": True,
     "SCALE SIGNAL XSEC": False,
@@ -87,16 +67,12 @@ params = {
     "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
-<<<<<<< HEAD
-    "ABCDNN TAG": "SR"
-=======
-    "ABCDNN GROUP": [ # background processes that abcdnn will be applied to
-      "TTNOBB",
-      "TTBB",
-      "QCD"
-    ],
-    "ABCDNN TAG": "SR" 
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
+  },
+  "ABCDNN": {
+    "TAG": "SR",
+    "CONTROL VARIABLES":  [ "NJ", "NB" ],
+    "TRANSFER VARIABLES": [ "HT", "DNN_3t" ],
+    "GROUPS": [ "TTBB", "TTNOBB" ]
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -159,13 +135,12 @@ region_prefix = {
   "VR": "templates_VR",
   "TTCR": "ttbar",
   "WJCR": "wjets",
-  "BASELINE": "baseline"
+  "BASELINE": "baseline",
   "ABCDNN": "acbdnn"
 }
 
 # systematic uncertainty sources
 systematics = {
-<<<<<<< HEAD
   "MC": {
     "pileup": True, 
     "trigeff": False,
@@ -190,22 +165,12 @@ systematics = {
     "jes": True,
     "toppt": True, 
     "ht": False,
-    "JER": False, 
-    "JEC": False,
+    "ABCDNN": True,
+    "JER": True, 
+    "JEC": True,
     "HD": False,
     "UE": False
   },
-=======
-  "MC": [ 
-    "pileup", "trigeff",
-    "muRFcorrd", "muR", "muF", "isr", "fsr", 
-    "hotstat", "hotcspur", "hotclosure", 
-    "LF", "LFstat1", "LFstat2", "HF", "HFstat1", "HFstat2", 
-    "CFerr1", "CFerr2",
-    "toppt", "ht",
-    #"JER", "JEC"
-  ],
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
   "LUMI": {
     "16APV": 1.012,
     "16": 1.012,
@@ -213,16 +178,16 @@ systematics = {
     "18": 1.025
   },
   "TRIG": {
-    "E": 1.0, 
-    "M": 1.0
+    "E": 1.03, 
+    "M": 1.03,
   },
   "ID": {
-    "E": 1.03,
-    "M": 1.03
+    "E": 1.015,
+    "M": 1.010
   },
   "ISO": {
-    "E": 0.0,
-    "M": 0.0
+    "E": 1.025,
+    "M": 1.025
   },
   "XSEC": {
     "TTBAR": [ 0.945, 1.048 ],
@@ -260,11 +225,11 @@ hist_bins = {
     "NB": [ "2p" ],
     "NJ": [ "5p" ]
   },
-  "ABCDNN": {
+  "ABCDNN": { # edit these based on ABCDnn training signal region
     "LEPTON": [ "E", "M" ],
     "NHOT": [ "0", "1", "2p" ],
-    "NT": [ "0" ],
-    "NW": [ "0" ],
+    "NT": [ "0p" ],
+    "NW": [ "0p" ],
     "NB": [ "3p" ],
     "NJ": [ "7p" ] 
   }
@@ -273,7 +238,7 @@ hist_bins = {
 event_cuts = {
   "pt_electron": 20,
   "pt_muon": 20,
-  "pt_jet": 20,
+  "pt_jet": 30,
   "met": 20,
   "mt": 0,
   "ht": 350
@@ -302,12 +267,6 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-<<<<<<< HEAD
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), "DNN_{1-50}" )
-=======
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), ";DNN_{1-50}" ),
-    "DNN_ABCDnn_SR": ( "DNN_ABCDnn_SR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" ),
-    "DNN_ABCDnn_CR": ( "DNN_ABCDnn_CR", bins( 0, 1, 101 ), ";DNN_{ABCDnn}" )
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
+    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), "DNN_{1-50}" ),
   }
 }

@@ -32,11 +32,10 @@ def produce_templates():
   os.chdir( "makeTemplates" )
   for training in trainings:
     for variable in training[ "variable" ]:
-      command = "python condor_templates.py -y {} -v {} -p {} -i {} -r {}".format(
+      command = "python condor_templates.py -y {} -v {} -p {} -r {}".format(
         training[ "year" ],
         variable,
         training[ "tag" ],
-        training[ "path" ],
         args.region
       )
       os.system( command ) 

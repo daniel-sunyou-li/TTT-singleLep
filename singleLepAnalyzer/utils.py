@@ -5,6 +5,13 @@ import numpy as np
 import config
 from ROOT import *
 
+def contains_category( category, categories ):
+  for key in config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ]:
+    if category[ key ][0] not in categories[ key ]:
+      print( category[ key ][0], categories[ key ] )
+      return False
+  return True
+
 def hist_parse( hist_name, samples ):
   parse = {
     "PROCESS": "",

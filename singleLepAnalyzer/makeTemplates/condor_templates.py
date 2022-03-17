@@ -12,7 +12,6 @@ parser.add_argument( "-y", "--year", required = True, help = "[16,17,18]" )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-p", "--postfix", default = "test" )
 parser.add_argument( "-r", "--region", required = True, help = "[SR,PS,TTCR,WJCR]" )
-parser.add_argument( "-i", "--inputdir", required = True )
 args = parser.parse_args()
 
 thisDir = os.getcwd()
@@ -43,12 +42,7 @@ categories = list(
   )
 )
 	
-<<<<<<< HEAD
 subDir = "{}_UL{}_{}".format( config.region_prefix[ args.region ], args.year, args.postfix )
-=======
-prefix = config.region_prefix[ args.region ]
-subDir = "{}_UL{}_{}".format( prefix, args.year, args.postfix )
->>>>>>> be39dd62d7ed57d9a1887dee7aa2416d25dddfed
 outputPath = os.path.join( os.getcwd(), subDir )
 if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPath ) )
 
@@ -67,9 +61,6 @@ for variable in args.variables:
     if ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > int(category[5][0]):
       print( "[WARN] {} is not topologically possible, skipping...".format( categoryTag ) )
       continue
-    #if ( int(category[5][0]) == 5 ) and ( ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > 3 ): 
-    #  print( "[WARN] {} has too few signal yield, skipping...".format( categoryTag ) )
-    #  continue
       
     if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir -vp {}".format( os.path.join( outputPath, categoryTag ) ) )
     os.chdir( os.path.join( outputPath, categoryTag ) )

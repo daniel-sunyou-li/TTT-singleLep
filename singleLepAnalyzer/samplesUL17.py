@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
 import numpy as np
+import config
 
 samples = {
   "TEST": {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
-    #"TTToSemiLeptonic_ttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
+    "TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
   },
   "DAT": {
     "DataE": "SingleElectron",
@@ -119,6 +120,7 @@ groups[ "BKG" ][ "PROCESS" ] = {
 groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicttjj" + num for num in [ "1", "2", "3", "4" ] ]
 
 groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in groups[ "BKG" ][ "PROCESS" ].keys() ] )
+
     
 # grouped background processes
 groups[ "BKG" ][ "SUPERGROUP" ] = {
@@ -129,6 +131,11 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ],
   "TTH": [ "TTHB", "TTHnoB" ]
 }
+
+groups[ "BKG" ][ "ABCDNN" ] = []
+for group in config.params[ "ABCDNN" ][ "GROUPS" ]:
+  for process in groups[ "BKG" ][ "SUPERGROUP" ][ group ]:
+    groups[ "BKG" ][ "ABCDNN" ].append( process )
   
 groups[ "BKG" ][ "TTBAR_GROUPS" ] = {
   group: groups[ "BKG" ][ "SUPERGROUP" ][ group ] for group in [ "TTNOBB", "TTBB" ]

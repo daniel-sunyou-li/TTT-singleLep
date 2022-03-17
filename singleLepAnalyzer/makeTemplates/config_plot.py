@@ -1,3 +1,6 @@
+import os, sys
+sys.path.append( "../" )
+import config
 import ROOT
 
 options = {
@@ -12,14 +15,46 @@ options = {
   "REAL PULL": False,
   "BLIND": False,
   "Y LOG": True,
-  "SMOOTH": False,
+  "SMOOTH": True,
+  "SYMM SMOOTHING": False,
 }
 
 params = {
   "POSTFIX TEXT": "Preliminary",
   "INCLUDE LEP": [ "L" ], # E,M,L
   "ERROR BAND": [ "ALL" ], # "SHAPE ONLY", "SHAPE + NORM"
-  "EXCLUDE SYST": [],
+  "EXCLUDE SYST": [
+    #"pdf", # this is fine
+    #"pswgt", # this is fine
+    #"pileup", # this is fine 
+    "trigeff", # this one seems like there might be an issue --> way too huge? 
+    #"muRF",
+    "muRFcorrd", # this is fine
+    "muR", # this is fine
+    "muF", # this is fine
+    "isr", # this is fine 
+    "fsr", # this is fine 
+    "hotstat",  # seems a bit large 
+    "hotcspur",
+    "hotclosure",
+    "njet",
+    "njetsf",
+    "LF", # this is fine
+    "lfstats1", # this one might have an issue
+    "lfstats2", # this one might have an issue
+    "HF", # this is fine
+    "hfstats1",
+    "hfstats2",
+    "cferr1",
+    "cferr2",
+    "jes", # this one might have an issue
+    "toppt",
+    "ht",
+    "JER", # this seems very large
+    "JEC", # this seems very large
+    "HD",
+    "UE"
+  ],
   "SCALE SIGNAL YIELD": 100,
   "DAT COLOR": ROOT.kBlack,
   "SIG COLOR": ROOT.kBlack,
@@ -46,13 +81,17 @@ params = {
     "I POSITION": 11,
   },
   "LEGEND": {
-    "X1": 0.18,
-    "Y1": 0.80,
-    "X2": 0.80,
-    "Y2": 0.90,
-    "TEXT SIZE": 0.04
+    "X1": 0.55,
+    "Y1": 0.68,
+    "X2": 0.95,
+    "Y2": 0.88,
+    "TEXT SIZE": 0.02
   }
 }
+
+for i in range( len( params[ "EXCLUDE SYST" ] ) ):
+  params[ "EXCLUDE SYST" ][i] = params[ "EXCLUDE SYST" ][i].upper() 
+  if options[ "SMOOTH" ]: params[ "EXCLUDE SYST" ][i] += config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
 
 params[ "CANVAS" ][ "T" ] = 0.10 * params[ "CANVAS" ][ "H REF" ] 
 params[ "CANVAS" ][ "B" ] = 0.12 * params[ "CANVAS" ][ "H REF" ] if options[ "BLIND" ] else 0.35 * params[ "CANVAS" ][ "H REF" ]
@@ -61,6 +100,6 @@ params[ "CANVAS" ][ "R" ] = 0.04 * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "W" ] = 1. * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "H" ] = 1. * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "TAG X" ] = 0.82
-params[ "CANVAS" ][ "TAG Y" ] = 0.66 if options[ "BLIND" ] else 0.60
+params[ "CANVAS" ][ "TAG Y" ] = 0.60
 
-params[ "LATEX SIZE" ] = 0.03 if options[ "BLIND" ] else 0.04
+params[ "LATEX SIZE" ] = 0.04
