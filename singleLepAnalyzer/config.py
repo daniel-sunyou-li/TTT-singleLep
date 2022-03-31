@@ -7,10 +7,10 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_ste
 
 # target lumis in 1/pb for each year
 lumi = {
-  "16APV": 10000.,
-  "16": 35920., 
-  "17": 41530.,
-  "18": 59830.
+  "16APV": 20710., # preVFP ratio (57%) calculated using brilcalc on ReReco but total lumi from GoldenJSON
+  "16": 15623.,    # postVFP ratio (43%) calculated using brilcalc on ReReco but total lumi from GoldenJSON
+  "17": 41480.,    # calculated using brilcalc on GoldenJSON 
+  "18": 59832.     # calculated using brilcalc on GoldenJSON
 }
 lumiStr = { year: str( lumi[ year ] / 1000. ).replace( ".", "p" ) + "fb" for year in lumi }
 
