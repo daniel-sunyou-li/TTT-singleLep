@@ -9,8 +9,6 @@ import os
 import config
 
 parser = ArgumentParser()
-parser.add_argument( "-v",   "--verbose",     action = "store_true", help = "Display detailed logs." )
-parser.add_argument( "-r",   "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
 parser.add_argument( "-p",   "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
 parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from: 16, 17, 18" )
 parser.add_argument( "-n",   "--seeds",       default = "500",       help = "The number of seeds to submit (only in submit mode)." )
@@ -23,6 +21,8 @@ parser.add_argument( "-met", "--MET",         default = "60",        help = "MET
 parser.add_argument( "-lpt", "--LEPPT",       default = "20",        help = "Lepton PT cut" )
 parser.add_argument( "-mt",  "--MT",          default = "60",        help = "MT of lepton and MET" )
 parser.add_argument( "-dr",  "--MINDR",       default = "0.4",       help = "min DR between lepton and jet" )
+parser.add_argument(         "--verbose",     action = "store_true", help = "Display detailed logs." )
+parser.add_argument(         "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
 parser.add_argument(         "--test",        action = "store_true", help = "Only submit one job to test submission mechanics." )
 parser.add_argument(         "--unstarted",   action = "store_true", help = "Include unstarted jobs in the resubmit list." )
 parser.add_argument( "folders", nargs="*",    default = [],          help = "Condor log folders to [re]submit to." ) 
@@ -30,8 +30,8 @@ args = parser.parse_args()
 
 from correlation import generate_uncorrelated_seeds
 
-if args.year not in [ "16", "17", "18" ]:
-  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16, 17, 18.".format( args.year ) )
+if args.year not in [ "16APV", "16", "17", "18" ]:
+  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16APV, 16, 17, 18.".format( args.year ) )
 
 # Parse command line arguments
 jt.LOG = args.verbose
@@ -114,7 +114,7 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "7 GB",
+    "MEMORY": "8 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
@@ -128,7 +128,7 @@ def submit_job(job):
     "MT": args.MT,
     "MINDR": args.MINDR,
   }
-  if args.resubmit: condorParams[ "MEMORY" ] = "10 GB" 
+  if args.resubmit: condorParams[ "MEMORY" ] = "12 GB" 
  
   with open( job.path, "w" ) as f:
     f.write(
@@ -136,8 +136,8 @@ def submit_job(job):
 Executable = %(RUNDIR)s/remote.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
+Transfer_Input_Files = %(RUNDIR)s/remote.py, %(RUNDIR)s/config.py, %(RUNDIR)s/jobtracker.py
 request_memory = %(MEMORY)s
-request_cpus = 2
 JobBatchName = VariableImportance
 Output = %(FILENAME)s.out
 Error = %(FILENAME)s.err

@@ -13,9 +13,9 @@ TMVA.PyMethodBase.PyInitialize()
 def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
   # Returns the correlation matrix of the given variables
   # Get signal and background paths
-  tttw_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
-  tttj_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][1] )
-  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year ) ], "nominal/", config.sig_training[ str(year ) ][0] )
+  tttw_path =   os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
+  tttj_path =   os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][1] )
+  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
 
   # Create ROOT.TMVA object
   loader = TMVA.DataLoader("tmva_data")

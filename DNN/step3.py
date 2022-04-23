@@ -3,6 +3,7 @@
 import os, sys, glob
 from argparse import ArgumentParser
 import numpy as np
+import ROOT
 from ROOT import TFile, TTree
 from array import array
 from json import loads as load_json
@@ -17,13 +18,8 @@ import config
 
 # read in arguments
 parser = ArgumentParser()
-parser.add_argument("-i","--inputDir",required=True)
-parser.add_argument("-f","--fileName",required=True)
-parser.add_argument("-o","--outDir",required=True)
-parser.add_argument("-t","--tag",required=True)
+parser.add_argument("-f","--file",required=True)
 args = parser.parse_args()
-
-step3_file = args.fileName + ".root" 
 
 modelNames = glob.glob("*.tf")
 jsonNames  = glob.glob("*.json")
@@ -49,29 +45,33 @@ def setup( modelNames, jsonNames ):
 
     return models, varlist, jetlist, indexlist, taglist
 
-def check_root( rootTree ):
-    if rootTree.GetEntries() == 0:
-        print( ">> Tree \"ljmet\" is empty, writing out empty tree" )
-        return True
-    else: return False   
-        
-def get_predictions( rootTree, models, varlist, empty ):
+
+def get_predictions( models, varlist, fName, tName = "ljmet" ):
     events = []
-    disclist = []
-    
+    discs = []
+    df = ROOT.RDataFrame( tName, fName )
+
     for variables in varlist:
-        if empty: events.append( np.asarray([]) )
-        else: events.append( np.asarray( rootTree.AsMatrix( [ variable.encode( "ascii", "ignore" ) for variable in variables ] ) ) )
+        if df.Count() == 0: 
+            events.append( np.asarray([]) )
+        else:
+            eventDict = df.AsNumpy( columns = [ variable.encode( "ascii", "ignore" ) for variable in variables ] )
+            eventList = []
+            for variable in sorted( variables ):
+                eventList.append( eventDict[ variable ] )
+            events.append( np.array( eventList ).transpose() )
     
     for i, model in enumerate(models):
-        if empty: disclist.append( np.asarray([]) )
-        else: disclist.append( model.predict( events[i] ) )
-
-    return disclist 
+        if df.Count() == 0: 
+            discs.append( np.asarray([]) )
+        else: 
+            discs.append( model.predict( events[i] ) )
+        print( "[INFO] Discriminator stats: {:.3f} pm {:.3f}".format( np.mean( discs[i] ), np.std( discs[i] ) ) )
+    return discs 
         
 
 def fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree ): 
-    out = TFile( step3_file, "RECREATE" );
+    out = TFile( args.file.split( "/" )[-1], "RECREATE" );
     out.cd()
     newTree = rootTree.CloneTree(0);
     DNN_disc = {}
@@ -88,19 +88,19 @@ def fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootT
         for j, modelName in enumerate( sorted( modelNames ) ):
             DNN_disc[ modelName ][0] = disclist[j][i]
         newTree.Fill()
-    print( "[OK ] Successfully added {} new discriminators".format( len( modelNames ) ) )
+    print( "[OK] Successfully added {} new discriminators".format( len( modelNames ) ) )
     newTree.Write()
     out.Write()
     out.Close()
 
 def main():
-    print( ">> Running the step3 production..." )
+    print( "[START] Running the step3 production..." )
     models, varlist, jetlist, indexlist, taglist = setup( modelNames, jsonNames )
-    rootFile = TFile.Open( "{}/{}/{}.root".format( args.inputDir, args.tag, args.fileName ) );
-    print( ">> Creating step3 for sample: {}/{}.root".format( args.tag, args.fileName ) )
-    rootTree = rootFile.Get( "ljmet" );
-    empty = check_root( rootTree )
-    disclist = get_predictions( rootTree, models, varlist, empty )
+    rootFile = TFile.Open( args.file );
+    rootTree = rootFile.Get( "ljmet" ); 
+    print( ">> Creating step3 for sample: {}.root".format( args.file ) )
+    disclist = get_predictions( models, varlist, args.file, "ljmet" )
     fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree )
+    print( "[DONE] Finished adding {} DNN discriminator branches to {}".format( len( disclist ), args.file ) )
 
 main()

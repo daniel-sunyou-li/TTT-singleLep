@@ -15,18 +15,12 @@ echo ">> Setting Up TTT Job"
 
 # Enter environment
 source /cvmfs/cms.cern.ch/cmsset_default.sh
-
-# Copy and Unpack Resources
-xrdcp -s root://cmseos.fnal.gov//store/user/$eos_username/CMSSW106_ttt.tgz .
-tar -xf CMSSW106_ttt.tgz
-rm CMSSW106_ttt.tgz
-
-cd ./CMSSW_10_6_19/src/TTT-singleLep/DNN/
-
-export SCRAM_ARCH=slc7_amd64_gcc630
+export SCRAM_ARCH=slc7_amd64_gcc700
+scramv1 project CMSSW CMSSW_10_6_29
+cd CMSSW_10_6_29
 eval `scramv1 runtime -sh`
-source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt/bin/thisroot.sh
+cd -
 
-echo "[OK ] Setup finished."
+source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt/bin/thisroot.sh
 
 python remote.py -y $year -s $seed_vars -nj $NJETS -nb $NBJETS -ht $AK4HT -met $MET -lpt $LEPPT -mt $MT -dr $MINDR 

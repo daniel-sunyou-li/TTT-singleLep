@@ -41,7 +41,7 @@ base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
             "( %(isTraining)s == 1 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
-VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ).union( set( CUT_VARIABLES ) ) ) ) )
+VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ).union( set( WEIGHT_VARIABLES ) ) ) ) )
 CUT_VARIABLES = [ ( v, VARIABLES.index(v) ) for v in CUT_VARIABLES ]
 
 SAVE_FPR_TPR_POINTS = 20
@@ -170,7 +170,8 @@ class MLTrainingInstance(object):
       weights[ path ] = df_weight.Sum( "weight" ).GetValue()
       factors[ path ] = float( df3_count ) / weights[ path ] 
       sig_list = []
-      for x, y in sig_dict.items(): sig_list.append(y)
+      for variable in sorted( VARIABLES ):
+        sig_list.append( sig_dict[ variable ] )
       if path in all_signals:
         all_signals[path] = np.concatenate( ( all_signals[path], np.array( sig_list ).transpose() ) )
       else:
@@ -199,7 +200,8 @@ class MLTrainingInstance(object):
       bkg_dict = df_3.AsNumpy( columns = VARIABLES )
       del df, df_1, df_2, df_3
       bkg_list = []
-      for x, y in bkg_dict.items(): bkg_list.append(y)
+      for variable in sorted( VARIABLES ):
+        bkg_list.append( bkg_dict[ variable ] )
       if path in all_backgrounds:
         all_backgrounds[path] = np.concatenate( ( all_backgrounds[path], np.array( bkg_list ).tranpose() ) )
       else:
@@ -261,7 +263,7 @@ class HyperParameterModel(MLTrainingInstance):
   def select_ml_variables(self, sig_events, bkg_events, varlist):
     # Select which variables from ML_VARIABLES to use in training
     positions = { v: VARIABLES.index(v) for v in varlist }
-    var_mask = [ positions[v] for v in positions ]
+    var_mask = [ positions[v] for v in sorted( positions.keys() ) ]
     return np.concatenate( ( np.array( sig_events )[:, var_mask], np.array( bkg_events )[:, var_mask] ) )
 
   def build_model(self, input_size="auto"):
@@ -270,7 +272,6 @@ class HyperParameterModel(MLTrainingInstance):
       self.parameters[ "initial_nodes" ],
       input_dim=len(self.parameters["variables"]) if input_size == "auto" else input_size,
       kernel_initializer = "he_normal",
-      #kernel_initializer = "glorot_uniform",
       kernel_regularizer="l2",
       activation=self.parameters[ "activation_function" ]
     ) )
@@ -283,7 +284,6 @@ class HyperParameterModel(MLTrainingInstance):
         self.model.add( Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
           kernel_initializer = "he_normal",
-          #kernel_initializer = "glorot_uniform",
           kernel_regularizer = "l2",
           activation=self.parameters[ "activation_function" ]
         ) )
@@ -291,7 +291,6 @@ class HyperParameterModel(MLTrainingInstance):
 	self.model.add( Dense(
           self.parameters[ "initial_nodes" ],
           kernel_initializer = "he_normal",
-          #kernel_initializer = "glorot_uniform",
           kernel_regularizer = "l2",
           activation=self.parameters[ "activation_function" ]
         ) )
@@ -376,11 +375,12 @@ class HyperParameterModel(MLTrainingInstance):
     del train_x, test_x, train_y, test_y, history
 
 class CrossValidationModel( HyperParameterModel ):
-  def __init__( self, parameters, signal_paths, background_paths, ratio, model_folder, njets, nbjets, ak4ht, lepPt, met, mt, minDR, num_folds = 5 ):
+  def __init__( self, parameters, signal_paths, background_paths, ratio, model_folder, njets, nbjets, ak4ht, lepPt, met, mt, minDR, num_folds = 5, best_metric = "ACC" ):
     HyperParameterModel.__init__( self, parameters, signal_paths, background_paths, ratio, njets, nbjets, ak4ht, lepPt, met, mt, minDR, None )
         
     self.model_folder = model_folder
     self.num_folds = num_folds
+    self.best_metric = best_metric
 
     if not os.path.exists( self.model_folder ):
       os.mkdir( self.model_folder )
@@ -455,6 +455,7 @@ class CrossValidationModel( HyperParameterModel ):
     # Train each fold
     print( ">> Beginning Training and Evaluation." )
     self.model_paths = []
+    self.mean_disc_res = []
     self.loss = []
     self.accuracy = []
     self.fpr_train = []
@@ -503,16 +504,46 @@ class CrossValidationModel( HyperParameterModel ):
       model_ckp = load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
-      fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), model_ckp.predict(shuffled_x)[:,0] )
-      fpr_test, tpr_test, _ = roc_curve( shuffled_test_y.astype(int), model_ckp.predict(shuffled_test_x)[:,0] )
+      predict_train = model_ckp.predict(shuffled_x)[:,0]
+      predict_test  = model_ckp.predict(shuffled_test_x)[:,0]
+
+      fpr_train, tpr_train, _ = roc_curve( shuffled_y.astype(int), predict_train )
+      fpr_test, tpr_test, _ = roc_curve( shuffled_test_y.astype(int), predict_test )
 
       auc_train = auc( fpr_train, tpr_train )
       auc_test  = auc( fpr_test, tpr_test )
 
-      if self.best_fold == -1 or auc_test > max(self.auc_test):
-        self.best_fold = k
+      mean_disc_res = abs( np.mean( predict_test ) - 0.5 ) # want to be as far from edges as possible
+
+      print( "[INFO] Statistics from training (k={})".format(k) )
+      print( "  + Discriminator: {:.3f} pm {:.3f}".format( np.mean( predict_test ), np.std( predict_test ) ) )
+      print( "  + Accuracy: {:.3f}".format( accuracy ) )
+      print( "  + Loss: {:.5f}".format( loss ) )
+      print( "  + AUC: {:.3f}".format( auc_test ) )
+
+      if self.best_metric == "ACC":
+        if self.best_fold == -1 or accuracy > max( self.accuracy ):
+          if len( self.accuracy ) > 0: print( "[INFO] New best accuracy (k = {} -> {}): {:.3f} {:.3f}".format( self.best_fold, k, max( self.accuracy ), accuracy ) )
+          self.best_fold = k
+      elif self.best_metric == "LOSS":
+        if self.best_fold == -1 or loss < min( self.loss ):
+          if len( self.loss ) > 0: print( "[INFO] New best loss (k = {} -> {}): {:.3f} -> {:.3f}".format( self.best_fold, k, min( self.loss ), loss ) )
+          self.best_fold = k
+      elif self.best_metric == "AUC":
+        if self.best_fold == -1 or auc_test > max( self.auc_test ):
+          if len( self.auc_test ) > 0: print( "[INFO] New best AUC (k = {} -> {}): {:.3f} -> {:.3f}".format( self.best_fold, k, max( self.auc_test ), auc_test ) )
+          self.best_fold = k
+      elif self.best_metric == "STABLE":
+        if self.best_fold == -1 or mean_disc_res < min( self.mean_disc_res ):
+          if len( self.mean_disc_res ) > 0: print( "[INFO] New best mean disc (k = {} -> {}): {:.3f} -> {:.3f}".format( self.best_fold, k, min( self.mean_disc_res ), mean_disc_res ) )          
+          else: print( "[INFO] New best mean disc (k = {}): {:.3f}".format( k, mean_disc_res ) )
+          self.best_fold = k
+ 
+      if not os.path.exists( self.model_folder ): os.system( "mkdir -vp {}".format( self.model_folder ) )
+      model_ckp.save( model_name )
 
       self.model_paths.append( model_name )
+      self.mean_disc_res.append( mean_disc_res )
       self.loss.append( loss )
       self.accuracy.append( accuracy )
       self.fpr_train.append( fpr_train[ 0::int( len(fpr_train) / SAVE_FPR_TPR_POINTS ) ] )

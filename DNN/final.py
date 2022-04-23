@@ -14,8 +14,12 @@ parser = ArgumentParser()
 parser.add_argument( "datasets", nargs="*", default=[], help="The dataset folders to search for HPO information")
 parser.add_argument( "-f", "--folder", default="auto", help="The name of the output folder.")
 parser.add_argument( "-k", "--num-folds", default="5", help="The number of cross-validation iterations to perform for each configuration")
+parser.add_argument( "-m", "--metric", default = "STABLE", help="Metric for best model options: STABLE,LOSS,ACC,AUC" )
 parser.add_argument( "--no-cut-save", action="store_true", help="Do not attempt to load or create saved cut event files.")
 args = parser.parse_args()
+
+if args.metric not in [ "STABLE", "LOSS", "ACC", "AUC" ]:
+  quit( "[ERR] Invalid model evaluation metric selected, choose from: STABLE, LOSS, ACC, AUC. Quitting..." )
 
 print( ">> Final Model Training: k-fold Cross Validation" )
 
@@ -77,9 +81,9 @@ for config_num, config_path in enumerate(config_order):
     config_json = load_json(f.read())
     parameters["variables"] = config_json["variables"]
     #parameters["patience"] = config_json["patience"][-1] if type(config_json["patience"]) == list else config_json["patience"]
-    parameters["patience"] = 10
+    parameters["patience"] = 5
     #parameters["epochs"] = config_json["epochs"][-1] if type(config_json["epochs"]) == list else config_json["epochs"]
-    parameters["epochs"] = 100
+    parameters["epochs"] = 50
   print( ">> Using njets >= {} and nbjets >= {}".format( config_json[ "njets" ], config_json[ "nbjets" ] ) )
   
   model_path = os.path.join(folder, "final_model_{}j_{}to{}.tf".format( config_json[ "njets" ], config_json[ "start_index" ], config_json[ "end_index" ] ) )
@@ -101,7 +105,7 @@ for config_num, config_path in enumerate(config_order):
     signal_files, background_files, float( config_json["ratio"] ), 
     cv_folder, 
     config_json["njets"], config_json["nbjets"], config_json["ak4ht"], config_json["leppt"], config_json["met"], config_json["mt"], config_json["mindr"],
-    int(args.num_folds ) )
+    int(args.num_folds ), args.metric )
   if not args.no_cut_save:
     if not os.path.exists(save_paths[0]):
       print( ">> Generating saved cut event files." )
@@ -143,7 +147,7 @@ for config_num, config_path in enumerate(config_order):
 
   print( ">> Preserving best model file as {}".format( model_path ) )
   copy( model.model_paths[ model.best_fold ], model_path )
-  rmtree(cv_folder)
+  #rmtree(cv_folder)
 
 summary_f.close()
 

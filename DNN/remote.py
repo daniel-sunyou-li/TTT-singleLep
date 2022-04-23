@@ -38,7 +38,7 @@ print(">> TTT Condor Job using {} samples".format( config.step2Sample[ args.year
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-inputDir = config.step2DirEOS[ args.year ] + "nominal/"
+inputDir = config.step2DirXRD[ args.year ] + "nominal/"
 loader = TMVA.DataLoader( "tmva_data" )
 factory = TMVA.Factory("VariableImportance",
                        "!V:!ROC:Silent:!Color:!DrawProgressBar:Transformations=I;:AnalysisType=Classification")
@@ -63,12 +63,14 @@ for sig in config.sig_training[ args.year ]:
   signal_trees[-1].GetEntry(0)
   loader.AddSignalTree( signal_trees[-1], 1 )
 
+
 for bkg in config.bkg_training[ args.year ]:
   backgrounds.append( TFile.Open( inputDir + bkg ) )
   background_trees.append( backgrounds[-1].Get( "ljmet" ) )
   background_trees[-1].GetEntry(0)
   if background_trees[-1].GetEntries() != 0:
     loader.AddBackgroundTree( background_trees[-1], 1 )
+
 
 # Set weights and cuts
 cutStr = config.base_cut
@@ -112,7 +114,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=20:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=5:BatchSize=512:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

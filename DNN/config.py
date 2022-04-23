@@ -7,21 +7,25 @@ varList = {}
 bruxUserName = "dli50"
 lpcUserName = "dsunyou"
 eosUserName = "dali"
-postfix = "RunIISummer20"
+postfix = "3t"
 
-years = [ "16APV", "16", "17", "18" ]
+#years = [ "16APV", "16", "17", "18" ]
+years = [ "17" ]
 
-step2Sample = { year: "FWLJMET106XUL_1lep20{}_3t_{}_step2".format( year, postfix ) for year in years }
+step2Sample = { year: "FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step2".format( year, postfix ) for year in years }
 
 step3Sample = { year: step2Sample[ year ].replace( "step2", "step3" ) for year in years }
 
-step2DirBRUX = { year: "/isilon/hadoop/store/user/dali/{}/".format( step2Sample[ year ] ) for year in years }
+step2DirBRUX = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
-step2DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
+step3DirBRUX = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
-step3DirLPC = { year: "~/nobackup/TTT-singleLep/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
+step2DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
 
-step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
+step3DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
+
+#step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
+step2DirXRD = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
 step3DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
@@ -40,11 +44,11 @@ sig_training = {
 # background samples to be used in training, only using ttbar events
 bkg_training = {
   year: [
-    "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+    #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
@@ -94,7 +98,7 @@ all_samples = {
     "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
     "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
     "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    #"TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+    "TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
     "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
  
