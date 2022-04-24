@@ -6,7 +6,8 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": True,
+  "REBINNED": False,
+  "ABCDNN": True,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
   "COMPARE SHAPES": False,
@@ -39,12 +40,12 @@ params = {
     "hotclosure",
     "njet",
     "njetsf",
-    "LF", # this is fine
-    "lfstats1", # this one might have an issue
-    "lfstats2", # this one might have an issue
-    "HF", # this is fine
-    "hfstats1",
-    "hfstats2",
+    #"LF", # this is fine
+    #"lfstats1", # this one might have an issue
+    #"lfstats2", # this one might have an issue
+    #"HF", # this is fine
+    #"hfstats1",
+    #"hfstats2",
     "cferr1",
     "cferr2",
     "jes", # this one might have an issue
@@ -71,6 +72,7 @@ params = {
     "EWK": ROOT.kMagenta - 2,
     "QCD": ROOT.kOrange + 5,
     "TTBAR": ROOT.kRed,
+    "ABCDNN": ROOT.kYellow - 4,
     "ERROR": ROOT.kBlack,
   },
   "Y DIV": 0.35,

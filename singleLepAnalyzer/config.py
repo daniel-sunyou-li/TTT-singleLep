@@ -7,8 +7,8 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_ste
 
 # target lumis in 1/pb for each year
 lumi = {
-  "16APV": 20710., # preVFP ratio (57%) calculated using brilcalc on ReReco but total lumi from GoldenJSON
-  "16": 15623.,    # postVFP ratio (43%) calculated using brilcalc on ReReco but total lumi from GoldenJSON
+  "16APV": 19520., # from pdmv
+  "16": 16810.,    # from pdmv
   "17": 41480.,    # calculated using brilcalc on GoldenJSON 
   "18": 59832.     # calculated using brilcalc on GoldenJSON
 }
@@ -58,7 +58,10 @@ options = {
     "TRIGGER EFFICIENCY": True,
   },
   "COMBINE": {
-    "TTHF SYST": True 
+    "TTHF SYST": True,
+    "PDF": True,
+    "ABCDNN": True,
+    "SMOOTH": True
   }
 }
 # non-boolean parameters used in creating templates
@@ -96,7 +99,7 @@ params = {
     ]
   },
   "COMBINE": {
-    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD", "TTH" ], # TTH?
+    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD", "TTH" ], 
     "DATA": [ "data_obs" ],
     "SIGNALS": [ "TTTW", "TTTJ" ],
     "MURF NORM": { 
@@ -162,12 +165,12 @@ systematics = {
     "hfstats2": True, 
     "cferr1": True, 
     "cferr2": True,
-    "jes": True,
+    "jes": False,
     "toppt": True, 
     "ht": False,
     "ABCDNN": True,
-    "JER": True, 
-    "JEC": True,
+    "JER": False, 
+    "JEC": False,
     "HD": False,
     "UE": False
   },
@@ -196,14 +199,15 @@ systematics = {
     "EWK": 1.038
   },
   "TTHF": 1.13,
-  "HDAMP": 1.085
+  "HDAMP": 1.085,
+  "ABCDNN": 1.10,
 }
 
 # binning configuration for the templates
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0", "1", "2p" ],
+    "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
@@ -227,7 +231,7 @@ hist_bins = {
   },
   "ABCDNN": { # edit these based on ABCDnn training signal region
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0", "1", "2p" ],
+    "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "3p" ],

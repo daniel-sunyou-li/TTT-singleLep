@@ -12,6 +12,7 @@ parser.add_argument( "-y", "--year", required = True )
 parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True )
 parser.add_argument( "-v", "--variable", required = True )
+parser.add_argument( "--abcdnn", action = "store_true" )
 parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
@@ -104,12 +105,13 @@ def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess" , symmetrize = T
   return hist[ "OUT" ]
 
 class ModifyTemplate():
-  def __init__( self, filepath, options, params, groups, variable ):
+  def __init__( self, filepath, options, params, groups, variable, doABCDNN ):
     self.filepath = filepath
     self.options = options
     self.params = params
     self.groups = groups
     self.variable = variable
+    self.doABCDNN = doABCDNN
     self.rebinned = {}
     self.yields = {}
     print( "[INFO] Running ModifyTemplate() with the following options" )
@@ -151,10 +153,12 @@ class ModifyTemplate():
           count[ "BKG SYST" ] += 1
         else:
           self.histograms[ "BKG" ][ hist_name ] = self.rFile[ "INPUT" ].Get( hist_name ).Clone( hist_name )
-          try:
-            self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ].Add( self.histograms[ "BKG" ][ hist_name ] )
-          except:
-            self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "BKG" ][ hist_name ].Clone( hist_tag( "BKG", parse[ "CATEGORY" ] ) )
+          if self.doABCDNN and parse[ "ABCDNN" ]:
+            try: self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "BKG" ][ hist_name ].Clone( hist_tag( "BKG", parse[ "CATEGORY" ] ) )
+            except: quit( "[ERR] There is no ABCDNN histogram for {}".format( parse[ "CATEGORY" ] ) )
+          else:
+            try: self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ].Add( self.histograms[ "BKG" ][ hist_name ] )
+            except: self.histograms[ "TOTAL BKG" ][ parse[ "CATEGORY" ] ] = self.histograms[ "BKG" ][ hist_name ].Clone( hist_tag( "BKG", parse[ "CATEGORY" ] ) )
           count[ "BKG" ] += 1
 
       elif parse[ "GROUP" ] == "SIG":
@@ -490,6 +494,7 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] != "MUR" and parse[ "SHIFT" ] != "UP": continue 
+        if parse[ "ABCDNN" ] or parse[ "PROCESS" ] == "ABCDNN": continue
         count += 1 
         hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
@@ -542,6 +547,7 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] != "ISR" and parse[ "SHIFT" ] != "UP": continue 
+        if parse[ "ABCDNN" ] or parse[ "PROCESS" ] == "ABCDNN": continue
         count += 1
         hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
         hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
@@ -673,15 +679,17 @@ class ModifyTemplate():
     for hist_key in self.rebinned:
       if "TOTAL" in hist_key: continue
       hist_names = self.rebinned[ hist_key ].keys()
+      print( ">> Loading {}".format( hist_key ) )
       for hist_name in hist_names:
         self.rebinned[ hist_key ][ hist_name ].Write()
+        count += 1
         parse = hist_parse( hist_name, samples )
+        if parse[ "SYST" ] == "ABCDNN" and not hist_name.startswith( "ABCDNN" ): continue
         shift = "Down" if parse[ "SHIFT" ] == "DN" else "Up"
         combine_tag = "NOMINAL" if not parse[ "IS SYST" ] else parse[ "SYST" ] + shift
-        if not parse[ "GROUP" ] == "DAT":
-          combine_name = hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], combine_tag ).replace( "DAT", "data_obs" )
-          self.rebinned[ hist_key ][ combine_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( combine_name )
-          self.rebinned[ hist_key ][ combine_name ].Write()
+        combine_name = hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], combine_tag )
+        self.rebinned[ hist_key ][ combine_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( combine_name )
+        self.rebinned[ hist_key ][ combine_name ].Write()
         count += 1
     print( "[DONE] {} histograms written to Combine template.".format( count ) )
     self.rFile[ "OUTPUT" ].Close()
@@ -742,7 +750,7 @@ def main():
   file_path = os.path.join( templateDir, file_name )
 
   # default rebin/merge histograms
-  template = ModifyTemplate( file_path, options, params, samples.groups, args.variable )  
+  template = ModifyTemplate( file_path, options, params, samples.groups, args.variable, args.abcdnn )  
   
   ## handling systematics
   if options[ "SYMM TOP PT" ]:

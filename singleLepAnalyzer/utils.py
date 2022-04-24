@@ -8,7 +8,6 @@ from ROOT import *
 def contains_category( category, categories ):
   for key in config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ]:
     if category[ key ][0] not in categories[ key ]:
-      print( category[ key ][0], categories[ key ] )
       return False
   return True
 
@@ -21,7 +20,8 @@ def hist_parse( hist_name, samples ):
     "SHIFT": "",
     "IS SYST": False,
     "CATEGORY": "",
-    "CHANNEL": ""
+    "CHANNEL": "",
+    "ABCDNN": False
   }
   parts = hist_name.split( "_" )
   for part in parts:
@@ -34,7 +34,7 @@ def hist_parse( hist_name, samples ):
       parse[ "GROUP" ] = "BKG"
       parse[ "COMBINE" ] = part
     elif part in samples.groups[ "DAT" ][ "PROCESS" ] + [ "DAT", "data", "obs" ]:
-      parse[ "PROCESS" ] = part
+      parse[ "PROCESS" ] = "data_obs"
       parse[ "GROUP" ] = "DAT"
       parse[ "COMBINE" ] = "data_obs"
     elif part in samples.groups[ "BKG" ][ "ALL" ]:
@@ -43,6 +43,9 @@ def hist_parse( hist_name, samples ):
       for group in samples.groups[ "BKG" ][ "SUPERGROUP" ].keys():
         if part in samples.groups[ "BKG" ][ "SUPERGROUP" ][ group ]:
           parse[ "COMBINE" ] = group
+    elif part in [ "ABCDNN" ]:
+      parse[ "GROUP" ] = "BKG"
+      parse[ "COMBINE" ] = part
 
     if part.endswith( "UP" ) or part.endswith( "DN" ):
       parse[ "SHIFT" ] = part[-2:]
@@ -60,6 +63,14 @@ def hist_parse( hist_name, samples ):
     if part.startswith( "is" ):
       parse[ "CATEGORY" ] = part
       parse[ "CHANNEL" ] = part[3:]
+  
+  abcdnnX = config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ][0]
+  abcdnnY = config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ][1]
+  abcdnnCheckX = abcdnnX.lower() + config.hist_bins[ "ABCDNN" ][ abcdnnX ][0] in parse[ "CATEGORY" ].lower()
+  abcdnnCheckY = abcdnnY.lower() + config.hist_bins[ "ABCDNN" ][ abcdnnY ][0] in parse[ "CATEGORY" ].lower()
+  if abcdnnCheckX and abcdnnCheckY:
+    parse[ "ABCDNN" ] = True
+
   return parse
 
 def hist_tag( *args ):
