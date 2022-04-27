@@ -196,28 +196,37 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
   count = {}
   hists[ "CMB" ] = {}
   for hist_key in hists:
-    if hist_key == "CMB": continue
-    print( "  + {}".format( hist_key ) )
+    if hist_key == "CMB" or "TOTAL" in hist_key: continue
     count[ hist_key ] = 0
     for hist_name in sorted( hists[ hist_key ].keys() ):
       parse = hist_parse( hist_name, samples )
-      if doABCDNN and "ABCDNN" in hist_name and hist_key == "BKG": 
-        if parse[ "PROCESS" ] in config.params[ "ABCDNN" ][ "GROUPS" ]:
-          if parse[ "IS SYST" ] and ( parse[ "SYST" ].upper() in [ "ABCDNN", "MUR", "MUF", "MURFCORRD", "FSR", "ISR" ] or "PDF" in parse[ "SYST" ] ):
-            try: hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
-            except: hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
-          elif not parse[ "IS SYST" ]:
-            print( ">> Including {} > {} for ABCDNN".format( hist_key, hist_name ) )
-            try: hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
-            except: hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) )
+      if doABCDNN and "ABCDNN" in hist_name: 
+        if parse[ "IS SYST" ] and parse[ "SYST" ].upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+          try: 
+            hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+          except: 
+            if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
+            hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
+        elif not parse[ "IS SYST" ]:
+          try: 
+            hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+          except: 
+            print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ) )
+            hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) )
         else:
           continue
       if parse[ "IS SYST" ]:
-        try: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
-        except: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
-      else:
-        try: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
-        except: hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) )
+        try: 
+          hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+        except:
+          if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
+          hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
+      elif "ABCDNN" not in hist_name:
+        try: 
+          hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
+        except: 
+          print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ) )
+          hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) )
       count[ hist_key ] += 1
 
   for key in hists[ "CMB" ]: hists[ "CMB" ][ key ].SetDirectory(0)
@@ -237,13 +246,13 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
   for category in categories:
     print( ">> Writing category: {}".format( category ) )
     hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Write()
-    if args.verbose: print( "   + DAT > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
+    print( "  + DAT > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
 
     for process in groups[ "SIG" ][ "PROCESS" ]:
       hists[ "CMB" ][ hist_tag( process, category ) ].Write()
-      if args.verbose: print( "   + SIG > {}: {}".format( hist_tag( process, category ), hists[ "CMB" ][ hist_tag( process, category ) ].Integral() ) )
+      print( "  + SIG > {}: {}".format( hist_tag( process, category ), hists[ "CMB" ][ hist_tag( process, category ) ].Integral() ) )
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
-        if args.verbose: print( "   + SIG (SYST): {}".format( hist_tag( process, category ) ) )
+        if args.verbose: print( "  + SIG SYST > {}".format( hist_tag( process, category ) ) )
         for syst in config.systematics[ "MC" ].keys():
           if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
@@ -251,7 +260,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           for shift in [ "UP", "DN" ]:
             hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
       if config.options[ "GENERAL" ][ "PDF" ]:
-        if args.verbose: print( "   + SIG (PDF): {}".format( hist_tag( process, category ) ) )
+        if args.verbose: print( "  + SIG PDF > {}".format( hist_tag( process, category ) ) )
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           hists[ "CMB" ][ hist_tag( process, category, "PDF" + str(i) ) ].Write()
 
@@ -263,11 +272,11 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
       yield_group = hists[ "CMB" ][ hist_tag( group, category ) ].IntegralAndError( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins(), error_group )
       if ( yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ] or error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ] ):
         scale_group = True
-        if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "[WARN] {} beneath yield threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
-        if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "[WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "  [WARN] {} beneath yield threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "  [WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
         hists[ "CMB" ][ hist_tag( group, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
       hists[ "CMB" ][ hist_tag( group, category ) ].Write()
-      if args.verbose: print( "   + BKG SUPERGROUP > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
+      print( "  + BKG > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
@@ -278,21 +287,28 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
             if scale_group:
               hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
             hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
-        if args.verbose: print( "    + BKG SUPERGROUP (SYS): {}".format( group ) )
+        if args.verbose: print( "  + BKG SYST > {}".format( group ) )
             
       if config.options[ "GENERAL" ][ "PDF" ]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           if scale_group:
             hists[ "CMB" ][ hist_tag( group, category, "PDF" + str(i) ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
           hists[ "CMB" ][ hist_tag( group, category, "PDF" + str(i) ) ].Write()
-        if args.verbose: print( "    + BKG SUPERGROUP (PDF): {}".format( group ) )
+        if args.verbose: print( "  + BKG PDF > {}".format( group ) )
   
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Write()
-      if args.verbose: print( "   + BKG SUPERGROUP > {}: {}".format( hist_tag( "ABCDNN", category ), hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Integral() ) )
-      if config.systematics[ "MC" ][ "ABCDNN" ]:
-        hists[ "CMB" ][ hist_tag( "ABCDNN", category, "ABCDNNUP" ) ].Write()
-        hists[ "CMB" ][ hist_tag( "ABCDNN", category, "ABCDNNDN" ) ].Write()
+      print( "  + BKG > {}: {}".format( hist_tag( "ABCDNN", category ), hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Integral() ) )
+      if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
+        for syst in config.systematics[ "MC" ].keys():
+          for shift in [ "UP", "DN" ]:
+            if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and config.systematics[ "MC" ][ syst ]:
+              hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
+        if args.verbose: print( "  + BKG SYST > ABCDNN" )
+      if config.options[ "GENERAL" ][ "PDF" ]:
+        for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
+          hists[ "CMB" ][ hist_tag( "ABCDNN", category, "PDF" + str(i) ) ].Write()
+        if args.verbose: print( "  + BKG PDF > ABCDNN" ) 
 
   combine_file.Close()
   print( "[DONE] Finished writing Combine templates in {:.2f} minutes".format( ( time.time() - sTime ) / 60. ) ) 
@@ -319,7 +335,8 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
           for syst in config.systematics[ "MC" ].keys():
             if not config.systematics[ "MC" ][ syst ]: continue
-            if process == "ABCDNN" and syst != "ABCDNN": continue
+            if process == "ABCDNN" and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
+            if syst.upper() == "ABCDNN" and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
             if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
             for shift in [ "UP", "DN" ]:
@@ -327,17 +344,17 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       return table
 
     for category in categories:
-      if args.verbose: print( ">> Computing yields for DATA histograms" )
+      if args.verbose: print( ">> Computing yields for DAT {}".format( category ) )
       tables = get_yield( tables, "CMB", [ "data_obs" ], category )
-      if args.verbose: print( ">> Computing yields for SIGNAL histograms" )
+      if args.verbose: print( ">> Computing yields for SIGNAL {}".format( category ) )
       tables = get_yield( tables, "CMB", groups[ "SIG" ][ "PROCESS" ], category )
       #if args.verbose: print( ">> Computing yields for BACKGROUND physics groups" )
       #tables = get_yield( tables, "BKG", groups[ "BKG" ][ "PROCESS" ].keys(), category )
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
-        if args.verbose: print( ">> Computing yields for ABCDNN BACKGROUND Combine groups" )
+        if args.verbose: print( ">> Computing yields for ABCDNN BACKGROUND {}".format( category ) )
         tables = get_yield( tables, "CMB", [ "ABCDNN" ], category )
       else:
-        if args.verbose: print( ">> Computing yields for BACKGROUND Combine groups" )
+        if args.verbose: print( ">> Computing yields for BACKGROUND Combine {}".format( category ) )
         tables = get_yield( tables, "CMB", groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
       
       tables[ "YIELD" ][ category ][ "TOTAL BKG" ] = 0

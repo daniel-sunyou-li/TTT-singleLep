@@ -75,7 +75,8 @@ params = {
     "TAG": "SR",
     "CONTROL VARIABLES":  [ "NJ", "NB" ],
     "TRANSFER VARIABLES": [ "HT", "DNN_3t" ],
-    "GROUPS": [ "TTBB", "TTNOBB" ]
+    "GROUPS": [ "TTBB", "TTNOBB" ],
+    "SYSTEMATICS": [ "ABCDNN", "MUR", "MUF", "MURFCORRD", "FSR", "ISR", "PDF" ]
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -251,7 +252,7 @@ event_cuts = {
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
 base_cut += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( event_cuts[ "pt_electron" ], event_cuts[ "pt_muon" ] )
 base_cut += " && AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > 0.4".format( event_cuts[ "ht" ], event_cuts[ "met" ], event_cuts[ "mt" ] )
-mc_weight = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc"
+mc_weight = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF"
 mc_weight += " * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) )"
 mc_weight += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj"
 

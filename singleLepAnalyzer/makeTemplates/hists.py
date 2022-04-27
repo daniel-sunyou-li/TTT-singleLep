@@ -94,6 +94,9 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
 
   if process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
+
+  if year in [ "16APV", "16", "17" ]:
+    mc_weights[ "NOMINAL" ] += " * L1NonPrefiringProb_CommonCalc"
    
   if process not in groups[ "DAT" ] and doSYST:
     if config.systematics[ "MC" ][ "pileup" ]:
@@ -102,6 +105,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
     if year in [ "16APV", "16", "17" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
+      print( mc_weights[ "PREFIRE" ] )
     if config.systematics[ "MC" ][ "muRFcorrd" ]:
       mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                     "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
@@ -215,6 +219,10 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
         if syst.upper() != "ABCDNN":
           histTag = hist_tag( process, categoryTag, syst.upper() + shift )
           hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
+    if year in [ "16APV", "16", "17" ]:
+      for shift in [ "UP", "DN" ]:
+        histTag = hist_tag( process, categoryTag, "PREFIRE" + shift )
+        hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
     for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
       histTag = hist_tag( process, categoryTag, "PDF" + str(i) ) 
@@ -250,6 +258,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
 
   if process not in groups[ "DAT" ] and doSYST:
     if year in [ "16APV", "16", "17" ]:
+      print( "[INFO] Including L1NonPrefiringProb_CommonCalc shifts" )
       for shift in [ "UP", "DN" ]:
         rTree[ process ].Draw(
           "{} >> {}".format( variableName, hist_tag( process, categoryTag, "PREFIRE" + shift ) ),

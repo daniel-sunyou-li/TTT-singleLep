@@ -39,7 +39,7 @@ samples = {
     "TTZH": "TTZH_TuneCP5_13TeV-madgraph-pythia8",
     "TTZZ": "TTZZ_TuneCP5_13TeV-madgraph-pythia8",
     "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8",
-    "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8", # MISSING IN OCT2019 PRODUCTION
+    "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8", 
     "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8",
     #"TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8",
     "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8",
@@ -109,7 +109,7 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "VV": [ "WW", "WZ", "ZZ" ],
   "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
-  "TTV": [ "TTWl", "TTZlM10", "TTHB", "TTHnoB" ], # TTZlM1to10 in-progress
+  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTHB", "TTHnoB" ], # TTZlM1to10 in-progress
   "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
   "TTCC": [ tt + "ttcc" for tt in ttbar ],

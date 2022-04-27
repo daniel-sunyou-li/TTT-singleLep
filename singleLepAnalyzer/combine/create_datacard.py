@@ -115,36 +115,36 @@ class DataCard():
       if parse[ "GROUP" ] == "SIG":
         if parse[ "IS SYST" ]: 
           if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG SYST" ].keys():
-            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else: 
-            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
         else: 
           if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ].keys():
-            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else:
-            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "BKG":
         if self.abcdnn and parse[ "ABCDNN" ]:
           if parse[ "IS SYST" ]:
-            if parse[ "SYST" ] == "ABCDNN": self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+            if parse[ "SYST" ] == "ABCDNN": self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else:
-            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
         else:
           if parse[ "IS SYST" ]: 
             if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG SYST" ].keys():
-              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
             else: 
-              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
           else: 
             if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ].keys():
-              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
             else:
-              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "DAT":
         if parse[ "CATEGORY" ] not in self.hist_groups[ "DAT" ].keys():
-          self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = [ parse[ "PROCESS" ] ]
+          self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
         else:
-          self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "PROCESS" ] )
+          self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
     
           
     self.masses = ch.ValsFromRange( "690" )
@@ -277,10 +277,10 @@ class DataCard():
       jer_tag = "JER{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       hf_tag = "HF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       lf_tag = "LF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hfstat1_tag = "HFSTAT1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hfstat2_tag = "HFSTAT2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lfstat1_tag = "LFSTAT1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lfstat2_tag = "LFSTAT2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      hfstat1_tag = "HFSTATS1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      hfstat2_tag = "HFSTATS2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      lfstat1_tag = "LFSTATS1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      lfstat2_tag = "LFSTATS2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       cferr1_tag = "CFERR1{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       cferr2_tag = "CFERR2{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
       abcdnn_tag = "ABCDNN{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
@@ -291,10 +291,10 @@ class DataCard():
       jer_tag = "JER$ERA"
       hf_tag = "HF"
       lf_tag = "LF"
-      hfstat1_tag = "HFSTAT1$ERA"
-      hfstat2_tag = "HFSTAT2$ERA"
-      lfstat1_tag = "LFSTAT1$ERA"
-      lfstat2_tag = "LFSTAT2$ERA"
+      hfstat1_tag = "HFSTATS1$ERA"
+      hfstat2_tag = "HFSTATS2$ERA"
+      lfstat1_tag = "LFSTATS1$ERA"
+      lfstat2_tag = "LFSTATS2$ERA"
       cferr1_tag = "CFERR1"
       cferr2_tag = "CFERR2"
       abcdnn_tag = "ABCDNN"
@@ -315,13 +315,13 @@ class DataCard():
       print( "   + Pileup: 1.0 (shape)" )
       count += 1
       
-    if self.year in [ "16APV", "16", "17" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, prefire_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      print( "   + Prefire: 1.0 (shape)" )
-      count += 1
+    #if self.year in [ "16APV", "16", "17" ]:
+    #  self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+    #    self.harvester, prefire_tag, "shape",
+    #    ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+    #  )
+    #  print( "   + Prefire: 1.0 (shape)" )
+    #  count += 1
       
     if config.systematics[ "MC" ][ "JEC" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(

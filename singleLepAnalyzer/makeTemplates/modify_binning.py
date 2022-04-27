@@ -377,7 +377,7 @@ class ModifyTemplate():
         if parse[ "SYST" ] != "TOPPT" and parse[ "SHIFT" ] != "DN": continue # adjust TOPPTDN to TOPPTUP
         for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
           self.rebinned[ hist_key ][ hist_name ].SetBinContent(
-            i, 2. * self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].GetBinContent(i) - self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].GetBinContent(i) 
+            i, 2. * self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].GetBinContent(i) - self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].GetBinContent(i) 
           )
         count += 1
     print( "[DONE] Adjusted {} toppt histograms".format( count ) )
@@ -397,7 +397,7 @@ class ModifyTemplate():
           }
           if yields[ "COUNT" ] == 0: continue
           shift_name = { 
-            shift: "{}_{}_BIN{}{}".format( parse[ "PROCESS" ], category, i, shift ) for shift in [ "UP", "DN" ] 
+            shift: "{}_{}_BIN{}{}".format( parse[ "COMBINE" ], category, i, shift ) for shift in [ "UP", "DN" ] 
           }
           for shift in [ "UP", "DN" ]:
             self.rebinned[ group ][ shift_name[ shift ] ] = self.rebinned[ group ][ hist_name ].Clone( shift_name[ shift ] ) 
@@ -424,7 +424,7 @@ class ModifyTemplate():
         error_max = self.rebinned[ "BKG" ][ bkg_max ].GetBinError(i)
         parse = hist_parse( bkg_max, samples )
         shift_name = {
-          shift: "{}_{}_BIN{}{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], i, shift ) for shift in [ "UP", "DN" ]
+          shift: "{}_{}_BIN{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], i, shift ) for shift in [ "UP", "DN" ]
         }
         count = { key: 0 for key in [ "NEGATIVE", "ZERO" ] }
         for shift in [ "UP", "DN" ]:
@@ -472,9 +472,9 @@ class ModifyTemplate():
         if "HOTCLOSURE" not in parse[ "SYST" ] and parse[ "SHIFT" ] != "UP": continue
         count += 1
         HOT_name = {
-          "NOM": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ),
-          "UP": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ),
-          "DN": hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" )
+          "NOM": hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ),
+          "UP": hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ),
+          "DN": hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" )
         }
         for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
           max_shift = max(
@@ -494,13 +494,12 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] != "MUR" and parse[ "SHIFT" ] != "UP": continue 
-        if parse[ "ABCDNN" ] or parse[ "PROCESS" ] == "ABCDNN": continue
         count += 1 
-        hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
+        hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
-          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst ) ].Clone()
-        hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
-        hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
+          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst ) ].Clone()
+        hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         for i in range( 1, hist_muRF[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_dict = { key: hist_muRF[ key ].Clone() for key in hist_muRF }
           weight_key = {
@@ -535,8 +534,8 @@ class ModifyTemplate():
           hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
 
         for shift in [ "UP", "DN" ]:
-          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
-          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
+          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
+          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
     print( "[DONE] Created {} MU R+F histograms".format( count ) ) 
   
   def add_PSWeight_shapes( self ): # done
@@ -547,14 +546,13 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] != "ISR" and parse[ "SHIFT" ] != "UP": continue 
-        if parse[ "ABCDNN" ] or parse[ "PROCESS" ] == "ABCDNN": continue
         count += 1
-        hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone() }
-        hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
-        hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
+        hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         for syst in [ "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
-            hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ].Clone()
+            hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].Clone()
         for i in range( 1, hist_PSWeight[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_key = {
             "MAX": "NOMINAL",
@@ -592,8 +590,8 @@ class ModifyTemplate():
         
         for syst in [ "PSWGT", "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
-            self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) )
-            self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
+            self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) )
+            self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
 
     print( "[DONE] Created {} PS Weight histograms".format( count ) )
           
@@ -607,12 +605,12 @@ class ModifyTemplate():
         if "PDF0" not in hist_name: continue
         count += 1
         hist_PDF = { 
-          "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
-          "PDFUP": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
-          "PDFDN": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone()
+          "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
+          "PDFUP": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
+          "PDFDN": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         }
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-          hist_PDF[ "PDF{}".format(i) ] = self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], "PDF" + str(i) ) ].Clone( "PDF{}".format(i) )
+          hist_PDF[ "PDF{}".format(i) ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], "PDF" + str(i) ) ].Clone( "PDF{}".format(i) )
         for i in range( 1, hist_PDF[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_limit = {
             "MAX": hist_PDF[ "PDF0" ].GetBinContent(i),
@@ -640,8 +638,8 @@ class ModifyTemplate():
           hist_PDF[ "PDFDN" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
         
         for shift in [ "UP", "DN" ]:
-          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) )
-          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "PROCESS" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
+          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
+          self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
 
     print( "[DONE] Adjusted {} PDF systematic histograms".format( count ) )
           
@@ -657,16 +655,16 @@ class ModifyTemplate():
         if parse[ "SYST" ].upper() in [ syst_exclude.upper() for syst_exclude in self.params[ "EXCLUDE SMOOTH" ] ]: continue
         try:
           hist_syst = {
-            "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ] ) ].Clone(),
-            "UP": self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].Clone(),
-            "DN": self.rebinned[ hist_key ][ hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" ) ].Clone()
+            "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
+            "UP": self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].Clone(),
+            "DN": self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" ) ].Clone()
           }
         except:
           continue
         count += 1
         smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ] , symmetrize = self.options[ "SYMM SMOOTHING" ] )
         for shift in [ "UP", "DN" ]:
-          smooth_name = hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], parse[ "SYST" ] + self.params[ "SMOOTHING ALGO" ].upper() + shift ) 
+          smooth_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + self.params[ "SMOOTHING ALGO" ].upper() + shift ) 
           self.rebinned[ hist_key ][ smooth_name ] = smooth_hist[ shift ].Clone( smooth_name )
           self.rebinned[ hist_key ][ smooth_name ].SetDirectory(0)
     print( "[DONE] Added {} smoothed systematic histograms".format( count ) )
@@ -681,14 +679,16 @@ class ModifyTemplate():
       hist_names = self.rebinned[ hist_key ].keys()
       print( ">> Loading {}".format( hist_key ) )
       for hist_name in hist_names:
+        negative_bin_correction( self.rebinned[ hist_key ][ hist_name ] )
         self.rebinned[ hist_key ][ hist_name ].Write()
         count += 1
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] == "ABCDNN" and not hist_name.startswith( "ABCDNN" ): continue
         shift = "Down" if parse[ "SHIFT" ] == "DN" else "Up"
         combine_tag = "NOMINAL" if not parse[ "IS SYST" ] else parse[ "SYST" ] + shift
-        combine_name = hist_tag( parse[ "PROCESS" ], parse[ "CATEGORY" ], combine_tag )
+        combine_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], combine_tag )
         self.rebinned[ hist_key ][ combine_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( combine_name )
+        negative_bin_correction( self.rebinned[ hist_key ][ combine_name ] )
         self.rebinned[ hist_key ][ combine_name ].Write()
         count += 1
     print( "[DONE] {} histograms written to Combine template.".format( count ) )
@@ -703,8 +703,8 @@ def get_shape_uncertainty( hists, process, channel ): # needs some fixes to the 
   for syst in config.systematics[ "MC" ].keys():
     if not config.systematics[ "MC" ][ syst ]: continue
     if syst in systematics_remove or ( args.smoothing and config.smooth_algo not in syst ): continue
-    if args.norm_theory_sig and process in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
-    if args.norm_theory_bkg and process not in groups[ "SIG" ][ "PROCESS" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
+    if args.norm_theory_sig and process in groups[ "SIG" ][ "COMBINE" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
+    if args.norm_theory_bkg and process not in groups[ "SIG" ][ "COMBINE" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
     for shift in [ "UP", "DN" ]:
       hist_shape = "{}{}_{}{}".format( prefix, process, syst, shift )
       shift = yields[ channel ][ hist_names[ channel ][ process ].GetName() ] / ( yields[ channel ][ nominal ] + config.zero ) - 1
