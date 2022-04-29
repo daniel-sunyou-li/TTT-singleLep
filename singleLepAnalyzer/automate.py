@@ -1,4 +1,4 @@
-import os, time
+import os,sys, time
 import config
 from argparse import ArgumentParser
 
@@ -67,14 +67,14 @@ python templates.py -y {} -t {} -v {} -r {} --verbose \n".format( cmsswbase, os.
 Executable = {}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step2\n\
+JobBatchName = SLA_step2_{}\n\
 request_memory = 1024\n\
 Output = condor_log/{}.out\n\
 Error = condor_log/{}.err\n\
 Log = condor_log/{}.log\n\
 Notification = Error\n\
 Arguments = \n\
-Queue 1\n".format( shell_name, step2_name, step2_name, step2_name ) 
+Queue 1\n".format( shell_name, variable, step2_name, step2_name, step2_name ) 
       )
       jdf.close()
       os.system( "condor_submit {}".format( jdf_name ) )
@@ -132,7 +132,9 @@ def run_combine():
   for training in trainings:
     for variable in training[ "variable" ]:
       condor_name = "condor_step4_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable )
-      shell_name = "condor_config/{}.sh".format( condor_name )
+      log_name = "log_{}_{}_{}".format( variable, training[ "year" ], training[ "tag" ] )
+      shell_name = "{}/{}.sh".format( log_name, condor_name )
+      if not os.path.exists( log_name ): os.system( "mkdir -vp {}".format( log_name ) )
       shell = open( shell_name, "w" )
       shell.write(
 "#!/bin/bash\n\
@@ -140,7 +142,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python make_datacard.py -y {} -v {} -t {} \n\
+python create_datacard.py -y {} -v {} -t {} \n\
 cd limits_UL{}_{}_{}\n\
 combine -M Significance cmb/workspace.root -t -l --expectSignal=1 --cminDefaultMinimizerStrategry 0 &> significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0&> limits.txt\n\
@@ -160,14 +162,16 @@ Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
 JobBatchName = SLA_step4 \n\
 request_memory = 3072 \n\
-Output = {}/conodr_log/{}.out \n\
-Error = {}/condor_log/{}.err \n\
-Log = {}/condor_log/{}.log \n\
+Output = {}.out \n\
+Error = {}.err \n\
+Log = {}.log \n\
 Notification = Error \n\
 Arguments = \n\
 Queue 1""".format(
   os.getcwd(), shell_name,
-  os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
+  os.path.join( os.getcwd(), log_name, condor_name ), 
+  os.path.join( os.getcwd(), log_name, condor_name ), 
+  os.path.join( os.getcwd(), log_name, condor_name )
 )
       )
       jdf.close()

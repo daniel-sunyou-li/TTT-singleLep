@@ -26,76 +26,76 @@ k_factor = {
 
 mc_stats = {
   "TTTJ": { 
-    "EVENTS": 354000., 
+    "EVENTS": 465000.0, 
     "XSEC": 0.0003974 
   },
   "TTTW": { 
-    "EVENTS": 360000., 
+    "EVENTS": 448000.0, 
     "XSEC": 0.0007314
   },
   
   "TTTT": { 
-    "EVENTS": 4526556., 
+    "EVENTS": 5371110., 
     "XSEC": 0.01197
   },
   "TTWW": { 
-    "EVENTS": 698000., 
+    "EVENTS": 530000.0, 
     "XSEC": 0.00703
   },
   "TTWZ": { 
-    "EVENTS": 350000., 
+    "EVENTS": 698000.0, 
     "XSEC": 0.002453
   },
   "TTWH": { 
-    "EVENTS": 360000., 
+    "EVENTS": 523000.0, 
     "XSEC": 0.001141
   },
   "TTHH": { 
-    "EVENTS": 360000., 
+    "EVENTS": 442000.0, 
     "XSEC": 0.0006655
   },
   "TTZH": { 
-    "EVENTS": 350000., 
+    "EVENTS": 700000.0, 
     "XSEC": 0.00113
   },
   "TTZZ": { 
-    "EVENTS": 327000., 
+    "EVENTS": 621000., 
     "XSEC": 0.001385
   },
   "TTWl": { 
-    "EVENTS": 6497731., 
+    "EVENTS": 4071914., 
     "XSEC": 0.2161
   },
   "TTWq": { 
-    "EVENTS": 359006., 
+    "EVENTS": 395611., 
     "XSEC": 0.4377
   },
   "TTZlM10": { 
-    "EVENTS": 6990534., 
+    "EVENTS": 7555432., 
     "XSEC": 0.05324
   },
-#  "TTZlM1to10": { 
-#    "EVENTS": 0., 
-#    "XSEC": 0.05324
-#  },
+  "TTZlM1to10": { 
+    "EVENTS": 781204., 
+    "XSEC": 0.05324
+  },
   "TTHB": { 
-    "EVENTS": 7661779., 
+    "EVENTS": 13932018., 
     "XSEC": 0.5269
   },
   "TTHnoB": { 
-    "EVENTS": 4965389., 
+    "EVENTS": 6124800., 
     "XSEC": 0.5638
   },
   "Ts": { 
-    "EVENTS": 8938338., 
+    "EVENTS": 9037288., 
     "XSEC": 3.44
   },
   "Tt": { 
-    "EVENTS": 121728252.0, 
+    "EVENTS": 63509348., 
     "XSEC": 136.02
   },
   "Tbt": { 
-    "EVENTS": 65821722., 
+    "EVENTS": 63509348., 
     "XSEC": 80.95
   },
   "TtW": { 
@@ -103,7 +103,7 @@ mc_stats = {
     "XSEC": 35.83
   },
   "TbtW": { 
-    "EVENTS": 5673700., 
+    "EVENTS": 5644700., 
     "XSEC": 35.83
   },
   
@@ -112,7 +112,7 @@ mc_stats = {
     "XSEC": 1712000
   },
   "QCD300": { 
-    "EVENTS": 43589739.0, 
+    "EVENTS": 38938413., 
     "XSEC": 347700
   },
   "QCD500": { 
@@ -124,7 +124,7 @@ mc_stats = {
     "XSEC": 6831
   },
   "QCD1000": { 
-    "EVENTS": 10256089.0, 
+    "EVENTS": 10256089., 
     "XSEC": 1207
   },
   "QCD1500": { 
@@ -132,7 +132,7 @@ mc_stats = {
     "XSEC": 119.9
   },
   "QCD2000": { 
-    "EVENTS": 4112573.0, 
+    "EVENTS": 4112573., 
     "XSEC": 25.24
   },
   
@@ -150,27 +150,27 @@ mc_stats = {
   },
   
   "DYM200": { 
-    "EVENTS": 12513057., 
+    "EVENTS": 9704602., 
     "XSEC": 54.951
   },
   "DYM400": { 
-    "EVENTS": 5543804., 
+    "EVENTS": 5408819., 
     "XSEC": 7.862
   },
   "DYM600": { 
-    "EVENTS": 5278417., 
+    "EVENTS": 3535183., 
     "XSEC": 1.977
   },
   "DYM800": { 
-    "EVENTS": 4506887., 
+    "EVENTS": 1025124., 
     "XSEC": 0.858
   },
   "DYM1200": { 
-    "EVENTS": 4802716., 
+    "EVENTS": 4798360., 
     "XSEC": 0.191
   },
   "DYM2500": { 
-    "EVENTS": 1480047., 
+    "EVENTS": 1395535., 
     "XSEC": 0.0045
   },
   
@@ -179,28 +179,28 @@ mc_stats = {
     "XSEC": 359.7 * k_factor[ "WJetsMG" ]
   },
   "WJetsMG400": { 
-    "EVENTS": 5437447., 
+    "EVENTS": 5408819., 
     "XSEC": 48.91 * k_factor[ "WJetsMG" ]
   },
   "WJetsMG600": { 
-    "EVENTS": 5545298., 
+    "EVENTS": 5292676., 
     "XSEC": 12.05 * k_factor[ "WJetsMG" ]
   },
   "WJetsMG800": { 
-    "EVENTS": 5088483.0, 
+    "EVENTS": 4834185., 
     "XSEC": 5.501 * k_factor[ "WJetsMG" ]
   },
   "WJetsMG1200": { 
-    "EVENTS": 4942590., 
+    "EVENTS": 3556525., 
     "XSEC": 1.329 * k_factor[ "WJetsMG" ]
   },
   "WJetsMG2500": { 
-    "EVENTS": 1185699.0, 
+    "EVENTS": 1185699., 
     "XSEC": 0.03216 * k_factor[ "WJetsMG" ]
   },
   
   "TTToSemiLeptonic": { 
-    "EVENTS": 352212660.0, 
+    "EVENTS": 331279322.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9" ] )
   },
   "TTToSemiLeptonicUEUP": { 
@@ -221,7 +221,7 @@ mc_stats = {
   },
   
   "TTToSemiLeptonicHT500": { 
-    "EVENTS": 352212660, 
+    "EVENTS": 331279322., 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9" ] 
   },
   "TTToSemiLeptonicHT500UEUP": { 
@@ -241,11 +241,11 @@ mc_stats = {
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDDN" ]
   },
   "TTToSemiLeptonHT500": { 
-    "EVENTS": 10179200, 
+    "EVENTS": 7035304.0, 
     "XSEC": 2.251
   },
   "TTToHadronic": { 
-    "EVENTS": 233815417., 
+    "EVENTS": 233815417.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "Hadronic" ] 
   },
   "TTToHadronicUEUP": { 
@@ -266,7 +266,7 @@ mc_stats = {
   },
   
   "TTTo2L2Nu": { 
-    "EVENTS": 44580106. + 28515514. + 51439568. + 47012288. + 25495972., 
+    "EVENTS": 105697364., 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "2L2Nu" ]
   },
   "TTTo2L2NuUEUP": { 
