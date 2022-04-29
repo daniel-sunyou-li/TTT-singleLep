@@ -51,7 +51,7 @@ def check_samples( inLoc, outLoc, shifts, year ):
   for shift in shifts:
     if inLoc == "LPC":
       eosDir = os.path.join( "/eos/uscms/", config.step2DirEOS[ year ].split( "///" )[1] )
-      fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, config.step2Sample[ year ], shift ) )
+      fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
     elif inLoc == "BRUX":
       status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step2DirBRUX[ year ].split( "//" )[-1], shift ) )
       fStep2[ shift ] = [ item.name for item in dirList ]
@@ -59,7 +59,8 @@ def check_samples( inLoc, outLoc, shifts, year ):
     if outLoc == "LPC":
       try:
         eosDir = os.path.join( "/eos/uscms/", config.step3DirEOS[ year ].split( "///" )[1] )
-        fStep3[ shift ] = EOSlistdir( os.path.join( eos_dir, config.step3Sample[ year ], shift ) )
+        print( os.path.join( eosDir, shift ) )
+        fStep3[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
       except:
         fStep3[ shift ] = []
     elif outLoc == "BRUX":
@@ -86,7 +87,7 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
           sampleTag = oFile.split( "hadd_" )[1].split( "." )[0]
           try: sFiles[ sampleTag ].append( sampleName )
           except: sFiles[ sampleTag ] = [ sampleName ]
-          resubmit_count += 1
+          count += 1
           if args.verbose: print( ">> Resubmitting failed job: {}".format( sampleName ) )
   
     for lFile in logFiles:
@@ -95,20 +96,20 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
         sampleTag = lFile.split( "hadd_" )[1].split( "." )[0]
         try: sFiles[ sampleTag ].append( sampleName )
         except: sFiles[ sampleTag ] = [ sampleName ]
-        resubmit_count += 1
+        count += 1
         if args.verbose: print( ">> Resubmitting suspended job: {}".format( sampleName ) )
 
     for shift in shifts:
       sFiles[shift] = []
       for i, fName in enumerate( fStep2[shift] ):
         if fName not in fStep3[shift]:
-          try: sFiles[shift].append(file)
-          except: sFiles[shift] = [ file ]
-          resubmit_count += 1
-          if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( file ) )
+          try: sFiles[shift].append(fName)
+          except: sFiles[shift] = [ fName ]
+          count += 1
+          if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( fName ) )
 
-    print( ">> {} samples to resubmit".format( resubmit_count ) )
-    if resubmit_count == 0: quit( "[ERR] No samples to resubmit, quitting..." )
+    print( ">> {} samples to resubmit".format( count ) )
+    if count == 0: quit( "[ERR] No samples to resubmit, quitting..." )
 
   else:
     for shift in shifts:
@@ -160,7 +161,7 @@ def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params 
     "PARAMFILE" : params,
     "FILENAME"  : fileName.split( "." )[0],
     "INPUTFILE" : os.path.join( inputDir, shift, fileName ),
-    "OUTPUTDIR" : os.path.join( outputDir, shift ),
+    "OUTPUTFILE" : os.path.join( outputDir, shift, fileName ),
     "LOGDIR"    : logDir,              
     "SHIFT"     : shift,                  
     "MEMORY"    : request_memory
@@ -179,7 +180,7 @@ Output = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.out
 Error = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.err
 Log = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.log
 Notification = Never
-Arguments = %(FILENAME)s.root %(INPUTFILE)s %(OUTPUTDIR)s
+Arguments = %(FILENAME)s.root %(INPUTFILE)s %(OUTPUTFILE)s
 Queue 1"""%dict
   )
   jdf.close()
