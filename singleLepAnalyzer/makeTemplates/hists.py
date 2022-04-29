@@ -95,6 +95,9 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
   if process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
 
+  if "DNN" in variable:
+    mc_weights[ "NOMINAL" ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj" 
+
   if year in [ "16APV", "16", "17" ]:
     mc_weights[ "NOMINAL" ] += " * L1NonPrefiringProb_CommonCalc"
    

@@ -7,7 +7,7 @@ options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
   "REBINNED": False,
-  "ABCDNN": True,
+  "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
   "COMPARE SHAPES": False,
@@ -28,6 +28,7 @@ params = {
     #"pdf", # this is fine
     #"pswgt", # this is fine
     #"pileup", # this is fine 
+    #"prefire",
     "trigeff", # this one seems like there might be an issue --> way too huge? 
     #"muRF",
     "muRFcorrd", # this is fine
@@ -46,8 +47,8 @@ params = {
     #"HF", # this is fine
     #"hfstats1",
     #"hfstats2",
-    "cferr1",
-    "cferr2",
+    #"cferr1",
+    #"cferr2",
     "jes", # this one might have an issue
     "toppt",
     "ht",

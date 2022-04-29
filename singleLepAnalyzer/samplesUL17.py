@@ -7,7 +7,7 @@ samples = {
   "TEST": {
     #"TTToSemiLeptonicttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1",
     "TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
-    "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
+    #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
     #"TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
@@ -41,7 +41,7 @@ samples = {
     "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8",
     "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8", 
     "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8",
-    #"TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8",
+    "TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8",
     "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8",
     "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8"
   },
@@ -72,7 +72,7 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
       if tt == "SemiLeptonic":
         if shift == "TuneCP5":
           if fs == "jj":
-            for n in [ "1", "2", "3", "4" ]:
+            for n in [ "1" ]:
               samples[ "BKG" ][ "TTTo{}{}tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
           else:
             samples[ "BKG" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}".format( tt, shift, fs )

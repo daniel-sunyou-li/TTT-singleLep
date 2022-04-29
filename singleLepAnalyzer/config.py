@@ -2,8 +2,8 @@ import numpy as np
 
 years = [ "16APV", "16", "17", "18" ]
 
-postfix = "3t_deepJetV1"
-inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_1lep20{}_{}_step3/".format( year, postfix ) for year in years }
+postfix = "3t"
+inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step3/".format( year, postfix ) for year in years }
 
 # target lumis in 1/pb for each year
 lumi = {
@@ -30,7 +30,7 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": True,
+    "ABCDNN": False,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
@@ -60,7 +60,7 @@ options = {
   "COMBINE": {
     "TTHF SYST": True,
     "PDF": True,
-    "ABCDNN": True,
+    "ABCDNN": False,
     "SMOOTH": True
   }
 }
@@ -208,7 +208,7 @@ systematics = {
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0p" ],
+    "NHOT": [ "0", "1", "2p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
@@ -228,7 +228,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2p" ],
-    "NJ": [ "5p" ]
+    "NJ": [ "4p" ]
   },
   "ABCDNN": { # edit these based on ABCDnn training signal region
     "LEPTON": [ "E", "M" ],
@@ -252,9 +252,8 @@ event_cuts = {
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
 base_cut += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( event_cuts[ "pt_electron" ], event_cuts[ "pt_muon" ] )
 base_cut += " && AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > 0.4".format( event_cuts[ "ht" ], event_cuts[ "met" ], event_cuts[ "mt" ] )
-mc_weight = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF"
+mc_weight = "triggerXSF * triggerSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF"
 mc_weight += " * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) )"
-mc_weight += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj"
 
 # plotting configuration
 def bins( min_, max_, nbins_ ):
@@ -264,6 +263,7 @@ plot_params = {
   "VARIABLES": {
     "LEPPT": ( "leptonPt_MultiLepCalc", bins( 0, 600, 121 ), ";Lepton p_{T} [GeV]" ),
     "LEPETA": ( "leptonEta_MultiLepCalc", bins( -2.4, 2.4, 49 ), ";Lepton #eta" ),
+    "MINDR": ( "minDR_lepJet", bins( 0, 4, 51 ), ";#DeltaR(l, closest jet)" ),
     "JETPT": ( "theJetPt_JetSubCalc_PtOrdered", bins( 0, 1500, 51 ), ";AK4 Jet p_{T} [GeV]" ),
     "JETETA": ( "theJetEta_JetSubCalc_PtOrdered", bins( -2.4, 2.4, 49 ), ";AK4 Jet #eta" ),
     "MET": ( "corr_met_MultiLepCalc", bins( 0, 1000, 51 ), ";p_{T}^{miss} [GeV]" ),
@@ -272,6 +272,6 @@ plot_params = {
     "NBJETS": ( "NJetsCSV_JetSubCalc", bins( 0, 10, 11 ), ";Medium DeepJet Multiplicity" ),
     "NWJETS": ( "NJetsWtagged", bins( 0, 6, 7 ), ";W-tagged Jet Multiplicity" ),
     "NTJETS": ( "NJetsTtagged", bins( 0, 4, 5 ), ";t-tagged Jet Multiplicity" ),
-    "DNN_3t": ( "DNN_5j_1to50_S2B10", bins( 0, 1, 101 ), "DNN_{1-50}" ),
+    "DNN_3t": ( "DNN_4j_1to50_nJ4pnB2p", bins( 0, 1, 101 ), "DNN" ),
   }
 }

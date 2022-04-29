@@ -107,7 +107,7 @@ def clean_histograms( hists, hist_key, scale, rebin ):
   
   def bin_correction( hists_, hist_key ):
     def overflow( hist_ ):
-      n = hist_.GetXaxis().GetNbins()
+      n = hist_.GetNbinsX()
       content_over = hist_.GetBinContent( n ) + hist_.GetBinContent( n + 1 )
       error_over = math.sqrt( hist_.GetBinError( n )**2 + hist_.GetBinError( n + 1 )**2 )
       hist_.SetBinContent( n, content_over )
@@ -208,6 +208,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
             if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
         elif not parse[ "IS SYST" ]:
+          print( "[DEBUG] ABCDNN hist {} bins = {} --> Bin 89 = {:.2e}".format( hist_name, hists[ hist_key ][ hist_name ].GetNbinsX(), hists[ hist_key ][ hist_name ].GetBinContent(89) ) )
           try: 
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
           except: 
@@ -228,6 +229,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
           print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ) )
           hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) )
       count[ hist_key ] += 1
+
 
   for key in hists[ "CMB" ]: hists[ "CMB" ][ key ].SetDirectory(0)
   if config.params[ "HISTS" ][ "TTHFSF" ] != 1: hists = scale_ttbar( hists, config.params[ "HISTS" ][ "TTHFSF" ], config.params[ "HISTS" ][ "TTLFSF" ] )
@@ -531,7 +533,7 @@ def main():
   for variable in args.variables:
     hists = load_histograms( variable, templateDir, categories )
     for hist_key in hists:
-      if hists[ hist_key ].keys() == []: continue
+      if len( hists[ hist_key ].keys() ) <= 0: continue
       hists = clean_histograms( hists, hist_key, config.params[ "HISTS" ][ "LUMISCALE" ], config.params[ "HISTS" ][ "REBIN" ] )
     hists = combine_histograms( hists, variable, categories, groups, config.options[ "GENERAL" ][ "ABCDNN" ] )
     write_combine( hists, variable, categories, groups, templateDir, config.options[ "GENERAL" ][ "ABCDNN" ] )
