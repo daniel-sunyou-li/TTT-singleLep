@@ -65,7 +65,7 @@ def check_samples( inLoc, outLoc, shifts, year ):
         fStep3[ shift ] = []
     elif outLoc == "BRUX":
       try:
-        status, dirList = xrdClient.dirlist( os.path.join( config.step3DirBRUX[ year ], shift ) )
+        status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step3DirBRUX[ year ].split( "//" )[-1], shift ) )
         fStep3[ shift ] = [ item.name for item in dirList ]
       except:
         fStep3[ shift ] = []
@@ -115,6 +115,8 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
     for shift in shifts:
       print( ">> {} samples to submit:".format( shift ) )
       for i, fName in enumerate( sorted( fStep2[shift] ) ):
+        if "ttjj_11_hadd" not in fName: continue
+        if fName in fStep3[shift]: continue
         print( "   {:<4} {}".format( str(i+1) + ".", fName ) ) 
         sFiles[shift].append(fName)
         if test: break
@@ -154,7 +156,7 @@ def check_model( folders ):
  
 def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params ):
   request_memory = "10240" 
-  if "tttosemilepton" in fileName.lower() and "ttjj_hadd" in fileName.lower(): request_memory = "14336" 
+  if "tttosemilepton" in fileName.lower() and "ttjj" in fileName.lower(): request_memory = "16384" 
   if args.resubmit: request_memory = "16384"
   dict = {
     "MODEL"     : models,       
@@ -202,7 +204,7 @@ def main():
   shifts = [ "nominal" ] if not args.shifts else [ "JECup", "JECdown", "JERup", "JERdown" ]
 
   step2Dir = config.step2DirBRUX[ args.year ] if args.inLoc == "BRUX" else config.step2DirEOS[ args.year ]
-  step3Dir = config.step3DirBRUX[ args.year ] if args.outLoc == "BRUX" else config.step3DirEOS[ args.year ]
+  step3Dir = config.step3DirEOS[ args.year ]
 
   fStep2, fStep3 = check_samples( args.inLoc, args.outLoc, shifts, args.year )
   jsonFiles, params = check_json( args.folders )

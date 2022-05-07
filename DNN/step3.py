@@ -8,7 +8,7 @@ from ROOT import TFile, TTree
 from array import array
 from json import loads as load_json
 import os, sys
-import tqdm
+#import tqdm
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
@@ -71,8 +71,8 @@ def get_predictions( models, varlist, fName, tName = "ljmet" ):
     return discs 
         
 
-def fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree ): 
-    out = TFile( args.file.split( "/" )[-1], "RECREATE" );
+def fill_tree( fileName, modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree ): 
+    out = TFile( fileName.split( "/" )[-1], "RECREATE" );
     out.cd()
     newTree = rootTree.CloneTree(0);
     DNN_disc = {}
@@ -84,7 +84,7 @@ def fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootT
         print( ">> Creating new step3 branch: {}".format( disc_name[ modelName ] ) )
         branches[ modelName ] = newTree.Branch( disc_name[ modelName ], DNN_disc[ modelName ], disc_name[ modelName ] + "/F" );
         print( "   - {:.4f} pm {:.4f}".format( np.mean( disclist[i] ), np.std( disclist[i] ) ) )
-    for i in tqdm.tqdm( range( len(disclist[0]) ) ):
+    for i in range( len(disclist[0]) ):
         rootTree.GetEntry(i)
         for j, modelName in enumerate( sorted( modelNames ) ):
             DNN_disc[ modelName ][0] = disclist[j][i]
@@ -101,7 +101,7 @@ def main():
     rootTree = rootFile.Get( "ljmet" ); 
     print( ">> Creating step3 for sample: {}".format( args.file ) )
     disclist = get_predictions( models, varlist, args.file, "ljmet" )
-    fill_tree( modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree )
+    fill_tree( args.file, modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree )
     print( "[DONE] Finished adding {} DNN discriminator branches to {}".format( len( disclist ), args.file ) )
 
 main()
