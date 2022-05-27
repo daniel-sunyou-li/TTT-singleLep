@@ -252,11 +252,12 @@ class ModifyTemplate():
         if self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) == 0.:
           if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
             del self.xbins[ "MERGED" ][ channel ][-2]
-        for key_lep in [ "isE", "isM" ]:
-          if self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
-            if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
-              del self.xbins[ "MERGED" ][ channel ][-2]
-              continue
+        else:
+          for key_lep in [ "isE", "isM" ]:
+            if self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
+              if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
+                del self.xbins[ "MERGED" ][ channel ][-2]
+                continue
       
       self.N_NEWBINS = len( self.xbins[ "MERGED" ][ channel ] )
       self.xbins[ "LIMIT" ][ channel ] = []

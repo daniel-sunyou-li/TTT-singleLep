@@ -35,11 +35,11 @@ mc_stats = {
   },
   
   "TTTT": { 
-    "EVENTS": 5371110., 
+    "EVENTS": 6029906.0, 
     "XSEC": 0.01197
   },
   "TTWW": { 
-    "EVENTS": 530000.0, 
+    "EVENTS": 1228000.0, 
     "XSEC": 0.00703
   },
   "TTWZ": { 
@@ -91,11 +91,11 @@ mc_stats = {
     "XSEC": 3.44
   },
   "Tt": { 
-    "EVENTS": 63509348., 
+    "EVENTS": 121728252.0, 
     "XSEC": 136.02
   },
   "Tbt": { 
-    "EVENTS": 63509348., 
+    "EVENTS": 65821722.0, 
     "XSEC": 80.95
   },
   "TtW": { 
@@ -112,7 +112,7 @@ mc_stats = {
     "XSEC": 1712000
   },
   "QCD300": { 
-    "EVENTS": 38938413., 
+    "EVENTS": 43589739.0, 
     "XSEC": 347700
   },
   "QCD500": { 
@@ -200,7 +200,7 @@ mc_stats = {
   },
   
   "TTToSemiLeptonic": { 
-    "EVENTS": 331279322.0, 
+    "EVENTS": 683741954.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9" ] )
   },
   "TTToSemiLeptonicUEUP": { 
@@ -221,7 +221,7 @@ mc_stats = {
   },
   
   "TTToSemiLeptonicHT500": { 
-    "EVENTS": 331279322., 
+    "EVENTS": 683741954.0, 
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9" ] 
   },
   "TTToSemiLeptonicHT500UEUP": { 
@@ -241,7 +241,7 @@ mc_stats = {
     "XSEC": xsec[ "TT" ] * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDDN" ]
   },
   "TTToSemiLeptonHT500": { 
-    "EVENTS": 7035304.0, 
+    "EVENTS": 17364358.0, 
     "XSEC": 2.251
   },
   "TTToHadronic": { 
@@ -292,7 +292,10 @@ weights = { key: config.lumi[ "17" ] * mc_stats[ key ][ "XSEC" ] / mc_stats[ key
 for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
     if tt == "SemiLeptonic" and fs == "jj":
-      for n in [ "1", "2", "3", "4" ]:
+      for n in range(1,24):
+        weights[ "TTTo{}tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
+    elif tt == "SemiLeptonic" and fs == "cc":
+      for n in range(1,4):
         weights[ "TTTo{}tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
     else:
       weights[ "TTTo{}tt{}".format( tt, fs ) ] = weights[ "TTTo{}".format( tt ) ]

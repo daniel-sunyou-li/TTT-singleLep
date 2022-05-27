@@ -293,7 +293,7 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
 def format_upper_hist( pad, hist, hist_bkg, blind, log_scale ):
   if "NTJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(5)
   elif "NWJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(5)
-  elif "NBJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(6,ROOT.kFalse)
+  elif "NBJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(6)
   pad.cd()
   hist.GetYaxis().CenterTitle()
   hist.GetYaxis().SetTitle( "Events/bin" )
@@ -332,7 +332,7 @@ def format_lower_hist( pad, hist, real_pull, variable ):
   
   if "NTJETS" in variable: hist.GetXaxis().SetNdivisions(5)
   elif "NWJETS" in variable: hist.GetXaxis().SetNdivisions(5)
-  elif "NBJETS" in variable: hist.GetXaxis().SetNdivisions(6,ROOT.kFalse)
+  elif "NBJETS" in variable: hist.GetXaxis().SetNdivisions(6)
   else: hist.GetXaxis().SetNdivisions(506)
   
   hist.GetYaxis().SetLabelSize(0.10)
@@ -698,7 +698,8 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     if not os.path.exists( os.path.join( templateDir, "plots/" ) ): os.system( "mkdir -vp {}".format( os.path.join( templateDir, "plots/" ) ) )
     canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
 
-def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABCDNN ):
+def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABCDNN, blind ):
+  print( "[START] Plotting background ratios" )
   categories_lep = []
   for category in categories:
     if "is"+lepton in category: categories_lep.append( category )
@@ -710,17 +711,29 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
   canvas.SetFrameFillStyle(0)
   canvas.SetFrameBorderMode(0)
 
-  pad = {
-    "UPPER": ROOT.TPad( "UPPER", "", 0, config_plot.params[ "Y DIV" ], 1 ,1 ),
-    "LOWER": ROOT.TPad( "LOWER", "", 0, 0, 1, config_plot.params[ "Y DIV" ] )
-  }
-  
-  pad[ "UPPER" ].SetBottomMargin(0)
-  pad[ "LOWER" ].SetTopMargin(0)
-  pad[ "LOWER" ].SetBottomMargin(0.50)
+  if blind:
+    pad = {
+      "UPPER": ROOT.TPad( "UPPER", "", 0, 0, 1, 1 )
+    }
+  else:
+    pad = {
+      "UPPER": ROOT.TPad( "UPPER", "", 0, config_plot.params[ "Y DIV" ], 1 ,1 ),
+      "LOWER": ROOT.TPad( "LOWER", "", 0, 0, 1, config_plot.params[ "Y DIV" ] )
+    }
+
+  if not blind:
+    pad[ "UPPER" ].SetBottomMargin(0)
+    pad[ "LOWER" ].SetTopMargin(0)
+    pad[ "LOWER" ].SetBottomMargin(0.50)
+  else:
+    pad[ "UPPER" ].SetBottomMargin(0.20)
+    pad[ "UPPER" ].SetLeftMargin(0.10)
+    pad[ "UPPER" ].SetRightMargin(0.25)
   for key in pad:
-    pad[ key ].SetLeftMargin(  config_plot.params[ "CANVAS" ][ "L" ] / config_plot.params[ "CANVAS" ][ "W" ] )
-    pad[ key ].SetRightMargin( config_plot.params[ "CANVAS" ][ "R" ] / config_plot.params[ "CANVAS" ][ "W" ] ) 
+    if blind and key == "LOWER": continue
+    if not blind:
+      pad[ key ].SetLeftMargin(  config_plot.params[ "CANVAS" ][ "L" ] / config_plot.params[ "CANVAS" ][ "W" ] )
+      pad[ key ].SetRightMargin( config_plot.params[ "CANVAS" ][ "R" ] / config_plot.params[ "CANVAS" ][ "W" ] ) 
     pad[ key ].SetFillColor(0)
     pad[ key ].SetBorderMode(0)
     pad[ key ].SetFrameFillStyle(0)
@@ -728,7 +741,10 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
     pad[ key ].Draw()
 
   ratio_stack = ROOT.THStack( "RATIO STACK", "" )
-  ratio_legend = ROOT.TLegend( 0.35, 0.7, 0.8, 0.9 )
+  if blind:
+    ratio_legend = ROOT.TLegend( 0.25, 0.75, 0.6, 0.9 )
+  else:
+    ratio_legend = ROOT.TLegend( 0.35, 0.7, 0.80, 0.9 )
   ratio_legend.SetShadowColor(0)
   ratio_legend.SetFillStyle(0)
   ratio_legend.SetLineColor(0)
@@ -739,28 +755,32 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
   ratio_legend.SetTextSize(0.04)
 
   ratio_hists = {}
-  ratio_data = ROOT.TH1F( "DATA RATIO", "DATA RATIO", len( categories_lep ), 0, len( categories_lep ) )
   for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
     ratio_hists[ group ] = ROOT.TH1F( group, group, len( categories_lep ), 0, len( categories_lep ) )
     ratio_legend.AddEntry( ratio_hists[ group ], group, "f" )
     for i, category in enumerate( sorted( categories_lep ) ):
       ratio_hists[ group ].SetBinContent( i + 1, float( hists[ "BKG" ][ hist_tag( group, category ) ].Integral() ) / float( hists[ "TOTAL BKG" ][ category ].Integral() ) )
+      if blind:
+        ratio_hists[ group ].GetXaxis().SetBinLabel( i + 1, category )
+        ratio_hists[ group ].GetXaxis().SetLabelSize(0.03)
     ratio_hists[ group ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
     ratio_hists[ group ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
     ratio_hists[ group ].SetLineWidth(2)
     ratio_stack.Add( ratio_hists[ group ] )
-  for i, category in enumerate( sorted( categories_lep ) ):
-    ratio_data.SetBinContent( i + 1, float( hists[ "DAT" ][ hist_tag( "data_obs", category ) ].Integral() ) / float( hists[ "TOTAL BKG" ][ category ].Integral() ) )
-    ratio_data.GetXaxis().SetBinLabel( i + 1, category )
 
-  ratio_data.SetMinimum( 0.50 )
-  ratio_data.SetMaximum( 1.05 )
-  ratio_data.GetXaxis().SetLabelSize( 0.09 )
-  ratio_data.GetYaxis().SetTitle( "Data/Bkg" )
-  ratio_data.GetYaxis().SetTitleOffset( 0.50 )
-  ratio_data.GetYaxis().CenterTitle()
-  ratio_data.LabelsOption( "v" )
-
+  if not blind:
+    ratio_data = ROOT.TH1F( "DATA RATIO", "DATA RATIO", len( categories_lep ), 0, len( categories_lep ) )
+    for i, category in enumerate( sorted( categories_lep ) ):
+      ratio_data.SetBinContent( i + 1, float( hists[ "DAT" ][ hist_tag( "data_obs", category ) ].Integral() ) / float( hists[ "TOTAL BKG" ][ category ].Integral() ) )
+      ratio_data.GetXaxis().SetBinLabel( i + 1, category )
+    ratio_data.SetMinimum( 0.50 )
+    ratio_data.SetMaximum( 1.05 )
+    ratio_data.GetXaxis().SetLabelSize( 0.09 )
+    ratio_data.GetYaxis().SetTitle( "Data/Bkg" )
+    ratio_data.GetYaxis().SetTitleOffset( 0.50 )
+    ratio_data.GetYaxis().CenterTitle()
+    ratio_data.LabelsOption( "v" )
+  
   pad[ "UPPER" ].cd()
   ratio_stack.SetMaximum(1.3)
   ratio_stack.SetMinimum(0.0)
@@ -772,14 +792,13 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
   pad[ "UPPER" ].Update()
   pad[ "UPPER" ].RedrawAxis()
 
-  pad[ "LOWER" ].cd()
+  if not blind:
+    pad[ "LOWER" ].cd()
+    ratio_data.Draw( "HIST" )
+    pad[ "LOWER" ].RedrawAxis()
+    pad[ "LOWER" ].Update()
 
-  ratio_data.Draw( "HIST" )
-
-  pad[ "LOWER" ].RedrawAxis()
-  pad[ "LOWER" ].Update()
-
-  save_name = "background_{}_ratio.png".format( lepton )
+  save_name = "background_{}_ratio.png".format( lepton ) if not blind else "background_{}_ratio_blind.png".format( lepton )
   canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
 
 def main():
@@ -830,6 +849,7 @@ def main():
           lepton = lep,
           doABCDNN = config_plot.options[ "ABCDNN" ],
           groups = samples.groups,
-          templateDir = templateDir
+          templateDir = templateDir,
+          blind = blind
         )
 main()

@@ -76,8 +76,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
 
   
   # modify weights
-  # scale up MC samples used in DNN/ABCDnn training where dataset partitioned into 40/20/40 so scale isTraining==3 by 2.5 
-  mc_weights = { "NOMINAL": "2.5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) or process.startswith( "TTTT" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
+  # scale up MC samples used in DNN/ABCDnn training where dataset partitioned into 60/20/20 so scale isTraining==3 by 5
+  mc_weights = { "NOMINAL": "5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in weights.weights.keys():
     mc_weights[ "PROCESS" ] = "{:.10f}".format( weights.weights[ process ] ) 
   else:
@@ -95,16 +95,19 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
   if process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += "*{}*{}".format( config.mc_weight, mc_weights[ "PROCESS" ] )
 
-  if "DNN" in variable:
+  if category["NB"] != "0p" and process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj" 
 
-  if year in [ "16APV", "16", "17" ]:
+  if year in [ "16APV", "16", "17" ] and process not in groups ["DAT"]:
     mc_weights[ "NOMINAL" ] += " * L1NonPrefiringProb_CommonCalc"
    
   if process not in groups[ "DAT" ] and doSYST:
     if config.systematics[ "MC" ][ "pileup" ]:
       mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
                                  "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
+    if config.systematics[ "MC" ][ "pileupJetID" ]:
+      mc_weights[ "PILEUPJETID" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightUp" ),
+                                      "DN": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightDown" ) }
     if year in [ "16APV", "16", "17" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
@@ -163,7 +166,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
   if "TTToSemiLepton" in process and "HT500" in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==1"
   elif "TTToSemiLepton" in process and "HT500" not in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==0"
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ][:]
-  if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) or process.startswith( "TTTT" ) ) and "DNN" in variable ):
+  if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
     cuts[ "NOMINAL" ] += " && isTraining == 3" # Used isTraining==1 in training and isTraining==2 in validation of training
 
   cuts[ "LEPTON" ] = " && isElectron==1" if category[ "LEPTON" ][0] == "E" else " && isMuon==1"

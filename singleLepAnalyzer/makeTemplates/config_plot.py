@@ -22,7 +22,7 @@ options = {
 
 params = {
   "POSTFIX TEXT": "Preliminary",
-  "INCLUDE LEP": [ "L" ], # E,M,L
+  "INCLUDE LEP": [ "M","E","L" ], # E,M,L
   "ERROR BAND": [ "ALL" ], # "SHAPE ONLY", "SHAPE + NORM"
   "EXCLUDE SYST": [
     #"pdf", # this is fine
