@@ -14,7 +14,7 @@ parser = ArgumentParser()
 parser.add_argument( "datasets", nargs="*", default=[], help="The dataset folders to search for HPO information")
 parser.add_argument( "-f", "--folder", default="auto", help="The name of the output folder.")
 parser.add_argument( "-k", "--num-folds", default="5", help="The number of cross-validation iterations to perform for each configuration")
-parser.add_argument( "-m", "--metric", default = "STABLE", help="Metric for best model options: STABLE,LOSS,ACC,AUC" )
+parser.add_argument( "-m", "--metric", default = "AUC", help="Metric for best model options: STABLE,LOSS,ACC,AUC" )
 parser.add_argument( "--no-cut-save", action="store_true", help="Do not attempt to load or create saved cut event files.")
 args = parser.parse_args()
 

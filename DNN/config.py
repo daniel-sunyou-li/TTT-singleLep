@@ -10,7 +10,7 @@ eosUserName = "dali"
 postfix = "3t"
 
 #years = [ "16APV", "16", "17", "18" ]
-years = [ "17" ]
+years = [ "16", "17", "18" ]
 
 step2Sample = { year: "FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step2".format( year, postfix ) for year in years }
 
@@ -46,9 +46,17 @@ bkg_training = {
   year: [
     #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_6_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_7_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_11_hadd.root",
+    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_12_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
@@ -76,87 +84,6 @@ bkg_training = {
   ] for year in years
 }
 
-shift_keys = {
-  "": "",
-  "UEdn": "down",
-  "UEup": "up",
-  "HDAMPup": "hdampUP",
-  "HDAMPdn": "hdampDN"
-}
-
-all_samples = { 
-  "17": {
-    "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTTT": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWH": "TTWH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWW": "TTWW_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWZ": "TTWZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTZH": "TTZH_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTZZ": "TTZZ_TuneCP5_13TeV-madgraph-pythia8_hadd.root",
-    "TTWl": "TTWJetsToLNu_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
-    "TTWq": "TTWJetsToQQ_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8_hadd.root",
-    "TTZlM10": "TTZToLLNuNu_M-10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTZlM1to10": "TTZToLL_M-1to10_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTHnoB": "ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-    "TTHB": "ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8_hadd.root",
- 
-    "DataE": "SingleElectron_hadd.root",
-    "DataM": "SingleMuon_hadd.root",
-  
-    "DY200":  "DYJetsToLL_M-50_HT-200to400_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DY400":  "DYJetsToLL_M-50_HT-400to600_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DY600":  "DYJetsToLL_M-50_HT-600to800_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DY800":  "DYJetsToLL_M-50_HT-800to1200_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DY1200": "DYJetsToLL_M-50_HT-1200to2500_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-    "DY2500": "DYJetsToLL_M-50_HT-2500toInf_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8_hadd.root",
-  
-    "QCD200":  "QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD300":  "QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD500":  "QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD700":  "QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD1000": "QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD1500": "QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-    "QCD2000": "QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8_hadd.root",
-  
-    "Ts": "ST_s-channel_4f_leptonDecays_13TeV_amcatnlo-pythia_hadd.root",
-    "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8_hadd.root",
-    "Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_PSweights_13TeV-powheg-pythia8_hadd.root",
-    "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-    "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8_hadd.root",
-
-    "WJets200": "WJetsToLNu_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJets400": "WJetsToLNu_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJets600": "WJetsToLNu_HT-600To800_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJets800": "WJetsToLNu_HT-800To1200_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJets1200": "WJetsToLNu_HT-1200To2500_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-    "WJets2500": "WJetsToLNu_HT-2500ToInf_TuneCP5_13TeV-madgraphMLM-pythia8_hadd.root",
-  
-    "WW": "WW_TuneCP5_13TeV-pythia8_hadd.root",
-    "WZ": "WZ_TuneCP5_13TeV-pythia8_hadd.root",
-    "ZZ": "ZZ_TuneCP5_13TeV-pythia8_hadd.root"
-  },
-}
-
-shift_key = {
-  "TuneCP5": "",
-  "TuneCP5up": "UEUP",
-  "TuneCP5down": "UEDN",
-  "hdampUP_TuneCP5": "HDUP",
-  "hdampDOWN_TuneCP5": "HDDN"
-}
-
-for year in years:
-  for tt in [ "SemiLeptonic", "SemiLepton", "2L2Nu", "Hadronic" ]:
-    for jj in [ "tt1b", "tt2b", "ttbb", "ttcc", "ttjj" ]:
-      for shift in shift_key:
-        if tt == "SemiLeptonic" and shift == "TuneCP5":
-          for n in ["1","2","3","4"]:
-            all_samples[ year ][ "TTTo{}_{}_{}_{}".format( tt, jj, shift_key[ shift ], n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_{}_{}_hadd.root".format( tt, shift, jj, n )
-        else:
-          all_samples[ year ][ "TTTo{}_{}_{}".format( tt, jj, shift_key[ shift ] ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_{}_hadd.root".format( tt, shift, jj ) 
-   
 varList["DNN"] = [
   ("AK4HTpMETpLepPt", "S_{T} [GeV]" , 0, 4000, 101),
   ("minMleppBjet", "min[M(l,b)] [GeV]", 0, 1000, 101),
@@ -241,7 +168,7 @@ varList["Step3"].append( tuple( ( "DNN_3t", "ttt discriminator", 0, 1, 101) ) )
 
 # weight event count
 
-weightStr = "triggerXSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc * " + \
+weightStr = "triggerXSF * triggerSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc * " + \
             "(MCWeight_MultiLepCalc / abs(MCWeight_MultiLepCalc) ) * xsecEff * tthfWeight * btagDeepJetWeight * btagDeepJet2DWeight_HTnj"
 
 # general cut, add selection based cuts in training scripts

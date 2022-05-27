@@ -51,7 +51,7 @@ def check_samples( inLoc, outLoc, shifts, year ):
   for shift in shifts:
     if inLoc == "LPC":
       eosDir = os.path.join( "/eos/uscms/", config.step2DirEOS[ year ].split( "///" )[1] )
-      fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, config.step2Sample[ year ], shift ) )
+      fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
     elif inLoc == "BRUX":
       status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step2DirBRUX[ year ].split( "//" )[-1], shift ) )
       fStep2[ shift ] = [ item.name for item in dirList ]
@@ -59,12 +59,13 @@ def check_samples( inLoc, outLoc, shifts, year ):
     if outLoc == "LPC":
       try:
         eosDir = os.path.join( "/eos/uscms/", config.step3DirEOS[ year ].split( "///" )[1] )
-        fStep3[ shift ] = EOSlistdir( os.path.join( eos_dir, config.step3Sample[ year ], shift ) )
+        print( os.path.join( eosDir, shift ) )
+        fStep3[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
       except:
         fStep3[ shift ] = []
     elif outLoc == "BRUX":
       try:
-        status, dirList = xrdClient.dirlist( os.path.join( config.step3DirBRUX[ year ], shift ) )
+        status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step3DirBRUX[ year ].split( "//" )[-1], shift ) )
         fStep3[ shift ] = [ item.name for item in dirList ]
       except:
         fStep3[ shift ] = []
@@ -86,7 +87,7 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
           sampleTag = oFile.split( "hadd_" )[1].split( "." )[0]
           try: sFiles[ sampleTag ].append( sampleName )
           except: sFiles[ sampleTag ] = [ sampleName ]
-          resubmit_count += 1
+          count += 1
           if args.verbose: print( ">> Resubmitting failed job: {}".format( sampleName ) )
   
     for lFile in logFiles:
@@ -95,25 +96,27 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
         sampleTag = lFile.split( "hadd_" )[1].split( "." )[0]
         try: sFiles[ sampleTag ].append( sampleName )
         except: sFiles[ sampleTag ] = [ sampleName ]
-        resubmit_count += 1
+        count += 1
         if args.verbose: print( ">> Resubmitting suspended job: {}".format( sampleName ) )
 
     for shift in shifts:
       sFiles[shift] = []
       for i, fName in enumerate( fStep2[shift] ):
         if fName not in fStep3[shift]:
-          try: sFiles[shift].append(file)
-          except: sFiles[shift] = [ file ]
-          resubmit_count += 1
-          if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( file ) )
+          try: sFiles[shift].append(fName)
+          except: sFiles[shift] = [ fName ]
+          count += 1
+          if args.verbose: print( ">> Resubmitting missing step3 job: {}".format( fName ) )
 
-    print( ">> {} samples to resubmit".format( resubmit_count ) )
-    if resubmit_count == 0: quit( "[ERR] No samples to resubmit, quitting..." )
+    print( ">> {} samples to resubmit".format( count ) )
+    if count == 0: quit( "[ERR] No samples to resubmit, quitting..." )
 
   else:
     for shift in shifts:
       print( ">> {} samples to submit:".format( shift ) )
       for i, fName in enumerate( sorted( fStep2[shift] ) ):
+        if "ttjj_11_hadd" not in fName: continue
+        if fName in fStep3[shift]: continue
         print( "   {:<4} {}".format( str(i+1) + ".", fName ) ) 
         sFiles[shift].append(fName)
         if test: break
@@ -153,14 +156,14 @@ def check_model( folders ):
  
 def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params ):
   request_memory = "10240" 
-  if "tttosemilepton" in fileName.lower() and "ttjj_hadd" in fileName.lower(): request_memory = "14336" 
+  if "tttosemilepton" in fileName.lower() and "ttjj" in fileName.lower(): request_memory = "16384" 
   if args.resubmit: request_memory = "16384"
   dict = {
     "MODEL"     : models,       
     "PARAMFILE" : params,
     "FILENAME"  : fileName.split( "." )[0],
     "INPUTFILE" : os.path.join( inputDir, shift, fileName ),
-    "OUTPUTDIR" : os.path.join( outputDir, shift ),
+    "OUTPUTFILE" : os.path.join( outputDir, shift, fileName ),
     "LOGDIR"    : logDir,              
     "SHIFT"     : shift,                  
     "MEMORY"    : request_memory
@@ -179,7 +182,7 @@ Output = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.out
 Error = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.err
 Log = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.log
 Notification = Never
-Arguments = %(FILENAME)s.root %(INPUTFILE)s %(OUTPUTDIR)s
+Arguments = %(FILENAME)s.root %(INPUTFILE)s %(OUTPUTFILE)s
 Queue 1"""%dict
   )
   jdf.close()
@@ -201,7 +204,7 @@ def main():
   shifts = [ "nominal" ] if not args.shifts else [ "JECup", "JECdown", "JERup", "JERdown" ]
 
   step2Dir = config.step2DirBRUX[ args.year ] if args.inLoc == "BRUX" else config.step2DirEOS[ args.year ]
-  step3Dir = config.step3DirBRUX[ args.year ] if args.outLoc == "BRUX" else config.step3DirEOS[ args.year ]
+  step3Dir = config.step3DirEOS[ args.year ]
 
   fStep2, fStep3 = check_samples( args.inLoc, args.outLoc, shifts, args.year )
   jsonFiles, params = check_json( args.folders )
