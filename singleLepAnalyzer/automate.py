@@ -10,9 +10,11 @@ parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Opti
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-r", "--region", default = "SR" )
+parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid option used for -r (--region). Quitting." )
+verbose = "--verbose" if args.verbose else ""
 
 def get_trainings( tags, years, variables ):
   trainings = []
@@ -95,11 +97,11 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python modify_binning.py -y {} -v {} -t {} \n\
-python plot_templates.py -y {} -v {} -t {} \n\ ".format( 
+python modify_binning.py -y {} -v {} -t {} -r {} \n\
+python plot_templates.py -y {} -v {} -t {} -r {} --templates \n\ ".format( 
   cmsswbase, os.getcwd(), 
-  train[ "year" ], variable, train[ "tag" ], 
-  train[ "year" ], variable, train[ "tag" ]
+  train[ "year" ], variable, train[ "tag" ], args.region,
+  train[ "year" ], variable, train[ "tag" ], args.region
 )
       )
       shell.close()
@@ -142,13 +144,13 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python create_datacard.py -y {} -v {} -t {} \n\
+python create_datacard.py -y {} -v {} -t {} -r {} {} \n\
 cd limits_UL{}_{}_{}\n\
 combine -M Significance cmb/workspace.root -t -l --expectSignal=1 --cminDefaultMinimizerStrategry 0 &> significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0&> limits.txt\n\
 cd ..\n".format(
   cmsswbase, os.getcwd(),
-  training[ "year" ], variable, training[ "tag" ], 
+  training[ "year" ], variable, training[ "tag" ], args.region, verbose,
   training[ "year" ], training[ "tag" ], variable,
 )
       )

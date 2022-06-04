@@ -292,10 +292,7 @@ weights = { key: config.lumi[ "17" ] * mc_stats[ key ][ "XSEC" ] / mc_stats[ key
 for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:
     if tt == "SemiLeptonic" and fs == "jj":
-      for n in range(1,24):
-        weights[ "TTTo{}tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
-    elif tt == "SemiLeptonic" and fs == "cc":
-      for n in range(1,4):
+      for n in range(1,11):
         weights[ "TTTo{}tt{}{}".format( tt, fs, n ) ] = weights[ "TTTo{}".format( tt ) ]
     else:
       weights[ "TTTo{}tt{}".format( tt, fs ) ] = weights[ "TTTo{}".format( tt ) ]

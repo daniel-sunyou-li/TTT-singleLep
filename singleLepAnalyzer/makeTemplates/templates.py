@@ -27,7 +27,7 @@ elif args.year == "16":
 elif args.year == "17":
   import samplesUL17 as samples
 elif args.year == "18":
-  import samplesuL18 as samples
+  import samplesUL18 as samples
 else:
   quit( "[ERR] Invalid -y (--year) argument used. Quitting" )
 

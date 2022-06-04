@@ -72,10 +72,7 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
       if tt == "SemiLeptonic":
         if shift == "TuneCP5":
           if fs == "jj":
-            for n in range(1,24):
-              samples[ "BKG" ][ "TTTo{}{}tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
-          elif fs == "cc":
-            for n in range(1,4):
+            for n in range(1,11):
               samples[ "BKG" ][ "TTTo{}{}tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
           else:
             samples[ "BKG" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}".format( tt, shift, fs )
@@ -115,15 +112,13 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10", "TTHB", "TTHnoB" ], 
   "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
-  "TTCC": [ tt + "ttcc" for tt in ttbar if tt != "TTToSemiLeptonic" ],
+  "TTCC": [ tt + "ttcc" for tt in ttbar ],
   "TT1B": [ tt + "tt1b" for tt in ttbar ],
   "TT2B": [ tt + "tt2b" for tt in ttbar ],
   "TTBB": [ tt + "ttbb" for tt in ttbar ]
 }
 
-
-groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicttjj" + str(num) for num in range(1,24) ]
-groups[ "BKG" ][ "PROCESS" ][ "TTCC" ] += [ "TTToSemiLeptonicttcc" + str(num) for num in range(1,4) ]
+groups[ "BKG" ][ "PROCESS" ][ "TTJJ" ] += [ "TTToSemiLeptonicttjj" + str(num) for num in range(1,11) ]
 
 groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in groups[ "BKG" ][ "PROCESS" ].keys() ] )
 
@@ -134,7 +129,7 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
   "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": groups[ "BKG" ][ "PROCESS" ][ "QCD" ],
+  "QCD": [ "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "TTH": [ "TTHB", "TTHnoB" ]
 }
 

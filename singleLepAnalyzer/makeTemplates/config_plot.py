@@ -6,7 +6,7 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": False,
+  "REBINNED": True,
   "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
@@ -22,7 +22,7 @@ options = {
 
 params = {
   "POSTFIX TEXT": "Preliminary",
-  "INCLUDE LEP": [ "M","E","L" ], # E,M,L
+  "INCLUDE LEP": [ "M" ], # E,M,L
   "ERROR BAND": [ "ALL" ], # "SHAPE ONLY", "SHAPE + NORM"
   "EXCLUDE SYST": [
     #"pdf", # this is fine
