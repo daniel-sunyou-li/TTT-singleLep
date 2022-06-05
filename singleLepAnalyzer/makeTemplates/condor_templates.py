@@ -88,7 +88,7 @@ request_memory = 5000
 Output = condor_step1_%(VARIABLE)s.out
 Error = condor_step1_%(VARIABLE)s.err
 Log = condor_step1_%(VARIABLE)s.log
-JobBatchName = SLA_step1_%(VARIABLE)s
+JobBatchName = SLA_step1_%(YEAR)s_%(VARIABLE)s
 Notification = Error
 Arguments = %(VARIABLE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s %(SUBDIR)s
 Queue 1"""%jobParams

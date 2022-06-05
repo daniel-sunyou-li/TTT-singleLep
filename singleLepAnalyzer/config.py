@@ -8,7 +8,7 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_singleLep20{}UL
 # target lumis in 1/pb for each year
 lumi = {
   "16APV": 19520., # from pdmv
-  "16": 16810.,    # from pdmv
+  "16": 16810. * 0.995,    # from pdmv, missing a few LJMet files from Run2016F
   "17": 41480.,    # calculated using brilcalc on GoldenJSON 
   "18": 59832.     # calculated using brilcalc on GoldenJSON
 }
