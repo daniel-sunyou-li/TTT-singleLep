@@ -129,7 +129,7 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
   "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": [ "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
+  "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "TTH": [ "TTHB", "TTHnoB" ]
 }
 

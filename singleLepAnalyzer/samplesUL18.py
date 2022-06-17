@@ -31,8 +31,10 @@ samples = {
     "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
     "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
 
+    #"TTTT": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8",
     "TTTT1": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_1",
     "TTTT2": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_2",
+    "TTTT3": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_3",
     "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8",
     "TTWH": "TTWH_TuneCP5_13TeV-madgraph-pythia8",
     "TTWW": "TTWW_TuneCP5_13TeV-madgraph-pythia8",
@@ -111,7 +113,7 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "VV": [ "WW", "WZ", "ZZ" ],
   "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
   "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10", "TTHB", "TTHnoB" ], 
-  "TTXY": [ "TTTT1", "TTTT2", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+  "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
   "TTCC": [ tt + "ttcc" for tt in ttbar ],
   "TT1B": [ tt + "tt1b" for tt in ttbar ],
@@ -130,7 +132,7 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
   "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": [ "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
+  "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "TTH": [ "TTHB", "TTHnoB" ]
 }
 

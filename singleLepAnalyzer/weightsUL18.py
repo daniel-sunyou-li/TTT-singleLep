@@ -35,7 +35,7 @@ mc_stats = {
   },
   
   "TTTT": { 
-    "EVENTS": 7492690.0, 
+    "EVENTS": 11614228.0, 
     "XSEC": 0.01197
   },
   "TTWW": { 
@@ -72,7 +72,7 @@ mc_stats = {
   },
   "TTZlM10": { 
     "EVENTS": 9651834.0, 
-    "XSEC": 0.05324
+    "XSEC": 0.2439
   },
   "TTZlM1to10": { 
     "EVENTS": 550706.0, 
@@ -80,11 +80,11 @@ mc_stats = {
   },
   "TTHB": { 
     "EVENTS": 9292938.0, 
-    "XSEC": 0.5269
+    "XSEC": 0.291
   },
   "TTHnoB": { 
     "EVENTS": 7088505.0, 
-    "XSEC": 0.5638
+    "XSEC": 0.209
   },
   "Ts": { 
     "EVENTS": 12607741.0, 
@@ -291,6 +291,7 @@ weights = { key: config.lumi[ "18" ] * mc_stats[ key ][ "XSEC" ] / mc_stats[ key
 
 weights[ "TTTT1" ] = weights[ "TTTT" ]
 weights[ "TTTT2" ] = weights[ "TTTT" ]
+weights[ "TTTT3" ] = weights[ "TTTT" ]
 
 for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
   for fs in [ "jj", "cc", "bb", "1b", "2b" ]:

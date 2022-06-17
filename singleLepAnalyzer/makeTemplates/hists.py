@@ -98,8 +98,11 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
   if category["NB"] != "0p" and process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj" 
 
-  if year in [ "16APV", "16", "17" ] and process not in groups ["DAT"]:
+  if year in [ "16APV", "16", "17", "18" ] and process not in groups ["DAT"]:
     mc_weights[ "NOMINAL" ] += " * L1NonPrefiringProb_CommonCalc"
+
+  if year in [ "16APV" ]: # since single lepton triggers weren't produced for EOY in 2016APV, default to triggerX
+    mc_weights[ "NOMINAL" ] = mc_weights[ "NOMINAL" ].replace( "triggerSF", "1" )
    
   if process not in groups[ "DAT" ] and doSYST:
     if config.systematics[ "MC" ][ "pileup" ]:
@@ -111,7 +114,6 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
     if year in [ "16APV", "16", "17" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
-      print( mc_weights[ "PREFIRE" ] )
     if config.systematics[ "MC" ][ "muRFcorrd" ]:
       mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                     "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
@@ -168,6 +170,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ][:]
   if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
     cuts[ "NOMINAL" ] += " && isTraining == 3" # Used isTraining==1 in training and isTraining==2 in validation of training
+  if year == "18" and category[ "LEPTON" ][0] == "E": # exclude electrons that fall in this HEM region which resulted in many misidentifications of jets as electrons
+    cuts[ "NOMINAL" ] += " && ( leptonEta_MultiLepCalc > -1.3 || ( leptonPhi_MultiLepCalc < -1.57 || leptonPhi_MultiLepCalc > -0.87 ) )"
 
   cuts[ "LEPTON" ] = " && isElectron==1" if category[ "LEPTON" ][0] == "E" else " && isMuon==1"
   cuts[ "NHOT" ] = " && NresolvedTops1pFake {}= {}".format( ">" if "p" in category[ "NHOT" ][0] else "=", category[ "NHOT" ][0][:-1] if "p" in category[ "NHOT" ][0] else category[ "NHOT" ][0] )
@@ -381,7 +385,7 @@ def make_hists( groups, group, category, useABCDNN ):
     if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIG", "BKG" ]:
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
-          rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir, sys + shift, samples.samples[ group ][ process ] ) )
+          rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir[ args.year ], syst + shift, samples.samples[ group ][ process ] ) )
     hists.update( analyze( rTrees, args.year, process, variable, doSys, config.options[ "GENERAL" ][ "PDF" ], isABCDNN, category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees

@@ -72,7 +72,7 @@ mc_stats = {
   },
   "TTZlM10": { 
     "EVENTS": 7555432., 
-    "XSEC": 0.05324
+    "XSEC": 0.2439
   },
   "TTZlM1to10": { 
     "EVENTS": 781204., 
@@ -80,11 +80,11 @@ mc_stats = {
   },
   "TTHB": { 
     "EVENTS": 13932018., 
-    "XSEC": 0.5269
+    "XSEC": 0.291
   },
   "TTHnoB": { 
     "EVENTS": 6124800., 
-    "XSEC": 0.5638
+    "XSEC": 0.209
   },
   "Ts": { 
     "EVENTS": 9037288., 
