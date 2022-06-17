@@ -202,12 +202,12 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {} \n\
 eval `scramv1 runtime -sh` \n\
 cd {} \n\
-combine_datacrads.py R17=limits_UL17_{}/cmb/combined.txt.cmb R18=limits_UL18_{}/cmb/combined.txt.cmb &> results/{}.txt \n\
+combineCards.py UL16APV=limits_UL16APV_{}/cmb/combined.txt.cmb UL16=limits_UL16_{}/cmb/combined.txt.cmb UL17=limits_UL17_{}/cmb/combined.txt.cmb  UL18=limits_UL18_{}/cmb/combined.txt.cmb > results/{}.txt \n\
 text2workspace.py results/{}.txt -o results/{}.root \n\
-combine -M Significance results/{}.root -t - --expectSignal=1 --cminDefaultMinimizerStrategy 0 &> results/significance_{}.txt \n\
-combine -M AsymptoticLimits results/{}.root --run=blind --cminDefaultMinimizerStrategy 0 &> results/limits_{}.txt".format(
+combine -M Significance Results/{}.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > Results/significance_{}.txt \n\
+combine -M AsymptoticLimits Results/{}.root --run=blind --cminDefaultMinimizerStrategy 0 > Results/limits_{}.txt".format(
   cmsswbase, os.getcwd(),
-  combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combined_tag, combine_tag
+  combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combined_tag, combine_tag, combine_tag, combine_tag
 )
     )
     shell.close()

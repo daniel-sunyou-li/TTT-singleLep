@@ -13,6 +13,8 @@ parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True, help = ",".join( list( config.region_prefix.keys() ) ) )
 parser.add_argument( "-v", "--variable", required = True )
 parser.add_argument( "-m", "--mode", default = 0, help = "0,1,2,3" )
+parser.add_argument( "--shapeSyst", action = "store_true" )
+parser.add_argument( "--normSyst", action = "store_true" )
 parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
@@ -200,7 +202,7 @@ class DataCard():
         count[ "CR" ] += 1
     print( "[DONE] Added {} categories to SR and {} categories to CR".format( count[ "SR" ], count[ "CR" ] ) )
   
-  def add_yield_systematics( self ):
+  def add_normalization_systematics( self ):
     print( "[START] Retrieving yield systematics from {}".format( self.templateName ) )
     count = 0
     
@@ -210,21 +212,72 @@ class DataCard():
     )
     print( "   + Luminosity {}: {} (lnN)".format( self.year, config.systematics[ "LUMI" ][ self.year ] ) )
     count += 1
-    
+
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester, "LUMI_RUN2", "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI_RUN2" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI_RUN2" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI_RUN2" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_RUN2" ][ "18" ] )
+    )
+    print( "   + Luminosity (Run2 Correlated) {}: {} (lnN)".format( self.year, config.systematics[ "LUMI_RUN2" ][ self.year ] ) )
+    count += 1
+
+    if self.year in [ "17", "18" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, "LUMI_17_18", "lnN",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], config.systematics[ "LUMI_17_18" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_17_18" ][ "18" ] )
+      )
+      print( "   + Luminosity (2017 and 2018 Correlated) {}: {} (lnN)".format( self.year, config.systematics[ "LUMI_17_18" ][ self.year ] ) )
+      count += 1
+
+    # not clear if this is applying the normalization uncertainty separate from the shape
+    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+    #  self.harvester, "PILEUP_NORM", "lnN",
+    #  ch.SystMap()( config.systematics[ "PILEUP" ] )
+    #)
+    #print( "   + Pileup Normalization {}: {} (lnN)".format( self.year, config.systematics[ "PILEUP" ] ) )
+    #count += 1
+  
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "E" ] ).AddSyst( 
-      self.harvester, "SF_EL_$ERA", "lnN",
+      self.harvester, "ID_EL_$ERA", "lnN",
       ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
     )
-    print( "   + Trigger (el) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
+    print( "   + ID (electron) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
     count += 1
     
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "E" ] ).AddSyst(
+      self.harvester, "TRIG_EL_$ERA", "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "E" ] )( [ "16" ], config.systematics[ "TRIG" ][ "E" ] )( [ "17" ], config.systematics[ "TRIG" ][ "E" ] )( [ "18" ], config.systematics[ "TRIG" ][ "E" ] )
+    )
+    print( "   + Trigger (el) {}: {} (lnN)".format( self.year, config.systematics[ "TRIG" ][ "E" ] ) )
+    count += 1
+
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "E" ] ).AddSyst(
+      self.harvester, "ISO_EL_$ERA", "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "E" ] )( [ "16" ], config.systematics[ "ISO" ][ "E" ] )( [ "17" ], config.systematics[ "ISO" ][ "E" ] )( [ "18" ], config.systematics[ "ISO" ][ "E" ] )
+    )
+    print( "   + miniIsolation (el) {}: {} (lnN)".format( self.year, config.systematics[ "ISO" ][ "E" ] ) )
+    count += 1
+
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "M" ] ).AddSyst( 
-      self.harvester, "SF_MU_$ERA", "lnN",
+      self.harvester, "ID_MU_$ERA", "lnN",
       ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
     )
-    print( "   + Trigger (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
+    print( "   + ID (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "M" ] ) )
     count += 1
    
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "M" ] ).AddSyst(
+      self.harvester, "TRIG_MU_$ERA", "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "M" ] )( [ "16" ], config.systematics[ "TRIG" ][ "M" ] )( [ "17" ], config.systematics[ "TRIG" ][ "M" ] )( [ "18" ], config.systematics[ "TRIG" ][ "M" ] )
+    )
+    print( "   + Trigger (mu) {}: {} (lnN)".format( self.year, config.systematics[ "TRIG" ][ "M" ] ) )
+    count += 1
+
+    self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "M" ] ).AddSyst(
+      self.harvester, "ISO_MU_$ERA", "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "M" ] )( [ "16" ], config.systematics[ "ISO" ][ "M" ] )( [ "17" ], config.systematics[ "ISO" ][ "M" ] )( [ "18" ], config.systematics[ "ISO" ][ "M" ] )
+    )
+    print( "   + miniIsolation (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ISO" ][ "M" ] ) )
+    count += 1
+
     yield_categories = self.categories[ "ALL" ]
     if self.abcdnn:
       if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
@@ -272,19 +325,23 @@ class DataCard():
     apply_samples = []
     
     if config.options[ "COMBINE" ][ "SMOOTH" ]:
-      pileup_tag = "PILEUP{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      prefire_tag = "PREFIRE{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      jec_tag = "JEC{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      jer_tag = "JER{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hf_tag = "HF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lf_tag = "LF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hfstat1_tag = "HFSTATS1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      hfstat2_tag = "HFSTATS2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lfstat1_tag = "LFSTATS1{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      lfstat2_tag = "LFSTATS2{}$ERA".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      cferr1_tag = "CFERR1{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      cferr2_tag = "CFERR2{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      abcdnn_tag = "ABCDNN{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      smooth_tag = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+      pileup_tag = "PILEUP{}".format( smooth_tag )
+      prefire_tag = "PREFIRE{}$ERA".format( smooth_tag )
+      jec_tag = "JEC{}$ERA".format( smooth_tag )
+      jer_tag = "JER{}$ERA".format( smooth_tag )
+      hf_tag = "HF{}".format( smooth_tag )
+      lf_tag = "LF{}".format( smooth_tag )
+      hfstat1_tag = "HFSTATS1{}$ERA".format( smooth_tag )
+      hfstat2_tag = "HFSTATS2{}$ERA".format( smooth_tag )
+      lfstat1_tag = "LFSTATS1{}$ERA".format( smooth_tag )
+      lfstat2_tag = "LFSTATS2{}$ERA".format( smooth_tag )
+      cferr1_tag = "CFERR1{}".format( smooth_tag )
+      cferr2_tag = "CFERR2{}".format( smooth_tag )
+      hotstat_tag = "HOTSTAT{}$ERA".format( smooth_tag )
+      hotcspur_tag = "HOTCSPUR{}$ERA".format( smooth_tag )
+      hotclosure_tag = "HOTCLOSURE{}$ERA".format( smooth_tag )
+      abcdnn_tag = "ABCDNN{}".format( smooth_tag )
     else:
       pileup_tag = "PILEUP"
       prefire_tag = "PREFIRE$ERA"
@@ -298,6 +355,9 @@ class DataCard():
       lfstat2_tag = "LFSTATS2$ERA"
       cferr1_tag = "CFERR1"
       cferr2_tag = "CFERR2"
+      hotstat_tag = "HOTSTAT$ERA"
+      hotcspur_tag = "HOTCSPUR$ERA"
+      hotclosure_tag = "HOTCLOSURE$ERA"
       abcdnn_tag = "ABCDNN"
      
     shape_categories = self.categories[ "ALL" ]
@@ -316,13 +376,13 @@ class DataCard():
       print( "   + Pileup: 1.0 (shape)" )
       count += 1
       
-    #if self.year in [ "16APV", "16", "17" ]:
-    #  self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
-    #    self.harvester, prefire_tag, "shape",
-    #    ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-    #  )
-    #  print( "   + Prefire: 1.0 (shape)" )
-    #  count += 1
+    if self.year in [ "16APV", "16", "17" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, prefire_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
+      )
+      print( "   + Prefire: 1.0 (shape)" )
+      count += 1
       
     if config.systematics[ "MC" ][ "JEC" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
@@ -404,7 +464,7 @@ class DataCard():
       print( "   + CFERR2: 1.0 (shape)" ) 
       count += 1
     
-    print( "[DONE] Added {} standard systematics".format( count ) )
+    print( "[DONE] Added {} shape systematics".format( count ) )
     
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
@@ -456,7 +516,7 @@ class DataCard():
     print( "[DONE] Added {} theoretical systematics".format( count ) )
   
   def add_TTHF_systematics( self ):
-    if self.options[ "COMBINE" ][ "TTHF SYST" ]:
+    if self.options[ "TTHF SYST" ]:
       print( "[START] Adding heavy flavor (TTBB) systematics" )
       tthf_categories = self.categories[ "ALL" ]
       if self.abcdnn:
@@ -532,10 +592,12 @@ def main():
   )
   datacard.define_regions( args.mode )
   datacard.add_datasets()
-  #datacard.add_yield_systematics()
-  #datacard.add_shape_systematics()
-  #datacard.add_theory_systematics()
-  #datacard.add_TTHF_systematics()
+  if args.normSyst:
+    datacard.add_normalization_systematics()
+    datacard.add_TTHF_systematics()
+  if args.shapeSyst:
+    datacard.add_shape_systematics()
+    datacard.add_theory_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()
