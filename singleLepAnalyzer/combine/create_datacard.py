@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys, math
+import tqdm
 from argparse import ArgumentParser
 sys.path.append( ".." )
 from utils import hist_parse
@@ -471,7 +472,7 @@ class DataCard():
   
   def add_shapes( self ):
     print( "[START] Retrieving histograms from {}".format( self.templateName ) )
-    for category in self.categories[ "ALL" ]:
+    for category in tqdm.tqdm( self.categories[ "ALL" ] ):
       key_bkg = { 
         "NOMINAL": "$PROCESS_{}$BIN_NOMINAL".format( category ),
         "SYST":    "$PROCESS_{}$BIN_$SYSTEMATIC".format( category )
@@ -531,9 +532,9 @@ def main():
   )
   datacard.define_regions( args.mode )
   datacard.add_datasets()
-  datacard.add_yield_systematics()
-  datacard.add_shape_systematics()
-  datacard.add_theory_systematics()
+  #datacard.add_yield_systematics()
+  #datacard.add_shape_systematics()
+  #datacard.add_theory_systematics()
   #datacard.add_TTHF_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
