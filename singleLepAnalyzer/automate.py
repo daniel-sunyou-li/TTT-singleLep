@@ -146,8 +146,8 @@ eval `scramv1 runtime -sh`\n\
 cd {} \n\
 python create_datacard.py -y {} -v {} -t {} -r {} {} \n\
 cd limits_UL{}_{}_{}\n\
-combine -M Significance cmb/workspace.root -t -l --expectSignal=1 --cminDefaultMinimizerStrategry 0 &> significance.txt\n\
-combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0&> limits.txt\n\
+combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
+combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0> limits.txt\n\
 cd ..\n".format(
   cmsswbase, os.getcwd(),
   training[ "year" ], variable, training[ "tag" ], args.region, verbose,
