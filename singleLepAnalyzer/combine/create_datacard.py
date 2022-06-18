@@ -376,7 +376,7 @@ class DataCard():
       print( "   + Pileup: 1.0 (shape)" )
       count += 1
       
-    if self.year in [ "16APV", "16", "17" ]:
+    if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, prefire_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
@@ -399,7 +399,31 @@ class DataCard():
       )
       print( "   + JER: 1.0 (shape)" ) 
       count += 1
+
+    if config.systematics[ "MC" ][ "hotstat" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+         self.harvester, hotstat_tag, "shape",
+         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HOTSTAT: 1.0 (shape)" )
+      count += 1
     
+    if config.systematics[ "MC" ][ "hotclosure" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, hotclosure_tag, "shape"
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HOTCLOSURE: 1.0 (shape)" )
+      count += 1
+
+    if config.systematics[ "MC" ][ "hotcspur" ]:
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, hotcspur_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HOTCSPUR: 1.0 (shape)" )
+      count += 1
+
     if config.systematics[ "MC" ][ "HF" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hf_tag, "shape",
@@ -597,7 +621,7 @@ def main():
     datacard.add_TTHF_systematics()
   if args.shapeSyst:
     datacard.add_shape_systematics()
-    datacard.add_theory_systematics()
+    #datacard.add_theory_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()

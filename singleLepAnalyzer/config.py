@@ -147,6 +147,7 @@ region_prefix = {
 systematics = {
   "MC": {
     "pileup": True, 
+    "prefire": False,
     "pileupJetID": True,
     "trigeff": False,   
     "muRFcorrd": True, 
@@ -154,9 +155,9 @@ systematics = {
     "muF": True, 
     "isr": True, 
     "fsr": True, 
-    "hotstat": True, 
-    "hotcspur": True, 
-    "hotclosure": True,
+    "hotstat": False, 
+    "hotcspur": False, 
+    "hotclosure": False,
     "njet": False,
     "njetsf": False,
     "LF": True, 
@@ -170,17 +171,29 @@ systematics = {
     "jes": False,
     "toppt": True, 
     "ht": False,
-    "ABCDNN": True,
-    "JER": True, 
-    "JEC": True,
+    "ABCDNN": False,
+    "JER": False, 
+    "JEC": False,
     "HD": False,
     "UE": False
   },
-  "LUMI": {
-    "16APV": 1.012,
-    "16": 1.012,
-    "17": 1.023,
-    "18": 1.025
+  "LUMI": { # uncorrelated
+    "16APV": 1.007,
+    "16": 1.007,
+    "17": 1.020,
+    "18": 1.015
+  },
+  "LUMI_RUN2": { # Full Run2 correlated
+    "16APV": 1.004,
+    "16": 1.004,
+    "17": 1.009,
+    "18": 1.020
+  },
+  "LUMI_17_18": { # 2017 and 2018 correlated
+    "16APV": 1.00,
+    "16": 1.00,
+    "17": 1.006,
+    "18": 1.002
   },
   "TRIG": {
     "E": 1.03, 
@@ -200,6 +213,7 @@ systematics = {
     "TOP": 1.20,
     "EWK": 1.06  #[ 0.927, 1.051 ]
   },
+  "PILEUP": 1.046,
   "TTHF": 1.13,
   "HDAMP": 1.085,
   "ABCDNN": 1.10,
