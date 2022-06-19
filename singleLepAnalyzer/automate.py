@@ -83,9 +83,10 @@ Queue 1\n".format( shell_name, variable, step2_name, step2_name, step2_name )
       time.sleep( 1 )
     os.chdir( "../" )
   
-def produce_binned_plots():
+def produce_binned_templates():
   trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
+  if not os.path.exists( "condor_config" ): os.system( "mkdir condor_config" )
   for train in trainings:
     for variable in train[ "variable" ]:
       condor_name = "condor_step3_{}_{}_{}".format( train[ "year" ], train[ "tag" ], variable )
@@ -105,7 +106,7 @@ python plot_templates.py -y {} -v {} -t {} -r {} --templates \n\ ".format(
 )
       )
       shell.close()
-      jdf_name = "crab_config/{}.job".format( condor_name ) 
+      jdf_name = "condor_config/{}.job".format( condor_name ) 
       jdf = open( jdf_name, "w" )
       jdf.write(
 """universe = vanilla \n\
@@ -144,7 +145,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python create_datacard.py -y {} -v {} -t {} -r {} {} \n\
+python create_datacard.py -y {} -v {} -t {} -r {} --shapeSyst --normSyst  {} \n\
 cd limits_UL{}_{}_{}\n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0> limits.txt\n\
@@ -202,7 +203,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {} \n\
 eval `scramv1 runtime -sh` \n\
 cd {} \n\
-combineCards.py UL16APV=limits_UL16APV_{}/cmb/combined.txt.cmb UL16=limits_UL16_{}/cmb/combined.txt.cmb UL17=limits_UL17_{}/cmb/combined.txt.cmb  UL18=limits_UL18_{}/cmb/combined.txt.cmb > results/{}.txt \n\
+combineCards.py UL16APV=limits_UL16APV_{}/cmb/combined.txt.cmb UL16=limits_UL16_{}/cmb/combined.txt.cmb UL17=limits_UL17_{}/cmb/combined.txt.cmb  UL18=limits_UL18_{}/cmb/combined.txt.cmb > Results/{}.txt \n\
 text2workspace.py results/{}.txt -o results/{}.root \n\
 combine -M Significance Results/{}.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > Results/significance_{}.txt \n\
 combine -M AsymptoticLimits Results/{}.root --run=blind --cminDefaultMinimizerStrategy 0 > Results/limits_{}.txt".format(

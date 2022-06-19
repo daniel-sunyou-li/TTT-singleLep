@@ -55,7 +55,7 @@ options = {
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,
     "UNCORRELATE YEARS": True,
-    "TRIGGER EFFICIENCY": True,
+    "TRIGGER EFFICIENCY": False,
   },
   "COMBINE": {
     "TTHF SYST": True,
@@ -83,8 +83,8 @@ params = {
     "REBIN": -1,            # rebin histograms to have this number of bins
     "TTHFSF": 4.7/3.9,      # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
     "TTLFSF": -1.,          # if ttLFsf -1, compute automatically using ttHFsf, else set manually
-    "MIN BKG YIELD": 0.00, # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.015 )
-    "MAX BKG ERROR": 1.0   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
+    "MIN BKG YIELD": 0.015, # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.015 )
+    "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
     "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
@@ -147,7 +147,7 @@ region_prefix = {
 systematics = {
   "MC": {
     "pileup": True, 
-    "prefire": False,
+    "prefire": True,
     "pileupJetID": True,
     "trigeff": False,   
     "muRFcorrd": True, 
@@ -155,9 +155,9 @@ systematics = {
     "muF": True, 
     "isr": True, 
     "fsr": True, 
-    "hotstat": False, 
-    "hotcspur": False, 
-    "hotclosure": False,
+    "hotstat": True, 
+    "hotcspur": True, 
+    "hotclosure": True,
     "njet": False,
     "njetsf": False,
     "LF": True, 

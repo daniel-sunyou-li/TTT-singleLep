@@ -228,14 +228,6 @@ class DataCard():
       print( "   + Luminosity (2017 and 2018 Correlated) {}: {} (lnN)".format( self.year, config.systematics[ "LUMI_17_18" ][ self.year ] ) )
       count += 1
 
-    # not clear if this is applying the normalization uncertainty separate from the shape
-    #self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-    #  self.harvester, "PILEUP_NORM", "lnN",
-    #  ch.SystMap()( config.systematics[ "PILEUP" ] )
-    #)
-    #print( "   + Pileup Normalization {}: {} (lnN)".format( self.year, config.systematics[ "PILEUP" ] ) )
-    #count += 1
-  
     self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "E" ] ).AddSyst( 
       self.harvester, "ID_EL_$ERA", "lnN",
       ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )

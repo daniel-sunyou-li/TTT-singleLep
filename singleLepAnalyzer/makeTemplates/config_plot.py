@@ -6,7 +6,7 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": False,
+  "REBINNED": True,
   "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,

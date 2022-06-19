@@ -111,7 +111,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
     if config.systematics[ "MC" ][ "pileupJetID" ]:
       mc_weights[ "PILEUPJETID" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightUp" ),
                                       "DN": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightDown" ) }
-    if year in [ "16APV", "16", "17" ]:
+    if year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
     if config.systematics[ "MC" ][ "muRFcorrd" ]:
@@ -157,7 +157,7 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
       mc_weights[ "ABCDNN UNC" ] = { "UP": mc_weights[ "ABCDNN" ].replace( "transfer_ABCDNN_{}".format( abcdnnTag ), "( transfer_ABCDNN_{} + transfer_err_ABCDNN_{} )".format( abcdnnTag, abcdnnTag ) ), 
                                      "DN": mc_weights[ "ABCDNN" ].replace( "transfer_ABCDNN_{}".format( abcdnnTag ), "( transfer_ABCDNN_{} - transfer_err_ABCDNN_{} )".format( abcdnnTag, abcdnnTag ) ) }
     # deep jet related systematics
-    for syst in [ "LF", "lfstats1", "lfstats2", "HF", "hfstats1", "hfstats2", "cferr1", "cferr2", "jes" ]:
+    for syst in [ "LF", "lfstats1", "lfstats2", "HF", "hfstats1", "hfstats2", "cferr1", "cferr2" ]:
       if config.systematics[ "MC" ][ syst ]:
         mc_weights[ syst.upper() ] = {}
         for shift in [ "up", "dn" ]:
@@ -228,11 +228,8 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
           hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
         if syst.upper() != "ABCDNN":
           histTag = hist_tag( process, categoryTag, syst.upper() + shift )
+          if syst.upper() == "PREFIRE" and year not in [ "16APV", "16", "17" ]: continue
           hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
-    if year in [ "16APV", "16", "17" ]:
-      for shift in [ "UP", "DN" ]:
-        histTag = hist_tag( process, categoryTag, "PREFIRE" + shift )
-        hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
   if doPDF:
     for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
       histTag = hist_tag( process, categoryTag, "PDF" + str(i) ) 
@@ -267,13 +264,6 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
     if verbose: print( "  + ABCDNN: {} --> {}".format( rTree[ process ].GetEntries(), hists[ hist_tag( process, categoryTag, "ABCDNN" ) ].Integral() ) )
 
   if process not in groups[ "DAT" ] and doSYST:
-    if year in [ "16APV", "16", "17" ]:
-      print( "[INFO] Including L1NonPrefiringProb_CommonCalc shifts" )
-      for shift in [ "UP", "DN" ]:
-        rTree[ process ].Draw(
-          "{} >> {}".format( variableName, hist_tag( process, categoryTag, "PREFIRE" + shift ) ),
-          "{} * ({})".format( mc_weights[ "PREFIRE" ][ shift ], cuts[ "NOMINAL" ] ),
-          "GOFF" )
     for syst in config.systematics[ "MC" ].keys():
       if not config.systematics[ "MC" ][ syst ]: continue
       for shift in [ "UP", "DN" ]:
@@ -283,7 +273,14 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
             "{} >> {}".format( abcdnnName, hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift ) ),
             "{} * ({})".format( mc_weights[ "ABCDNN {}".format( syst.upper() ) ][ shift ], cuts[ "NOMINAL" ] ),
             "GOFF" )
-        if syst.upper() in [ "PILEUP", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
+        if syst.upper() in [ "PREFIRE" ] and year in [ "16APV", "16", "17" ]:
+          rTree[ process ].Draw(
+            "{} >> {}".format( variableName, histTag ),
+            "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ),
+            "GOFF"
+          )
+
+        if syst.upper() in [ "PILEUP", "PILEUPJETID", "MURFCORRD", "MUR", "MUF", "ISR", "FSR", "NJET", "NJETSF", "CSVSHAPELF", "CSVSHAPEHF" ]:
           rTree[ process ].Draw( 
             "{} >> {}".format( variableName, histTag ), 
             "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ), 

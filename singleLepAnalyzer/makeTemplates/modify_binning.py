@@ -53,7 +53,7 @@ def underflow( hist ):
 def negative_bin_correction( hist ):
   integral = hist.Integral()
   for i in range( 0, hist.GetNbinsX() + 2 ):
-    if hist.GetBinContent(i) < 0:
+    if hist.GetBinContent(i) <= 0:
       hist.SetBinContent( i, config.params[ "GENERAL" ][ "ZERO" ] )
       hist.SetBinError( i, config.params[ "GENERAL" ][ "ZERO" ] )
   if hist.Integral() != 0 and integral > 0: 
@@ -601,10 +601,16 @@ class ModifyTemplate():
     count = 0
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
+      donePDF = []
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
-        if "PDF0" not in hist_name: continue
-        count += 1
+        if parse[ "SYST" ] != "PDF": continue
+        thisPDF = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] )
+        if thisPDF not in donePDF:
+          donePDF.append( thisPDF )
+          count += 1
+        else:
+          continue
         hist_PDF = { 
           "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
           "PDFUP": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
@@ -680,12 +686,13 @@ class ModifyTemplate():
       hist_names = self.rebinned[ hist_key ].keys()
       print( ">> Loading {}".format( hist_key ) )
       for hist_name in hist_names:
+        if "PDF" in hist_name and not ( hist_name.endswith( "UP" ) or hist_name.endswith( "DN" ) ): continue
         negative_bin_correction( self.rebinned[ hist_key ][ hist_name ] )
         self.rebinned[ hist_key ][ hist_name ].Write()
         count += 1
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ] == "ABCDNN" and not hist_name.startswith( "ABCDNN" ): continue
-        shift = "Down" if parse[ "SHIFT" ] == "DN" else "Up"
+        shift = "Down" if hist_name.endswith( "DN" ) else "Up"
         combine_tag = "NOMINAL" if not parse[ "IS SYST" ] else parse[ "SYST" ] + shift
         combine_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], combine_tag )
         self.rebinned[ hist_key ][ combine_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( combine_name )

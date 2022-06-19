@@ -259,6 +259,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
+          print( "[INFO] Including {} to Combine template".format( syst ) )
           for shift in [ "UP", "DN" ]:
             hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
       if config.options[ "GENERAL" ][ "PDF" ]:
