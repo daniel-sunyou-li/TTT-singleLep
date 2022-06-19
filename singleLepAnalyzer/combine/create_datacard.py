@@ -410,7 +410,7 @@ class DataCard():
     
     if config.systematics[ "MC" ][ "hotclosure" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hotclosure_tag, "shape"
+        self.harvester, hotclosure_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
       print( "   + HOTCLOSURE: 1.0 (shape)" )
