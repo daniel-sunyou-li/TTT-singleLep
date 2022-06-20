@@ -163,6 +163,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
+          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
@@ -256,6 +257,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         if args.verbose: print( "  + SIG SYST > {}".format( hist_tag( process, category ) ) )
         for syst in config.systematics[ "MC" ].keys():
+          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
@@ -282,6 +284,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
       print( "  + BKG > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
+          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           if syst == "ABCDNN": continue
@@ -304,6 +307,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
       print( "  + BKG > {}: {}".format( hist_tag( "ABCDNN", category ), hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Integral() ) )
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
+          if args.year == "18" and syst.upper() == "PREFIRE": continue
           for shift in [ "UP", "DN" ]:
             if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and config.systematics[ "MC" ][ syst ]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
@@ -324,6 +328,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
           if not config.systematics[ "MC" ][ syst ]: continue
+          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
@@ -338,6 +343,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
           for syst in config.systematics[ "MC" ].keys():
             if not config.systematics[ "MC" ][ syst ]: continue
+            if args.year == "18" and syst.upper() == "PREFIRE": continue
             if process == "ABCDNN" and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
             if syst.upper() == "ABCDNN" and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
@@ -529,7 +535,7 @@ def main():
   categories = get_categories( templateDir )
   groups = samples.groups 
   systematics = [ str(syst) for syst in config.systematics[ "MC" ].keys() if config.systematics[ "MC" ][ syst ] ]
-  if args.year in [ "16APV", "16", "17" ]: systematics += [ "prefire" ]
+  if args.year in [ "18" ]: systematics.remove( "prefire" )
 
   for variable in args.variables:
     hists = load_histograms( variable, templateDir, categories )

@@ -393,7 +393,7 @@ class DataCard():
       count += 1
 
     if config.systematics[ "MC" ][ "hotstat" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
          self.harvester, hotstat_tag, "shape",
          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
@@ -401,7 +401,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "hotclosure" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hotclosure_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
@@ -409,7 +409,7 @@ class DataCard():
       count += 1
 
     if config.systematics[ "MC" ][ "hotcspur" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hotcspur_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
@@ -506,7 +506,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, murf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -514,7 +514,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "isr" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, isr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -522,7 +522,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "fsr" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, fsr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -591,16 +591,19 @@ class DataCard():
   def create_workspace( self ):
     print( ">> Creating workspace for DataCard" )
     outDir = os.path.join( os.getcwd(), self.limitPath, "cmb/" )
+    if not os.path.exists( outDir ): os.system( "mkdir {}".format( outDir ) )
     os.system( "combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
     
 def main():
   params = config.params[ "COMBINE" ].copy()
   options = config.options[ "COMBINE" ].copy()
+  tagShape = "" if args.shapeSyst else "noShape"
+  tagNorm  = "" if args.normSyst else "noNorm"
   datacard = DataCard( 
     args.variable, 
     args.year, 
     args.region, 
-    args.tag,
+    args.tag + tagShape + tagNorm,
     params, 
     options,
     samples,
