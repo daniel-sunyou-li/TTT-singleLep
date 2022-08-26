@@ -8,12 +8,15 @@ parser = ArgumentParser()
 parser.add_argument( "-c", "--config", help = "YAML configuration file" )
 parser.add_argument( "--validation", action = "store_true", help = "Combine custom datacard combinations" )
 parser.add_argument( "--correlations", action = "store_true", help = "Adjust bin naming to account for correlations" )
+parser.add_argument( "--positive", action = "store_true", help = "Turn off zero and/or negative bins" )
+parser.add_argument( "--verbose", action = "store_true", help = "Verbosity of messages" )
 args = parser.parse_args()
-  
-# global params
-tag = config[ "CAMPAIGN_TAG" ] 
-datacards = config[ "DATACARDS" ]
 
+def hist_key( *args ):
+  key = args[0]
+  for arg in args[1:]: key += "_{}".format( arg )
+  return key
+  
 class file(object):
   def __init__( self, tag, workingDir ):
     self.tag = tag
@@ -46,28 +49,70 @@ class file(object):
     self.file.close()
   
 class harvester(object):
-  def __init__( self, datacards, config, analysis = "TTTX", era = "Run2UL" ):
-    self.config = config
-    self.analysis = analysis
-    self.era = era
-    self.datacards = datacards
+  def __init__( self, datacards, tag, postfix, removeUnct, verbose, analysis = "TTTX", era = "Run2UL" ):
+    print( "[COMBINE] Instantiating harvester class for {} {} analysis".format( era, analysis ) )
+    print( "  [INFO] Verbosity {}".format( "ON" if verbose else "OFF" ) )
+    self.verbose = verbose        # verbosity of messages
+    self.analysis = analysis      # analysis tag, arbitrary
+    self.era = era                # era tag, arbitrary
+    self.datacards = datacards    # dictionary of datacard paths associated to each analysis channel
+    self.tag = tag                # tag used for combination campaign
+    self.postfix = postfix        # dictionary of postfixes associated to each analysis channel
+    self.removeUnct = removeUnct  # dictionary of uncertainties to remove from each datacard
     self.ch = ch.CombineHarvester()
     pass
+  
   def load_datacards( self ):
+    print( "[COMBINE] Parsing through datacards, and extracting and organizing bin information" )
+    if self.verbose: print( "  [INFO] Considering {} datacards".format( len( self.datacards ) ) )
+    self.bins_sorted = { "ALL": [] }
     for datacard in self.datacards:
+      self.bins_sorted[ datacard ] = []
       self.ch.ParseDatacard( self.datacards[ datacard ], self.analysis, self.era, datacard, 0, "125" )
+      self.ch.cp().channel( [ datacard ] ).ForEachObj( lambda x: self.bins_sorted[ "ALL" ].append( ( x.bin(), hist_key( datacard, x.bin() ) ) ) )
+      self.ch.cp().channel( [ datacard ] ).ForEachObj( lambda x: self.bins_dict[ datacard ].append( hist_key( datacard, x.bin() ) ) )
     pass
+  
   def remove_uncertainties( self ):
-    for key in config[ "REMOVE UNCERTAINTIES" ]:
-      for source in config[ "REMOVE UNCERTAINTIES" ][ key ]:
+    for key in self.removeUnct:
+      for source in self.removeUnct[ key ]:
         self.ch.FilterSysts( lambda x: x.channel() == channel and x.name() == source )
     pass
-  def modify_uncertaintes( self, bValidation, bCorrelation ):
+  
+  def format_bin_names( self ):
+    print( "[COMBINE] Renaming bins to distinguish channels in final datacard..." )
+    for datacard in self.datacards:
+      self.ch.cp().channel( [ datacard ] ).ForEachObj( lambda x: x.set_bin( hist_key( datacard, x.bin() ) ) )
+    print( "[COMBINE] Renaming autoMCstats bins..." )
+    for old, new in list( set( self.bins_sorted[ "ALL" ] ) ):
+      self.ch.RenameAutoMCStatsBin( old, new )
     pass
-  def format_bin_names():
+  
+  def rename_uncertainties( self ):
+    def rename_uncertainty( postfix ):
+      def rename_function( x ):
+        if x.type() != "rateParam": x.set_name( hist_key( x.name(), suffix ) )
+      return rename_function
+     
+    for analysis in self.postfix:
+      postfix = self.config[ "POSTFIX" ][ analysis ]
+      self.ch.cp().channel( [ analysis ] ).ForEachSyst( rename_uncertainty( postfix ) )
     pass
-  def rename_uncertainties():
+  
+  def modify_uncertainties( self, bPositive, bValidation, bCorrelation ):
+    if bPositive:
+      print( "[COMBINE] Turning off zero and/or negative bins" )
+      self.ch.FilterProces( lambda x: x.rate() <= 0 )
+      self.ch.FilterSysts( lambda x: x.type() == "shape" and x.value_u() <= 0 )
+      self.ch.FilterSysts( lambda x: x.type() == "shape" and x.value_d() <= 0 )
     pass
+  
+  def write_datacard( self ):
+    print( "[COMBINE] Preparing main datacard" )
+    rOut = ROOT.TFile( "combined_{0}/{1}_combined_{0}.root".format( self.tag, self.analysis ), "RECREATE" )
+    self.ch.WriteDatacard( "combined_{}/{}_combined_{}.txt".format( self.tag, self.analysis ), rOut )
+    rOut.Close()
+  
   def combine_correlations():
     pass
 
