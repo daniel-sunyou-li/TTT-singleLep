@@ -9,6 +9,7 @@ parser = ArgumentParser()
 parser.add_argument( "-c", "--config", help = "YAML configuration file" )
 parser.add_argument( "--validation", action = "store_true", help = "Combine custom datacard combinations" )
 parser.add_argument( "--correlations", action = "store_true", help = "Adjust bin naming to account for correlations" )
+parser.add_argument( "--single", action = "store_true", help = "Create datacards for single systematics" )
 parser.add_argument( "--positive", action = "store_true", help = "Turn off zero and/or negative bins" )
 parser.add_argument( "--verbose", action = "store_true", help = "Verbosity of messages" )
 args = parser.parse_args()
@@ -24,7 +25,7 @@ class file(object):
     self.workingDir = workingDir
     self.count = 0
     pass
-  def write_shell():
+  def write_shell( self, cards ):
     self.file = open( "combined_{}/start_T2W.sh".format( self.tag ), "w" )
     self.file.write( "#!/bin/sh\n" )
     self.file.write( "set -e\n" )
@@ -36,8 +37,21 @@ class file(object):
     self.file.write( "cd {}/combined_{}/\n\n".format( self.workingDir, self.tag ) )
     self.file.write( "DATACARD=\n" )
     self.file.write( "case $1 in\n" )
+    for card in cards:
+      self.add_datacard( card )
+    self.file.write( "esac\n" )
+    self.file.write( "text2workspace.py $DATACARD -o ${DATACARD:0:-4}.root -m 125 --channel-masks\n" )
+    self.file.close()
     pass
-  def write_condor():
+  def write_condor( self ):
+    self.file = open( "combined_{}/condor_T2W.sub".format( self.tag ), "w" )
+    self.file.write( "executable = start_T2W.sh\n" )
+    self.file.write( "arguments = ${PROCID}\n" )
+    self.file.write( "output = start_T2W.out\n" )
+    self.file.write( "error = start_T2W.err\n" )
+    self.file.write( "log = start_T2W.log\n" )
+    self.file.write( "queue\n" )
+    self.file.close()
     pass
   def write_to( self, text ):
       self.file.write( text )
@@ -190,8 +204,9 @@ def main():
   ch_ttt.modify_uncertainties( args.positive )
   ch_ttt.format_bin_names()
   ch_ttt.rename_uncertainties()
-  ch_ttt.combine_correlations()
+  ch_ttt.combine_correlations( args.single )
   ch_ttt.combine_analysis()
+  ch_ttt.autoMCstats( args.single )
   
   out.write_shell( ch_ttt.cards_to_add )
   condor.write_condor()
