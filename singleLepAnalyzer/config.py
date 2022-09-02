@@ -25,7 +25,7 @@ BR = {
 options = {
   "GENERAL": {
     "TEST": False,        # run on limited samples
-    "JET SHIFTS": False,  # JEC/JER shifts for shape 
+    "JET SHIFTS": True,   # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
@@ -48,7 +48,7 @@ options = {
     "PS WEIGHTS": True,            # Construct Parton Shower weights
     "NORM THEORY SIG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
     "NORM THEORY BKG SYST": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
-    "SYMM SMOOTHING": False,
+    "SYMM SMOOTHING": True,
     "SYMM TOP PT": True,
     "SYMM HOTCLOSURE": True,
     "SCALE SIGNAL XSEC": False,
@@ -76,7 +76,7 @@ params = {
     "CONTROL VARIABLES":  [ "NJ", "NB" ],
     "TRANSFER VARIABLES": [ "HT", "DNN" ],
     "GROUPS": [ "TTBB", "TTNOBB" ],
-    "SYSTEMATICS": [ "ABCDNN", "MUR", "MUF", "MURFCORRD", "FSR", "ISR", "PDF" ]
+    "SYSTEMATICS": [ "ABCDNN" ]
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -134,14 +134,6 @@ params = {
   }  
 }
 
-region_prefix = {
-  "SR": "templates_SR",
-  "VR": "templates_VR",
-  "TTCR": "ttbar",
-  "WJCR": "wjets",
-  "BASELINE": "baseline",
-  "ABCDNN": "acbdnn"
-}
 
 # systematic uncertainty sources
 systematics = {
@@ -168,12 +160,11 @@ systematics = {
     "hfstats2": True, 
     "cferr1": True, 
     "cferr2": True,
-    "jes": False,
     "toppt": True, 
     "ht": False,
     "ABCDNN": False,
-    "JER": False, 
-    "JEC": False,
+    "JER": True, 
+    "JEC": True,
     "HD": False,
     "UE": False
   },
@@ -220,10 +211,20 @@ systematics = {
 }
 
 # binning configuration for the templates
+
+region_prefix = {
+  "SR": "templates_SR",
+  "VR": "templates_VR",
+  "TTCR": "ttbar",
+  "WJCR": "wjets",
+  "BASELINE": "baseline",
+  "ABCDNN": "abcdnn"
+}
+
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0", "1p" ],
+    "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],

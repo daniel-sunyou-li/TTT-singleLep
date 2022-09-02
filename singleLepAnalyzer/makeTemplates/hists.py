@@ -85,9 +85,9 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
 
   if doABCDNN:
     abcdnnTag = config.params[ "ABCDNN" ][ "TAG" ]
-    abcdnnName = variableName + "_ABCDNN_{}".format( abcdnnTag )
+    abcdnnName = variableName + "_{}".format( abcdnnTag )
     print( "   + Including ABCDnn Histograms with tag {}".format( abcdnnTag ) )
-    mc_weights[ "ABCDNN" ] = "transfer_ABCDNN_{} * {}".format( abcdnnTag, mc_weights[ "NOMINAL" ] )
+    mc_weights[ "ABCDNN" ] = "0.1 * transfer_{} * {}".format( abcdnnTag, mc_weights[ "NOMINAL" ] ) # only used 10% of ttbar in yield estimate
 
   if process.startswith( "TTTo" ):
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
@@ -244,6 +244,9 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
 	
   if verbose: 
     print( ">> Applying NOMINAL weights: {}".format( mc_weights[ "NOMINAL" ] ) )
+    if doABCDNN:
+      print( ">> Including ABCDnn weights: {}".format( mc_weights[ "ABCDNN" ] ) )
+    
     print( ">> Applying NOMINAL cuts: {}".format( cuts[ "NOMINAL" ] ) )
 
   # draw histograms
@@ -268,11 +271,6 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
       if not config.systematics[ "MC" ][ syst ]: continue
       for shift in [ "UP", "DN" ]:
         histTag = hist_tag( process, categoryTag, syst.upper() + shift )
-        if syst.upper() in [ "MURFCORRD", "MUR", "MUF", "ISR", "FSR" ] and doABCDNN:
-          rTree[ process ].Draw(
-            "{} >> {}".format( abcdnnName, hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift ) ),
-            "{} * ({})".format( mc_weights[ "ABCDNN {}".format( syst.upper() ) ][ shift ], cuts[ "NOMINAL" ] ),
-            "GOFF" )
         if syst.upper() in [ "PREFIRE" ] and year in [ "16APV", "16", "17" ]:
           rTree[ process ].Draw(
             "{} >> {}".format( variableName, histTag ),
@@ -351,14 +349,6 @@ def analyze( rTree, year, process, variable, doSYST, doPDF, doABCDNN, category, 
         "pdfWeights[{}] * {} * ({})".format( i, mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
         "GOFF" 
       )
-    if doABCDNN:
-      for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-        histTag = hist_tag( process, categoryTag, "ABCDNN", "PDF" + str(i) )
-        rTree[ process ].Draw(
-          "{} >> {}".format( abcdnnName, histTag ),
-          "pdfWeights[{}] * {} * ({})".format( i, mc_weights[ "ABCDNN" ], cuts[ "NOMINAL" ] ),
-          "GOFF"
-        )
     if verbose: print( "  + PDF" )
 							
   for key in hists: hists[ key ].SetDirectory(0)
@@ -382,7 +372,7 @@ def make_hists( groups, group, category, useABCDNN ):
     if config.options[ "GENERAL" ][ "JET SHIFTS" ] and group in [ "SIG", "BKG" ]:
       for syst in [ "JEC", "JER" ]:
         for shift in [ "up", "down" ]:
-          rFile[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir[ args.year ], syst + shift, samples.samples[ group ][ process ] ) )
+          rFiles[ process + syst + shift ], rTrees[ process + syst + shift ] = read_tree( os.path.join( config.inputDir[ args.year ], syst + shift, samples.samples[ group ][ process ] + "_hadd.root" ) )
     hists.update( analyze( rTrees, args.year, process, variable, doSys, config.options[ "GENERAL" ][ "PDF" ], isABCDNN, category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )
     del rFiles, rTrees

@@ -393,26 +393,44 @@ class DataCard():
       count += 1
 
     if config.systematics[ "MC" ][ "hotstat" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-         self.harvester, hotstat_tag, "shape",
-         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
+      if args.year == "16":
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotstat_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+      else:
+        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotstat_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
       print( "   + HOTSTAT: 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "hotclosure" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hotclosure_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
+      if args.year == "16":
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotclosure_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+      else:
+        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotclosure_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
       print( "   + HOTCLOSURE: 1.0 (shape)" )
       count += 1
 
     if config.systematics[ "MC" ][ "hotcspur" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hotcspur_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
+      if args.year == "16":
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotcspur_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+      else:
+        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotcspur_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
       print( "   + HOTCSPUR: 1.0 (shape)" )
       count += 1
 

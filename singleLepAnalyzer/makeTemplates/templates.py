@@ -18,7 +18,9 @@ parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
 # parse options
-doABCDNN = True if config.options[ "GENERAL" ][ "ABCDNN" ]  else False
+doABCDNN = config.options[ "GENERAL" ][ "ABCDNN" ]
+if doABCDNN:
+  print( "[INFO] Running ABCDnn templates" )
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid region argument used. Quiting..." )
 if args.year == "16APV":
   import samplesUL16APV as samples
@@ -270,15 +272,17 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           hists[ "CMB" ][ hist_tag( process, category, "PDF" + str(i) ) ].Write()
 
     yield_total = sum( [ hists[ "CMB" ][ hist_tag( group, category ) ].Integral() for group in groups[ "BKG" ][ "SUPERGROUP" ] if hist_tag( group, category ) in hists[ "CMB" ].keys() ] )
+    min_bkg_yield = 0 if args.region in [ "BASELINE", "ABCDNN" ] else config.params[ "HISTS" ][ "MIN BKG YIELD" ]
+    max_bkg_error = 1.0 if args.region in [ "BASELINE", "ABCDNN" ] else config.params[ "HISTS" ][ "MAX BKG ERROR" ]
     for group in groups[ "BKG" ][ "SUPERGROUP" ]:
       scale_group = False
       error_group = Double(0)
       if hist_tag( group, category ) not in hists[ "CMB" ].keys(): continue
       yield_group = hists[ "CMB" ][ hist_tag( group, category ) ].IntegralAndError( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins(), error_group )
-      if ( yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ] or error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ] ):
+      if ( yield_group / yield_total <= min_bkg_yield or error_group / yield_group >= max_bkg_error ):
         scale_group = True
-        if args.verbose and yield_group / yield_total <= config.params[ "HISTS" ][ "MIN BKG YIELD" ]: print( "  [WARN] {} beneath yield threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
-        if args.verbose and error_group / yield_group >= config.params[ "HISTS" ][ "MAX BKG ERROR" ]: print( "  [WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        if args.verbose and yield_group / yield_total <= min_bkg_yield: print( "  [WARN] {} beneath yield threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
+        if args.verbose and error_group / yield_group >= max_bkg_error: print( "  [WARN] {} above error threshold, scaling by {:.1e} in Combine template".format( group, config.params[ "GENERAL" ][ "ZERO" ] ) )
         hists[ "CMB" ][ hist_tag( group, category ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
       hists[ "CMB" ][ hist_tag( group, category ) ].Write()
       print( "  + BKG > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
@@ -312,10 +316,6 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
             if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and config.systematics[ "MC" ][ syst ]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
         if args.verbose: print( "  + BKG SYST > ABCDNN" )
-      if config.options[ "GENERAL" ][ "PDF" ]:
-        for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-          hists[ "CMB" ][ hist_tag( "ABCDNN", category, "PDF" + str(i) ) ].Write()
-        if args.verbose: print( "  + BKG PDF > ABCDNN" ) 
 
   combine_file.Close()
   print( "[DONE] Finished writing Combine templates in {:.2f} minutes".format( ( time.time() - sTime ) / 60. ) ) 
@@ -410,7 +410,8 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         for i in range( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins() + 1 ):
           tables[ "ERROR" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( group, category ) ].GetBinError(i)**2
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
-        tables[ "ERROR" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].GetBinError(i)**2
+        for i in range( 1, hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].GetXaxis().GetNbins() + 1 ):
+          tables[ "ERROR" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].GetBinError(i)**2
 
       tables[ "ERROR" ][ category ][ "TOTAL BKG" ] = math.sqrt( tables[ "ERROR" ][ category ][ "TOTAL BKG" ] ) 
       yield_d = tables[ "YIELD" ][ category ][ "data_obs" ] 

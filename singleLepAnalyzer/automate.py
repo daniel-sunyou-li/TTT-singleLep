@@ -14,6 +14,7 @@ parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
 if args.region not in list( config.region_prefix.keys() ): quit( "[ERR] Invalid option used for -r (--region). Quitting." )
+
 verbose = "--verbose" if args.verbose else ""
 
 def get_trainings( tags, years, variables ):
@@ -146,7 +147,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python create_datacard.py -y {} -v {} -t {} -r {} --shapeSyst --normSyst {} \n\
+python create_datacard.py -y {} -v {} -t {} -r {} --normSyst --shapeSyst {} \n\
 cd limits_UL{}_{}_{}\n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt\n\
