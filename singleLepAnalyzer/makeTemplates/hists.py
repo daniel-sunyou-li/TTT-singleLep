@@ -415,7 +415,7 @@ def numTrueHist( useJES, useABCDNN ):
                 add_process( nHist, group, "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, systJEC_ + shift, "hadd" )
           if config.systematics[ "MC" ][ "JER" ]:
             add_process( nHist, group, "JER" + shift_.upper(), process, "JER" + shift, "hadd" )
-        elif useABCDNN:
+        elif useABCDNN and "ABCDNNSAMPLE" in config.params["ABCDNN"]["SYSTEMATICS"]:
           for shift in [ "up", "down" ]:
             shift_ = "UP" if shift == "up" else "DN"
             add_process( nHist, group, "JECABCDNNSAMPLE" + shift_.upper(), process, "JEC" + shift, "ABCDnn_hadd" )
