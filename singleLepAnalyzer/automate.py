@@ -149,6 +149,8 @@ eval `scramv1 runtime -sh`\n\
 cd {} \n\
 python create_datacard.py -y {} -v {} -t {} -r {} --normSyst --shapeSyst {} \n\
 cd limits_UL{}_{}_{}\n\
+mkdir cmb \n\
+combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 4\n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt\n\
 cd ..\n".format(
@@ -165,7 +167,7 @@ cd ..\n".format(
 Executable = {}/{} \n\
 Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
-JobBatchName = SLA_step4 \n\
+JobBatchName = SLA_step4_{} \n\
 request_memory = 3072 \n\
 Output = {}.out \n\
 Error = {}.err \n\
@@ -173,7 +175,7 @@ Log = {}.log \n\
 Notification = Error \n\
 Arguments = \n\
 Queue 1""".format(
-  os.getcwd(), shell_name,
+  os.getcwd(), shell_name, condor_name,
   os.path.join( os.getcwd(), log_name, condor_name ), 
   os.path.join( os.getcwd(), log_name, condor_name ), 
   os.path.join( os.getcwd(), log_name, condor_name )
