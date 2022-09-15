@@ -76,7 +76,7 @@ params = {
     "CONTROL VARIABLES":  [ "NJ", "NB" ],   # X and Y control variables to define regions
     "TRANSFER VARIABLES": [ "HT", "DNN" ],  # transformed variables
     "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
-    "SYSTEMATICS": [ "EXTABCDSYST", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
+    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
