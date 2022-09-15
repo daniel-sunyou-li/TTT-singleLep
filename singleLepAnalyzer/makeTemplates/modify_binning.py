@@ -702,25 +702,6 @@ class ModifyTemplate():
     print( "[DONE] {} histograms written to Combine template.".format( count ) )
     self.rFile[ "OUTPUT" ].Close()
     
-def get_shape_uncertainty( hists, process, channel ): # needs some fixes to the hist name 
-  if not args.add_shapes: return 0
-  systematics = sorted( [ hist_name[ hist_name.find( process ) + len( process ) + 2: hist_name.find( "UP" ) ] for hist_name in yields[ channel ].keys() if channel in hist_name and process in hist_name and "UP" in hist_name ] )
-  total_shift = { shift: 0 for shift in [ "UP", "DN" ] }
-  prefix = hist_names[ channel ][ "ALL" ][0][:hist_names[ channel ][ "ALL" ]]
-  hist_nominal = hist_names[ channel ][ process ]
-  for syst in config.systematics[ "MC" ].keys():
-    if not config.systematics[ "MC" ][ syst ]: continue
-    if syst in systematics_remove or ( args.smoothing and config.smooth_algo not in syst ): continue
-    if args.norm_theory_sig and process in groups[ "SIG" ][ "COMBINE" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
-    if args.norm_theory_bkg and process not in groups[ "SIG" ][ "COMBINE" ] and ( "PDF" in syst or "MURF" in syst or "ISR" in syst or "FSR" in syst or "PSWEIGHT" in syst ): continue
-    for shift in [ "UP", "DN" ]:
-      hist_shape = "{}{}_{}{}".format( prefix, process, syst, shift )
-      shift = yields[ channel ][ hist_names[ channel ][ process ].GetName() ] / ( yields[ channel ][ nominal ] + config.zero ) - 1
-      if shift > 0: total_shift[ shift ] += shift**2
-      if shift < 0: total_shift[ shift ] += shift**2
-    shape_uncertainty_percent = ( math.sqrt( total_shift[ "UP" ] ) + math.sqrt( total_shift[ "DN" ] ) ) / 2
-    return shape_uncertainty_percent
-    
 def print_tables():
   table = []
   table = yield_tables( table )

@@ -25,7 +25,6 @@ BR = {
 options = {
   "GENERAL": {
     "TEST": False,        # run on limited samples
-    "JET SHIFTS": True,   # JEC/JER shifts for shape 
     "HDAMP": False,       # hdamp systematics
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
@@ -72,11 +71,12 @@ params = {
     "PDF RANGE": 100,   # PDF range
   },
   "ABCDNN": {
-    "TAG": "SR",
-    "CONTROL VARIABLES":  [ "NJ", "NB" ],
-    "TRANSFER VARIABLES": [ "HT", "DNN" ],
-    "GROUPS": [ "TTBB", "TTNOBB" ],
-    "SYSTEMATICS": [ "ABCDNN" ]
+    "TAG": "nJ6pnB2p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
+    "MC SCALE": 0.1,                        # fraction of total MC samples used when training ABCDnn 
+    "CONTROL VARIABLES":  [ "NJ", "NB" ],   # X and Y control variables to define regions
+    "TRANSFER VARIABLES": [ "HT", "DNN" ],  # transformed variables
+    "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
+    "SYSTEMATICS": [ "EXTABCDSYST", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -103,41 +103,13 @@ params = {
     "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD", "TTH" ], 
     "DATA": [ "data_obs" ],
     "SIGNALS": [ "TTTW", "TTTJ" ],
-    "MURF NORM": { 
-      "TTNOBB": 1.36,
-      "TTBB": 1.36,
-      "TOP": 1.47,
-      "EWK": 1.31,
-      "QCD": 1.38
-    },
-    "ISR NORM": {
-      "TTNOBB": 1.17,
-      "TTBB": 1.15,
-      "TOP": 1.16,
-      "EWK": 1.00,
-      "QCD": 1.11
-    },
-    "FSR NORM": {
-      "TTNOBB": 1.33,
-      "TTBB": 1.68,
-      "TOP": 1.24,
-      "EWK": 1.00,
-      "QCD": 1.21
-    },
-    "PDF NORM": {
-      "TTNOBB": 1.00,
-      "TTBB": 1.00,
-      "TOP": 1.20,
-      "EWK": 1.00,
-      "QCD": 1.01
-    }
   }  
 }
 
 
 # systematic uncertainty sources
 systematics = {
-  "MC": {
+  "MC": {  # to be added as histograms
     "pileup": True, 
     "prefire": True,
     "pileupJetID": True,
@@ -162,11 +134,27 @@ systematics = {
     "cferr2": True,
     "toppt": True, 
     "ht": False,
-    "ABCDNN": False,
+    "ABCDNNSAMPLE": True,      # Normal error propagation of extended ABCD equation in analysis SR
+    "ABCDNNMODEL": True,
+    "ABCDNNCLOSURE": True,
     "JER": True, 
     "JEC": True,
     "HD": False,
     "UE": False
+  },
+  "REDUCED JEC": {
+    "Total": False,
+    "FlavorQCD": True,
+    "RelativeBal": True,
+    "RelativeSample_Era": True,
+    "HF": True,
+    "HF_Era": True,
+    "BBEC1": True,
+    "BBEC1_Era": True,
+    "EC2": True,
+    "EC2_Era": True,
+    "Absolute": True,
+    "Absolute_Era": True
   },
   "LUMI": { # uncorrelated
     "16APV": 1.007,
@@ -204,10 +192,56 @@ systematics = {
     "TOP": 1.20,
     "EWK": 1.06  #[ 0.927, 1.051 ]
   },
+  # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
+  "EXTABCDSYST": {
+    "16APV": 1.000,
+    "16": 1.000,
+    "17": 1.021, # nJ5pnB2p = 1.012, nJ6pnB2p = 1.014, nJ6pnB3p = 1.021
+    "18": 1.000
+  },
+  "EXTABCDSTAT": {
+    "16APV": 1.000,
+    "16": 1.000,
+    "17": 1.010, # nJ5pnB2p = 1.005, nJ6pnB2p = 1.004, nJ6pnB3p = 1.010
+    "18": 1.000
+  },
+  "EXTABCDCLOSURE": {
+    "16APV": 1.000,
+    "16": 1.000,
+    "17": 1.093, # nJ5pnB2p = 1.151, nJ6pnB2p = 1.166, nJ6pnB3p = 1.093
+    "18": 1.00
+  },
   "PILEUP": 1.046,
   "TTHF": 1.13,
   "HDAMP": 1.085,
-  "ABCDNN": 1.10,
+  "MURF NORM": { 
+    "TTNOBB": 1.36,
+    "TTBB": 1.36,
+    "TOP": 1.47,
+    "EWK": 1.31,
+    "QCD": 1.38
+  },
+  "ISR NORM": {
+    "TTNOBB": 1.17,
+    "TTBB": 1.15,
+    "TOP": 1.16,
+    "EWK": 1.00,
+    "QCD": 1.11
+  },
+  "FSR NORM": {
+    "TTNOBB": 1.33,
+    "TTBB": 1.68,
+    "TOP": 1.24,
+    "EWK": 1.00,
+    "QCD": 1.21
+  },
+  "PDF NORM": {
+    "TTNOBB": 1.00,
+    "TTBB": 1.00,
+    "TOP": 1.20,
+    "EWK": 1.00,
+    "QCD": 1.01
+  }
 }
 
 # binning configuration for the templates
@@ -224,11 +258,11 @@ region_prefix = {
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0p" ],
+    "NHOT": [ "0", "1p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "2", "3p" ],
-    "NJ": [ "5", "6", "7p" ]
+    "NB": [ "1p" ],
+    "NJ": [ "4", "5p" ]
   },
   "VR": {
     "LEPTON": [ "E", "M" ],
@@ -243,7 +277,7 @@ hist_bins = {
     "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "2p" ],
+    "NB": [ "1p" ],
     "NJ": [ "4p" ]
   },
   "ABCDNN": { # edit these based on ABCDnn training signal region
@@ -251,8 +285,8 @@ hist_bins = {
     "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "3p" ],
-    "NJ": [ "7p" ] 
+    "NB": [ "2p" ],
+    "NJ": [ "6p" ] 
   }
 }
 

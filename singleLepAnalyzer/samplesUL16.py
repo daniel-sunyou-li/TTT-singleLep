@@ -92,6 +92,9 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
         elif "UE" in shifts[ shift ]:
           samples[ "UE" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
 
+split = {
+  "TTToSemiLeptonicttjj": [ "TTToSemiLeptonicttjj" + str(i) for i in range(1,11) ]
+}
 # define groups
 
 groups = { group: {} for group in [ "BKG", "SIG", "DAT", "TEST" ] }

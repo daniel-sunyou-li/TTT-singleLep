@@ -166,13 +166,21 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
           if args.year == "18" and syst.upper() == "PREFIRE": continue
-          if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
+          if not config.systematics[ "MC" ][ syst ] or "ABCD" in syst: continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
-            hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
-            hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
-            count += 1
+            if syst == "JEC":
+              for systJEC in config.systematics[ "REDUCED JEC" ]:
+                if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
+                hists_[ "CMB" ][ hist_tag( "TTBB", category, systJEC_.upper() + shift ) ].Scale( scaleHF )
+                hists_[ "CMB" ][ hist_tag( "TTNOBB", category, systJEC_.upper() + shift ) ].Scale( scaleLF )
+                count += 1
+            else:
+              hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
+              hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
+              count += 1
       if config.options[ "GENERAL" ][ "PDF" ]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           hists_[ "CMB" ][ hist_tag( "TTBB", category, "PDF" + str(i) ) ].Scale( scaleHF )
@@ -204,14 +212,13 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
     for hist_name in sorted( hists[ hist_key ].keys() ):
       parse = hist_parse( hist_name, samples )
       if doABCDNN and "ABCDNN" in hist_name: 
-        if parse[ "IS SYST" ] and parse[ "SYST" ].upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        if parse[ "IS SYST" ] and parse[ "SYST" ] in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           try: 
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
           except: 
             if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
         elif not parse[ "IS SYST" ]:
-          print( "[DEBUG] ABCDNN hist {} bins = {} --> Bin 89 = {:.2e}".format( hist_name, hists[ hist_key ][ hist_name ].GetNbinsX(), hists[ hist_key ][ hist_name ].GetBinContent(89) ) )
           try: 
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
           except: 
@@ -219,7 +226,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) )
         else:
           continue
-      if parse[ "IS SYST" ]:
+      if parse[ "IS SYST" ] and "ABCDNN" not in hist_name:
         try: 
           hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
         except:
@@ -260,12 +267,18 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
         if args.verbose: print( "  + SIG SYST > {}".format( hist_tag( process, category ) ) )
         for syst in config.systematics[ "MC" ].keys():
           if args.year == "18" and syst.upper() == "PREFIRE": continue
-          if not config.systematics[ "MC" ][ syst ] or syst == "ABCDNN": continue
+          if not config.systematics[ "MC" ][ syst ] or "ABCD" in syst: continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-          print( "[INFO] Including {} to Combine template".format( syst ) )
+          if args.verbose: print( "[INFO] Including {} to Combine template".format( syst ) )
           for shift in [ "UP", "DN" ]:
-            hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
+            if syst == "JEC":
+              for systJEC in config.systematics[ "REDUCED JEC" ]:
+                if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
+                hists[ "CMB" ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Write()
+            else:
+              hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
       if config.options[ "GENERAL" ][ "PDF" ]:
         if args.verbose: print( "  + SIG PDF > {}".format( hist_tag( process, category ) ) )
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
@@ -291,12 +304,20 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           if args.year == "18" and syst.upper() == "PREFIRE": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-          if syst == "ABCDNN": continue
+          if "ABCD" in syst or not config.systematics[ "MC" ][ syst ]: continue
           for shift in [ "UP", "DN" ]:
-            sysTag = syst.upper() + shift
-            if scale_group:
-              hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
-            hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
+            if syst == "JEC":
+              for systJEC in config.systematics[ "REDUCED JEC" ]:
+                if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                sysTag = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ).upper() + shift
+                if scale_group:
+                  hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+                hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
+            else:
+              sysTag = syst.upper() + shift
+              if scale_group:
+                hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+              hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
         if args.verbose: print( "  + BKG SYST > {}".format( group ) )
             
       if config.options[ "GENERAL" ][ "PDF" ]:
@@ -311,9 +332,10 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
       print( "  + BKG > {}: {}".format( hist_tag( "ABCDNN", category ), hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Integral() ) )
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
+          if syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
           if args.year == "18" and syst.upper() == "PREFIRE": continue
           for shift in [ "UP", "DN" ]:
-            if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and config.systematics[ "MC" ][ syst ]:
+            if config.systematics[ "MC" ][ syst ]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
         if args.verbose: print( "  + BKG SYST > ABCDNN" )
 
@@ -332,7 +354,13 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
-            for stat in yield_table: yield_table[ stat ][ hist_tag( category, syst.upper() + shift ) ] = {}
+            if syst == "JEC":
+              for systJEC in config.systematics[ "REDUCED JEC" ]:
+                if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
+                for stat in yield_table: yield_table[ stat ][ hist_tag( category, systJEC_.upper() + shift ) ] = {}
+            else:
+              for stat in yield_table: yield_table[ stat ][ hist_tag( category, syst.upper() + shift ) ] = {}
     return yield_table
   
   def fill_yield( tables ):
@@ -345,11 +373,17 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
             if not config.systematics[ "MC" ][ syst ]: continue
             if args.year == "18" and syst.upper() == "PREFIRE": continue
             if process == "ABCDNN" and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
-            if syst.upper() == "ABCDNN" and group not in [ "BKG", "BKG SYST" ]: continue
+            if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
             if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
             for shift in [ "UP", "DN" ]:
-              table[ "YIELD" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
+              if syst == "JEC":
+                for systJEC in config.systematics[ "REDUCED JEC" ]:
+                  if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                  systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
+                  table[ "YIELD" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Integral()
+              else:
+                table[ "YIELD" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
       return table
 
     for category in categories:
@@ -385,6 +419,27 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         for i in range( 1, hists[ hist_key ][ hist_tag( process, category ) ].GetXaxis().GetNbins() + 1 ):
           table[ "ERROR" ][ category ][ process ] += hists[ hist_key ][ hist_tag( process, category ) ].GetBinError(i)**2
         table[ "ERROR" ][ category ][ process ] = math.sqrt( table[ "ERROR" ][ category ][ process ] )
+        if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
+          for syst in config.systematics[ "MC" ].keys():
+            if not config.systematics[ "MC" ][ syst ]: continue
+            if "ABCD" in process and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
+            if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
+            if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
+            if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
+            for shift in [ "UP", "DN" ]:
+              if syst == "JEC":
+                for systJEC in config.systematics[ "REDUCED JEC" ]:
+                  if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+                  systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
+                  table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = 0
+                  for i in range( 1, hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
+                    table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].GetBinError(i)**2
+                  table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Integral()
+              else:
+                table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = 0
+                for i in range( 1, hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
+                  table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetBinError(i)**2
+                table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
       return table
 
     for category in categories:
@@ -431,7 +486,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
 
 def print_tables( tables, categories, groups, variable, templateDir ):
   def yield_table():
-    def format_section( table, title, columns, precision ):
+    def format_section( table, title, columns, systematic, precision ):
       pm = "{:." + precision + "f} pm {:." + precision + "f}"
       table.append( [ "YIELD:", title ] )
       table.append( [ "CATEGORY" ] + columns )
@@ -442,19 +497,21 @@ def print_tables( tables, categories, groups, variable, templateDir ):
         } for key in [ "YIELD", "ERROR" ]
       }
       for category in sorted( categories ):
-        row = [ category ]
+        category_mc = category if systematic == "NOMINAL" else hist_tag( category, systematic )
+        row = [ category_mc ]
         for process in columns:
-          if process not in tables[ "YIELD" ][ category ].keys():
+          if process == "data_obs": category_mc = category
+          if process not in tables[ "YIELD" ][ category_mc ].keys():
             row.append( pm.format(
               0,0
             ) )
           else:
             row.append( pm.format(
-              tables[ "YIELD" ][ category ][ process ],
-              tables[ "ERROR" ][ category ][ process ]
+              tables[ "YIELD" ][ category_mc ][ process ],
+              tables[ "ERROR" ][ category_mc ][ process ]
             ) )
-            process_stat[ "YIELD" ][ process ] += tables[ "YIELD" ][ category ][ process ]
-            process_stat[ "ERROR" ][ process ] += tables[ "ERROR" ][ category ][ process ]**2
+            process_stat[ "YIELD" ][ process ] += tables[ "YIELD" ][ category_mc ][ process ]
+            process_stat[ "ERROR" ][ process ] += tables[ "ERROR" ][ category_mc ][ process ]**2
         table.append( row )
       for process in columns:
         process_stat[ "ERROR" ][ process ] = -1 if ":" in process else math.sqrt( process_stat[ "ERROR" ][ process ] )
@@ -473,10 +530,10 @@ def print_tables( tables, categories, groups, variable, templateDir ):
     table = []
 
     #table = format_section( table, "PHYSICS PROCESS", [ "DAT" ] + list( groups[ "BKG" ][ "PROCESS" ].keys() ), "2" )
-    table = format_section( table, "COMBINE ANALYSIS", [ "data_obs" ] + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ), "2" )
-    table = format_section( table, "COMBINE ABCDNN", [ "data_obs", "ABCDNN" ], "2" )
-    table = format_section( table, "SIGNAL", groups[ "SIG" ][ "PROCESS" ], "3" )
-    table = format_section( table, "SUMMARY", [ "TOTAL BKG", "DATA:BKG" ], "4" )
+    table = format_section( table, "COMBINE ANALYSIS", [ "data_obs" ] + list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ), "NOMINAL", "2" )
+    table = format_section( table, "COMBINE ABCDNN", [ "data_obs", "ABCDNN" ] + config.params[ "ABCDNN" ][ "GROUPS" ], "NOMINAL", "2" )
+    table = format_section( table, "SIGNAL", groups[ "SIG" ][ "PROCESS" ], "NOMINAL", "3" )
+    table = format_section( table, "SUMMARY", [ "TOTAL BKG", "DATA:BKG" ], "NOMINAL", "4" )
 
     return table
 
@@ -535,8 +592,6 @@ def main():
   templateDir = os.path.join( os.getcwd(), "{}_UL{}_{}".format( template_prefix, args.year, args.tag ) )
   categories = get_categories( templateDir )
   groups = samples.groups 
-  systematics = [ str(syst) for syst in config.systematics[ "MC" ].keys() if config.systematics[ "MC" ][ syst ] ]
-  if args.year in [ "18" ]: systematics.remove( "prefire" )
 
   for variable in args.variables:
     hists = load_histograms( variable, templateDir, categories )

@@ -6,7 +6,8 @@ import config
 samples = {
   "TEST": {
     #"TTToSemiLeptonicttjj1": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1",
-    "TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
+    "Ts": "ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8",
+    #"TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
     #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
@@ -66,13 +67,17 @@ shifts = {
   "hdampDOWN_TuneCP5": "_HDDN"
 }
   
+N = {
+  "TTToSemiLeptonicttjj": range(1,11)
+}
+
 for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
   for shift in shifts:
     for fs in [ "1b", "2b", "bb", "cc", "jj" ]:
       if tt == "SemiLeptonic":
         if shift == "TuneCP5":
           if fs == "jj":
-            for n in range(1,11):
+            for n in N["TTToSemiLeptonicttjj"]:
               samples[ "BKG" ][ "TTTo{}{}tt{}{}".format( tt, shifts[ shift ], fs, n ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}_{}".format( tt, shift, fs, n )
           else:
             samples[ "BKG" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_HT0Njet0_tt{}".format( tt, shift, fs )
@@ -91,6 +96,10 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
           samples[ "HD" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
         elif "UE" in shifts[ shift ]:
           samples[ "UE" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
+
+split = {
+  "TTToSemiLeptonicttjj": [ "TTToSemiLeptonicttjj" + str(i) for i in N["TTToSemiLeptonicttjj"] ]
+}
 
 # define groups
 

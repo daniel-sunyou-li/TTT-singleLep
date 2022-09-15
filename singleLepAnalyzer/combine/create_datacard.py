@@ -53,6 +53,7 @@ class DataCard():
     self.abcdnn = options[ "ABCDNN" ]
     self.tag = tag
     self.lumistr = config.lumiStr[ self.year ]
+    self.smoothing = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
     self.regions = {
       "SIGNAL":  [],
       "CONTROL": []
@@ -105,10 +106,10 @@ class DataCard():
     self.signals = self.params[ "SIGNALS" ]
     self.backgrounds = self.params[ "BACKGROUNDS" ]
     self.data = self.params[ "DATA" ]
-    self.muRF_norm = self.params[ "MURF NORM" ]
-    self.isr_norm = self.params[ "ISR NORM" ]
-    self.fsr_norm = self.params[ "FSR NORM" ]
-    self.pdf_norm = self.params[ "PDF NORM" ]
+    self.muRF_norm = config.systematics[ "MURF NORM" ]
+    self.isr_norm = config.systematics[ "ISR NORM" ]
+    self.fsr_norm = config.systematics[ "FSR NORM" ]
+    self.pdf_norm = config.systematics[ "PDF NORM" ]
     self.category_arr = { category: [ ( 0, "" ) ] for category in self.categories[ "ALL" ] }
     
     self.hist_groups = { key: {} for key in [ "SIG", "SIG SYST", "BKG", "BKG SYST", "DAT" ] }
@@ -272,14 +273,6 @@ class DataCard():
 
     yield_categories = self.categories[ "ALL" ]
     if self.abcdnn:
-      if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
-        abcdnn_tag = "ABCDNN"
-      else:
-        abcdnn_tag = "ABCDNN{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-        self.harvester, abcdnn_tag, "lnN",
-        ch.SystMap()( 1.0 )
-      )
       yield_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
 
     self.harvester.cp().process( [ bkg for bkg in self.backgrounds if bkg in [ "TTBB", "TTNOBB" ] ] ).channel( yield_categories ).AddSyst(
@@ -307,6 +300,8 @@ class DataCard():
       self.harvester, "XSEC_TTH", "lnN",
       ch.SystMap()( config.systematics[ "XSEC" ][ "TTH" ] )
     )
+    print( "  + TTH: {} (lnN)".format( config.systematics[ "XSEC" ][ "TOP" ] ) )
+    count += 1
 
     print( "[DONE] Added {} yield systematics".format( count ) )
     
@@ -317,23 +312,21 @@ class DataCard():
     apply_samples = []
     
     if config.options[ "COMBINE" ][ "SMOOTH" ]:
-      smooth_tag = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
-      pileup_tag = "PILEUP{}".format( smooth_tag )
-      prefire_tag = "PREFIRE{}$ERA".format( smooth_tag )
-      jec_tag = "JEC{}$ERA".format( smooth_tag )
-      jer_tag = "JER{}$ERA".format( smooth_tag )
-      hf_tag = "HF{}".format( smooth_tag )
-      lf_tag = "LF{}".format( smooth_tag )
-      hfstat1_tag = "HFSTATS1{}$ERA".format( smooth_tag )
-      hfstat2_tag = "HFSTATS2{}$ERA".format( smooth_tag )
-      lfstat1_tag = "LFSTATS1{}$ERA".format( smooth_tag )
-      lfstat2_tag = "LFSTATS2{}$ERA".format( smooth_tag )
-      cferr1_tag = "CFERR1{}".format( smooth_tag )
-      cferr2_tag = "CFERR2{}".format( smooth_tag )
-      hotstat_tag = "HOTSTAT{}$ERA".format( smooth_tag )
-      hotcspur_tag = "HOTCSPUR{}$ERA".format( smooth_tag )
-      hotclosure_tag = "HOTCLOSURE{}$ERA".format( smooth_tag )
-      abcdnn_tag = "ABCDNN{}".format( smooth_tag )
+      pileup_tag = "PILEUP{}".format( self.smoothing )
+      prefire_tag = "PREFIRE{}$ERA".format( self.smoothing )
+      jec_tag = "JEC{}$ERA".format( self.smoothing )
+      jer_tag = "JER{}$ERA".format( self.smoothing )
+      hf_tag = "HF{}".format( self.smoothing )
+      lf_tag = "LF{}".format( self.smoothing )
+      hfstat1_tag = "HFSTATS1{}$ERA".format( self.smoothing )
+      hfstat2_tag = "HFSTATS2{}$ERA".format( self.smoothing )
+      lfstat1_tag = "LFSTATS1{}$ERA".format( self.smoothing )
+      lfstat2_tag = "LFSTATS2{}$ERA".format( self.smoothing )
+      cferr1_tag = "CFERR1{}".format( self.smoothing )
+      cferr2_tag = "CFERR2{}".format( self.smoothing )
+      hotstat_tag = "HOTSTAT{}$ERA".format( self.smoothing )
+      hotcspur_tag = "HOTCSPUR{}$ERA".format( self.smoothing )
+      hotclosure_tag = "HOTCLOSURE{}$ERA".format( self.smoothing )
     else:
       pileup_tag = "PILEUP"
       prefire_tag = "PREFIRE$ERA"
@@ -350,15 +343,10 @@ class DataCard():
       hotstat_tag = "HOTSTAT$ERA"
       hotcspur_tag = "HOTCSPUR$ERA"
       hotclosure_tag = "HOTCLOSURE$ERA"
-      abcdnn_tag = "ABCDNN"
      
     shape_categories = self.categories[ "ALL" ]
     if self.abcdnn:
       shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
-      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-        self.harvester, abcdnn_tag, "shape",
-        ch.SystMap()( config.systematics[ "ABCDNN" ] )
-      )
 
     if config.systematics[ "MC" ][ "pileup" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
@@ -377,12 +365,17 @@ class DataCard():
       count += 1
       
     if config.systematics[ "MC" ][ "JEC" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, jec_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      print( "   + JEC: 1.0 (shape)" )
-      count += 1
+      for systJEC in config.systematics[ "REDUCED JEC" ]:
+        if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+        jecSYST_tag = jec_tag.replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
+        if "Era" not in systJEC:
+          jecSYST_tag = jecSYST_tag.replace( "$ERA", "" )
+        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, jecSYST_tag.upper(), "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+        print( "   + {} ({}): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) )
+        count += 1
     
     if config.systematics[ "MC" ][ "JER" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
@@ -505,10 +498,10 @@ class DataCard():
     count = 0
     
     if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
-      pdf_tag = "PDF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      murf_tag = "MURF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      isr_tag = "ISR{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
-      fsr_tag = "FSR{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
+      pdf_tag = "PDF{}".format( self.smoothing )
+      murf_tag = "MURF{}".format( self.smoothing )
+      isr_tag = "ISR{}".format( self.smoothing )
+      fsr_tag = "FSR{}".format( self.smoothing )
     else:
       pdf_tag = "PDF"
       murf_tag = "MURF"
@@ -520,6 +513,11 @@ class DataCard():
         self.harvester, pdf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
+      if self.abcdnn:
+        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+          self.harvester, pdf_tag, "shape",
+          ch.SystMap()( 1.0 )
+        )
       print( "   + PDF: 1.0 (shape)" )
       count += 1
     
@@ -528,6 +526,11 @@ class DataCard():
         self.harvester, murf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
+      if self.abcdnn:
+        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+          self.harvester, murf_tag, "shape", 
+          ch.SystMap()( 1.0 )
+        )
       print( "   + MURF: 1.0 (shape)" )
       count += 1
     
@@ -536,6 +539,11 @@ class DataCard():
         self.harvester, isr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
+      if self.abcdnn:
+        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+          self.harvester, isr_tag, "shape",
+          ch.SystMap()( 1.0 )
+        )
       print( "   + ISR: 1.0 (shape)" )
       count += 1
     
@@ -544,11 +552,56 @@ class DataCard():
         self.harvester, fsr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
+      if self.abcdnn:
+        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+          self.harvester, fsr_tag, "shape",
+          ch.SystMap()( 1.0 )
+        )
       print( "   + FSR: 1.0 (shape)" )
       count += 1
   
     print( "[DONE] Added {} theoretical systematics".format( count ) )
   
+  def add_ABCDNN_systematics( self ): 
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, "EXTABCDSYST", "lnN",
+      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDSYST" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSYST" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSYST" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSYST" ][ "18" ] ) 
+    )
+
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, "EXTABCDSTAT", "lnN",
+      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDSTAT" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSTAT" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSTAT" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSTAT" ][ "18" ] )
+    )
+    
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, "EXTABCDCLOSURE", "lnN",
+      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDCLOSURE" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDCLOSURE" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDCLOSURE" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDCLOSOSURE" ][ "18" ] )
+    )
+
+    if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
+      abcdnn_model_tag = "ABCDNNMODEL{}".format( self.smoothing )
+      abcdnn_sample_tag = "ABCDNNSAMPLE{}".format( self.smoothing )
+      abcdnn_closure_tag = "ABCDNNCLOSURE{}".format( self.smoothing )
+    else:
+      abcdnn_model_tag = "ABCDNNMODEL"
+      abcdnn_sample_tag = "ABCDNNSAMPLE"
+      abcdnn_closure_tag = "ABCDNNCLOSURE"
+
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, abcdnn_model_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, abcdnn_sample_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      self.harvester, abcdnn_closure_tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+
+    print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
+
   def add_TTHF_systematics( self ):
     if self.options[ "TTHF SYST" ]:
       print( "[START] Adding heavy flavor (TTBB) systematics" )
@@ -610,7 +663,8 @@ class DataCard():
     print( ">> Creating workspace for DataCard" )
     outDir = os.path.join( os.getcwd(), self.limitPath, "cmb/" )
     if not os.path.exists( outDir ): os.system( "mkdir {}".format( outDir ) )
-    os.system( "combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
+    os.system( "python ../../CombineHarvester/CombineTools/scripts/combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
+    #os.system( "combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
     
 def main():
   params = config.params[ "COMBINE" ].copy()
@@ -634,7 +688,9 @@ def main():
     datacard.add_TTHF_systematics()
   if args.shapeSyst:
     datacard.add_shape_systematics()
-    #datacard.add_theory_systematics()
+    datacard.add_theory_systematics()
+  if options[ "ABCDNN" ]:
+    datacard.add_ABCDNN_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()
