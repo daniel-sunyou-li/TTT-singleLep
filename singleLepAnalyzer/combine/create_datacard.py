@@ -348,6 +348,12 @@ class DataCard():
     if self.abcdnn:
       shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
 
+    useHOT = True
+    useCSV = True
+    for category in shape_categories:
+      if "nhot0p" in category.lower(): useHOT = False
+      if "nb0p" in category.lower(): useCSV = False
+      
     if config.systematics[ "MC" ][ "pileup" ]:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, pileup_tag, "shape",
@@ -384,8 +390,8 @@ class DataCard():
       )
       print( "   + JER: 1.0 (shape)" ) 
       count += 1
-
-    if config.systematics[ "MC" ][ "hotstat" ]:
+        
+    if config.systematics[ "MC" ][ "hotstat" ] and useHOT:
       if args.year == "16":
         self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
           self.harvester, hotstat_tag, "shape",
@@ -399,7 +405,7 @@ class DataCard():
       print( "   + HOTSTAT: 1.0 (shape)" )
       count += 1
     
-    if config.systematics[ "MC" ][ "hotclosure" ]:
+    if config.systematics[ "MC" ][ "hotclosure" ] and useHOT:
       if args.year == "16":
         self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
           self.harvester, hotclosure_tag, "shape",
@@ -413,7 +419,7 @@ class DataCard():
       print( "   + HOTCLOSURE: 1.0 (shape)" )
       count += 1
 
-    if config.systematics[ "MC" ][ "hotcspur" ]:
+    if config.systematics[ "MC" ][ "hotcspur" ] and useHOT:
       if args.year == "16":
         self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
           self.harvester, hotcspur_tag, "shape",
@@ -427,7 +433,7 @@ class DataCard():
       print( "   + HOTCSPUR: 1.0 (shape)" )
       count += 1
 
-    if config.systematics[ "MC" ][ "HF" ]:
+    if config.systematics[ "MC" ][ "HF" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hf_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -435,7 +441,7 @@ class DataCard():
       print( "   + HF: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "LF" ]:
+    if config.systematics[ "MC" ][ "LF" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, lf_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -443,7 +449,7 @@ class DataCard():
       print( "   + LF: 1.0 (shape)" )     
       count += 1
     
-    if config.systematics[ "MC" ][ "hfstats1" ]:
+    if config.systematics[ "MC" ][ "hfstats1" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hfstat1_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -451,7 +457,7 @@ class DataCard():
       print( "   + HFSTAT1: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "lfstats1" ]:
+    if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, lfstat1_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -459,7 +465,7 @@ class DataCard():
       print( "   + LFSTAT1: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "cferr1" ]:
+    if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, cferr1_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -467,7 +473,7 @@ class DataCard():
       print( "   + CFERR1: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "hfstats2" ]:
+    if config.systematics[ "MC" ][ "hfstats2" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, hfstat2_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -475,7 +481,7 @@ class DataCard():
       print( "   + HFSTAT2: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "lfstats2" ]:
+    if config.systematics[ "MC" ][ "lfstats2" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, lfstat2_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -483,7 +489,7 @@ class DataCard():
       print( "   + LFSTAT2: 1.0 (shape)" ) 
       count += 1
     
-    if config.systematics[ "MC" ][ "cferr2" ]:
+    if config.systematics[ "MC" ][ "cferr2" ] and useCSV:
       self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, cferr2_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
@@ -659,13 +665,6 @@ class DataCard():
       count += 1
     print( "[DONE] Wrote {} data cards".format( count ) )
     
-  def create_workspace( self ):
-    print( ">> Creating workspace for DataCard" )
-    outDir = os.path.join( os.getcwd(), self.limitPath, "cmb/" )
-    if not os.path.exists( outDir ): os.system( "mkdir {}".format( outDir ) )
-    os.system( "python ../../CombineHarvester/CombineTools/scripts/combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
-    #os.system( "combineTool.py -M T2W -i {} -o workspace.root --parallel 4".format( outDir ) )
-    
 def main():
   params = config.params[ "COMBINE" ].copy()
   options = config.options[ "COMBINE" ].copy()
@@ -694,7 +693,5 @@ def main():
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()
-  
-  datacard.create_workspace()
   
 main()
