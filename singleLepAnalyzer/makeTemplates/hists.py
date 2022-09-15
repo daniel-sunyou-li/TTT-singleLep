@@ -104,7 +104,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
   if category["NB"] != "0p" and process not in groups[ "DAT" ]:
     mc_weights[ "NOMINAL" ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj" 
 
-  if year in [ "16APV", "16", "17", "18" ] and process not in groups ["DAT"]:
+  if year in [ "16APV", "16", "17" ] and process not in groups ["DAT"]:
     mc_weights[ "NOMINAL" ] += " * L1NonPrefiringProb_CommonCalc"
 
   if year in [ "16APV" ]: # since single lepton triggers weren't produced for EOY in 2016APV, default to triggerX
@@ -123,31 +123,31 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     if config.systematics[ "MC" ][ "muRFcorrd" ]:
       mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                     "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN:
+      if doABCDNN and "MURFCORRD" in config.params["ABCDNN"]["SYSTEMATICS"]:
         mc_weights[ "ABCDNN MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "ABCDNN" ] ),
                                              "DN": "renormWeights[3] * {}".format( mc_weights[ "ABCDNN" ] ) }
     if config.systematics[ "MC" ][ "muR" ]:
       mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN:
+      if doABCDNN and "MUR" in config.params["ABCDNN"]["SYSTEMATICS"]:
         mc_weights[ "ABCDNN MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "ABCDNN" ] ),
                                        "DN": "renormWeights[2] * {}".format( mc_weights[ "ABCDNN" ] ) }
     if config.systematics[ "MC" ][ "muF" ]:
       mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN:
+      if doABCDNN and "MUF" in config.params["ABCDNN"]["SYSTEMATICS"]:
         mc_weights[ "ABCDNN MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "ABCDNN" ] ),
                                        "DN": "renormWeights[0] * {}".format( mc_weights[ "ABCDNN" ] ) }
     if config.systematics[ "MC" ][ "isr" ]:
       mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN:
+      if doABCDNN and "ISR" in config.params["ABCDNN"]["SYSTEMATICS"]:
         mc_weights[ "ABCDNN ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "ABCDNN" ] ),
                                        "DN": "renormPSWeights[2] * {}".format( mc_weights[ "ABCDNN" ] ) }
     if config.systematics[ "MC" ][ "fsr" ]:
       mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN:
+      if doABCDNN and "FSR" in config.params["ABCDNN"]["SYSTEMATICS"]:
         mc_weights[ "ABCDNN FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "ABCDNN" ] ),
                                        "DN": "renormPSWeights[3] * {}".format( mc_weights[ "ABCDNN" ] ) }
     if config.systematics[ "MC" ][ "toppt" ]:
@@ -159,10 +159,10 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     if config.systematics[ "MC" ][ "njetsf" ]:
       mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
                                  "DN": mc_weights[ "NOMINAL" ] }
-    if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and doABCDNN:
+    if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and doABCDNN and "ABCDNNMODEL" in config.params["ABCDNN"]["SYSTEMATICS"]:
       mc_weights[ "ABCDNN ABCDNNMODEL" ] = { "UP": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_MODELUP" ), 
                                              "DN": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_MODELDN" ) }
-    if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and doABCDNN:
+    if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and doABCDNN and "ABCDNNCLOSURE" in config.params["ABCDNN"]["SYSTEMATICS"]:
       mc_weights[ "ABCDNN ABCDNNCLOSURE" ] = { "UP": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_CLOSUREUP" ),
                                                "DN": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_CLOSUREDN" ) }
 
