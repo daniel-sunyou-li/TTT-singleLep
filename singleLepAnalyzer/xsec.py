@@ -92,7 +92,7 @@ xsec = {
 
 N = {
   "TTToSemiLeptonicttjj": range( 1, 11 ),
-  "TTTT": range( 1, 3 )
+  "TTTT": range( 1, 4 )
 }
 
 for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", "2L2Nu" ]:
@@ -106,3 +106,6 @@ for tt in [ "SemiLeptonic", "SemiLeptonicHT500", "SemiLeptonHT500", "Hadronic", 
       for syst in [ "UE", "HD" ]:
         for shift in [ "DN", "UP" ]:
           xsec[ "TTTo{}{}{}tt{}".format( tt, syst, shift, fs ) ] = xsec[ "TTTo{}{}{}".format( tt, syst, shift ) ]
+
+for i in N["TTTT"]:
+  xsec[ "TTTT{}".format(i) ] = xsec[ "TTTT" ]

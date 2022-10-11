@@ -23,16 +23,12 @@ import ROOT
 
 if args.year == "16APV": 
   import samplesUL16APV as samples
-  import weightsUL16APV as weights
 elif args.year == "16":
   import samplesUL16 as samples
-  import weightsUL16 as weights
 elif args.year == "17": 
   import samplesUL17 as samples
-  import weightsUL17 as weights
 elif args.year == "18": 
   import samplesUL18 as samples
-  import weightsUL18 as weights
 else: quit( "[ERR] Invalid -y (--year) argument. Quitting" ) 
 
 def jet_count( category ):
@@ -114,33 +110,34 @@ class DataCard():
     
     self.hist_groups = { key: {} for key in [ "SIG", "SIG SYST", "BKG", "BKG SYST", "DAT" ] }
     category_log = { key: {} for key in [ "SIG", "SIG SYST", "BKG", "BKG SYST", "DAT" ] }
-    for hist_name in self.hist_names:
+    for hist_name in list( set( self.hist_names ) ):
       parse = hist_parse( hist_name, samples )
       if parse[ "GROUP" ] == "SIG":
         if parse[ "IS SYST" ]: 
-          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG SYST" ].keys():
+          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG SYST" ]:
             self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else: 
             self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
         else: 
-          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ].keys():
+          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
             self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else:
             self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "BKG":
         if self.abcdnn and parse[ "ABCDNN" ]:
           if parse[ "IS SYST" ]:
-            if parse[ "SYST" ] == "ABCDNN": self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
+            if parse[ "SYST" ] in self.params[ "ABCDNN" ][ "SYSTEMATICS" ]: 
+              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ]
           else:
-            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
+            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ]
         else:
           if parse[ "IS SYST" ]: 
-            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG SYST" ].keys():
+            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG SYST" ]:
               self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
             else: 
               self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
           else: 
-            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ].keys():
+            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ]:
               self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
             else:
               self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
@@ -194,8 +191,8 @@ class DataCard():
     for category in self.categories[ "ALL" ]:
       if category in self.regions[ "SIGNAL" ]:
         self.harvester.AddObservations( [ "*" ], [ self.prefix ], [ self.year ], [ category ], self.category_arr[ category ] )
-        self.harvester.AddProcesses(    [ "*" ], [ self.prefix ], [ self.year ], [ category ], self.hist_groups[ "BKG" ][ category ], self.category_arr[ category ], False  )
-        self.harvester.AddProcesses(    [ "" ],  [ self.prefix ], [ self.year ], [ category ], self.hist_groups[ "SIG" ][ category ], self.category_arr[ category ], True  )
+        self.harvester.AddProcesses(    [ "*" ], [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "BKG" ][ category ] ) ), self.category_arr[ category ], False  )
+        self.harvester.AddProcesses(    [ "" ],  [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "SIG" ][ category ] ) ), self.category_arr[ category ], True  )
         count[ "SR" ] += 1
       else:
         self.harvester.AddObservations( [ "all" ], [ self.prefix ], [ self.year ], [ category ], self.category_arr[ category ] )
@@ -502,6 +499,9 @@ class DataCard():
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
     count = 0
+    shape_categories = self.categories[ "ALL" ]
+    if self.abcdnn:
+      shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
     
     if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
       pdf_tag = "PDF{}".format( self.smoothing )
@@ -515,20 +515,20 @@ class DataCard():
       fsr_tag = "FSR"
    
     if self.options[ "PDF" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, pdf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      if self.abcdnn:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, pdf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
+      #if self.abcdnn:
+      #  self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+      #    self.harvester, pdf_tag, "shape",
+      #    ch.SystMap()( 1.0 )
+      #  )
       print( "   + PDF: 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, murf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -541,7 +541,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "isr" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, isr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -554,7 +554,7 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "fsr" ]:
-      self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, fsr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
@@ -571,17 +571,17 @@ class DataCard():
   def add_ABCDNN_systematics( self ): 
     self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
       self.harvester, "EXTABCDSYST", "lnN",
-      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDSYST" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSYST" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSYST" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSYST" ][ "18" ] ) 
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDSYST" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSYST" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSYST" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSYST" ][ "18" ] ) 
     )
 
     self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
       self.harvester, "EXTABCDSTAT", "lnN",
-      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDSTAT" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSTAT" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSTAT" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSTAT" ][ "18" ] )
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDSTAT" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSTAT" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSTAT" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSTAT" ][ "18" ] )
     )
     
     self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
       self.harvester, "EXTABCDCLOSURE", "lnN",
-      ch.SystMap()( [ "16APV" ], config.systematics[ "EXTABCDCLOSURE" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDCLOSURE" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDCLOSURE" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDCLOSOSURE" ][ "18" ] )
+      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDCLOSURE" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDCLOSURE" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDCLOSURE" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDCLOSURE" ][ "18" ] )
     )
 
     if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
@@ -592,19 +592,22 @@ class DataCard():
       abcdnn_model_tag = "ABCDNNMODEL"
       abcdnn_sample_tag = "ABCDNNSAMPLE"
       abcdnn_closure_tag = "ABCDNNCLOSURE"
-
-    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-      self.harvester, abcdnn_model_tag, "shape",
-      ch.SystMap()( 1.0 )
-    )
-    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-      self.harvester, abcdnn_sample_tag, "shape",
-      ch.SystMap()( 1.0 )
-    )
-    self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-      self.harvester, abcdnn_closure_tag, "shape",
-      ch.SystMap()( 1.0 )
-    )
+    
+    if config.systematics[ "MC" ][ "ABCDNNMODEL" ]:
+      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+        self.harvester, abcdnn_model_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+    if config.systematics[ "MC" ][ "ABCDNNSAMPLE" ]:
+      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+        self.harvester, abcdnn_sample_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+    if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ]:
+      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
+        self.harvester, abcdnn_closure_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 
@@ -627,8 +630,8 @@ class DataCard():
     print( "[START] Retrieving histograms from {}".format( self.templateName ) )
     for category in tqdm.tqdm( self.categories[ "ALL" ] ):
       key_bkg = { 
-        "NOMINAL": "$PROCESS_{}$BIN_NOMINAL".format( category ),
-        "SYST":    "$PROCESS_{}$BIN_$SYSTEMATIC".format( category )
+        "NOMINAL":     "$PROCESS_{}$BIN_NOMINAL".format( category ),
+        "SYST":        "$PROCESS_{}$BIN_$SYSTEMATIC".format( category ),
       }
       self.harvester.cp().channel( [ category ] ).era( [ self.year ] ).backgrounds().ExtractShapes(
         os.path.join( self.limitPath, self.templateName ), key_bkg[ "NOMINAL" ], key_bkg[ "SYST" ]

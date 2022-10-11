@@ -20,16 +20,12 @@ import ROOT
 
 if args.year == "16APV": 
   import samplesUL16APV as samples
-  import weightsUL16APV as weights
 elif args.year == "16":
   import samplesUL16 as samples
-  import weightsUL16 as weights
 elif args.year == "17": 
   import samplesUL17 as samples
-  import weightsUL17 as weights
 elif args.year == "18": 
   import samplesUL18 as samples
-  import weightsUL18 as weights
 else: quit( "[ERR] Invalid -y (--year) argument. Quitting" )
 
 def overflow( hist ):

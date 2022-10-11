@@ -426,6 +426,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
             if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
             if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
+            if syst.upper() == "PREFIRE" and args.year not in [ "16APV", "16", "17" ]: continue
             for shift in [ "UP", "DN" ]:
               if syst == "JEC":
                 for systJEC in config.systematics[ "REDUCED JEC" ]:

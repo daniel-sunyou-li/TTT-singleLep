@@ -31,14 +31,14 @@ params = {
     #"prefire",
     "trigeff", # this one seems like there might be an issue --> way too huge? 
     #"muRF",
-    "muRFcorrd", # this is fine
-    "muR", # this is fine
-    "muF", # this is fine
-    "isr", # this is fine 
-    "fsr", # this is fine 
-    "hotstat",  # seems a bit large 
-    "hotcspur",
-    "hotclosure",
+    #"muRFcorrd", # this is fine
+    #"muR", # this is fine
+    #"muF", # this is fine
+    #"isr", # this is fine 
+    #"fsr", # this is fine 
+    #"hotstat",  # seems a bit large 
+    #"hotcspur",
+    #"hotclosure",
     "njet",
     "njetsf",
     #"LF", # this is fine
@@ -49,11 +49,11 @@ params = {
     #"hfstats2",
     #"cferr1",
     #"cferr2",
-    "jes", # this one might have an issue
+    #"jes", # this one might have an issue
     "toppt",
     "ht",
-    "JER", # this seems very large
-    "JEC", # this seems very large
+    #"JER", # this seems very large
+    #"JEC", # this seems very large
     "HD",
     "UE"
   ],

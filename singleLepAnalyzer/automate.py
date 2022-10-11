@@ -67,17 +67,17 @@ python templates.py -y {} -t {} -v {} -r {} --verbose \n".format( cmsswbase, os.
       jdf = open( jdf_name, "w" )
       jdf.write(
 "universe = vanilla \n\
-Executable = {}\n\
+Executable = {0}\n\
 Should_Transfer_Files = YES\n\
 WhenToTransferOutput = ON_EXIT\n\
-JobBatchName = SLA_step2_{}\n\
+JobBatchName = SLA_step2_{1}_{2}\n\
 request_memory = 1024\n\
-Output = condor_log/{}.out\n\
-Error = condor_log/{}.err\n\
-Log = condor_log/{}.log\n\
+Output = condor_log/{3}.out\n\
+Error = condor_log/{3}.err\n\
+Log = condor_log/{3}.log\n\
 Notification = Error\n\
 Arguments = \n\
-Queue 1\n".format( shell_name, variable, step2_name, step2_name, step2_name ) 
+Queue 1\n".format( shell_name, variable, training[ "tag" ], step2_name ) 
       )
       jdf.close()
       os.system( "condor_submit {}".format( jdf_name ) )

@@ -29,7 +29,7 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": False,
+    "ABCDNN": True,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
@@ -59,7 +59,7 @@ options = {
   "COMBINE": {
     "TTHF SYST": True,
     "PDF": True,
-    "ABCDNN": False,
+    "ABCDNN": True,
     "SMOOTH": True
   }
 }
@@ -71,12 +71,13 @@ params = {
     "PDF RANGE": 100,   # PDF range
   },
   "ABCDNN": {
-    "TAG": "nJ6pnB2p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
+    "TAG": "nJ5pnB2p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
     "MC SCALE": 0.1,                        # fraction of total MC samples used when training ABCDnn 
+    "TF SCALE": 1.0,                        # scale extended ABCD transfer factor with additional cut
     "CONTROL VARIABLES":  [ "NJ", "NB" ],   # X and Y control variables to define regions
-    "TRANSFER VARIABLES": [ "HT", "DNN" ],  # transformed variables
+    "TRANSFER VARIABLES": [ "CSVB_3", "DNN" ],  # transformed variables
     "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
-    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
+    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "PDF", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -194,22 +195,22 @@ systematics = {
   },
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
-    "16APV": 1.000,
-    "16": 1.000,
-    "17": 1.021, # nJ5pnB2p = 1.012, nJ6pnB2p = 1.014, nJ6pnB3p = 1.021
-    "18": 1.000
+    "16APV": 1.012,
+    "16": 1.012,
+    "17": 1.008, 
+    "18": 1.007,
   },
   "EXTABCDSTAT": {
-    "16APV": 1.000,
-    "16": 1.000,
-    "17": 1.010, # nJ5pnB2p = 1.005, nJ6pnB2p = 1.004, nJ6pnB3p = 1.010
-    "18": 1.000
+    "16APV": 1.004,
+    "16": 1.004,
+    "17": 1.002, 
+    "18": 1.002
   },
   "EXTABCDCLOSURE": {
-    "16APV": 1.000,
-    "16": 1.000,
-    "17": 1.093, # nJ5pnB2p = 1.151, nJ6pnB2p = 1.166, nJ6pnB3p = 1.093
-    "18": 1.00
+    "16APV": 1.186,
+    "16": 1.154,
+    "17": 1.151, 
+    "18": 1.076
   },
   "PILEUP": 1.046,
   "TTHF": 1.13,
@@ -258,10 +259,10 @@ region_prefix = {
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0", "1p" ],
+    "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "1p" ],
+    "NB": [ "1", "2p" ],
     "NJ": [ "4", "5p" ]
   },
   "VR": {
@@ -269,8 +270,8 @@ hist_bins = {
     "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "2", "3p" ],
-    "NJ": [ "5", "6" ]
+    "NB": [ "0", "1" ],
+    "NJ": [ "4", "5", "6" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],
@@ -286,7 +287,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2p" ],
-    "NJ": [ "6p" ] 
+    "NJ": [ "5p" ] 
   }
 }
 
@@ -296,12 +297,14 @@ event_cuts = {
   "pt_jet": 30,
   "met": 20,
   "mt": 0,
-  "ht": 350
+  "ht": 350,
+  "dnn": 0.
 }
 
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
 base_cut += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( event_cuts[ "pt_electron" ], event_cuts[ "pt_muon" ] )
 base_cut += " && AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > 0.4".format( event_cuts[ "ht" ], event_cuts[ "met" ], event_cuts[ "mt" ] )
+base_cut += " && DNN_1to40_3t > {}".format( event_cuts[ "dnn" ] )
 mc_weight = "triggerXSF * triggerSF * pileupWeight * pileupJetIDWeight * lepIdSF * EGammaGsfSF * isoSF"
 mc_weight += " * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) )"
 

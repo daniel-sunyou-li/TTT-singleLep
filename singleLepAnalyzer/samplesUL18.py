@@ -68,6 +68,11 @@ shifts = {
   "hdampUP_TuneCP5": "_HDUP",
   "hdampDOWN_TuneCP5": "_HDDN"
 }
+
+N = {
+  "TTToSemiLeptonicttjj": range(1,11),
+  "TTTT": range(1,4)
+}
   
 for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
   for shift in shifts:
@@ -95,6 +100,11 @@ for tt in [ "SemiLepton", "SemiLeptonic", "Hadronic", "2L2Nu" ]:
         elif "UE" in shifts[ shift ]:
           samples[ "UE" ][ "TTTo{}{}tt{}".format( tt, shifts[ shift ], fs ) ] = "TTTo{}_{}_13TeV-powheg-pythia8_tt{}".format( tt, shift, fs )
 
+split = {
+  "TTToSemiLeptonicttjj": [ "TTToSemiLeptonicttjj" + str(i) for i in N["TTToSemiLeptonicttjj"] ],
+  "TTTT": [ "TTTT" + str(i) for i in N["TTTT"] ]
+}
+
 # define groups
 
 groups = { group: {} for group in [ "BKG", "SIG", "DAT", "TEST" ] }
@@ -113,7 +123,7 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "VV": [ "WW", "WZ", "ZZ" ],
   "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
   "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10", "TTHB", "TTHnoB" ], 
-  "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+  "TTXY": [ "TTTT1", "TTT2", "TTT3", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
   "TTCC": [ tt + "ttcc" for tt in ttbar ],
   "TT1B": [ tt + "tt1b" for tt in ttbar ],
