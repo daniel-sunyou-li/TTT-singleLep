@@ -352,19 +352,27 @@ class DataCard():
       if "nb0p" in category.lower(): useCSV = False
       
     if config.systematics[ "MC" ][ "pileup" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, pileup_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      print( "   + Pileup: 1.0 (shape)" )
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, pileup_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + Pileup (Correlated): 1.0 (shape)" )
       count += 1
       
     if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, prefire_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
       )
-      print( "   + Prefire: 1.0 (shape)" )
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, prefire_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
+      )
+      print( "   + Prefire (Un-correlated): 1.0 (shape)" )
       count += 1
       
     if config.systematics[ "MC" ][ "JEC" ]:
@@ -373,19 +381,38 @@ class DataCard():
         jecSYST_tag = jec_tag.replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
         if "Era" not in systJEC:
           jecSYST_tag = jecSYST_tag.replace( "$ERA", "" )
-        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, jecSYST_tag.upper(), "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        print( "   + {} ({}): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) )
+          self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+            self.harvester, jecSYST_tag.upper(), "shape",
+            ch.SystMap()( 1.0 )
+          )
+          self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+            self.harvester, jecSYST_tag.upper(), "shape",
+            ch.SystMap()( 1.0 )
+          )
+          print( "   + {} ({}) (Correlated): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) )
+        else:
+          self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+            self.harvester, jecSYST_tag.upper(), "shape",
+            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+          )
+          self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+            self.harvester, jecSYST_tag.upper(), "shape",
+            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+          )
+          
+          print( "   + {} ({}) (Un-correlated): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) ) 
         count += 1
     
     if config.systematics[ "MC" ][ "JER" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, jer_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-      print( "   + JER: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, jer_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + JER (Un-correlated): 1.0 (shape)" ) 
       count += 1
         
     if config.systematics[ "MC" ][ "hotstat" ] and useHOT:
@@ -395,11 +422,15 @@ class DataCard():
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
       else:
-        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
           self.harvester, hotstat_tag, "shape",
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
-      print( "   + HOTSTAT: 1.0 (shape)" )
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotstat_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+      print( "   + HOTSTAT (Un-correlated): 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "hotclosure" ] and useHOT:
@@ -409,11 +440,15 @@ class DataCard():
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
       else:
-        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
           self.harvester, hotclosure_tag, "shape",
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
-      print( "   + HOTCLOSURE: 1.0 (shape)" )
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+          self.harvester, hotclosure_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+      print( "   + HOTCLOSURE (Un-correlated): 1.0 (shape)" )
       count += 1
 
     if config.systematics[ "MC" ][ "hotcspur" ] and useHOT:
@@ -423,7 +458,11 @@ class DataCard():
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
       else:
-        self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+          self.harvester, hotcspur_tag, "shape",
+          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        )
+        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
           self.harvester, hotcspur_tag, "shape",
           ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
         )
@@ -431,11 +470,15 @@ class DataCard():
       count += 1
 
     if config.systematics[ "MC" ][ "HF" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, hf_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        ch.SystMap()( 1.0 )
       )
-      print( "   + HF: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, hf_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + HF (Correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "LF" ] and useCSV:
@@ -447,51 +490,75 @@ class DataCard():
       count += 1
     
     if config.systematics[ "MC" ][ "hfstats1" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, hfstat1_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-      print( "   + HFSTAT1: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, hfstat1_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HFSTAT1 (Un-correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, lfstat1_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-      print( "   + LFSTAT1: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, lfstat1_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + LFSTAT1 (Un-correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, cferr1_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        ch.SystMap()( 1.0 )
       )
-      print( "   + CFERR1: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, cferr1_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + CFERR1 (Correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "hfstats2" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, hfstat2_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-      print( "   + HFSTAT2: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, hfstat2_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + HFSTAT2 (Un-correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "lfstats2" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, lfstat2_tag, "shape",
         ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-      print( "   + LFSTAT2: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, lfstat2_tag, "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+      )
+      print( "   + LFSTAT2 (Un-correlated): 1.0 (shape)" ) 
       count += 1
     
     if config.systematics[ "MC" ][ "cferr2" ] and useCSV:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, cferr2_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
+        ch.SystMap()( 1.0 )
       )
-      print( "   + CFERR2: 1.0 (shape)" ) 
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, cferr2_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + CFERR2 (Correlated): 1.0 (shape)" ) 
       count += 1
     
     print( "[DONE] Added {} shape systematics".format( count ) )
@@ -515,55 +582,51 @@ class DataCard():
       fsr_tag = "FSR"
    
     if self.options[ "PDF" ]:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( shape_categories ).AddSyst(
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
         self.harvester, pdf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      #if self.abcdnn:
-      #  self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-      #    self.harvester, pdf_tag, "shape",
-      #    ch.SystMap()( 1.0 )
-      #  )
-      print( "   + PDF: 1.0 (shape)" )
+      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
+        self.harvester, pdf_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+      print( "   + PDF (Correlated): 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ]:
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, murf_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
       self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, murf_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      if self.abcdnn:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, murf_tag, "shape", 
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + MURF: 1.0 (shape)" )
+      print( "   + MURF (Correlated): 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "isr" ]:
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, isr_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
       self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, isr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      if self.abcdnn:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, isr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + ISR: 1.0 (shape)" )
+      print( "   + ISR (Correlated): 1.0 (shape)" )
       count += 1
     
     if config.systematics[ "MC" ][ "fsr" ]:
+      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
+        self.harvester, fsr_tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
       self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
         self.harvester, fsr_tag, "shape",
         ch.SystMap()( 1.0 )
       )
-      if self.abcdnn:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, fsr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + FSR: 1.0 (shape)" )
+      print( "   + FSR (Correlated): 1.0 (shape)" )
       count += 1
   
     print( "[DONE] Added {} theoretical systematics".format( count ) )
