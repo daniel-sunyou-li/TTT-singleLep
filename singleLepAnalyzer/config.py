@@ -71,13 +71,19 @@ params = {
     "PDF RANGE": 100,   # PDF range
   },
   "ABCDNN": {
-    "TAG": "nJ5pnB2p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
-    "MC SCALE": 0.1,                        # fraction of total MC samples used when training ABCDnn 
-    "TF SCALE": 1.0,                        # scale extended ABCD transfer factor with additional cut
-    "CONTROL VARIABLES":  [ "NJ", "NB" ],   # X and Y control variables to define regions
+    "TAG": "nJ7pnB3p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
+    "TF": {
+      "16APV": 0.01489,       # nJ5pnB2p = 0.02610, nJ7pnB3p = 0.01489
+      "16": 0.01522,          # nJ5pnB2p = 0.02805, nJ7pnB3p = 0.01522   
+      "17": 0.00724,          # nJ5pnB2p = 0.01210, nJ7pnB3p = 0.00724
+      "18": 0.01123,          # nJ5pnB2p = 0.02060, nJ7pnB3p = 0.01123
+    },                        
+    "TF SCALE": 1.0,          # scale extended ABCD transfer factor with additional cut
+    "CONTROL VARIABLES":  [ "NJ", "NB" ],       # X and Y control variables to define regions
     "TRANSFER VARIABLES": [ "CSVB_3", "DNN" ],  # transformed variables
     "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
-    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "PDF", "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ],
+    "MINOR BKG": [ "TTH", "TOP", "EWK" ],   # Minor backgrounds to include with ABCDnn in SR
+    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "MUR", "MUF", "MURFCOORD","MURF", "ISR", "FSR", "PDF" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -188,33 +194,45 @@ systematics = {
     "M": 1.025
   },
   "XSEC": {
-    "TTBAR": [ 0.945, 1.048 ],
-    "TTH": 1.12,
-    "TOP": 1.20,
-    "EWK": 1.06  #[ 0.927, 1.051 ]
+    "TTBAR": [ 0.91, 1.11 ], # hDamp uncertainty of +10/-7% added in quadrature with x-sec uncertainty of +4.8/-5.5%
+    "TTH": 1.20,             # 15APR21 4tops meeting agreement
+    "TOP": 1.04,             # aligning with 50% ttV, ttH and tt+xy uncertainties from OSDL and SSDL 4T analyses
+    "EWK": 1.038             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV scale and pdf added in quadrature 
   },
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
-    "16APV": 1.012,
-    "16": 1.012,
-    "17": 1.008, 
-    "18": 1.007,
+    "16APV": 1.050,  # nJ7pnB3p = 1.050, nJ5pnB2p = 1.015
+    "16": 1.048,     # nJ7pnB3p = 1.048, nJ5pnB2p = 1.014
+    "17": 1.031,     # nJ7pnB3p = 1.031, nJ5pnB2p = 1.010 
+    "18": 1.025,     # nJ7pnB3p = 1.026, nJ5pnB2p = 1.008 
   },
   "EXTABCDSTAT": {
-    "16APV": 1.004,
-    "16": 1.004,
-    "17": 1.002, 
-    "18": 1.002
+    "16APV": 1.029,  # nJ7pnB3p = 1.029, nJ5pnB2p = 1.005
+    "16": 1.029,     # nJ7pnB3p = 1.029, nJ5pnB2p = 1.004
+    "17": 1.018,     # nJ7pnB3p = 1.018, nJ5pnB2p = 1.003
+    "18": 1.015,     # nJ7pnB3p = 1.015, nJ5pnB2p = 1.002 
   },
   "EXTABCDCLOSURE": {
-    "16APV": 1.186,
-    "16": 1.154,
-    "17": 1.151, 
-    "18": 1.076
+    "16APV": 1.070,  # nJ6nB2 = 1.070, nJ6nB1 = 1.040  
+    "16": 1.154,     # nJ6nB2 = 1.009, nJ6nB1 = 1.060
+    "17": 1.025,     # nJ6nB2 = 1.025, nJ6nB1 = 1.042  
+    "18": 1.023      # nJ6nB2 = 1.023, nJ6nB1 = 1.042
   },
   "PILEUP": 1.046,
   "TTHF": 1.13,
   "HDAMP": 1.085,
+  "MU SF": { # Theory uncertainty SFs to include acceptance/event migration, values calculated by Sinan in May 2022
+    "16APV": { "DN": 0.7524, "UP": 1.2888 }, 
+    "16":    { "DN": 0.7524, "UP": 1.2888 },
+    "17":    { "DN": 0.7527, "UP": 1.2890 },
+    "18":    { "DN": 0.7523, "UP": 1.2889 }
+  },
+  "PDF SF": {
+    "16APV": { "DN": 0.9976, "UP": 1.0015 },
+    "16":    { "DN": 0.9976, "UP": 1.0015 },
+    "17":    { "DN": 0.9977, "UP": 1.0015 },
+    "18":    { "DN": 0.9976, "UP": 1.0016 }
+  },
   "MURF NORM": { 
     "TTNOBB": 1.36,
     "TTBB": 1.36,
@@ -262,8 +280,8 @@ hist_bins = {
     "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "1", "2p" ],
-    "NJ": [ "4", "5p" ]
+    "NB": [ "2", "3p" ],
+    "NJ": [ "5", "6", "7p" ]
   },
   "VR": {
     "LEPTON": [ "E", "M" ],
@@ -298,7 +316,7 @@ event_cuts = {
   "met": 20,
   "mt": 0,
   "ht": 350,
-  "dnn": 0.
+  "dnn": 0.0
 }
 
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "

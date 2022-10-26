@@ -51,7 +51,7 @@ def hist_parse( hist_name, samples ):
       parse[ "IS SYST" ] = True
       if part.endswith( "UP" ) or part.endswith( "DN" ):
         parse[ "SHIFT" ] = part[-2:]
-        parse[ "SYST" ] = "PDF{}".format( config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() ) if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in part else "PDF"
+        parse[ "SYST" ] = part[:-2]
       else:
         parse[ "SHIFT" ] = part[3:]
         parse[ "SYST" ] = "PDF"

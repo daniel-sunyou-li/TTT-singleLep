@@ -129,6 +129,7 @@ def cms_lumi( pad, postfix, blind ):
     latex.DrawLatex( pad_dim["L"] + 0.10, 1 - ( 1. + header[ "TEXT OFFSET" ] ) * pad_dim[ "T" ], header[ "POSTFIX" ] )
   
   pad.Update()
+  del latex
 
 def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_signal_yield, norm_bin_width, smooth, doABCDNN ):
   file_name = "template_combine_{}_UL{}".format( args.variable, args.year )
@@ -166,7 +167,7 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
       except:
         histograms[ "TOTAL DAT" ][ category ] = histograms[ "DAT" ][ hist_name ].Clone()
     elif parse[ "GROUP" ] == "BKG":
-      if doABCDNN and parse[ "ABCDNN" ] and "ABCDNN" not in hist_name: continue # only the ABCDNN estimate used for this category
+      if doABCDNN and parse[ "ABCDNN" ] and ( "ABCDNN" not in hist_name and parse[ "COMBINE" ] not in config.params[ "ABCDNN" ][ "MINOR BKG" ] ): continue # only the ABCDNN estimate and minor backgrounds used for this category
       if args.verbose and not parse[ "IS SYST" ]: print( "  + BKG: {}".format( hist_name) )
       histograms[ "BKG" ][ hist_name ] = rFile.Get( hist_name ).Clone( hist_name )  
       if not parse[ "IS SYST" ]:
@@ -463,6 +464,11 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ "ABCDNN" ] )
         hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ].SetLineWidth(2)
         bkg_stack.Add( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ] )
+        for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
+          hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
+          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineWidth(2)
+          bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
       except: pass
     else:
       for group in sorted( groups[ "BKG" ][ "SUPERGROUP" ].keys(), reverse = True ):
@@ -563,6 +569,8 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
       legend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       legend.AddEntry( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ], "ABCDNN", "f" )
+      for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+        legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" )
     else:
       for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
         legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" ) 
@@ -697,6 +705,8 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     save_name += ".png"
     if not os.path.exists( os.path.join( templateDir, "plots/" ) ): os.system( "mkdir -vp {}".format( os.path.join( templateDir, "plots/" ) ) )
     canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
+    ROOT.SetOwnership(canvas,False)
+    del canvas, pad, frame, legend, bkg_stack, latex
 
 def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABCDNN, blind ):
   print( "[START] Plotting background ratios" )
@@ -800,6 +810,7 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
 
   save_name = "background_{}_ratio.png".format( lepton ) if not blind else "background_{}_ratio_blind.png".format( lepton )
   canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
+  del canvas
 
 def main():
   tdrstyle.setTDRStyle()

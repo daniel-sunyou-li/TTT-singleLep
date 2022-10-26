@@ -90,11 +90,11 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
   if doABCDNN:
     abcdnnTag      = config.params[ "ABCDNN" ][ "TAG" ]
-    extABCDScale   = config.params[ "ABCDNN" ][ "MC SCALE" ]
+    extABCDTF      = config.params[ "ABCDNN" ][ "TF" ][ args.year ]
     extABCDTFScale = config.params[ "ABCDNN" ][ "TF SCALE" ]
     abcdnnName     = variableName + "_{}".format( abcdnnTag )
     print( "   + Including ABCDnn Histograms with tag {}".format( abcdnnTag ) )
-    mc_weights[ "ABCDNN" ] = "{} * {} * transfer_{}".format( extABCDScale, extABCDTFScale, abcdnnTag ) 
+    mc_weights[ "ABCDNN" ] = "{} * {}".format( extABCDTF, extABCDTFScale, abcdnnTag ) 
 
   if process.startswith( "TTTo" ):
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"

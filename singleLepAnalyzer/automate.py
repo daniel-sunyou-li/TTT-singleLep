@@ -6,7 +6,7 @@ cmsswbase = os.path.join( os.getcwd(), ".." )
 
 parser = ArgumentParser()
 parser.add_argument( "-s", "--step", required = True, help = "Options: 1-5" )
-parser.add_argument( "-y", "--years", nargs = "+", required = True, help = "Options: 16APV, 16, 17, 18" )
+parser.add_argument( "-y", "--years", nargs = "+",  help = "Options: 16APV, 16, 17, 18" )
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-r", "--region", default = "SR" )
@@ -87,6 +87,7 @@ Queue 1\n".format( shell_name, variable, training[ "tag" ], step2_name )
 def produce_binned_templates():
   trainings = get_trainings( args.tags, args.years, args.variables )
   os.chdir( "makeTemplates" )
+  doABCDNN = config.options[ "GENERAL" ][ "ABCDNN" ]
   if not os.path.exists( "condor_config" ): os.system( "mkdir condor_config" )
   for train in trainings:
     for variable in train[ "variable" ]:
@@ -99,10 +100,10 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {} \n\
 eval `scramv1 runtime -sh`\n\
 cd {} \n\
-python modify_binning.py -y {} -v {} -t {} -r {} \n\
+python modify_binning.py -y {} -v {} -t {} -r {} {} \n\
 python plot_templates.py -y {} -v {} -t {} -r {} --templates \n\ ".format( 
   cmsswbase, os.getcwd(), 
-  train[ "year" ], variable, train[ "tag" ], args.region,
+  train[ "year" ], variable, train[ "tag" ], args.region, doABCDNN,
   train[ "year" ], variable, train[ "tag" ], args.region
 )
       )
@@ -132,10 +133,13 @@ Queue 1""".format(
  
 def run_combine():
   trainings = get_trainings( args.tags, args.years, args.variables )
-  os.chdir( "combine" )
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  postfix = tagABCDnn + tagSmooth
   if not os.path.exists( "condor_config" ): os.system( "mkdir condor_config" )
   for training in trainings:
     for variable in training[ "variable" ]:
+      os.chdir( "combine" )
       condor_name = "condor_step4_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable )
       log_name = "log_{}_{}_{}".format( variable, training[ "year" ], training[ "tag" ] )
       shell_name = "{}/{}.sh".format( log_name, condor_name )
@@ -144,19 +148,16 @@ def run_combine():
       shell.write(
 "#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
-cd {} \n\
+cd {0} \n\
 eval `scramv1 runtime -sh`\n\
-cd {} \n\
-python create_datacard.py -y {} -v {} -t {} -r {} --normSyst --shapeSyst {} \n\
-cd limits_UL{}_{}_{}\n\
-mkdir cmb \n\
+cd {1} \n\
+python create_datacard.py -y {2} -v {3} -t {4} -r {5} --normSyst --shapeSyst {6} \n\
+cd limits_UL{2}_{3}_{5}_{4}_{7}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 4\n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt\n\
 cd ..\n".format(
-  cmsswbase, os.getcwd(),
-  training[ "year" ], variable, training[ "tag" ], args.region, verbose,
-  training[ "year" ], training[ "tag" ], variable,
+  cmsswbase, os.getcwd(), training[ "year" ], variable, training[ "tag" ], args.region, verbose, postfix 
 )
       )
       shell.close()
@@ -164,80 +165,72 @@ cd ..\n".format(
       jdf = open( jdf_name, "w" )
       jdf.write(
 """universe = vanilla \n\
-Executable = {}/{} \n\
+Executable = {0}/{1} \n\
 Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
-JobBatchName = SLA_step4_{} \n\
+JobBatchName = SLA_step4_{2} \n\
 request_memory = 3072 \n\
-Output = {}.out \n\
-Error = {}.err \n\
-Log = {}.log \n\
+Output = {3}.out \n\
+Error = {3}.err \n\
+Log = {3}.log \n\
 Notification = Error \n\
 Arguments = \n\
 Queue 1""".format(
   os.getcwd(), shell_name, condor_name,
   os.path.join( os.getcwd(), log_name, condor_name ), 
-  os.path.join( os.getcwd(), log_name, condor_name ), 
-  os.path.join( os.getcwd(), log_name, condor_name )
 )
       )
       jdf.close()
       os.system( "condor_submit {}".format( jdf_name ) )
       os.chdir( ".." )
   
-def combine_years( tags, variables ):
-  combinations = []
+def combine_years():
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
 
-  for tag in tags:
-    for variable in avariables:
-      combinations.append( {
-        "variable": variable,
-        "tag": tags
-      } )
-      
-  os.chdir( "combine" )
-  for combination in combinations:
-    combine_tag = "{}_{}".format( combination[ "tag" ], combination[ "variable" ] )
-    condor_name = "condor_step5_{}".format( combine_tag )
-    shell_name = "condor_config/{}.sh".format( condor_name )
-    shell = open( shell_name, "w" )
-    shell.write(
+  for variable in args.variables:
+    for tag in args.tags:
+      os.chdir( "combine" )
+      os.mkdir( "condor_log" )
+      combine_tag = "{}_{}_{}_{}".format( variable, args.region, tag, tagSmooth )
+      condor_name = "condor_step5_{}".format( combine_tag )
+      shell_name = "condor_config/{}.sh".format( condor_name )
+      shell = open( shell_name, "w" )
+      shell.write(
 "#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
-cd {} \n\
+cd {0} \n\
 eval `scramv1 runtime -sh` \n\
-cd {} \n\
-combineCards.py UL16APV=limits_UL16APV_{}/cmb/combined.txt.cmb UL16=limits_UL16_{}/cmb/combined.txt.cmb UL17=limits_UL17_{}/cmb/combined.txt.cmb  UL18=limits_UL18_{}/cmb/combined.txt.cmb > Results/{}.txt \n\
-text2workspace.py results/{}.txt -o results/{}.root \n\
-combine -M Significance Results/{}.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > Results/significance_{}.txt \n\
-combine -M AsymptoticLimits Results/{}.root --run=blind --cminDefaultMinimizerStrategy 0 > Results/limits_{}.txt".format(
-  cmsswbase, os.getcwd(),
-  combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combine_tag, combined_tag, combine_tag, combine_tag, combine_tag
+cd {1} \n\
+mkdir -vp Results/{2}/ \n\
+combineCards.py UL16APV=limits_UL16APV_{2}/cmb/combined.txt.cmb UL16=limits_UL16_{2}/cmb/combined.txt.cmb UL17=limits_UL17_{2}/cmb/combined.txt.cmb  UL18=limits_UL18_{2}/cmb/combined.txt.cmb > Results/{2}/workspace.txt \n\
+text2workspace.py Results/{2}/workspace.txt -o Results/{2}/workspace.root \n\
+combine -M Significance Results/{2}/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > Results/{2}/significance.txt \n\
+combine -M AsymptoticLimits Results/{2}/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > Results/{2}/limits.txt".format(
+  cmsswbase, os.getcwd(), combine_tag
 )
     )
-    shell.close()
-    jdf_name = "condor_config/{}.job".format( condor_name )
-    jdf = open( jdf_name, "w" )
-    jdf.write(
+      shell.close()
+      jdf_name = "condor_config/{}.job".format( condor_name )
+      jdf = open( jdf_name, "w" )
+      jdf.write(
 """universe = vanilla \n\
-Executable = {}/{} \n\
+Executable = {0}/{1} \n\
 Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
 JobBatchName = SLA_step5 \n\
 request_memory = 3072 \n\
-Output = {}/condor_log/{}.out \n\
-Error = {}/condor_log/{}.err \n\
-Log = {}/condor_log/{}.log \n\
+Output = {0}/condor_log/{2}.out \n\
+Error = {0}/condor_log/{2}.err \n\
+Log = {0}/condor_log/{2}.log \n\
 Notification = Error \n\
 Arguments = \n\
 Queue 1""".format(
-  os.getcwd(), shell_name,
-  os.getcwd(), condor_name, os.getcwd(), condor_name, os.getcwd(), condor_name
+      os.getcwd(), shell_name, condor_name
 )
     )
-    jdf.close()
-    os.system( "condor_submit {}".format( jdf_name ) )
-    os.chdir( ".." )
+      jdf.close()
+      os.system( "condor_submit {}".format( jdf_name ) )
+      os.chdir( ".." )
 
 if args.step == "1": produce_templates()
 elif args.step == "2": run_templates()
