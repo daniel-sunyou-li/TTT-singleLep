@@ -47,7 +47,7 @@ The `singleLepAnalyzer` repository can be run in two modes: one using purely sca
 
 All scripts run automatically by `automate.py` can be run interactively via the terminal. All example interactive submissions are for the 2017 era running a fit on the DNN discriminator binned for the signal region. If you create a new production of step1, step2 or step3 files, you may need to update `samplesUL##.py` with the correct file names, as well as indiate number of hadded files. You may also redefine the background groupings used for formatting the backgrounds. You may also update the process cross-sections used in normalizing the MC yields in `xsec.py`. 
 
-### Step 0 Edit `config.py`
+### Step 0 -- Edit `config.py`
 
 All settings and parameters are defined in `config.py` and any edits should only be made to `config.py`. Check (and edit) the following settings/parameters before running `singleLepAnalyzer`:
 * `inputDir` -- path to ROOT files containing events
