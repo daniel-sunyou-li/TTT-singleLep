@@ -41,11 +41,30 @@ Where the following arguments are supported:
 
 ## Detailed Step Explanations
 
+All scripts run automatically by `automate.py` can be run interactively via the terminal. All example interactive submissions are for the 2017 era running a fit on the DNN discriminator binned for the signal region.
+
 ### Step 0 Edit `config.py`
 
-All settings and parameters are defined in `config.py` and any edits should only be made to `config.py`. 
+All settings and parameters are defined in `config.py` and any edits should only be made to `config.py`. Check (and edit) the following settings/parameters before running `singleLepAnalyzer`:
+* `inputDir` -- path to ROOT files containing events
+* `options` -- boolean analysis options
+* `params` -- non-boolean analysis parameters 
+* `systematics` -- indicate systematics to include in analysis as well as uncertainty values
+* `hist_bins` -- define template binning regions
+* `event_cuts` -- event selection cut values
+* `base_cut` -- cuts applied to branches in ROOT files
+* `mc_weight` -- scale factor weights applied per event, also modified in `hists.py`
+* `plot_params` -- new analysis variables need to be added along with desired binning and plotting name
 
 ### Step 1 -- Draw Histograms
+
+To populate histograms interactively,
+
+        cd makeTemplates/
+        python hists.py -v DNN -y 17 -nh 1p -nb 3p -nj 7p -sd templates_UL17_DNN_SR
+        
+Running `hists.py` once creates the template for a single combination of the template binning regions. Running step 1 for `automate.py` calls on `condor_templates.py` to submit all combinations of the signal region template binning as condor jobs and saves each template to the same subdirectory
+
 
 ### Step 2 -- Format and Clean `Higgs Combine` Templates
 
