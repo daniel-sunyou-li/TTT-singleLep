@@ -39,6 +39,10 @@ Where the following arguments are supported:
 * `-t` (`--tag`): unique postfix for templates generated for a given config setting
 * `-s` (`--step`): `1` through `7`, for an explanation, see below
 
+## ABCDnn and Extended ABCD Settings
+
+The `singleLepAnalyzer` repository can be run in two modes: one using purely scale-factor based MC corrections and one using data-driven methods for both shape and normalization corrections. An additional step before running `singleLepAnalyzer` is needed for using ABCDnn, which can be found [here](https://github.com/daniel-sunyou-li/ABCDnn). These files should be stored in a directory similar to the nominal ROOT files. Running with ABCDnn files will replace the outtermost template bin category corrections with the ABCDnn and extended ABCD methods.
+
 ## Detailed Step Explanations
 
 All scripts run automatically by `automate.py` can be run interactively via the terminal. All example interactive submissions are for the 2017 era running a fit on the DNN discriminator binned for the signal region. If you create a new production of step1, step2 or step3 files, you may need to update `samplesUL##.py` with the correct file names, as well as indiate number of hadded files. You may also redefine the background groupings used for formatting the backgrounds. You may also update the process cross-sections used in normalizing the MC yields in `xsec.py`. 
