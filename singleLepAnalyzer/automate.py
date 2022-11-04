@@ -93,8 +93,8 @@ python modify_binning.py -y {2} -t {3} -v {4} -r {5} {6}".format(
   
 def plot_templates():
   trainings = get_trainings( args.tags, args.years, args.variables )
-  for train in trainings:
-    for variable in train[ "variable" ]:
+  for training in trainings:
+    for variable in training[ "variable" ]:
       os.chdir( "makeTemplates" )
       nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
       nameCondor = "SLA_step3_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
@@ -107,7 +107,7 @@ eval `scramv1 runtime -sh`\n\
 cd {1} \n\
 python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates \n\ ".format( 
   cmsswbase, os.getcwd(), 
-  train[ "year" ], variable, train[ "tag" ], args.region, doABCDNN,
+  training[ "year" ], variable, training[ "tag" ], args.region
 )
       )
       shell.close()
