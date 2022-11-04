@@ -337,7 +337,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           for shift in [ "UP", "DN" ]:
             if config.systematics[ "MC" ][ syst ]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
-        if config.options[ "GENERAL" ][ "PDF" ]:
+        if config.options[ "GENERAL" ][ "PDF" ] and "PDF" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
             hists[ "CMB" ][ hist_tag( "ABCDNN", category, "PDF" + str(i) ) ].Write()
         if args.verbose: print( "  + BKG SYST > ABCDNN" )

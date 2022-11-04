@@ -7,7 +7,7 @@ options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
   "REBINNED": True,
-  "ABCDNN": True,
+  "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
   "COMPARE SHAPES": False,
@@ -16,48 +16,40 @@ options = {
   "REAL PULL": False,
   "BLIND": False,
   "Y LOG": True,
-  "SMOOTH": True,
+  "SMOOTH": False,
   "SYMM SMOOTHING": False,
 }
 
 params = {
   "POSTFIX TEXT": "Preliminary",
   "INCLUDE LEP": [ "E", "M", "L" ], # E,M,L
-  "ERROR BAND": [ "ALL" ], # "SHAPE ONLY", "SHAPE + NORM"
+  "ERROR BAND": [ "SHAPE", "STAT", "NORM" ], # STAT, SHAPE, NORM, ALL
   "EXCLUDE SYST": [
-    #"pdf", # this is fine
-    #"pswgt", # this is fine
-    #"pileup", # this is fine 
-    #"prefire",
-    "trigeff", # this one seems like there might be an issue --> way too huge? 
-    #"muRF",
-    #"muRFcorrd", # this is fine
-    #"muR", # this is fine
-    #"muF", # this is fine
-    #"isr", # this is fine 
-    #"fsr", # this is fine 
-    #"hotstat",  # seems a bit large 
-    #"hotcspur",
-    #"hotclosure",
-    "njet",
-    "njetsf",
+    "PDF", "PDFSIG",
+    "PSWGT", "PSWGTSIG", "PSWGTTTBAR", "PSWGTTOP", "PSWGTTTH", "PSWGTEWK", "PSWGTQCD",
+    #"PILEUP", 
+    #"PREFIRE",
+    "MUR", "MURSIG", "MURTTBAR", "MURTOP", "MURTTH", "MUREWK", "MURQCD",
+    "MUF", "MUFSIG", "MUFTTBAR", "MUFTOP", "MUFTTH", "MUFEWK", "MUFQCD",
+    "MURFCORRD", "MURFCORRDSIG", "MURFCORRDTTBAR", "MURFCORRDTOP", "MURFCORRDTTH", "MURFCORRDEWK", "MURFCORRDQCD",
+    "MURF", "MURFSIG",
+    "ISR", "ISRSIG", 
+    "FSR", "FSRSIG",  
+    "HOTSTAT",   
+    "HOTCSPUR",
+    "HOTCLOSURE",
     #"LF", # this is fine
-    #"lfstats1", # this one might have an issue
+    #"LFSTATS2", # this one might have an issue
     #"lfstats2", # this one might have an issue
     #"HF", # this is fine
     #"hfstats1",
     #"hfstats2",
     #"cferr1",
     #"cferr2",
-    #"jes", # this one might have an issue
-    "toppt",
-    "ht",
-    #"JER", # this seems very large
-    #"JEC", # this seems very large
-    "HD",
-    "UE"
+    #"JER", 
+    #"JEC", 
   ],
-  "SCALE SIGNAL YIELD": 100,
+  "SCALE SIGNAL YIELD": 1000,
   "DAT COLOR": ROOT.kBlack,
   "SIG COLOR": ROOT.kBlack,
   "SIG PULL COLOR": 2,
@@ -102,7 +94,7 @@ params[ "CANVAS" ][ "L" ] = 0.12 * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "R" ] = 0.04 * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "W" ] = 1. * params[ "CANVAS" ][ "W REF" ]
 params[ "CANVAS" ][ "H" ] = 1. * params[ "CANVAS" ][ "W REF" ]
-params[ "CANVAS" ][ "TAG X" ] = 0.82
-params[ "CANVAS" ][ "TAG Y" ] = 0.60
+params[ "CANVAS" ][ "TAG X" ] = 0.20
+params[ "CANVAS" ][ "TAG Y" ] = 0.76
 
 params[ "LATEX SIZE" ] = 0.04

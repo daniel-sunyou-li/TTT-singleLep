@@ -216,8 +216,88 @@ cd .. \n".format(
       condor_template( nameLog, nameCondor )
       os.chdir( ".." )
   
+def impact_plots_combined():
+  freezeParams = {
+    "NOMINAL": "",
+    "JECFLAVORQCD": "JECFLAVORQCDLOWESS",
+    "ISRTTBAR": "ISRTTBARLOWESS",
+    "HF": "HFLOWESS",
+    "ISRTOP": "ISRTOPLOWESS",
+    "MURFTTBAR": "MURFTTBARLOWESS",
+    "ISRQCD": "ISRQCDLOWESS",
+    "FSRTTBAR": "FSRTTBARLOWESS",
+    "THEORYTTH": "ISRTTHLOWESS,FSRTTHLLOWESS,MURFTTHLOWESS,XSEC_TTH"
+  }
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  for tag in args.tags:
+    for variable in args.variables:
+      nameLog = "log_{}_{}_{}".format( variable, args.region, tag )
+      if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
+      for freezeTag in freezeParams:
+        freezeParam = "" if freezeTag == "NOMINAL" else "--freezeParameters {}".format( freezeParams[ freezeTag ] )
+        tagFreeze = "noFreeze" if freezeTag == "NOMINAL" else "freeze" + freezeTag
+        for i in [0,1]:
+          tagR = "r{}".format(i)
+          os.chdir( "combine" )
+          postfix = tagSmooth + tagABCDnn
+          nameCondor = "SLA_step7_{}_{}_{}_{}".format( variable, args.region, tag, tagR + postfix + tagFreeze )  
+          tagAllSyst = "{}_{}_{}_{}".format( variable, args.region, tag, postfix )
+          if not os.path.exists( os.path.join( "Results/", tagAllSyst, tagFreeze ) ): os.system( "mkdir -vp Results/{}".format( os.path.join( tagAllSyst, tagFreeze ) ) )
+          shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
+          shell.write(
+"#!/bin/bash\n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
+cd {0} \n\
+eval `scramv1 runtime -sh` \n\
+cd {1} \n\
+cd Results/{2}/{3}/ \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit 1 -t -1 --expectSignal {4} --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 8 \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit 1 -t -1 --expectSignal {4} --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --exclude rgx{5} --cminDefaultMinimizerType Minuit --parallel 8 {6} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_{2}.json --exclude rgx{5} \n\
+plotImpacts.py -i impacts_{2}.json -o impacts_{2} \n\
+cd .. \n".format(
+  cmsswbase, os.getcwd(), tagAllSyst, tagFreeze, i, "\{prop_bin.*\}", freezeParam
+)
+      )
+          shell.close()
+          condor_template( nameLog, nameCondor )
+          os.chdir( ".." )
 
-def uncertainty_breakdown():
+def uncertainty_breakdown_era():
+  trainings = get_trainings( args.tags, args.years, args.variables )
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  postfix = tagABCDnn + tagSmooth
+  for training in trainings:
+    for variable in training[ "variable" ]:
+      os.chdir( "combine" )
+      nameCondor = "SLA_step8_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix )
+      nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
+      shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
+      shell.write(
+"#!/bin/bash\n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
+cd {0} \n\
+eval `scramv1 runtime -sh` \n\
+cd {1} \n\
+cd limits_UL{2}_{3}_{4}_{5}_{6}/cmb/ \n\
+combine workspace.root -M MultiDimFit -t -1 --saveWorkspace --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit -n postfit \n\
+combine workspace.root -M MultiDimFit -t -1 --algo grid --snapshotName MultiDimFit --setParameterRanges r=-100,100 -n workspace.total \n\
+combine workspace.root -M MultiDimFit -t -1 --algo grid --snapShotName MultiDimFit --setParameterRanges r=-100,100 --freezeNuisanceGroups SHAPE,NORM -n workspace.freeze_shape_norm \n\
+combine workspace.root -M MultiDimFit -t -1 --algo grid --snapShotName MultiDimFit --setParameterRanges r=-100,100 --freezeNuisanceGroups SHAPE,NORM,THEORY -n workspace.freeze_shape_norm_theory \n\
+combine workspace.root -M MultiDimFit -t -1 --algo grid --snapShotName MultiDimFit --setParameterRanges r=-100,100 --freezeParameters allConstrainedNuisances -n workspace.freeze_all \n\
+plot1DScan.py workspace.root --main-label \"Total Uncertainty\" --others workspace.freeze_shape.MultiDimFit.mH120.root:\"Freeze Shape\":4 workspace.freeze_shape_norm.MultiDimFit.mH120.root:\"Freeze Shape+Norm\":7 workspace.freeze_shape_norm_theory.MultiDimFit.mH120.root:\"Stat Only\":6 --output breakdown_UL{2}_{3}_{4}_{5}_{6} --y-max 10 --y-cut 40 --breakdown \"Shape,Norm,Theory,Rest,Stat\" \n\
+cd .. \n".format(
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], postfix, "\{prop_bin.*\}"
+)
+      )
+      shell.close()
+      condor_template( nameLog, nameCondor )
+      os.chdir( ".." )
+  
+
   return
 
 
@@ -227,5 +307,6 @@ elif args.step == "3": plot_templates()
 elif args.step == "4": run_combine()
 elif args.step == "5": combine_years()
 elif args.step == "6": impact_plots_era()
+elif args.step == "7": impact_plots_combined()
 else:
   print( "[ERR] Invalid step option used" ) 

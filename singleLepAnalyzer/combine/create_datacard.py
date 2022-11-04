@@ -13,9 +13,11 @@ parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True, help = ",".join( list( config.region_prefix.keys() ) ) )
 parser.add_argument( "-v", "--variable", required = True )
 parser.add_argument( "-m", "--mode", default = 0, help = "0,1,2,3" )
+parser.add_argument( "-c", "--card", help = "Datacard input to add systematic groups to" )
 parser.add_argument( "--shapeSyst", action = "store_true" )
 parser.add_argument( "--normSyst", action = "store_true" )
 parser.add_argument( "--verbose", action = "store_true" )
+parser.add_argument( "--groups", action = "store_true", help = "Add systematic groups in datacard for systematic breakdown" )
 args = parser.parse_args()
 
 import CombineHarvester.CombineTools.ch as ch
@@ -994,4 +996,66 @@ def main():
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()
   
-main()
+def add_groups_datacard( nDataCard ):
+  fDataCard = open( nDataCard, "a" )
+  tagSmooth = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() if config.options[ "COMBINE"][ "SMOOTH" ] else ""
+  doABCDNN = config.options[ "COMBINE" ][ "ABCDNN" ]
+  groups = { "NORM": [], "SHAPE": [], "THEORY": [], "ABCDNN": [] }
+  groups[ "NORM" ].append( "LUMI_{}".format( args.year ) )
+  groups[ "NORM" ].append( "LUMI_RUN2" )
+  groups[ "NORM" ].append( "LUMI_17_18" )
+  groups[ "NORM" ].append( "ID_EL_{}".format( args.year ) )
+  groups[ "NORM" ].append( "TRIG_EL_{}".format( args.year ) )
+  groups[ "NORM" ].append( "ISO_EL_{}".format( args.year ) )
+  groups[ "NORM" ].append( "ID_MU_{}".format( args.year ) )
+  groups[ "NORM" ].append( "TRIG_MU_{}".format( args.year ) )
+  groups[ "NORM" ].append( "ISO_MU_{}".format( args.year ) )
+  groups[ "NORM" ].append( "XSEC_TTBAR" )
+  groups[ "NORM" ].append( "XSEC_EWK" )
+  groups[ "NORM" ].append( "XSEC_TOP" )
+  groups[ "NORM" ].append( "XSEC_TTH" )
+  groups[ "NORM" ].append( "TTHF" )
+  groups[ "SHAPE" ].append( "PILEUP{}".format( tagSmooth ) )
+  groups[ "SHAPE" ].append( "PREFIRE{}{}".format( tagSmooth , args.year ) )
+  groups[ "SHAPE" ].append( "HF{}".format( tagSmooth ) )
+  groups[ "SHAPE" ].append( "LF{}".format( tagSmooth ) )
+  groups[ "SHAPE" ].append( "HFSTATS1{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "HFSTATS2{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "LFSTATS1{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "LFSTATS2{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "CFERR1{}".format( tagSmooth ) )
+  groups[ "SHAPE" ].append( "CFERR2{}".format( tagSmooth ) )
+  groups[ "SHAPE" ].append( "HOTSTAT{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "HOTCSPUR{}{}".format( tagSmooth, args.year ) )
+  groups[ "SHAPE" ].append( "HOTCLOSURE{}{}".format( tagSmooth, args.year ) )
+  for systJEC in config.systematics[ "REDUCED JEC" ]:
+    jecSYST_tag = "JEC{}".format( tagSmooth ).replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
+    if "Era" in systJEC:
+      jecSYST_tag += args.year 
+    groups[ "SHAPE" ].append( jecSYST_tag )
+  for theory in [ "PDF", "MURF", "ISR", "FSR" ]:
+    groups[ "THEORY" ].append( theory + "SIG" )
+    for process in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+      if process in [ "TTNOBB", "TTBB" ]:
+        groups[ "THEORY" ].append( theory + "TTBAR" + tagSmooth )
+      else:
+        groups[ "THEORY" ].append( theory + process + tagSmooth )
+  if doABCDNN:
+    groups[ "ABCDNN" ].append( "EXTABCDSYST" )
+    groups[ "ABCDNN" ].append( "EXTABCDSTAT" )
+    groups[ "ABCDNN" ].append( "EXTABCDCLOSURE" )
+    groups[ "ABCDNN" ].append( "ABCDNNMODEL" + tagSmooth )
+    groups[ "ABCDNN" ].append( "ABCDNNSAMPLE" + tagSmooth )
+
+  fDataCard.write( "NORM   group = {} \n".format( " ".join( groups[ "NORM" ] ) ) )
+  fDataCard.write( "SHAPE  group = {} \n".format( " ".join( groups[ "SHAPE" ] ) ) )
+  fDataCard.write( "THEORY group = {} \n".format( " ".join( groups[ "THEORY" ] ) ) )
+  if doABCDNN:
+    fDataCard.write( "ABCDNN group = {} \n".format( " ".join( groups[ "ABCDNN" ] ) ) )
+
+  fDataCard.close()
+
+if args.groups:
+  add_groups_datacard( args.card )
+else:
+  main()

@@ -497,6 +497,7 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ].upper() != "MUR" and parse[ "SHIFT" ] != "UP": continue 
+        if parse[ "COMBINE" ] == "ABCDNN" and "MURF" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
         count += 1 
         hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
@@ -544,13 +545,13 @@ class ModifyTemplate():
           self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
           self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
           if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]: # correlate all MURF ttbar theory systematics together
-            self.rebinned[ hist_key ][ "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
+            self.rebinned[ hist_key ][ "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
             self.rebinned[ hist_key ][ "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
           elif parse[ "COMBINE" ] in config.params[ "COMBINE" ][ "SIGNALS" ]: # correlate signal processes together
-            self.rebinned[ hist_key ][ "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
+            self.rebinned[ hist_key ][ "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
             self.rebinned[ hist_key ][ "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
           else: # correlate MURF theory systematics by group
-            self.rebinned[ hist_key ][ "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) )
+            self.rebinned[ hist_key ][ "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) )
             self.rebinned[ hist_key ][ "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ].SetDirectory(0)
             
     print( "[DONE] Created {} MU Renormalization and Factorization histograms".format( count ) ) 
@@ -563,6 +564,7 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ].upper() != "ISR" and parse[ "SHIFT" ] != "UP": continue 
+        if parse[ "COMBINE" ] == "ABCDNN" and ( "ISR" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and "FSR" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] ): continue
         count += 1
         hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
