@@ -71,7 +71,7 @@ params = {
     "PDF RANGE": 100,   # PDF range
   },
   "ABCDNN": {
-    "TAG": "nJ7pnB3p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
+    "TAG": "nJ7pnB3pnHOT1p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
     "TF": {
       "16APV": 0.01489,       # nJ5pnB2p = 0.02610, nJ7pnB3p = 0.01489
       "16": 0.01522,          # nJ5pnB2p = 0.02805, nJ7pnB3p = 0.01522   
@@ -83,7 +83,7 @@ params = {
     "TRANSFER VARIABLES": [ "CSVB_3", "DNN" ],  # transformed variables
     "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
     "MINOR BKG": [ "TTH", "TOP", "EWK" ],   # Minor backgrounds to include with ABCDnn in SR
-    "SYSTEMATICS": [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE", "MUR", "MUF", "MURFCOORD","MURF", "ISR", "FSR", "PDF" ],
+    "SYSTEMATICS": [ "ABCDNNCLOSURE" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -103,7 +103,7 @@ params = {
       "NJET", "NJETSF", "PSWGT", "BTAG"
     ],
     "EXCLUDE SMOOTH": [
-      "TOPPT", "HT" 
+      "HT" 
     ]
   },
   "COMBINE": {
@@ -182,16 +182,16 @@ systematics = {
     "18": 1.002
   },
   "TRIG": {
-    "E": 1.03, 
-    "M": 1.03,
+    "E": { year: 1.03 for year in years }, 
+    "M": { year: 1.03 for year in years },
   },
   "ID": {
-    "E": 1.015,
-    "M": 1.010
+    "E": { year: 1.015 for year in years },
+    "M": { year: 1.010 for year in years }
   },
   "ISO": {
-    "E": 1.025,
-    "M": 1.025
+    "E": { year: 1.025 for year in years },
+    "M": { year: 1.025 for year in years }
   },
   "XSEC": {
     "TTBAR": [ 0.91, 1.11 ], # hDamp uncertainty of +10/-7% added in quadrature with x-sec uncertainty of +4.8/-5.5%
@@ -201,25 +201,25 @@ systematics = {
   },
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
-    "16APV": 1.050,  # nJ7pnB3p = 1.050, nJ5pnB2p = 1.015
-    "16": 1.048,     # nJ7pnB3p = 1.048, nJ5pnB2p = 1.014
-    "17": 1.031,     # nJ7pnB3p = 1.031, nJ5pnB2p = 1.010 
-    "18": 1.025,     # nJ7pnB3p = 1.026, nJ5pnB2p = 1.008 
+    "16APV": 1.084,  # nJ7pnB3p = 1.050, nJ5pnB2p = 1.015, nJ7pnB3pnHOT1p = 1.084
+    "16": 1.081,     # nJ7pnB3p = 1.048, nJ5pnB2p = 1.014, nJ7pnB3pnHOT1p = 1.081
+    "17": 1.054,     # nJ7pnB3p = 1.031, nJ5pnB2p = 1.010, nJ7pnB3pnHOT1p = 1.054
+    "18": 1.044,     # nJ7pnB3p = 1.026, nJ5pnB2p = 1.008, nJ7pnB3pnHOT1p = 1.044
   },
   "EXTABCDSTAT": {
-    "16APV": 1.029,  # nJ7pnB3p = 1.029, nJ5pnB2p = 1.005
-    "16": 1.029,     # nJ7pnB3p = 1.029, nJ5pnB2p = 1.004
-    "17": 1.018,     # nJ7pnB3p = 1.018, nJ5pnB2p = 1.003
-    "18": 1.015,     # nJ7pnB3p = 1.015, nJ5pnB2p = 1.002 
+    "16APV": 1.041,  # nJ7pnB3p = 1.029, nJ5pnB2p = 1.005, nJ7pnB3pnHOT1p = 1.041
+    "16": 1.042,     # nJ7pnB3p = 1.029, nJ5pnB2p = 1.004, nJ7pnB3pnHOT1p = 1.042
+    "17": 1.029,     # nJ7pnB3p = 1.018, nJ5pnB2p = 1.003, nJ7pnB3pnHOT1p = 1.029
+    "18": 1.023,     # nJ7pnB3p = 1.015, nJ5pnB2p = 1.002, nJ7pnB3pnHOT1p = 1.023
   },
   "EXTABCDCLOSURE": {
-    "16APV": 1.070,  # nJ6nB2 = 1.070, nJ6nB1 = 1.040  
+    "16APV": 1.070,  # nJ6nB2 = 1.070, nJ6nB1 = 1.040
     "16": 1.154,     # nJ6nB2 = 1.009, nJ6nB1 = 1.060
     "17": 1.025,     # nJ6nB2 = 1.025, nJ6nB1 = 1.042  
     "18": 1.023      # nJ6nB2 = 1.023, nJ6nB1 = 1.042
   },
   "PILEUP": 1.046,
-  "TTHF": 1.13,
+  "TTHF": { year: 1.13 for year in years },
   "HDAMP": 1.085,
   "MU SF": { # Theory uncertainty SFs to include acceptance/event migration, values calculated by Sinan in May 2022
     "16APV": { "DN": 0.7524, "UP": 1.2888 }, 
@@ -301,11 +301,11 @@ hist_bins = {
   },
   "ABCDNN": { # edit these based on ABCDnn training signal region
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0p" ],
+    "NHOT": [ "1p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "2p" ],
-    "NJ": [ "5p" ] 
+    "NB": [ "3p" ],
+    "NJ": [ "7p" ] 
   }
 }
 

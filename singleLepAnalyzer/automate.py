@@ -110,9 +110,9 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios {6}".format( 
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6}".format( 
+#python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios {6} \n\
+#python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates {6} \n\
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )
@@ -222,8 +222,8 @@ cd {1} \n\
 cd limits_UL{2}_{3}_{4}_{5}_{6}/cmb/ \n\
 mkdir {7} \n\
 cd {7} \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.2 --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 40 \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.2 --cminDefaultMinimizerStrategy 0 --exclude rgx{8} --cminDefaultMinimizerType Minuit {9} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.1 --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 40 \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.1 --cminDefaultMinimizerStrategy 0 --exclude rgx{8} --cminDefaultMinimizerType Minuit {9} \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json --exclude rgx{8} \n\
 plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7} \n\
 cd .. \n".format(
@@ -237,14 +237,14 @@ cd .. \n".format(
 def impact_plots_combined():
   freezeParams = {
     "NOMINAL": "",
-    "JECFLAVORQCD": "JECFLAVORQCDLOWESS",
-    "ISRTTBAR": "ISRTTBARLOWESS",
-    "HF": "HFLOWESS",
-    "ISRTOP": "ISRTOPLOWESS",
-    "MURFTTBAR": "MURFTTBARLOWESS",
-    "ISRQCD": "ISRQCDLOWESS",
-    "FSRTTBAR": "FSRTTBARLOWESS",
-    "THEORYTTH": "ISRTTHLOWESS,FSRTTHLLOWESS,MURFTTHLOWESS,XSEC_TTH"
+    #"JECFLAVORQCD": "JECFLAVORQCDLOWESS",
+    #"ISRTTBAR": "ISRTTBARLOWESS",
+    #"HF": "HFLOWESS",
+    #"ISRTOP": "ISRTOPLOWESS",
+    #"MURFTTBAR": "MURFTTBARLOWESS",
+    #"ISRQCD": "ISRQCDLOWESS",
+    #"FSRTTBAR": "FSRTTBARLOWESS",
+    #"THEORYTTH": "ISRTTHLOWESS,FSRTTHLLOWESS,MURFTTHLOWESS,XSEC_TTH"
   }
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"

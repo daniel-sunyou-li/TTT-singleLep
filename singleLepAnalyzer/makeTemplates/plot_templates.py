@@ -1061,7 +1061,7 @@ def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categor
       # save the plot
 
       save_name = hist_tag( args.variable, category, syst )
-      if rebinned: save_name += "_rebinned_stat{}".format( str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+      if hist_parse( category, samples )[ "ABCDNN" ] and doABCDNN: save_name += "_ABCDnn"
       if blind: save_name += "_blind"
       if config_plot.options[ "Y LOG" ]: save_name += "_logy"
       save_name += ".png"
@@ -1130,7 +1130,7 @@ def main():
           scale_signal_yield = config_plot.options[ "SCALE SIGNAL YIELD" ], 
           real_pull = config_plot.options[ "REAL PULL" ]
         )
-      if args.shifts:
+      if args.shifts and config_plot.options[ "REBINNED" ] and config_plot.options[ "SMOOTH" ]:
         plot_shifts( 
           templateDir = templateDir, 
           lep = lep, 

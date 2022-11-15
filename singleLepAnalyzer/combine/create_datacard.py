@@ -16,6 +16,7 @@ parser.add_argument( "-m", "--mode", default = 0, help = "0,1,2,3" )
 parser.add_argument( "-c", "--card", help = "Datacard input to add systematic groups to" )
 parser.add_argument( "--shapeSyst", action = "store_true" )
 parser.add_argument( "--normSyst", action = "store_true" )
+parser.add_argument( "--theorySyst", action = "store_true" )
 parser.add_argument( "--verbose", action = "store_true" )
 parser.add_argument( "--groups", action = "store_true", help = "Add systematic groups in datacard for systematic breakdown" )
 args = parser.parse_args()
@@ -51,6 +52,7 @@ class DataCard():
     self.abcdnn = options[ "ABCDNN" ]
     self.tag = tag
     self.lumistr = config.lumiStr[ self.year ]
+    self.smooth = config.options[ "COMBINE" ][ "SMOOTH" ]
     self.smoothing = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
     self.regions = {
       "SIGNAL":  [],
@@ -87,6 +89,9 @@ class DataCard():
     
     self.categories = { "ALL": list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names if ( "isE" in hist_name.split( "_" )[-2] or "isM" in hist_name.split( "_" )[-2] ) ) ) }
     self.categories[ "ABCDNN" ] = [ category for category in self.categories[ "ALL" ] if hist_parse( category, self.samples )[ "ABCDNN" ] ]
+    self.categories[ "SF" ] = self.categories[ "ALL" ]
+    if self.abcdnn:
+      self.categories[ "SF" ] = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
     self.categories[ "E" ] =   [ category for category in self.categories[ "ALL" ] if "isE" in category ]
     self.categories[ "M" ] =   [ category for category in self.categories[ "ALL" ] if "isM" in category ]
     self.categories[ "B" ] =   [ category for category in self.categories[ "ALL" ] if "nB0p" not in category ]
@@ -150,7 +155,6 @@ class DataCard():
         else:
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
     
-          
     self.masses = ch.ValsFromRange( "690" )
     
   def define_regions( self, mode = 0 ):
@@ -203,722 +207,232 @@ class DataCard():
         count[ "CR" ] += 1
     print( "[DONE] Added {} categories to SR and {} categories to CR".format( count[ "SR" ], count[ "CR" ] ) )
   
-  def add_normalization_systematics( self ):
-    print( "[START] Retrieving yield systematics from {}".format( self.templateName ) )
-    count = 0
-    
-    shape_categories = self.categories[ "ALL" ]
-    if self.abcdnn:
-      shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
-    
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst( 
-      self.harvester, "LUMI_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
+  def add_norm( self, baseTag, groups, categories, values ):
+    self.harvester.cp().process( groups ).channel( categories ).AddSyst( 
+      self.harvester, baseTag, "lnN",
+      ch.SystMap( "era" )( [ "16APV" ], values[ "16APV" ] )( [ "16" ], values[ "16" ] )( [ "17" ], values[ "17" ] )( [ "18" ], values[ "18" ] )
     )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst( 
-      self.harvester, "LUMI_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst( 
-        self.harvester, "LUMI_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI" ][ "18" ] )
-      )
-    print( "   + Luminosity {}: {} (lnN)".format( self.year, config.systematics[ "LUMI" ][ self.year ] ) )
-    count += 1
 
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-      self.harvester, "LUMI_RUN2", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI_RUN2" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI_RUN2" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI_RUN2" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_RUN2" ][ "18" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-      self.harvester, "LUMI_RUN2", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI_RUN2" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI_RUN2" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI_RUN2" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_RUN2" ][ "18" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.signals + self.backgrounds ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, "LUMI_RUN2", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "LUMI_RUN2" ][ "16APV" ] )( [ "16" ], config.systematics[ "LUMI_RUN2" ][ "16" ] )( [ "17" ], config.systematics[ "LUMI_RUN2" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_RUN2" ][ "18" ] )
+  def add_shape( self, tag, groups, categories, smooth, decorrelate ):
+    if smooth: tag += "LOWESS"
+    if decorrelate:
+      self.harvester.cp().process( groups ).channel( categories ).AddSyst(
+        self.harvester, tag + "$ERA", "shape",
+        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
       )
-    print( "   + Luminosity (Run2 Correlated) {}: {} (lnN)".format( self.year, config.systematics[ "LUMI_RUN2" ][ self.year ] ) )
-    count += 1
+    else:
+      self.harvester.cp().process( groups ).channel( categories ).AddSyst(
+        self.harvester, tag, "shape",
+        ch.SystMap()( 1.0 )
+      )
+    
+
+  def add_normalization_systematics( self ):
+    print( "[START] Retrieving normalization systematics from {}".format( self.templateName ) )
+    
+    self.categories[ "SF" ] = self.categories[ "ALL" ]
+    if self.abcdnn:
+      self.categories[ "SF" ] = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
+
+    self.add_norm( "LUMI_$ERA", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI" ] )
+    self.add_norm( "LUMI_$ERA", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI" ] )
+    if self.abcdnn: self.add_norm( "LUMI_$ERA", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI" ] )
+
+    self.add_norm( "LUMI_RUN2", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI_RUN2" ] )
+    self.add_norm( "LUMI_RUN2", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI_RUN2" ] )
+    if self.abcdnn: self.add_norm( "LUMI_RUN2", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI_RUN2" ] )
 
     if self.year in [ "17", "18" ]:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, "LUMI_17_18", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], config.systematics[ "LUMI_17_18" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_17_18" ][ "18" ] )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, "LUMI_17_18", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], config.systematics[ "LUMI_17_18" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_17_18" ][ "18" ] )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, "LUMI_17_18", "lnN",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], config.systematics[ "LUMI_17_18" ][ "17" ] )( [ "18" ], config.systematics[ "LUMI_17_18" ][ "18" ] )
-        )
-      print( "   + Luminosity (2017 and 2018 Correlated) {}: {} (lnN)".format( self.year, config.systematics[ "LUMI_17_18" ][ self.year ] ) )
-      count += 1
+      self.add_norm( "LUMI_17_18", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI_17_18" ] )
+      self.add_norm( "LUMI_17_18", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI_17_18" ] )
+      if self.abcdnn: self.add_norm( "LUMI_17_18", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI_17_18" ] )
+ 
+    self.add_norm( "ID_EL_$ERA", self.signals, self.categories[ "E" ], config.systematics[ "ID" ][ "E" ] )
+    self.add_norm( "ID_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
+    if self.abcdnn: self.add_norm( "ID_EL_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
 
-    shape_categories_E = self.categories[ "E" ]
-    shape_categories_M = self.categories[ "M" ]
-    if self.abcdnn:
-      shape_categories_M = [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ]
-      shape_categories_E = [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ]
-      abcdnn_categories_M = [ category for category in self.categories[ "ABCDNN" ] if "isM" in category ]
-      abcdnn_categories_E = [ category for category in self.categories[ "ABCDNN" ] if "isE" in category ]
-
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "E" ] ).AddSyst( 
-      self.harvester, "ID_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_E ).AddSyst( 
-      self.harvester, "ID_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_E ).AddSyst( 
-        self.harvester, "ID_EL_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "E" ] )( [ "16" ], config.systematics[ "ID" ][ "E" ] )( [ "17" ], config.systematics[ "ID" ][ "E" ] )( [ "18" ], config.systematics[ "ID" ][ "E" ] )
-      )
-    print( "   + ID (electron) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "E" ] ) )
-    count += 1
+    self.add_norm( "TRIG_EL_$ERA", self.signals, self.categories[ "E" ], config.systematics[ "TRIG" ][ "E" ] )
+    self.add_norm( "TRIG_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "TRIG" ][ "E" ] )
+    if self.abcdnn: self.add_norm( "TRIG_EL_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "TRIG" ][ "E" ] )
     
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "E" ] ).AddSyst(
-      self.harvester, "TRIG_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "E" ] )( [ "16" ], config.systematics[ "TRIG" ][ "E" ] )( [ "17" ], config.systematics[ "TRIG" ][ "E" ] )( [ "18" ], config.systematics[ "TRIG" ][ "E" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_E ).AddSyst(
-      self.harvester, "TRIG_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "E" ] )( [ "16" ], config.systematics[ "TRIG" ][ "E" ] )( [ "17" ], config.systematics[ "TRIG" ][ "E" ] )( [ "18" ], config.systematics[ "TRIG" ][ "E" ] )
-    )
-    if self.abcdnn: 
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_E ).AddSyst(
-        self.harvester, "TRIG_EL_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "E" ] )( [ "16" ], config.systematics[ "TRIG" ][ "E" ] )( [ "17" ], config.systematics[ "TRIG" ][ "E" ] )( [ "18" ], config.systematics[ "TRIG" ][ "E" ] )
-      )
-    print( "   + Trigger (el) {}: {} (lnN)".format( self.year, config.systematics[ "TRIG" ][ "E" ] ) )
-    count += 1
+    self.add_norm( "ISO_EL_$ERA", self.signals, self.categories[ "E" ], config.systematics[ "ISO" ][ "E" ] )
+    self.add_norm( "ISO_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "E" ] )
+    if self.abcdnn: self.add_norm( "ISO_EL_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "E" ] )
 
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "E" ] ).AddSyst(
-      self.harvester, "ISO_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "E" ] )( [ "16" ], config.systematics[ "ISO" ][ "E" ] )( [ "17" ], config.systematics[ "ISO" ][ "E" ] )( [ "18" ], config.systematics[ "ISO" ][ "E" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_E ).AddSyst(
-      self.harvester, "ISO_EL_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "E" ] )( [ "16" ], config.systematics[ "ISO" ][ "E" ] )( [ "17" ], config.systematics[ "ISO" ][ "E" ] )( [ "18" ], config.systematics[ "ISO" ][ "E" ] )
-    )
-    if self.abcdnn: 
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_E ).AddSyst(
-        self.harvester, "ISO_EL_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "E" ] )( [ "16" ], config.systematics[ "ISO" ][ "E" ] )( [ "17" ], config.systematics[ "ISO" ][ "E" ] )( [ "18" ], config.systematics[ "ISO" ][ "E" ] )
-      ) 
-    print( "   + miniIsolation (el) {}: {} (lnN)".format( self.year, config.systematics[ "ISO" ][ "E" ] ) )
-    count += 1
+    self.add_norm( "ID_MU_$ERA", self.signals, self.categories[ "M" ], config.systematics[ "ID" ][ "M" ] )
+    self.add_norm( "ID_MU_$ERA", self.backgrounds, [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "M" ] )
+    if self.abcdnn: self.add_norm( "ID_MU_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "M" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "M" ] )
 
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "M" ] ).AddSyst( 
-      self.harvester, "ID_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_M ).AddSyst( 
-      self.harvester, "ID_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_M ).AddSyst( 
-        self.harvester, "ID_MU_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ID" ][ "M" ] )( [ "16" ], config.systematics[ "ID" ][ "M" ] )( [ "17" ], config.systematics[ "ID" ][ "M" ] )( [ "18" ], config.systematics[ "ID" ][ "M" ] )
-      )
-    print( "   + ID (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ID" ][ "M" ] ) )
-    count += 1
-   
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "M" ] ).AddSyst(
-      self.harvester, "TRIG_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "M" ] )( [ "16" ], config.systematics[ "TRIG" ][ "M" ] )( [ "17" ], config.systematics[ "TRIG" ][ "M" ] )( [ "18" ], config.systematics[ "TRIG" ][ "M" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_M ).AddSyst(
-      self.harvester, "TRIG_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "M" ] )( [ "16" ], config.systematics[ "TRIG" ][ "M" ] )( [ "17" ], config.systematics[ "TRIG" ][ "M" ] )( [ "18" ], config.systematics[ "TRIG" ][ "M" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_M ).AddSyst(
-        self.harvester, "TRIG_MU_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "TRIG" ][ "M" ] )( [ "16" ], config.systematics[ "TRIG" ][ "M" ] )( [ "17" ], config.systematics[ "TRIG" ][ "M" ] )( [ "18" ], config.systematics[ "TRIG" ][ "M" ] )
-      )
-    print( "   + Trigger (mu) {}: {} (lnN)".format( self.year, config.systematics[ "TRIG" ][ "M" ] ) )
-    count += 1
-
-    self.harvester.cp().process( self.signals ).channel( self.categories[ "M" ] ).AddSyst(
-      self.harvester, "ISO_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "M" ] )( [ "16" ], config.systematics[ "ISO" ][ "M" ] )( [ "17" ], config.systematics[ "ISO" ][ "M" ] )( [ "18" ], config.systematics[ "ISO" ][ "M" ] )
-    )
-    self.harvester.cp().process( self.backgrounds ).channel( shape_categories_M ).AddSyst(
-      self.harvester, "ISO_MU_$ERA", "lnN",
-      ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "M" ] )( [ "16" ], config.systematics[ "ISO" ][ "M" ] )( [ "17" ], config.systematics[ "ISO" ][ "M" ] )( [ "18" ], config.systematics[ "ISO" ][ "M" ] )
-    )
-    if self.abcdnn:
-      self.harvester.cp().process( self.minor_backgrounds ).channel( abcdnn_categories_M ).AddSyst(
-        self.harvester, "ISO_MU_$ERA", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "ISO" ][ "M" ] )( [ "16" ], config.systematics[ "ISO" ][ "M" ] )( [ "17" ], config.systematics[ "ISO" ][ "M" ] )( [ "18" ], config.systematics[ "ISO" ][ "M" ] )
-      )
-    print( "   + miniIsolation (mu) {}: {} (lnN)".format( self.year, config.systematics[ "ISO" ][ "M" ] ) )
-    count += 1
-
-    yield_categories = self.categories[ "ALL" ]
-    if self.abcdnn:
-      yield_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
-
-    self.harvester.cp().process( [ bkg for bkg in self.backgrounds if bkg in [ "TTBB", "TTNOBB" ] ] ).channel( yield_categories ).AddSyst(
-      self.harvester, "XSEC_TTBAR", "lnN",
-      ch.SystMap()( config.systematics[ "XSEC" ][ "TTBAR" ] )
-    )
-    print( "   + TTBAR: {} (lnN)".format( config.systematics[ "XSEC" ][ "TTBAR" ] ) )
-    count += 1
+    self.add_norm( "TRIG_MU_$ERA", self.signals, self.categories[ "M" ], config.systematics[ "TRIG" ][ "M" ] )
+    self.add_norm( "TRIG_MU_$ERA", self.backgrounds, [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "TRIG" ][ "M" ] )
+    if self.abcdnn: self.add_norm( "TRIG_MU_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "M" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "TRIG" ][ "M" ] )
     
-    self.harvester.cp().process( [ "EWK" ] ).channel( yield_categories ).AddSyst(
-      self.harvester, "XSEC_EWK", "lnN",
-      ch.SystMap()( config.systematics[ "XSEC" ][ "EWK" ] )
-    )
-    print( "   + EWK: {} (lnN)".format( config.systematics[ "XSEC" ][ "EWK" ] ) )
-    count += 1
-    
-    self.harvester.cp().process( [ "TOP" ] ).channel( yield_categories ).AddSyst(
-      self.harvester, "XSEC_TOP", "lnN",
-      ch.SystMap()( config.systematics[ "XSEC" ][ "TOP" ] )
-    )
-    print( "   + TOP: {} (lnN)".format( config.systematics[ "XSEC" ][ "TOP" ] ) )
-    count += 1
-    
-    self.harvester.cp().process( [ "TTH" ] ).channel( yield_categories ).AddSyst(
-      self.harvester, "XSEC_TTH", "lnN",
-      ch.SystMap()( config.systematics[ "XSEC" ][ "TTH" ] )
-    )
-    print( "  + TTH: {} (lnN)".format( config.systematics[ "XSEC" ][ "TOP" ] ) )
-    count += 1
+    self.add_norm( "ISO_MU_$ERA", self.signals, self.categories[ "M" ], config.systematics[ "ISO" ][ "M" ] )
+    self.add_norm( "ISO_MU_$ERA", self.backgrounds, [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "M" ] )
+    if self.abcdnn: self.add_norm( "ISO_MU_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "M" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "M" ] )
 
-    print( "[DONE] Added {} yield systematics".format( count ) )
+    print( "[DONE] Finished adding normalization systematic uncertainties" )
     
   def add_shape_systematics( self ):
     print( "[START] Retrieving shape systematics from {}".format( self.templateName ) )
-    count = 0
-    
-    apply_samples = []
-    
-    if config.options[ "COMBINE" ][ "SMOOTH" ]:
-      pileup_tag = "PILEUP{}".format( self.smoothing )
-      prefire_tag = "PREFIRE{}$ERA".format( self.smoothing )
-      jec_tag = "JEC{}$ERA".format( self.smoothing )
-      jer_tag = "JER{}$ERA".format( self.smoothing )
-      hf_tag = "HF{}".format( self.smoothing )
-      lf_tag = "LF{}".format( self.smoothing )
-      hfstat1_tag = "HFSTATS1{}$ERA".format( self.smoothing )
-      hfstat2_tag = "HFSTATS2{}$ERA".format( self.smoothing )
-      lfstat1_tag = "LFSTATS1{}$ERA".format( self.smoothing )
-      lfstat2_tag = "LFSTATS2{}$ERA".format( self.smoothing )
-      cferr1_tag = "CFERR1{}".format( self.smoothing )
-      cferr2_tag = "CFERR2{}".format( self.smoothing )
-      hotstat_tag = "HOTSTAT{}$ERA".format( self.smoothing )
-      hotcspur_tag = "HOTCSPUR{}$ERA".format( self.smoothing )
-      hotclosure_tag = "HOTCLOSURE{}$ERA".format( self.smoothing )
-    else:
-      pileup_tag = "PILEUP"
-      prefire_tag = "PREFIRE$ERA"
-      jec_tag = "JEC$ERA"
-      jer_tag = "JER$ERA"
-      hf_tag = "HF"
-      lf_tag = "LF"
-      hfstat1_tag = "HFSTATS1$ERA"
-      hfstat2_tag = "HFSTATS2$ERA"
-      lfstat1_tag = "LFSTATS1$ERA"
-      lfstat2_tag = "LFSTATS2$ERA"
-      cferr1_tag = "CFERR1"
-      cferr2_tag = "CFERR2"
-      hotstat_tag = "HOTSTAT$ERA"
-      hotcspur_tag = "HOTCSPUR$ERA"
-      hotclosure_tag = "HOTCLOSURE$ERA"
      
-    shape_categories = self.categories[ "ALL" ]
-    if self.abcdnn:
-      shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
-
     useHOT = True
     useCSV = True
-    for category in shape_categories:
+    for category in self.categories[ "SF" ]:
       if "nhot0p" in category.lower(): useHOT = False
       if "nb0p" in category.lower(): useCSV = False
-      
+
     if config.systematics[ "MC" ][ "pileup" ]:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, pileup_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, pileup_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, pileup_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + Pileup (Correlated): 1.0 (shape)" )
-      count += 1
-      
+      self.add_shape( "PILEUP", self.signals, self.categories[ "ALL" ], self.smooth, False )
+      self.add_shape( "PILEUP", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
+      if self.abcdnn: self.add_shape( "PILEUP", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+
     if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, prefire_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, prefire_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, prefire_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )
-        )
-      print( "   + Prefire (Un-correlated): 1.0 (shape)" )
-      count += 1
-      
+      self.add_shape( "PREFIRE", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "PREFIRE", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "PILEUP", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+
     if config.systematics[ "MC" ][ "JEC" ]:
+      jec_tag = "JEC"
+      if self.smooth: jec_tag += self.smoothing
+      jec_tag += "$ERA"
       for systJEC in config.systematics[ "REDUCED JEC" ]:
         if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
         jecSYST_tag = jec_tag.replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
-        if "Era" not in systJEC:
-          jecSYST_tag = jecSYST_tag.replace( "$ERA", "" )
-          self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-            self.harvester, jecSYST_tag.upper(), "shape",
-            ch.SystMap()( 1.0 )
-          )
-          self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-            self.harvester, jecSYST_tag.upper(), "shape",
-            ch.SystMap()( 1.0 )
-          )
-          if self.abcdnn:
-            self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-              self.harvester, jecSYST_tag.upper(), "shape",
-              ch.SystMap()( 1.0 )
-            )
-          print( "   + {} ({}) (Correlated): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) )
-        else:
-          self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-            self.harvester, jecSYST_tag.upper(), "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-          self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-            self.harvester, jecSYST_tag.upper(), "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-          if self.abcdnn:
-            self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-              self.harvester, jecSYST_tag.upper(), "shape",
-              ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-            )
+        if "Era" not in systJEC: jecSYST_tag = jecSYST_tag.replace( "$ERA", "" ) 
+        self.add_shape( jecSYST_tag.upper(), self.signals, self.categories[ "ALL" ], False, False )
+        self.add_shape( jecSYST_tag.upper(), self.backgrounds, self.categories[ "SF" ], False, False )
+        if self.abcdnn: self.add_shape( jecSYST_tag.upper(), self.minor_backgrounds, self.categories[ "ABCDNN" ], False, False )
           
-          print( "   + {} ({}) (Un-correlated): 1.0 (shape)".format( systJEC.replace( "Era", "20" + args.year ), jecSYST_tag ) ) 
-        count += 1
-    
     if config.systematics[ "MC" ][ "JER" ]:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, jer_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, jer_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, jer_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + JER (Un-correlated): 1.0 (shape)" ) 
-      count += 1
-        
+      self.add_shape( "JER", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "JER", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "JER", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+
     if config.systematics[ "MC" ][ "hotstat" ] and useHOT:
-      if args.year == "16":
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotstat_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotstat_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      else:
-        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-          self.harvester, hotstat_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotstat_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotstat_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      print( "   + HOTSTAT (Un-correlated): 1.0 (shape)" )
-      count += 1
+      if args.year not in [ "16" ]: self.add_shape( "HOTSTAT", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "HOTSTAT", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "HOTSTAT", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
     
     if config.systematics[ "MC" ][ "hotclosure" ] and useHOT:
-      if args.year == "16":
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotclosure_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotclosure_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      else:
-        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-          self.harvester, hotclosure_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotclosure_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotclosure_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      print( "   + HOTCLOSURE (Un-correlated): 1.0 (shape)" )
-      count += 1
+      if args.year not in [ "16" ]: self.add_shape( "HOTCLOSURE", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "HOTCLOSURE", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "HOTCLOSURE", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
 
     if config.systematics[ "MC" ][ "hotcspur" ] and useHOT:
-      if args.year == "16":
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotcspur_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotcspur_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      else:
-        self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-          self.harvester, hotcspur_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-          self.harvester, hotcspur_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-        if self.abcdnn:
-          self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, hotcspur_tag, "shape",
-            ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-          )
-      print( "   + HOTCSPUR: 1.0 (shape)" )
-      count += 1
+      if args.year not in [ "16" ]: self.add_shape( "HOTCSPUR", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "HOTCSPUR", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "HOTCSPUR", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
 
     if config.systematics[ "MC" ][ "HF" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, hf_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hf_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, hf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + HF (Correlated): 1.0 (shape)" ) 
-      count += 1
+      self.add_shape( "HF", self.signals, self.categories[ "ALL" ], self.smooth, False )
+      self.add_shape( "HF", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
+      if self.abcdnn: self.add_shape( "HF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
     
     if config.systematics[ "MC" ][ "LF" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, lf_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, lf_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, lf_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + LF: 1.0 (shape)" )     
-      count += 1
-    
+      self.add_shape( "LF", self.signals, self.categories[ "ALL" ], self.smooth, False )
+      self.add_shape( "LF", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
+      if self.abcdnn: self.add_shape( "LF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+         
     if config.systematics[ "MC" ][ "hfstats1" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, hfstat1_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hfstat1_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, hfstat1_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + HFSTAT1 (Un-correlated): 1.0 (shape)" ) 
-      count += 1
-    
-    if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, lfstat1_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, lfstat1_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, lfstat1_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + LFSTAT1 (Un-correlated): 1.0 (shape)" ) 
-      count += 1
-    
-    if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, cferr1_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, cferr1_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, cferr1_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + CFERR1 (Correlated): 1.0 (shape)" ) 
-      count += 1
+      self.add_shape( "HFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "HFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "HFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
     
     if config.systematics[ "MC" ][ "hfstats2" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, hfstat2_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, hfstat2_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, hfstat2_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + HFSTAT2 (Un-correlated): 1.0 (shape)" ) 
-      count += 1
+      self.add_shape( "HFSTATS2", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "HFSTATS2", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "HFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+
+    if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
+      self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
     
     if config.systematics[ "MC" ][ "lfstats2" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, lfstat2_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, lfstat2_tag, "shape",
-        ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, lfstat2_tag, "shape",
-          ch.SystMap( "era" )( [ "16APV" ], 1.0 )( [ "16" ], 1.0 )( [ "17" ], 1.0 )( [ "18" ], 1.0 )
-        )
-      print( "   + LFSTAT2 (Un-correlated): 1.0 (shape)" ) 
-      count += 1
+      self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
+      self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
+      if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
     
+    if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
+      self.add_shape( "CFERR1", self.signals, self.categories[ "ALL" ], self.smooth, False )
+      self.add_shape( "CFERR1", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
+      if self.abcdnn: self.add_shape( "CFERR1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+
     if config.systematics[ "MC" ][ "cferr2" ] and useCSV:
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, cferr2_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      self.harvester.cp().process( self.backgrounds ).channel( shape_categories ).AddSyst(
-        self.harvester, cferr2_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-      if self.abcdnn:
-        self.harvester.cp().process( self.minor_backgrounds ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, cferr2_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      print( "   + CFERR2 (Correlated): 1.0 (shape)" ) 
-      count += 1
+      self.add_shape( "CFERR2", self.signals, self.categories[ "ALL" ], self.smooth, False )
+      self.add_shape( "CFERR2", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
+      if self.abcdnn: self.add_shape( "CFERR2", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+
+    print( "[DONE] Added shape systematics" )
     
-    print( "[DONE] Added {} shape systematics".format( count ) )
-    
+  def add_xsec( self, tag, groups, categories, value ):
+    self.harvester.cp().process( groups ).channel( categories ).AddSyst(
+      self.harvester, tag, "lnN",
+      ch.SystMap()( value )
+    )
+
+  def add_model( self, tag, groups, categories, smooth ):
+    if smooth: tag += self.smoothing
+    self.harvester.cp().process( groups ).channel( categories ).AddSyst(
+      self.harvester, tag, "shape",
+      ch.SystMap()( 1.0 )
+    )
+
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
-    count = 0
-    shape_categories = self.categories[ "ALL" ]
-    if self.abcdnn:
-      shape_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
     
-    # signal theory systematics
+    self.add_xsec( "XSEC_TTBAR", [ "TTBB", "TTNOBB" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTBAR" ] )
+    self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "EWK" ] )
+    if self.abcdnn and "EWK" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "EWK" ] )
+    self.add_xsec( "XSEC_TOP", [ "TOP" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TOP" ] )
+    if self.abcdnn and "TOP" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_TOP", [ "TOP" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TOP" ] )
+    self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTH" ] )
+    if self.abcdnn and "TTH" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTH" ] )
+    
     if self.options[ "PDF" ]:
-      pdf_tag = "PDFSIG" #+ self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "PDFSIG"
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, pdf_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-    if config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ]:
-      murf_tag = "MURFSIG" #+ self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "MURFSIG"
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, murf_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-    if config.systematics[ "MC" ][ "isr" ]:
-      isr_tag = "ISRSIG" #+ self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "ISRSIG"
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, isr_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
-    if config.systematics[ "MC" ][ "fsr" ]:
-      fsr_tag = "FSRSIG" #+ self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "FSRSIG"
-      self.harvester.cp().process( self.signals ).channel( self.categories[ "ALL" ] ).AddSyst(
-        self.harvester, fsr_tag, "shape",
-        ch.SystMap()( 1.0 )
-      )
+      self.add_model( "PDF", self.signals, self.categories[ "ALL" ], self.smooth )
+      self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], self.smooth )
+      if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth )
 
-    # background theory systematics
-    for process in self.backgrounds:
-      if process in [ "TTNOBB", "TTBB" ]:
-        pdf_tag = "PDFTTBAR" + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "PDFTTBAR"
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, pdf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        murf_tag = "MURFTTBAR" + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "MURFTTBAR"
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, murf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        isr_tag = "ISRTTBAR" + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "ISRTTBAR"
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, isr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        fsr_tag = "FSRTTBAR" + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "FSRTTBAR"
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, fsr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-
-      else:
-        pdf_tag = "PDF" + process + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "PDF" + process
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, pdf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        murf_tag = "MURF" + process + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "MURF" + process
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, murf_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        isr_tag = "ISR" + process + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "ISR" + process
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, isr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-        fsr_tag = "FSR" + process + self.smoothing if config.options[ "COMBINE" ][ "SMOOTH" ] else "FSR" + process
-        self.harvester.cp().process( [ process ] ).channel( shape_categories ).AddSyst(
-          self.harvester, fsr_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )        
+    for syst in [ "MURF", "ISR", "FSR" ]:
+      if syst == "ISR" and not config.systematics[ "MC" ][ "isr" ]: continue
+      if syst == "FSR" and not config.systematics[ "MC" ][ "fsr" ]: continue
+      if syst == "MURF" and not ( config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ] or config.systematics[ "MC" ][ "muRFcorrd" ] ): continue
+      for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+        if group in [ "TTNOBB", "TTBB" ]:
+          self.add_model( syst + "TTBAR", [ group ], self.categories[ "SF" ], self.smooth )
+        else:
+          self.add_model( syst + group, [ group ], self.categories[ "SF" ], self.smooth )
+          if self.abcdnn:
+            self.add_model( syst + group, [ group ], self.categories[ "ABCDNN" ], self.smooth )
+      self.add_model( syst + "SIG", self.signals, self.categories[ "ALL" ], False ) 
     
-        if process in self.minor_backgrounds and self.abcdnn:
-          self.harvester.cp().process( [ process ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, pdf_tag, "shape",
-            ch.SystMap()( 1.0 )
-          )
-          self.harvester.cp().process( [ process ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, murf_tag, "shape",
-            ch.SystMap()( 1.0 )
-          )
-          self.harvester.cp().process( [ process ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, isr_tag, "shape",
-            ch.SystMap()( 1.0 )
-          )
-          self.harvester.cp().process( [ process ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-            self.harvester, fsr_tag, "shape",
-            ch.SystMap()( 1.0 )
-          )
-      
-    print( "   + PDF (Correlated): 1.0 (shape)" )
-    print( "   + MURF (Correlated): 1.0 (shape)" )
-    print( "   + ISR (Correlated): 1.0 (shape)" )
-    print( "   + FSR (Correlated): 1.0 (shape)" )
-  
     print( "[DONE] Added theoretical systematics" )
   
   def add_ABCDNN_systematics( self ): 
     if args.normSyst:
-      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-        self.harvester, "EXTABCDSYST", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDSYST" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSYST" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSYST" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSYST" ][ "18" ] ) 
-      )
-
-      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-        self.harvester, "EXTABCDSTAT", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDSTAT" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDSTAT" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDSTAT" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDSTAT" ][ "18" ] )
-      )
-    
-      self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-        self.harvester, "EXTABCDCLOSURE", "lnN",
-        ch.SystMap( "era" )( [ "16APV" ], config.systematics[ "EXTABCDCLOSURE" ][ "16APV" ] )( [ "16" ], config.systematics[ "EXTABCDCLOSURE" ][ "16" ] )( [ "17" ], config.systematics[ "EXTABCDCLOSURE" ][ "17" ] )( [ "18" ], config.systematics[ "EXTABCDCLOSURE" ][ "18" ] )
-      )
-
-    if config.options[ "MODIFY BINNING" ][ "SMOOTH" ]:
-      abcdnn_model_tag = "ABCDNNMODEL{}".format( self.smoothing )
-      abcdnn_sample_tag = "ABCDNNSAMPLE{}".format( self.smoothing )
-      abcdnn_closure_tag = "ABCDNNCLOSURE{}".format( self.smoothing )
-    else:
-      abcdnn_model_tag = "ABCDNNMODEL"
-      abcdnn_sample_tag = "ABCDNNSAMPLE"
-      abcdnn_closure_tag = "ABCDNNCLOSURE"
+      if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSYST", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSYST" ] )
+      if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSTAT", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSTAT" ] )
+      if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDCLOSURE" ] )
 
     if args.shapeSyst:
-      if config.systematics[ "MC" ][ "ABCDNNMODEL" ]:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, abcdnn_model_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      if config.systematics[ "MC" ][ "ABCDNNSAMPLE" ]:
-        self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-          self.harvester, abcdnn_sample_tag, "shape",
-          ch.SystMap()( 1.0 )
-        )
-      #if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ]:
-      #  self.harvester.cp().process( [ "ABCDNN" ] ).channel( self.categories[ "ABCDNN" ] ).AddSyst(
-      #    self.harvester, abcdnn_closure_tag, "shape",
-      #    ch.SystMap()( 1.0 )
-      #  )
+      if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and "ABCDNNMODEL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        self.add_shape( "ABCDNNMODEL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
+      if config.systematics[ "MC" ][ "ABCDNNSAMPLE" ] and "ABCDNNSAMPLE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        self.add_shape( "ABCDNNSAMPLE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
+      if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 
   def add_TTHF_systematics( self ):
     if self.options[ "TTHF SYST" ]:
       print( "[START] Adding heavy flavor (TTBB) systematics" )
-      tthf_categories = self.categories[ "ALL" ]
-      if self.abcdnn:
-        tthf_categories = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
+
+      self.add_norm( "TTHF", [ "TTBB" ], self.categories[ "SF" ], config.systematics[ "TTHF" ] )
       
-      self.harvester.cp().process( [ "TTBB" ] ).channel( tthf_categories ).AddSyst(
-        self.harvester, "TTHF", "lnN",
-        ch.SystMap()( config.systematics[ "TTHF" ] )
-      )
-      print( "[DONE] Added TTHF: {} (lnN)".format( config.systematics[ "TTHF" ] ) )
+      print( "[DONE]" )
     else:
       pass
   
@@ -969,9 +483,10 @@ def main():
   options = config.options[ "COMBINE" ].copy()
   tagShape = "" if args.shapeSyst else "noShape"
   tagNorm  = "" if args.normSyst else "noNorm"
+  tagTheory = "" if args.theorySyst else "noTheory"
   tagSmooth = "" if not options[ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not options[ "ABCDNN" ] else "ABCDNN"
-  dTag = args.tag + "_" + tagABCDnn + tagShape + tagNorm + tagSmooth
+  dTag = args.tag + "_" + tagABCDnn + tagShape + tagNorm + tagTheory + tagSmooth
   datacard = DataCard( 
     args.variable, 
     args.year, 
@@ -986,10 +501,11 @@ def main():
   datacard.add_datasets()
   if args.normSyst:
     datacard.add_normalization_systematics()
-    datacard.add_TTHF_systematics()
   if args.shapeSyst:
     datacard.add_shape_systematics()
+  if args.theorySyst:
     datacard.add_theory_systematics()
+    datacard.add_TTHF_systematics()
   if options[ "ABCDNN" ]:
     datacard.add_ABCDNN_systematics()
   datacard.add_shapes()

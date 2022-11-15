@@ -60,11 +60,13 @@ def hist_parse( hist_name, samples ):
       parse[ "CATEGORY" ] = part
       parse[ "CHANNEL" ] = part[3:]
   
-  abcdnnX = config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ][0]
-  abcdnnY = config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ][1]
-  abcdnnCheckX = abcdnnX.lower() + config.hist_bins[ "ABCDNN" ][ abcdnnX ][0] in parse[ "CATEGORY" ].lower()
-  abcdnnCheckY = abcdnnY.lower() + config.hist_bins[ "ABCDNN" ][ abcdnnY ][0] in parse[ "CATEGORY" ].lower()
-  if abcdnnCheckX and abcdnnCheckY:
+  def check_abcdnn( param, bins, category ):
+    for bin_ in bins:
+      if param + bin_ in category:
+        return True
+    return False
+
+  if check_abcdnn( "nHOT", config.hist_bins[ "ABCDNN" ][ "NHOT" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nJ", config.hist_bins[ "ABCDNN" ][ "NJ" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nB", config.hist_bins[ "ABCDNN" ][ "NB" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nT", config.hist_bins[ "ABCDNN" ][ "NT" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nW", config.hist_bins[ "ABCDNN" ][ "NW" ], parse[ "CATEGORY" ] ):
     parse[ "ABCDNN" ] = True
 
   return parse
