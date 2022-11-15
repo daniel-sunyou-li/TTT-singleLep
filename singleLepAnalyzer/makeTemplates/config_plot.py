@@ -6,7 +6,7 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": True,
+  "REBINNED": False,
   "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
@@ -17,15 +17,15 @@ options = {
   "BLIND": False,
   "Y LOG": True,
   "SMOOTH": False,
-  "SYMM SMOOTHING": False,
 }
 
 params = {
   "POSTFIX TEXT": "Preliminary",
   "INCLUDE LEP": [ "E", "M", "L" ], # E,M,L
   "ERROR BAND": [ "SHAPE", "STAT", "NORM" ], # STAT, SHAPE, NORM, ALL
-  "EXCLUDE SYST": [
-    "PDF", "PDFSIG",
+  "EXCLUDE SYST": [ # templates will contain some systematics that are being unused, so exclude them from the plots 
+    "ABCDNNSAMPLE", "ABCDNNMODEL",
+    "PDFEWK", "PDFQD", "PDFTOP", "PDFTTBAR", "PDFTTH", "PDFSIG",
     "PSWGT", "PSWGTSIG", "PSWGTTTBAR", "PSWGTTOP", "PSWGTTTH", "PSWGTEWK", "PSWGTQCD",
     #"PILEUP", 
     #"PREFIRE",
@@ -35,9 +35,9 @@ params = {
     "MURF", "MURFSIG",
     "ISR", "ISRSIG", 
     "FSR", "FSRSIG",  
-    "HOTSTAT",   
-    "HOTCSPUR",
-    "HOTCLOSURE",
+    #"HOTSTAT",   
+    #"HOTCSPUR",
+    #"HOTCLOSURE",
     #"LF", # this is fine
     #"LFSTATS2", # this one might have an issue
     #"lfstats2", # this one might have an issue
@@ -76,9 +76,9 @@ params = {
     "I POSITION": 11,
   },
   "LEGEND": {
-    "X1": 0.55,
-    "Y1": 0.68,
-    "X2": 0.95,
+    "X1": 0.15,
+    "Y1": 0.80,
+    "X2": 0.50,
     "Y2": 0.88,
     "TEXT SIZE": 0.02
   }
@@ -86,7 +86,7 @@ params = {
 
 for i in range( len( params[ "EXCLUDE SYST" ] ) ):
   params[ "EXCLUDE SYST" ][i] = params[ "EXCLUDE SYST" ][i].upper() 
-  if options[ "SMOOTH" ]: params[ "EXCLUDE SYST" ][i] += config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  if options[ "SMOOTH" ]: params[ "EXCLUDE SYST" ].append( params[ "EXCLUDE SYST" ][i] + config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() )
 
 params[ "CANVAS" ][ "T" ] = 0.10 * params[ "CANVAS" ][ "H REF" ] 
 params[ "CANVAS" ][ "B" ] = 0.12 * params[ "CANVAS" ][ "H REF" ] if options[ "BLIND" ] else 0.35 * params[ "CANVAS" ][ "H REF" ]
