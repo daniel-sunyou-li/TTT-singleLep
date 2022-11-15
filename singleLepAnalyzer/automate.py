@@ -10,6 +10,7 @@ parser.add_argument( "-y", "--years", nargs = "+",  help = "Options: 16APV, 16, 
 parser.add_argument( "-t", "--tags", nargs = "+", required = True )
 parser.add_argument( "-v", "--variables", nargs = "+", required = True )
 parser.add_argument( "-r", "--region", default = "SR" )
+parser.add_argument( "--html", help = "Path to html page on BRUX" )
 parser.add_argument( "--verbose", action = "store_true" )
 args = parser.parse_args()
 
@@ -93,6 +94,10 @@ python modify_binning.py -y {2} -t {3} -v {4} -r {5} {6}".format(
   
 def plot_templates():
   trainings = get_trainings( args.tags, args.years, args.variables )
+  try:
+    argHTML = "--html {}".format( args.html )
+  except:
+    argHTML = ""
   for training in trainings:
     for variable in training[ "variable" ]:
       os.chdir( "makeTemplates" )
@@ -100,14 +105,16 @@ def plot_templates():
       nameCondor = "SLA_step3_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
       shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
       shell.write(
-"#!/bin/bash\n\
-source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
+"#!/bin/bash \n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
-eval `scramv1 runtime -sh`\n\
+eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates \n\ ".format( 
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates {6} \n\
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6} \n\
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios {6}".format( 
   cmsswbase, os.getcwd(), 
-  training[ "year" ], variable, training[ "tag" ], args.region
+  training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )
       )
       shell.close()
@@ -131,14 +138,14 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {0} \n\
 eval `scramv1 runtime -sh`\n\
 cd {1} \n\
-python create_datacard.py -y {2} -v {3} -t {4} -r {5} --normSyst --shapeSyst {6} \n\
+python create_datacard.py -y {2} -v {3} -t {4} -r {5} --normSyst --shapeSyst --theorySyst {6} \n\
 python create_datacard.py -y {2} -v {3} -t {4} -r {5} {6} \n\
 cd limits_UL{2}_{3}_{5}_{4}_{7}{8}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 4\n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt\n\
 cd ..\n\
-cd limits_UL{2}_{3}_{5}_{4}_{7}noShapenoNorm{8}\n\
+cd limits_UL{2}_{3}_{5}_{4}_{7}noShapenoNormnoTheory{8}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 4 \n\
 combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt\n\
@@ -156,7 +163,7 @@ def combine_years():
   for variable in args.variables:
     for tag in args.tags:
       os.chdir( "combine" )
-      nameLog = "log_{}_{}_{}".format( variable, args.region, training[ "tag" ] )
+      nameLog = "log_{}_{}_{}".format( variable, args.region, tag )
       nameCondor = "SLA_step5_{}_{}_{}_{}".format( variable, args.region, tag, tagABCDnn + tagSmooth )
       if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
       tagAllSyst = "{}_{}_{}_{}{}".format( variable, args.region, tag, tagABCDnn, tagSmooth )
@@ -187,34 +194,45 @@ combine -M AsymptoticLimits Results/{3}/workspace.root --run=blind --cminDefault
 
 def impact_plots_era():
   trainings = get_trainings( args.tags, args.years, args.variables )
+  freezeParams = {
+    "NOMINAL": "",
+    #"THEORYTTH": "ISRTTHLOWESS,FSRTTHLLOWESS,MURFTTHLOWESS,XSEC_TTH",
+    #"THEORYTTBAR": "ISRTTBARHLOWESS,FSRTTBARLOWESS,MURFTTBARLOWESS,XSEC_TTBAR",
+    #"THEORYSIG": "ISRSIG,FSRSIGLOWESS,MURFSIGLOWESS"
+  }
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
   postfix = tagABCDnn + tagSmooth
   for training in trainings:
     for variable in training[ "variable" ]:
-      os.chdir( "combine" )
-      nameCondor = "SLA_step6_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix )
-      nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
-      if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
-      shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
-      shell.write(
+      for freezeTag in freezeParams:
+        freezeParam = "" if freezeTag == "NOMINAL" else "--freezeParameters {}".format( freezeParams[ freezeTag ] )
+        tagFreeze = "noFreeze" if freezeTag == "NOMINAL" else "freeze" + freezeTag
+        os.chdir( "combine" )
+        nameCondor = "SLA_step6_{}_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix, tagFreeze )
+        nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+        if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
+        shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
+        shell.write(
 "#!/bin/bash\n\
 source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
 cd limits_UL{2}_{3}_{4}_{5}_{6}/cmb/ \n\
-combineTool.py -M Impacts -d workspace.root -m 125 --doInitialFit --robustFit 1 -t -1 --expectSignal 1 --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit \n\
-combineTool.py -M Impacts -d workspace.root -m 125 --doFits --robustFit 1 -t -1 --expectSignal 1 --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --exclude rgx{7} --cminDefaultMinimizerType Minuit \n\
-combineTool.py -M Impacts -d workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{6}.json --exclude rgx{7} \n\
-plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{6}.json -o impacts_UL{2}_{4}_{3}_{5}_{6} \n\
+mkdir {7} \n\
+cd {7} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.2 --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 40 \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit=1 -t -1 --expectSignal=1 --rMin -50 --rMax 50 --setRobustFitTolerance 0.2 --cminDefaultMinimizerStrategy 0 --exclude rgx{8} --cminDefaultMinimizerType Minuit {9} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json --exclude rgx{8} \n\
+plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7} \n\
 cd .. \n".format(
-  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], postfix, "\{prop_bin.*\}"
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], postfix, tagFreeze, "\{prop_bin.*\}", freezeParam
 )
       )
-      shell.close()
-      condor_template( nameLog, nameCondor )
-      os.chdir( ".." )
+        shell.close()
+        condor_template( nameLog, nameCondor )
+        os.chdir( ".." )
   
 def impact_plots_combined():
   freezeParams = {
@@ -240,7 +258,7 @@ def impact_plots_combined():
         for i in [0,1]:
           tagR = "r{}".format(i)
           os.chdir( "combine" )
-          postfix = tagSmooth + tagABCDnn
+          postfix = tagABCDnn + tagSmooth
           nameCondor = "SLA_step7_{}_{}_{}_{}".format( variable, args.region, tag, tagR + postfix + tagFreeze )  
           tagAllSyst = "{}_{}_{}_{}".format( variable, args.region, tag, postfix )
           if not os.path.exists( os.path.join( "Results/", tagAllSyst, tagFreeze ) ): os.system( "mkdir -vp Results/{}".format( os.path.join( tagAllSyst, tagFreeze ) ) )
@@ -252,8 +270,8 @@ cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
 cd Results/{2}/{3}/ \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit 1 -t -1 --expectSignal {4} --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 8 \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit 1 -t -1 --expectSignal {4} --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --exclude rgx{5} --cminDefaultMinimizerType Minuit --parallel 8 {6} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --robustFit=1 -t -1 --expectSignal={4} --rMin -30 --rMax 30 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit --parallel 8 \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --robustFit=1 -t -1 --expectSignal={4} --rMin -30 --rMax 30 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --exclude rgx{5} --cminDefaultMinimizerType Minuit --parallel 8 {6} \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_{2}.json --exclude rgx{5} \n\
 plotImpacts.py -i impacts_{2}.json -o impacts_{2} \n\
 cd .. \n".format(
