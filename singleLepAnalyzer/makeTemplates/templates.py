@@ -337,7 +337,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
           for shift in [ "UP", "DN" ]:
             if config.systematics[ "MC" ][ syst ]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
-        if config.options[ "GENERAL" ][ "PDF" ]:
+        if config.options[ "GENERAL" ][ "PDF" ] and "PDF" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
             hists[ "CMB" ][ hist_tag( "ABCDNN", category, "PDF" + str(i) ) ].Write()
         if args.verbose: print( "  + BKG SYST > ABCDNN" )
@@ -398,7 +398,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       #tables = get_yield( tables, "BKG", groups[ "BKG" ][ "PROCESS" ].keys(), category )
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
         if args.verbose: print( ">> Computing yields for ABCDNN BACKGROUND {}".format( category ) )
-        tables = get_yield( tables, "CMB", [ "ABCDNN" ], category )
+        tables = get_yield( tables, "CMB", [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ], category )
       else:
         if args.verbose: print( ">> Computing yields for BACKGROUND Combine {}".format( category ) )
         tables = get_yield( tables, "CMB", groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
@@ -409,6 +409,8 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         tables[ "YIELD" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( group, category ) ].Integral()
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
         tables[ "YIELD" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( "ABCDNN", category ) ].Integral()
+        for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+          tables[ "YIELD" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( group, category ) ].Integral()
 
       tables[ "YIELD" ][ category ][ "DATA:BKG" ] = tables[ "YIELD" ][ category ][ "data_obs" ] / ( tables[ "YIELD" ][ category ][ "TOTAL BKG" ] + config.params[ "GENERAL" ][ "ZERO" ] )
    
@@ -455,7 +457,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       #tables = get_error( tables, "BKG", groups[ "BKG" ][ "PROCESS" ].keys(), category )
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
         if args.verbose: print( ">> Computing errors for ABCDNN BACKGROUND Combine groups" )
-        tables = get_error( tables, "CMB", [ "ABCDNN" ], category )
+        tables = get_error( tables, "CMB", [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ], category )
       else:
         if args.verbose: print( ">> Computing errors for BACKGROUND Combine groups" )
         tables = get_error( tables, "CMB", groups[ "BKG" ][ "SUPERGROUP" ].keys(), category )
@@ -465,7 +467,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       tables[ "ERROR" ][ category ][ "DATA:BKG" ] = 0
       for group in groups[ "BKG" ][ "SUPERGROUP" ]:
         if hist_tag( group, category ) not in hists[ "CMB" ].keys(): continue
-        if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]: continue
+        if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ] and group not in config.params[ "ABCDNN" ][ "MINOR BKG" ]: continue
         for i in range( 1, hists[ "CMB" ][ hist_tag( group, category ) ].GetXaxis().GetNbins() + 1 ):
           tables[ "ERROR" ][ category ][ "TOTAL BKG" ] += hists[ "CMB" ][ hist_tag( group, category ) ].GetBinError(i)**2
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:

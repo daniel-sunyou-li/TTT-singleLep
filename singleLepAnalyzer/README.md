@@ -1,68 +1,171 @@
-# Single Lep Analyzer (DNN)
+# Single Lep Analyzer -- Three Top to Single Lepton Final State
+
+## Environment Setup
+
+Before running this repository, run the following setup instructions once (prepared for BRUX):
+
+    # retrieve CMSSW environment
+    source /cvmfs/cms.cern.ch/cmsset_default.sh
+    setenv SCRAM_ARCH slc7_amd64_gcc700
+    cmsrel CMSSW_10_6_29
+    cd CMSSW_10_6_29/src/
+    cmsenv
+    # retrieve Higgs Combine and Combine Harvester
+    git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+    cd HiggsAnalysis/CombinedLimit
+    git fetch origin
+    git checkout v8.2.0
+    git clone https://github.com/cms-analysis/CombineHarvester.git CombineHarvester
+    scramv1 b clean; scramv1 b
+    # retrieve singleLepAnalyzer
+    git clone -b UL https://github.com/daniel-sunyou-li/TTT-singleLep.git
 
 ## Quick Start Instructions
 
-The singleLepAnalyzer framework is split into 5 overall steps, beginning with step3 `.root` files produced by `application.py` and ending with the calculation of the yield limits:  
+To run `singleLepAnalyzer`, 
 
-> __1.  Produce signal/background/data histograms for each variable__  
-> __2.  Produce the combine templates and compute all systematics__  
-> 3.  Re-bin the histograms for combine and plot the templates (WIP)  
-> 4.  
-> 5.  
+    cd CMSSW_10_6_29/src/TTT-singleLep/singleLepAnalyzer/
+    source /cvmfs/cms.cern.ch/cmsset_default.sh
+    cmsenv 
+    python automate.py -y <era1> <era2> -v <var1> <var2> -t <tag> -r <region> -s <step1-4>
+    python automate.py -v <var1> <var2> -t <tag> -r <region> -s 5
+    python automate.py -y <era1> <era2> -v <var1> <var2> -t <tag> -r <region> -s 6
+    python automate.py -v <var1> <var2> -t <tag> -r <region> -s 7
 
-Each step can be run using the `submit_SLA.py -s [#] -c [config file]` script using the input command `-s` to indicate a step from `1` to `5` and `-c` indicates which configuration file to use. A unit test submission can be made using the tag `--test`. The configuration file template with default values is provided as [`config_SLA.json`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/config_SLA.json) and __should be edited__ to the user's discretion.
+Where the following arguments are supported:
+* `-y` (`--year`): `16APV`, `16`, `17`, `18`
+* `-r` (`--region`): see [config.py](https://github.com/daniel-sunyou-li/TTT-singleLep/blob/UL/singleLepAnalyzer/config.py#L268-L275)
+* `-v` (`--variables`): see [config.py](https://github.com/daniel-sunyou-li/TTT-singleLep/blob/UL/singleLepAnalyzer/config.py#L334-L422)
+* `-t` (`--tag`): unique postfix for templates generated for a given config setting
+* `-s` (`--step`): `1` through `7`, for an explanation, see below
 
-## Detailed Description
-The results of the Single Lep Analyzer will all be stored in a subdirectory: `/TTTT_TMVA_DNN/singleLepAnalyzer/templates_[year]/`. The Condor `.job` scripts and the `.log`, `.out` and `.err` files are stored in `/TTTT_TMVA_DNN/singleLepAnalyzer/log_step[#]_[date]/`.
+## ABCDnn and Extended ABCD Settings
 
-### Step 1: Make Histograms 
-___Relevant Scripts:___
-* `submit_SLA.py`
-* `step1.sh`
-* `hists.py`
-* `analyze.py`
-* `utils.py`
+The `singleLepAnalyzer` repository can be run in two modes: one using purely scale-factor based MC corrections and one using data-driven methods for both shape and normalization corrections. An additional step before running `singleLepAnalyzer` is needed for using ABCDnn, which can be found [here](https://github.com/daniel-sunyou-li/ABCDnn). These files should be stored in a directory similar to the nominal ROOT files. Running with ABCDnn files will replace the outtermost template bin category corrections with the ABCDnn and extended ABCD methods.
 
-In this step, a Condor job is submitted to consolidate the background, signal, and/or data samples into a pickled file (histogram) containing information for the [variables of interest](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/varsList.py#L572-L573) specified in the config `.json` file. Additionally, the EOS folders to store the histograms are created in the submission script.  Each of the background, signal and data file has its own histogram, with each histogram containing information on one of the specified variables. The histograms are further categorized based on lepton flavor (electron or muon) and various (flavored) jet cuts.  Each category will have its own set of background, signal and data histograms.  The total number of histograms produced in "Step 1" is:
+## Detailed Step Explanations
 
-  Number of Histograms = ( 3 [BKG/SIG/DAT] ) x ( 2 [E/M] ) ( # Variables ) x ( # HOT-jets ) x ( # t-jets ) x ( # b-jets ) x ( # W-jets ) x ( # jets )
-  
-The resulting histograms are stored in the EOS path(s): `root://cmseos.fnal.gov:///store/user/[EOS username]/FWLJMET102X_1lep[year]_Oct2019_4t_[sample date]_step3/templates/[category]/[bkg/sig/data]_[variable].pkl`. For running multiple iterations of the workflow, edit the configuration parameter `config_SLA[ "STEP 1" ][ "EOSFOLDER" ]`.  The number of Condor jobs produced is equivalent to `( # variables ) x ( # years ) x ( # categories )`.  For each Condor job, the script `hists.py`--which references `analyze.py` and `utils.py`--is run once and stores the resultant three histograms on EOS at the specified path.
+All scripts run automatically by `automate.py` can be run interactively via the terminal. All example interactive submissions are for the 2017 era running a fit on the DNN discriminator binned for the signal region. If you create a new production of step1, step2 or step3 files, you may need to update `samplesUL##.py` with the correct file names, as well as indiate number of hadded files. You may also redefine the background groupings used for formatting the backgrounds. You may also update the process cross-sections used in normalizing the MC yields in `xsec.py`. 
 
-The histograms are specifically created in [`analyze.py`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/analyze.py#L145-L477) and returned in the `hists.py` script.  The `analyze.py` script is run for each [combination of sample, variable, category and year]( https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/hists.py#L89-L92 ).  The `hists.py` script collects a group of histograms based on the sample classification (background, signal, data) and dumps the histograms into a pickled file.  
+### Step 0 -- Edit `config.py`
 
-__`analyze.py`__  
-In `analyze.py`, the histograms are [instantiated as `TH1D` `ROOT` objects](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/analyze.py#L123-L137) where the histogram name and binning parameters are defined in varsList.py as a list of `tuple`s. Each histogram corresponds to a combination of the variable, category and sample. The histograms are also defined to include the sum of squares of the weights. The weights and the cuts for the different systematics defined in the configuration file are also compiled for each instance of `analyze()` and are applied for their respective histograms. In evaluating the histograms with systematics, there are [6 overall categories in which the weights, cuts and/or naming might differ.](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/analyze.py#L143-L172) Additionally, the calculation of PDFs is available and is set at a default value of 100 PDFs produced. The histogram filling process is primarily carried out by [`rootTree[ process ].Draw()`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/analyze.py#L140) which references the instantiated histograms in `hists` by their given names in the form of `[iPlot]_[lumiStr]_[catStr]_[process]`.
+All settings and parameters are defined in `config.py` and any edits should only be made to `config.py`. Check (and edit) the following settings/parameters before running `singleLepAnalyzer`:
+* `inputDir` -- path to ROOT files containing events
+* `options` -- boolean analysis options
+* `params` -- non-boolean analysis parameters 
+* `systematics` -- indicate systematics to include in analysis as well as uncertainty values
+* `hist_bins` -- define template binning regions
+* `event_cuts` -- event selection cut values
+* `base_cut` -- cuts applied to branches in ROOT files
+* `mc_weight` -- scale factor weights applied per event, also modified in `hists.py`
+* `plot_params` -- new analysis variables need to be added along with desired binning and plotting name
 
-### Step 2: Consolidate Histograms and Compute Systematics into ROOT Files for Higgs Combine
-___Relevant Scripts:___
-* `submit_SLA.py`
-* `step2_SLA.sh`
-* `templates.py`
+### Step 1 -- Draw Histograms
 
-In this step, a Condor job is submitted to consolidate all the background, signal and data histograms from each category into a single `ROOT` file.  A single job is submitted per year. The Condor job runs the script [`templates.py`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/templates.py).  The `templates.py` script performs several tasks:  
-* __Write Theta templates:__ produces a `ROOT` file for each variable and year (I can probably phase this out for now since it seems as if only Combine is being used)
-* __Write Combine templates:__ produces a `ROOT` file for each variable and year
-* __Write Summary templates:__ produces a `ROOT` file for each year
-* __Write yield tables:__ produces a `.txt` file for each variable and year  
-The templates are later used in Higgs Combine to compute the limits.
+To populate histograms interactively,
 
-__[ADD FURTHER EXPLANATION OF TEMPLATES.PY]__
-* need to distinguish between the different templates and what exactly goes into a template
-* what is the "interesting" information in the yield tables
+        cd makeTemplates/
+        python hists.py -v DNN -y 17 -nh 1p -nb 3p -nj 7p -sd templates_UL17_DNN_SR_postfix
+        
+Possible arguments include:
+* `-v` (`--variable`) -- see `config.plot_params["VARIABLES"]`
+* `-y` (`--year`) -- `16APV`, `16`, `17`, `18`
+* `-l` (`--lepton`) -- `E` (electron) or `M` (muon)
+* `-nh` (`--nhot`) -- HOT-tagged jet multiplicity requirement (use `#p` to indicate inclusive bin)
+* `-nt` (`--nt`) -- top-tagged jet multiplicity requirement
+* `-nw` (`--nw`) -- W-tagged jet multiplicity requirement
+* `-nb` (`--nb`) -- b-tagged jet multiplicity requirement
+* `-nj` (`--nj`) -- jet multiplicity requirement
+* `-sd` (`-subDir`) -- name of subdirectory to store the histogrms and templates
 
-### Step 3: Re-bin the Histograms and Plot the Templates
-___Relevant Scripts:___
-* `submit_SLA.py`
-* `step3_SLA.sh`
-* `modify_binning.py`
-* `plot_templates.py`
+Running `hists.py` once creates the template for a single combination of the template binning regions. Each template constitutes a pickled file of histograms for the background, signal and data files. The event selection and MC scaling is applied during this step, as well as defining some of the systematic histograms. Running step 1 for `automate.py` calls on `condor_templates.py` to submit all combinations of the signal region template binning as condor jobs and saves each template to the same subdirectory.
 
-In this step, a Condor job is submitted that first re-bins the histograms for the Higgs Combine templates and then produces `.png` plots from the templates.  A single job is submitted per combination of variable and year. The result of the `modify_binning.py` script is to produce a new `ROOT` file for the previously produced Combine template with a modification to the naming by including the tag 'rebin'. Additionally, new yield tables are produced based on the modified binning. The result of the `plot_templates.py` script is the production of a plot for each combination of variable, category and year.  The `plot_templates.py` script can opt to either use the `original` or `modified` binning, this parameter "PLOT" is set in the `.json` [configuration file](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/blob/test/singleLepAnalyzer/config_SLA.json#L18).
+### Step 2 -- Format and Clean `Higgs Combine` Templates
 
-__[ADD FURTHER EXPLANATION ABOUT HOW THE BINNING IS MODIFIED]__  
-__[ADD FURTHER EXPLANATION ABOUT WHAT IS BEING PLOTTED]__
+To combine the histograms into a single template and perform some histogram corrections,
 
-### Step 4: Run Higgs Combine on Either 2017 or 2018
+        cd makeTemplates/
+        python templates.py -v DNN -y 17 -t postfix -r SR 
+        python modify_binning.py -v DNN -y 17 -t postfix -r SR 
+        
+Possible arguments for `templates.py` and `modify_binning.py` include:
+* `-v` (`--variable`)
+* `-y` (`--year`)
+* `-t` (`--tag`) -- unique postfix to distinguish templates
+* `-r` (`--region`) -- template binning region
+* `--abcdnn` (`modify_binning.py` only) -- perform binning according to ABCDnn MC background
 
-### Step 5: Combine Results from 2017 and 2018
+In `templates.py`, the histograms are formatted according to the category-by-category statistics, producing a single ROOT template file along with a table with category yields in the subdirectory. Statistical significance thresholds are applied to determine whether or not to include the defined background groups. Other general bin corrections are applied including overflow and underflow, negative bins. 
+
+In `modify_binning.py`, the histograms are further formatted to improve the `Higgs Combine` likelihood analysis, producing a single ROOT template file with modified binning to be run on. Several of these corrections include rebinning the histograms to achieve a required bin-by-bin statistical significance, symmetrizing and smoothing the up/down systematic shifts, and defining some of the theoretical systematic uncertainties. 
+
+### (Optional) Step 3 -- Plot Histograms
+
+To plot the histograms for each category, 
+
+        cd makeTemplates/
+        python plot_templates.py -v DNN -y 17 -t postfix -r SR --templates
+        
+Possible arguments for `plot_templates.py` include:
+* `-v` (`--variable`)
+* `-y` (`--year`)
+* `-t` (`--tag`)
+* `-r` (`--region`)
+* `--templates` -- produce the histogram plots by template bin category
+* `--ratios` -- produce bar graphs showing the relative background composition by template bins
+
+There are additional arguments that can be used to format the plots as well as control which uncertainties are displayed in `config_plot.py`. Some of the important options to check include whether the rebinned templates are being plotted and whether the data is shown or not (i.e. blinded vs unblinded). The different plots can be found in the subdirectory. 
+
+### Steo 4 -- Create Datacards and Run `Higgs Combine` by Era
+
+Datacards to be used in `Higgs Combine` are produced using,
+
+        cd combine/
+        python create_datacard.py -v DNN -y 17 -t postfix -r SR --shapeSyst --normSyst
+        cd limits_UL17_DNN_SR_postfix_LOWESS/
+        combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 4
+        combine -M Significance cmb/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > significance.txt
+        combine -M AsymptoticLimits cmb/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > limits.txt
+        
+Possible arguments for `create_datacard.py` include:
+* `-v` (`--variable`)
+* `-y` (`--year`)
+* `-t` (`--tag`)
+* `-r` (`--region`)
+* `-m` (`--mode`) -- Options include `0` through `3` (default = `0`) which determine whether to treat the template categories as a control or signal region
+* `--shapeSyst` -- Flag to include the shape systematic uncertainties in the datacard
+* `--normSyst` -- Flag to include the normalization systematic uncertainties in the datacard
+
+Additional options and parameters can be configured in `config.py`, including whether to run with ABCDnn MC background or not and to use the smoothed templates or not. `create_datacard.py` produces a subdirectory (indicating if the smoothing is used, ABCDnn is used, shape uncertainties are included and normalization uncertainties are included) that will contain the `Combine` datacards in `cmb/`. `Higgs Combine` takes the datacard as an input to interpret the histogram groups and systematics to include during the simultaneous binned likelihood fit. There are datacards produced for the individual template bins beginning with `TTTX_*.txt` and they are consolidated into a single datacard for the given era in `combined.txt.cmb`.
+
+More information regarding the `Higgs Combine` commands can be found on the [webpage](http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/commonstatsmethods/). The default running settings in `singleLepAnalyzer` are blinded and generate Asimov toy datasets to simulate the data for computing an expected significance and signal strength limits. The results are stored in significance.txt and limits.txt, respectively. 
+
+### Step 5 -- Combine Eras and Final States Datacards 
+
+After producing datacards for the individual eras (or final states), they can be combined into a single datacard (for a Run2 analysis, as an example) with,
+
+        cd combine/
+        combineCards.py UL16APV=limits_UL16APV_DNN_SR_postfix_LOWESS/cmb/combined.txt.cmb UL16=limits_UL16_DNN_SR_postfix_LOWESS/cmb/combined.txt.cmb UL17=limits_UL17_DNN_SR_postfix_LOWESS/cmb/combined.txt.cmb UL18=limits_UL18_DNN_SR_postfix_LOWESS/cmb/combined.txt.cmb
+        text2workspace.py Results/DNN_SR_postfix_LOWESS/workspace.txt -o Results/DNN_SR_postfix_LOWESS/workspace.root 
+        combine -M Significance Results/DNN_SR_postfix_LOWESS/workspace.root -t -1 --expectSignal=1 --cminDefaultMinimizerStrategy 0 > Results/DNN_SR_postfix_LOWESS/significance.txt
+        combine -M AsymptoticLimits Results/DNN_SR_postfix_LOWESS/workspace.root --run=blind --cminDefaultMinimizerStrategy 0 > Results/DNN_SR_postfix_LOWESS/limits.txt
+
+### Step 6 -- Study Systematic Uncertainties with Impact Plots by Era
+
+The systematic uncertainties can be studied using tools available in `Higgs Combine`.  In particular, the systematic uncertainty impacts on the signal strength (`r`) likelihood fit can be evaluated by freezing all-but-one nuisance parameters and seeing how much the post-fit vs pre-fit pull shifts affect the signal strength. The command for retrieving the impacts are,
+
+        cd combine/
+        cd limits_UL17_DNN_SR_postfix_LOWESS/cmb/
+        combineTool.py -M Impacts -d workspace.root -m 125 --doInitialFit --robustFit 1 -t -1 --expectSignal 1 --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit
+        combineTool.py -M Impacts -d workspace.root -m 125 --doFits --robustFit 1 -t -1 --expectSignal 1 --rMin -100 --rMax 100 --setRobustFitTolerance 0.2 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --exclude rgx"\prop_bin.*\}" --cminDefaultMinimizerType Minuit
+        combineTool.py -M Impacts -d workspace.root -m 125 -o impacts_UL17_DNN_SR_postfix_LOWESS --exclude rgx"\prop_bin.*\}"
+        plotImpacts.py -i impacts_UL17_DNN_SR_postfix_LOWESS -o impacts_UL17_DNN_SR_postfix_LOWESS
+        
+Some of the options for producing the impact plots include:
+* `-t -1` -- this is for blinding the data and using a toy Asimov dataset
+* `--rMin` and `--rMax` -- allows the fit to test `r` at defined bounds, default set to `--rMin` at `0` and `--rMax` at `20`
+* `--exclude rgx"\prop_bin.*\}"` -- this excludes the statistical uncertainties by bin (which add a significant amount of computing time)
+        
+### Step 7 -- Study Systematic Uncertainties for Combined Eras
+
+The systematic uncertainties for the combined datacards can be evaluated in a similar method using the combined datacard (and workspace) instead of the ones for the individual eras.
