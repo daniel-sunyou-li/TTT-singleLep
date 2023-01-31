@@ -29,6 +29,7 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
       print( "[WARN] The variable {} was not found. Omitting.".format(var) )
 
   # Open ROOT files
+  print( tttw_path )
   tttw_f = TFile.Open( tttw_path )
   tttw = tttw_f.Get( "ljmet" )
   tttj_f = TFile.Open( tttj_path )
@@ -78,7 +79,7 @@ def reweight_importances( year, variables, importances, njets, nbjets, ak4ht, le
   # Re-weight the variable importances
   for i, importance in enumerate( importances ):
     if importance < 0: importances[i] = 0 
-  corr_mat = abs( get_correlation_matrix( int(year), variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR) / 100.0 )
+  corr_mat = abs( get_correlation_matrix( year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR) / 100.0 )
   mod_corr_mat = np.zeros( ( len( corr_mat ), len( corr_mat ) ) )
   for i in range(len(corr_mat)):
     for j in range(len(corr_mat)):

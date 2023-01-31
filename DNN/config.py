@@ -9,29 +9,46 @@ lpcUserName = "dsunyou"
 eosUserName = "dali"
 postfix = "3t"
 
-#years = [ "16APV", "16", "17", "18" ]
-years = [ "16", "17", "18" ]
+years = [ "16APV", "16", "17", "18" ]
+#years = [ "16", "17", "18" ]
 
 step2Sample = { year: "FWLJMET106XUL_singleLep20{}UL_RunIISummer20_{}_step2".format( year, postfix ) for year in years }
 
 step3Sample = { year: step2Sample[ year ].replace( "step2", "step3" ) for year in years }
 
-step2DirBRUX = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
+step2DirBRUX = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
-step3DirBRUX = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
+step3DirBRUX = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
 step2DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
 
 step3DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
 
 #step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
-step2DirXRD = { year: "root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
+step2DirXRD = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
-step3DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
+step3DirXRD = { year: "root://cmsxrootd.fnal.gov//store/group/{}/{}/".format( "lpcljm", step3Sample[ year ] ) for year in years }
 
 step2DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
-step3DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
+step3DirEOS = { year: "root://cmseos.fnal.gov///store/group/{}/{}/".format( "lpcljm", step3Sample[ year ] ) for year in years }
+
+# sample JES shifts
+shifts = {
+  #"JER": True,
+  #"JEC": True, # fully de-correlated, corresponds to total JEC from LJMet
+  "FlavorQCD": True,
+  #"RelativeBal": True,
+  #"RelativeSample_Era": True,
+  #"HF": True,
+  #"HF_Era": True,
+  #"BBEC1": True,
+  #"BBEC1_Era": True,
+  #"EC2": True,
+  #"EC2_Era": True,
+  #"Absolute": True,
+  #"Absolute_Era": True
+}
 
 # signal sample to be used in training
 sig_training = { 
@@ -55,8 +72,8 @@ bkg_training = {
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_11_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_12_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_11_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_12_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",

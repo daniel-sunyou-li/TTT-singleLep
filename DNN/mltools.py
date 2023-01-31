@@ -38,7 +38,7 @@ WEIGHT_VARIABLES = [
 ]
 
 base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
-            "( %(isTraining)s == 1 )"
+            "( %(isTraining)s == 2 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
 VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ).union( set( WEIGHT_VARIABLES ) ) ) ) )
@@ -160,7 +160,7 @@ class MLTrainingInstance(object):
       df = ROOT.RDataFrame( "ljmet", path )
       df_count = df.Count().GetValue()
       n_s += df_count
-      df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
+      df_1 = df.Filter( "isTraining == 2" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       df3_count = df_3.Count().GetValue()
@@ -189,7 +189,7 @@ class MLTrainingInstance(object):
       df = ROOT.RDataFrame( "ljmet", path )
       df_count = df.Count().GetValue()
       n_b += df_count
-      df_1 = df.Filter( "isTraining == 1" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
+      df_1 = df.Filter( "isTraining == 2" ).Filter( "DataPastTriggerX == 1 && MCPastTriggerX == 1" ).Filter( "isElectron == 1 || isMuon == 1" )
       df_2 = df_1.Filter( "leptonPt_MultiLepCalc > {} && NJetsCSV_JetSubCalc >= {} && NJets_JetSubCalc >= {}".format( self.lepPt, self.nbjets, self.njets ) )
       df_3 = df_2.Filter( "AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( self.ak4ht, self.met, self.mt, self.minDR ) )
       df3_count = df_3.Count().GetValue()
