@@ -115,7 +115,6 @@ def get_jobs( fStep2, fStep3, shifts, log, resubmit, test ):
     for shift in shifts:
       print( ">> {} samples to submit:".format( shift ) )
       for i, fName in enumerate( sorted( fStep2[shift] ) ):
-        if "ttjj_11_hadd" not in fName: continue
         if fName in fStep3[shift]: continue
         print( "   {:<4} {}".format( str(i+1) + ".", fName ) ) 
         sFiles[shift].append(fName)
@@ -202,6 +201,12 @@ def main():
   print( "[START] Submitting step3 application jobs...")
   voms_init()
   shifts = [ "nominal" ] if not args.shifts else [ "JECup", "JECdown", "JERup", "JERdown" ]
+  if args.shifts:
+    shifts = []
+    for nShift in config.shifts:
+      if not config.shifts[ nShift ]: continue
+      for dShift in [ "up", "down" ]:
+        shifts.append( nShift.replace( "Era", "20" + args.year ).replace( "2016APV", "2016" ) + dShift )
 
   step2Dir = config.step2DirBRUX[ args.year ] if args.inLoc == "BRUX" else config.step2DirEOS[ args.year ]
   step3Dir = config.step3DirEOS[ args.year ]

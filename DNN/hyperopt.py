@@ -190,10 +190,10 @@ CONFIG = {
     "hidden_layers": [ 1, 2 ],
     "initial_nodes": [ len(variables), len(variables) * 5 ],
     "node_pattern": [ "static", "dynamic" ],
-    "batch_power": [ 8, 9, 10 ],
-    "learning_rate": [ 1e-5, 1e-4],
+    "batch_power": [ 7, 8, 9 ],
+    "learning_rate": [ 1e-5, 1e-4 ],
     "regulator": [ "dropout", "none" ],
-    "activation_function": [ "selu", "softplus", "elu" ],
+    "activation_function": [ "softplus", "elu" ],
 
     "n_calls": 20,
     "n_starts": 15,
@@ -208,7 +208,7 @@ if args.parameters != None and os.path.exists(args.parameters):
     u_params = load_json(f.read())
     CONFIG.update(u_params)
     
-tag = "{}j_{}to{}".format( cut["NJETS"], subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
+tag = "{}to{}".format( subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
 CONFIG.update({
   "year":year,
   "background": background_files, 
@@ -359,4 +359,4 @@ with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["t
 with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".json"), "w") as f:
   f.write(write_json(dict([(key, res_gp.x[val]) for key, val in opt_order.iteritems()]), indent=2))
 print( "[OK ] Finished optimization in: {}".format( datetime.now() - start_time ) )
-
+quit()
