@@ -2,6 +2,7 @@
 
 import os, sys, math
 import tqdm
+import ROOT
 from argparse import ArgumentParser
 sys.path.append( ".." )
 from utils import hist_parse
@@ -12,7 +13,7 @@ parser.add_argument( "-y", "--year", required = True, help = "16APV,16,17,18" )
 parser.add_argument( "-t", "--tag", required = True )
 parser.add_argument( "-r", "--region", required = True, help = ",".join( list( config.region_prefix.keys() ) ) )
 parser.add_argument( "-v", "--variable", required = True )
-parser.add_argument( "-m", "--mode", default = 0, help = "0,1,2,3" )
+parser.add_argument( "-m", "--mode", default = 4, help = "0,1,2,3,4" )
 parser.add_argument( "-c", "--card", help = "Datacard input to add systematic groups to" )
 parser.add_argument( "--shapeSyst", action = "store_true" )
 parser.add_argument( "--normSyst", action = "store_true" )
@@ -63,9 +64,10 @@ class DataCard():
     self.options = options
     self.prefix = prefix
     
-    self.templateName = "template_combine_{}_UL{}_rebinned_stat{}.root".format( 
+    self.templateName = "template_combine_{}_UL{}_rebinned_merge{}_stat{}.root".format( 
       self.variable,
       self.year,
+      config.params[ "MODIFY BINNING" ][ "MIN MERGE" ],
       str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" )
     )
     self.templateDir = os.path.join( 
@@ -85,17 +87,19 @@ class DataCard():
     
     templateFile = ROOT.TFile( os.path.join( self.limitPath, self.templateName ) )
     self.hist_names = [ rKey.GetName() for rKey in templateFile.GetListOfKeys() if not hist_parse( rKey.GetName(), samples )[ "IS SYST" ] ]
-    templateFile.Close()
     
     self.categories = { "ALL": list( set( hist_name.split( "_" )[-2] for hist_name in self.hist_names if ( "isE" in hist_name.split( "_" )[-2] or "isM" in hist_name.split( "_" )[-2] ) ) ) }
     self.categories[ "ABCDNN" ] = [ category for category in self.categories[ "ALL" ] if hist_parse( category, self.samples )[ "ABCDNN" ] ]
     self.categories[ "SF" ] = self.categories[ "ALL" ]
+    print( "All {} categories: {}".format( len( self.categories[ "ALL" ] ), self.categories[ "ALL" ] ) )
+    print( "ABCDnn categories: {}".format( self.categories[ "ABCDNN" ] ) )
     if self.abcdnn:
       self.categories[ "SF" ] = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
+    print( "SF categories: {}".format( self.categories[ "SF" ] ) )
     self.categories[ "E" ] =   [ category for category in self.categories[ "ALL" ] if "isE" in category ]
     self.categories[ "M" ] =   [ category for category in self.categories[ "ALL" ] if "isM" in category ]
     self.categories[ "B" ] =   [ category for category in self.categories[ "ALL" ] if "nB0p" not in category ]
-    self.categories[ "HOT" ] = [ category for category in self.categories[ "ALL" ] if "nHOI0p" not in category ]
+    self.categories[ "HOT" ] = [ category for category in self.categories[ "ALL" ] if "nHOT0p" not in category ]
     self.categories[ "T" ] =   [ category for category in self.categories[ "ALL" ] if "nT0p" not in category ]
     self.categories[ "W" ] =   [ category for category in self.categories[ "ALL" ] if "nW0p" not in category ]
 
@@ -116,34 +120,33 @@ class DataCard():
     self.pdf_norm = config.systematics[ "PDF NORM" ]
     self.category_arr = { category: [ ( 0, "" ) ] for category in self.categories[ "ALL" ] }
     
-    self.hist_groups = { key: {} for key in [ "SIG", "SIG SYST", "BKG", "BKG SYST", "DAT" ] }
-    category_log = { key: {} for key in [ "SIG", "SIG SYST", "BKG", "BKG SYST", "DAT" ] }
-    for hist_name in list( set( self.hist_names ) ):
+    self.hist_groups = { key: {} for key in [ "SIG", "BKG", "DAT" ] }
+    category_log = { key: {} for key in [ "SIG", "BKG", "DAT" ] }
+    hist_list = [ hist_name for hist_name in set( self.hist_names ) if not ( hist_name.upper().endswith( "UP" ) or hist_name.upper().endswith( "DN" ) or hist_name.upper().endswith( "DOWN" ) ) ]
+    exclude_count = 0
+    for hist_name in hist_list:
       parse = hist_parse( hist_name, samples )
       if parse[ "GROUP" ] == "SIG":
         if parse[ "IS SYST" ]: 
-          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG SYST" ]:
-            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-          else: 
-            self.hist_groups[ "SIG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
+          continue
         else: 
           if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
             self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
           else:
             self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "BKG":
+        if templateFile.Get( hist_name ).Integral() < 1e-5: 
+          print( "[WARN] {} is beneath yield threshold, excluding...".format( hist_name )  )
+          exclude_count += 1
+          continue
         if self.abcdnn and parse[ "ABCDNN" ]:
           if parse[ "IS SYST" ]:
-            if parse[ "SYST" ] in self.params[ "ABCDNN" ][ "SYSTEMATICS" ]: 
-              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ]
+            continue
           else:
             self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ]
         else:
           if parse[ "IS SYST" ]: 
-            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG SYST" ]:
-              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-            else: 
-              self.hist_groups[ "BKG SYST" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
+            continue
           else: 
             if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ]:
               self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
@@ -155,7 +158,9 @@ class DataCard():
         else:
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
     
+    templateFile.Close()
     self.masses = ch.ValsFromRange( "690" )
+    print( "[DONE] Finished assigning physics groups to datacard templates. Excluded {} processes failing statistical threshold requirement.".format( exclude_count ) )
     
   def define_regions( self, mode = 0 ):
   # mode 0: make all regions "SIGNAL REGION" --> default
@@ -163,21 +168,18 @@ class DataCard():
   # mode 2: make only the lowermost region the "CONTROL REGION"
   # mode 3: make all regions "CONTROL REGION"
     print( "[START] Defining signal and control regions using mode {}".format( mode ) )
-    min_category = jet_count( self.categories[ "ALL" ][0] )
-    max_category = jet_count( self.categories[ "ALL" ][0] )
-    for category in self.categories[ "ALL" ]:
-      min_category = min( min_category, jet_count( category ) )
-      max_category = max( max_category, jet_count( category ) )
+    upper_category = sorted( self.categories[ "ALL" ] )[-1].replace( "isE", "" ).replace( "isM", "" )
+    lower_category = sorted( self.categories[ "ALL" ] )[0].replace( "isE", "" ).replace( "isM", "" )
     for category in self.categories[ "ALL" ]:
       if mode == 3:
         self.regions[ "CONTROL" ].append( category )
       elif mode == 2:
-        if jet_count( category ) == min_category:
+        if lower_category in category:
           self.regions[ "CONTROL" ].append( category )
         else:
           self.regions[ "SIGNAL" ].append( category )
       elif mode == 1:
-        if jet_count( category ) == max_category:
+        if upper_category in category:
           self.regions[ "SIGNAL" ].append( category )
         else:
           self.regions[ "CONTROL" ].append( category )
@@ -203,7 +205,7 @@ class DataCard():
         count[ "SR" ] += 1
       else:
         self.harvester.AddObservations( [ "all" ], [ self.prefix ], [ self.year ], [ category ], self.category_arr[ category ] )
-        self.harvester.AddProcesses(    [ "all" ], [ self.prefix ], [ self.year ], [ category ], self.hist_groups[ "BKG" ][ category ], self.category_arr[ category ], False )
+        self.harvester.AddProcesses(    [ "all" ], [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "BKG" ][ category ] ) ), self.category_arr[ category ], False )
         count[ "CR" ] += 1
     print( "[DONE] Added {} categories to SR and {} categories to CR".format( count[ "SR" ], count[ "CR" ] ) )
   
@@ -225,8 +227,7 @@ class DataCard():
         self.harvester, tag, "shape",
         ch.SystMap()( 1.0 )
       )
-    
-
+  
   def add_normalization_systematics( self ):
     print( "[START] Retrieving normalization systematics from {}".format( self.templateName ) )
     
@@ -282,87 +283,115 @@ class DataCard():
       if "nhot0p" in category.lower(): useHOT = False
       if "nb0p" in category.lower(): useCSV = False
 
-    if config.systematics[ "MC" ][ "pileup" ]:
-      self.add_shape( "PILEUP", self.signals, self.categories[ "ALL" ], self.smooth, False )
-      self.add_shape( "PILEUP", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
-      if self.abcdnn: self.add_shape( "PILEUP", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+    if config.systematics[ "MC" ][ "pileup" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "pileup" ][2]
+      self.add_shape( "PILEUP", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "PILEUP", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "PILEUP", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
-    if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
-      self.add_shape( "PREFIRE", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "PREFIRE", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "PILEUP", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+    if config.systematics[ "MC" ][ "pileupJetID" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "pileupJetID" ][2]
+      self.add_shape( "PILEUPJETID", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "PILEUPJETID", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "PILEUPJETID", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
-    if config.systematics[ "MC" ][ "JEC" ]:
+    if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "prefire" ][2]
+      self.add_shape( "PREFIRE", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "PREFIRE", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "PREFIRE", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
+
+    if config.systematics[ "MC" ][ "toppt" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "toppt" ][2]
+      self.add_shape( "TOPPT", [ "TTBB", "TTNOBB" ], self.categories[ "SF" ], bSmooth, False )
+
+    if config.systematics[ "MC" ][ "JEC" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "JEC" ][2]
       jec_tag = "JEC"
-      if self.smooth: jec_tag += self.smoothing
+      if bSmooth: jec_tag += self.smoothing
       jec_tag += "$ERA"
       for systJEC in config.systematics[ "REDUCED JEC" ]:
         if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
         jecSYST_tag = jec_tag.replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
         if "Era" not in systJEC: jecSYST_tag = jecSYST_tag.replace( "$ERA", "" ) 
+        if args.year == "17" and systJEC.upper() == "FLAVORQCD": continue
         self.add_shape( jecSYST_tag.upper(), self.signals, self.categories[ "ALL" ], False, False )
         self.add_shape( jecSYST_tag.upper(), self.backgrounds, self.categories[ "SF" ], False, False )
         if self.abcdnn: self.add_shape( jecSYST_tag.upper(), self.minor_backgrounds, self.categories[ "ABCDNN" ], False, False )
           
-    if config.systematics[ "MC" ][ "JER" ]:
-      self.add_shape( "JER", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "JER", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "JER", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+    if config.systematics[ "MC" ][ "JER" ][0]:
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "JER" ][2]
+      self.add_shape( "JER", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "JER", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "JER", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
+    hot_backgrounds = [ background for background in self.backgrounds if background not in [ "QCD", "EWK" ] ]
+    hot_minor_backgrounds = [ background for background in self.minor_backgrounds if background not in [ "QCD", "EWK" ] ]
     if config.systematics[ "MC" ][ "hotstat" ] and useHOT:
-      if args.year not in [ "16" ]: self.add_shape( "HOTSTAT", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "HOTSTAT", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "HOTSTAT", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "hotstat" ][2]
+      if args.year not in [ "16" ]: self.add_shape( "HOTSTAT", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "HOTSTAT", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "HOTSTAT", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
     if config.systematics[ "MC" ][ "hotclosure" ] and useHOT:
-      if args.year not in [ "16" ]: self.add_shape( "HOTCLOSURE", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "HOTCLOSURE", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "HOTCLOSURE", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "hotclosure" ][2]
+      if args.year not in [ "16" ]: self.add_shape( "HOTCLOSURE", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "HOTCLOSURE", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "HOTCLOSURE", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
     if config.systematics[ "MC" ][ "hotcspur" ] and useHOT:
-      if args.year not in [ "16" ]: self.add_shape( "HOTCSPUR", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "HOTCSPUR", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "HOTCSPUR", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "hotcspur" ][2]
+      if args.year not in [ "16" ]: self.add_shape( "HOTCSPUR", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "HOTCSPUR", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "HOTCSPUR", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
     if config.systematics[ "MC" ][ "HF" ] and useCSV:
-      self.add_shape( "HF", self.signals, self.categories[ "ALL" ], self.smooth, False )
-      self.add_shape( "HF", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
-      if self.abcdnn: self.add_shape( "HF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "HF" ][2]
+      self.add_shape( "HF", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "HF", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "HF", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
     
     if config.systematics[ "MC" ][ "LF" ] and useCSV:
-      self.add_shape( "LF", self.signals, self.categories[ "ALL" ], self.smooth, False )
-      self.add_shape( "LF", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
-      if self.abcdnn: self.add_shape( "LF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "LF" ][2]
+      self.add_shape( "LF", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "LF", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "LF", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
          
     if config.systematics[ "MC" ][ "hfstats1" ] and useCSV:
-      self.add_shape( "HFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "HFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "HFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "hfstats1" ]
+      self.add_shape( "HFSTATS1", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "HFSTATS1", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "HFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
     if config.systematics[ "MC" ][ "hfstats2" ] and useCSV:
-      self.add_shape( "HFSTATS2", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "HFSTATS2", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "HFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "hfstats2" ]
+      self.add_shape( "HFSTATS2", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "HFSTATS2", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "HFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
     if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
-      self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "lfstats1" ]
+      self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
     if config.systematics[ "MC" ][ "lfstats2" ] and useCSV:
-      self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], self.smooth, True )
-      self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], self.smooth, True )
-      if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, True )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "lfstats2" ]
+      self.add_shape( "LFSTATS2", self.signals, self.categories[ "ALL" ], bSmooth, True )
+      self.add_shape( "LFSTATS2", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
+      if self.abcdnn: self.add_shape( "LFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
     if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
-      self.add_shape( "CFERR1", self.signals, self.categories[ "ALL" ], self.smooth, False )
-      self.add_shape( "CFERR1", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
-      if self.abcdnn: self.add_shape( "CFERR1", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "cferr1" ]
+      self.add_shape( "CFERR1", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "CFERR1", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "CFERR1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
     if config.systematics[ "MC" ][ "cferr2" ] and useCSV:
-      self.add_shape( "CFERR2", self.signals, self.categories[ "ALL" ], self.smooth, False )
-      self.add_shape( "CFERR2", self.backgrounds, self.categories[ "SF" ], self.smooth, False )
-      if self.abcdnn: self.add_shape( "CFERR2", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth, False )
+      bSmooth = self.smooth and config.systematics[ "MC" ][ "cferr2" ]
+      self.add_shape( "CFERR2", self.signals, self.categories[ "ALL" ], bSmooth, False )
+      self.add_shape( "CFERR2", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
+      if self.abcdnn: self.add_shape( "CFERR2", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
     print( "[DONE] Added shape systematics" )
     
@@ -390,10 +419,12 @@ class DataCard():
     self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTH" ] )
     if self.abcdnn and "TTH" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTH" ] )
     
-    if self.options[ "PDF" ]:
-      self.add_model( "PDF", self.signals, self.categories[ "ALL" ], self.smooth )
-      self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], self.smooth )
-      if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], self.smooth )
+    pdf_groups = [ group for group in self.backgrounds if group not in [ "QCD", "EWK" ] ]
+    minor_pdf_groups = [ group for group in self.minor_backgrounds if group not in [ "QCD", "EWK" ] ]
+    if config.options[ "GENERAL" ][ "PDF" ]:
+      self.add_model( "PDF", self.signals, self.categories[ "ALL" ], False )
+      self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], False )
+      if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
 
     for syst in [ "MURF", "ISR", "FSR" ]:
       if syst == "ISR" and not config.systematics[ "MC" ][ "isr" ]: continue
@@ -401,11 +432,11 @@ class DataCard():
       if syst == "MURF" and not ( config.systematics[ "MC" ][ "muR" ] or config.systematics[ "MC" ][ "muF" ] or config.systematics[ "MC" ][ "muRFcorrd" ] ): continue
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         if group in [ "TTNOBB", "TTBB" ]:
-          self.add_model( syst + "TTBAR", [ group ], self.categories[ "SF" ], self.smooth )
+          self.add_model( syst + "TTBAR", [ group ], self.categories[ "SF" ], False )
         else:
-          self.add_model( syst + group, [ group ], self.categories[ "SF" ], self.smooth )
+          self.add_model( syst + group, [ group ], self.categories[ "SF" ], False )
           if self.abcdnn:
-            self.add_model( syst + group, [ group ], self.categories[ "ABCDNN" ], self.smooth )
+            self.add_model( syst + group, [ group ], self.categories[ "ABCDNN" ], False )
       self.add_model( syst + "SIG", self.signals, self.categories[ "ALL" ], False ) 
     
     print( "[DONE] Added theoretical systematics" )
@@ -418,23 +449,21 @@ class DataCard():
 
     if args.shapeSyst:
       if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and "ABCDNNMODEL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        self.add_shape( "ABCDNNMODEL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
+        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNMODEL" ][2]
+        self.add_shape( "ABCDNNMODEL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
       if config.systematics[ "MC" ][ "ABCDNNSAMPLE" ] and "ABCDNNSAMPLE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        self.add_shape( "ABCDNNSAMPLE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
+        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNSAMPLE" ][2]
+        self.add_shape( "ABCDNNSAMPLE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
       if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], self.smooth, False )
+        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
+        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 
   def add_TTHF_systematics( self ):
-    if self.options[ "TTHF SYST" ]:
-      print( "[START] Adding heavy flavor (TTBB) systematics" )
-
-      self.add_norm( "TTHF", [ "TTBB" ], self.categories[ "SF" ], config.systematics[ "TTHF" ] )
-      
-      print( "[DONE]" )
-    else:
-      pass
+    print( "[START] Adding heavy flavor (TTBB) systematics" )
+    self.add_norm( "TTHF", [ "TTBB" ], self.categories[ "SF" ], config.systematics[ "TTHF" ] )    
+    print( "[DONE]" )
   
   def add_shapes( self ):
     print( "[START] Retrieving histograms from {}".format( self.templateName ) )
@@ -461,7 +490,7 @@ class DataCard():
     self.harvester.AddDatacardLineAtEnd( "* autoMCStats 1." )
     print( "[DONE]" )
     
-  def rename_and_write( self ):
+  def rename_and_write( self, limit = True ):
     print( "[START] Setting standardized bin names" )
     ch.SetStandardBinNames( self.harvester )
     
@@ -472,6 +501,7 @@ class DataCard():
     writer.SetVerbosity(1)
     writer.WriteCards( "cmb", self.harvester )
     count = 0
+    upper_category = sorted( self.categories[ "ALL" ] )[-1].replace( "isE", "" ).replace( "isM", "" )
     for category in sorted( self.categories[ "ALL" ] ):
       print( ">> Writing category: {}".format( category ) )
       writer.WriteCards( category, self.harvester.cp().channel( [ category ] ) )

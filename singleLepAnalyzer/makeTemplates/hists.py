@@ -73,8 +73,8 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
   
   # modify weights
-  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==3 by 5
-  mc_weights = { "NOMINAL": "5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
+  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==1 || isTraining==3 by 1.25
+  mc_weights = { "NOMINAL": "1.25" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in xsec:
     nTrueHist = nHist[ process ]
     for splitPrefix in samples.split:
@@ -96,7 +96,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     print( "   + Including ABCDnn Histograms with tag {}".format( abcdnnTag ) )
     mc_weights[ "ABCDNN" ] = "{} * {}".format( extABCDTF, extABCDTFScale, abcdnnTag ) 
 
-  if process.startswith( "TTTo" ):
+  if process.startswith( "TTTo" ): # https://twiki.cern.ch/twiki/bin/view/Sandbox/JamesKeaveneySandbox
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"
 
   if process not in groups[ "DAT" ]:
@@ -112,58 +112,37 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     mc_weights[ "NOMINAL" ] = mc_weights[ "NOMINAL" ].replace( "triggerSF", "1" )
    
   if process not in groups[ "DAT" ] and doSYST:
-    if config.systematics[ "MC" ][ "pileup" ]:
+    if config.systematics[ "MC" ][ "pileup" ][0]:
       mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
                                  "DN": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightDown" ) }
-    if config.systematics[ "MC" ][ "pileupJetID" ]:
+    if config.systematics[ "MC" ][ "pileupJetID" ][0]:
       mc_weights[ "PILEUPJETID" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightUp" ),
                                       "DN": mc_weights[ "NOMINAL" ].replace( "pileupJetIDWeight", "pileupJetIDWeightDown" ) }
     if year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
-    if config.systematics[ "MC" ][ "muRFcorrd" ]:
+    if config.systematics[ "MC" ][ "muRFcorrd" ][0]:
       mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                     "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN and "MURFCORRD" in config.params["ABCDNN"]["SYSTEMATICS"]:
-        mc_weights[ "ABCDNN MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "ABCDNN" ] ),
-                                             "DN": "renormWeights[3] * {}".format( mc_weights[ "ABCDNN" ] ) }
-    if config.systematics[ "MC" ][ "muR" ]:
+    if config.systematics[ "MC" ][ "muR" ][0]:
       mc_weights[ "MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN and "MUR" in config.params["ABCDNN"]["SYSTEMATICS"]:
-        mc_weights[ "ABCDNN MUR" ] = { "UP": "renormWeights[4] * {}".format( mc_weights[ "ABCDNN" ] ),
-                                       "DN": "renormWeights[2] * {}".format( mc_weights[ "ABCDNN" ] ) }
-    if config.systematics[ "MC" ][ "muF" ]:
+    if config.systematics[ "MC" ][ "muF" ][0]:
       mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN and "MUF" in config.params["ABCDNN"]["SYSTEMATICS"]:
-        mc_weights[ "ABCDNN MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "ABCDNN" ] ),
-                                       "DN": "renormWeights[0] * {}".format( mc_weights[ "ABCDNN" ] ) }
-    if config.systematics[ "MC" ][ "isr" ]:
+    if config.systematics[ "MC" ][ "isr" ][0]: 
       mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN and "ISR" in config.params["ABCDNN"]["SYSTEMATICS"]:
-        mc_weights[ "ABCDNN ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "ABCDNN" ] ),
-                                       "DN": "renormPSWeights[2] * {}".format( mc_weights[ "ABCDNN" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ]:
+    if config.systematics[ "MC" ][ "fsr" ][0]:
       mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-      if doABCDNN and "FSR" in config.params["ABCDNN"]["SYSTEMATICS"]:
-        mc_weights[ "ABCDNN FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "ABCDNN" ] ),
-                                       "DN": "renormPSWeights[3] * {}".format( mc_weights[ "ABCDNN" ] ) }
-    if config.systematics[ "MC" ][ "toppt" ]:
+    if config.systematics[ "MC" ][ "toppt" ][0]:
       mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
                                 "DN": "(1/{}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "njet" ]:
-      mc_weights[ "NJET" ] = { "UP": mc_weights[ "NOMINAL" ],
-                               "DN": mc_weights[ "NOMINAL" ] }
-    if config.systematics[ "MC" ][ "njetsf" ]:
-      mc_weights[ "NJETSF" ] = { "UP": mc_weights[ "NOMINAL" ],
-                                 "DN": mc_weights[ "NOMINAL" ] }
-    if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and doABCDNN and "ABCDNNMODEL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+    if config.systematics[ "MC" ][ "ABCDNNMODEL" ][0] and doABCDNN and "ABCDNNMODEL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
       mc_weights[ "ABCDNN ABCDNNMODEL" ] = { "UP": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_MODELUP" ), 
                                              "DN": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_MODELDN" ) }
-    if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and doABCDNN and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+    if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][0] and doABCDNN and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
       mc_weights[ "ABCDNN ABCDNNCLOSURE" ] = { "UP": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_CLOSUREUP" ),
                                                "DN": mc_weights[ "ABCDNN" ].replace( abcdnnName, abcdnnName + "_CLOSUREDN" ) }
 
@@ -180,7 +159,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
   elif "TTToSemiLepton" in process and "HT500" not in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + " && isHTgt500Njetge9==0"
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ][:]
   if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
-    cuts[ "NOMINAL" ] += " && isTraining == 3" # Used isTraining==1 in training and isTraining==2 in validation of training
+    cuts[ "NOMINAL" ] += " && ( isTraining == 1 || isTraining == 3 )" # Used isTraining==1 in training and isTraining==2 in validation of training
   if year == "18" and category[ "LEPTON" ][0] == "E": # exclude electrons that fall in this HEM region which resulted in many misidentifications of jets as electrons
     cuts[ "NOMINAL" ] += " && ( leptonEta_MultiLepCalc > -1.3 || ( leptonPhi_MultiLepCalc < -1.57 || leptonPhi_MultiLepCalc > -0.87 ) )"
 
@@ -234,7 +213,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     
   if doSYST:
     for syst in config.systematics[ "MC" ]:
-      if not config.systematics[ "MC" ][ syst ]: continue
+      if not config.systematics[ "MC" ][ syst ][0]: continue
       for shift in [ "UP", "DN" ]:
         if doABCDNN and syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           histTag = hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift )
@@ -290,7 +269,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
   if process not in groups[ "DAT" ] and doSYST:
     nSyst, nSystABCDNN = 0, 0
     for syst in config.systematics[ "MC" ].keys():
-      if not config.systematics[ "MC" ][ syst ]: continue
+      if not config.systematics[ "MC" ][ syst ][0]: continue
       for shift in [ "UP", "DN" ]:
         histTag = hist_tag( process, categoryTag, syst.upper() + shift )
         if syst.upper() in [ "PREFIRE" ] and year in [ "16APV", "16", "17" ]:
@@ -382,7 +361,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
           nSyst += 1
         else:
           print( "[WARN] {} turned on, but excluded for {} in traditional SF {}...".format( syst.upper() + shift, process, categoryTag ) )
-        if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and doABCDNN:
+        if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and doABCDNN and config.systematics[ "MC" ][ syst ][0]:
           print( "[ABCDNN] Including {} for ABCDnn {} {}".format( syst.upper() + shift, process, categoryTag ) )
           if syst.upper() == "ABCDNNSAMPLE":
             rTree[ process + "JECABCDNNSAMPLE" + shift ].Draw(
@@ -391,9 +370,16 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
               "GOFF"
             )
             nSystABCDNN += 1
-          else:
+          elif syst.upper() == "ABCDNNCLOSURE":
             rTree[ process ].Draw(
-              "{} >> {}".format( abcdnnName, hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift ) ),
+              "{} >> {}".format( abcdnnName + "_CLOSURE" + shift, hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift ) ),
+              "{} * ({})".format( mc_weights[ "ABCDNN {}".format( syst.upper() ) ][ shift ], cuts[ "ABCDNN" ] ),
+              "GOFF"
+            )
+            nSystABCDNN += 1
+          elif syst.upper() == "ABCDNNMODEL":
+            rTree[ process ].Draw(
+              "{} >> {}".format( abcdnnName + "_MODEL" + shift, hist_tag( process, categoryTag, "ABCDNN", syst.upper() + shift ) ),
               "{} * ({})".format( mc_weights[ "ABCDNN {}".format( syst.upper() ) ][ shift ], cuts[ "ABCDNN" ] ),
               "GOFF"
             )
@@ -408,12 +394,6 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
         "pdfWeights[{}] * {} * ({})".format( i, mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ), 
         "GOFF" 
       )
-      if doABCDNN:
-        rTree[ process ].Draw(
-          "{} >> {}".format( abcdnnName, hist_tag( process, categoryTag, "ABCDNN", "PDF" + str(i) ) ),
-          "pdfWeights[{}] * {} * ({})".format( i, mc_weights[ "ABCDNN" ], cuts[ "ABCDNN" ] ),
-          "GOFF"
-        )
     if verbose: print( "  + PDF" )
 							
   for key in hists: hists[ key ].SetDirectory(0)
@@ -434,7 +414,7 @@ def numTrueHist( useJES, useABCDNN ):
       for shift in [ "up", "down" ]:
         shift_ = "UP" if shift == "up" else "DN"
         if useJES:
-          if config.systematics[ "MC" ][ "JEC" ]:
+          if config.systematics[ "MC" ][ "JEC" ][0]:
             for systJEC in config.systematics[ "REDUCED JEC" ]:
               if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
               systJEC_ = systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" )
@@ -442,9 +422,9 @@ def numTrueHist( useJES, useABCDNN ):
                 add_process( nHist, group, "JEC" + systJEC_.upper() + shift_.upper(), process, "JEC" + shift, "hadd" )
               else:
                 add_process( nHist, group, "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, systJEC_ + shift, "hadd" )
-          if config.systematics[ "MC" ][ "JER" ]:
+          if config.systematics[ "MC" ][ "JER" ][0]:
             add_process( nHist, group, "JER" + shift_.upper(), process, "JER" + shift, "hadd" )
-        elif useABCDNN and "ABCDNNSAMPLE" in config.params["ABCDNN"]["SYSTEMATICS"]:
+        elif useABCDNN and "ABCDNNSAMPLE" in config.params["ABCDNN"]["SYSTEMATICS"] and config.systematics[ "MC" ][ "ABCDNNSAMPLE" ][0]:
           for shift in [ "up", "down" ]:
             shift_ = "UP" if shift == "up" else "DN"
             add_process( nHist, group, "JECABCDNNSAMPLE" + shift_.upper(), process, "JEC" + shift, "ABCDnn_hadd" )
@@ -468,8 +448,8 @@ def make_hists( groups, group, category, nHist, useABCDNN ):
     if group in [ "SIG", "BKG", "TEST" ]:
       for shift in [ "up", "down" ]:
         shift_ = "UP" if shift == "up" else "DN"
-        if config.systematics[ "MC" ][ "JEC" ]:
-          if isABCDNN and process in samples.groups[ "BKG" ][ "ABCDNN" ]:
+        if config.systematics[ "MC" ][ "JEC" ][0]:
+          if isABCDNN and process in samples.groups[ "BKG" ][ "ABCDNN" ] and config.systematics[ "MC" ][ "ABCDNNSAMPLE" ][0]:
             rFiles[ process + "JECABCDNNSAMPLE" + shift_ ], rTrees[ process + "JECABCDNNSAMPLE" + shift_ ] = read_tree( os.path.join( config.inputDir[ args.year ].replace( "step3", "step3_ABCDnn" ), "JEC" + shift, samples.samples[ group ][ process ] + "_ABCDnn_hadd.root" ) )
           for systJEC in config.systematics[ "REDUCED JEC" ]:
             systJEC_ = systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" )
@@ -478,7 +458,7 @@ def make_hists( groups, group, category, nHist, useABCDNN ):
                 rFiles[ process + "JEC" + systJEC_.upper() + shift_ ], rTrees[ process + "JEC" + systJEC_.upper() + shift_ ] = read_tree( os.path.join( config.inputDir[ args.year ], "JEC" + shift, samples.samples[ group ][ process ] + "_hadd.root" ) )
               else:
                 rFiles[ process + "JEC" + systJEC_.upper().replace( "_", "" ) + shift_ ], rTrees[ process + "JEC" + systJEC_.upper().replace( "_", "" ) + shift_ ] = read_tree( os.path.join( config.inputDir[ args.year ], systJEC_ + shift, samples.samples[ group ][ process ] + "_hadd.root" ) )
-        if config.systematics[ "MC" ][ "JER" ]:
+        if config.systematics[ "MC" ][ "JER" ][0]:
           rFiles[ process + "JER" + shift_ ], rTrees[ process + "JER" + shift_ ] = read_tree( os.path.join( config.inputDir[ args.year ], "JER" + shift, samples.samples[ group ][ process ] + "_hadd.root" ) )
     hists.update( analyze( rTrees, nHist, args.year, process, variable, doSys, config.options[ "GENERAL" ][ "PDF" ], isABCDNN, category, True ) )
     print( "[OK] Added hists for {} in {:.2f} minutes".format( process, round( ( time.time() - process_time ) / 60,2 ) ) )

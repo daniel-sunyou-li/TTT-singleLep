@@ -33,34 +33,37 @@ options = {
     "FINAL ANALYSIS": False
   },
   "HISTS": {
-    "RENORM PDF": True, # renormalize the PDF weights
-    "SUMMARY": False,   # produce summary templates
+    "RENORM PDF": True,        # renormalize the PDF weights
+    "SUMMARY": False,          # produce summary templates
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
-    "BLIND": True,
+    "BLIND": True,                 #  
     "PDF": True,                   # add PDF systematic uncertainty
     "CR SYST": False,              # add systematic uncertainty to control region
-    "SHAPE SYST": True,            # add systematic uncertainty shapes
-    "SHAPE STAT": True,            # add statistical uncertainty shapes
-    "MURF SHAPES": True,
-    "PS WEIGHTS": True,            # Construct Parton Shower weights
+    "SHAPE SYST": True,            # add systematic shape uncertainty 
+    "SHAPE STAT": True,            # add statistical uncertainty 
+    "MURF SHAPES": True,           # include QCD renormalization and factorization systematics
+    "PS WEIGHTS": True,            # include parton shower weighting systematics as well as evaluate systematic envelope (PSwgt)
     "NORM THEORY SIG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
-    "NORM THEORY BKG SYST": False, # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
-    "SYMM SMOOTHING": True,
-    "SYMM TOP PT": True,
-    "SYMM HOTCLOSURE": True,
-    "SCALE SIGNAL XSEC": False,
+    "NORM THEORY BKG SYST": False,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
+    "SYMM SMOOTHING": True,       # symmetrize the systematics per bin before smoothing
+    "SYMM TOP PT": True,           # symmetrize top pt systematic
+    "SYMM HOTCLOSURE": True,       # symmetrize hotclosure systematic
+    "SCALE SIGNAL XSEC": False,    
     "ADD SHAPE SYST YIELD": True,
-    "SMOOTH": True,
-    "UNCORRELATE YEARS": True,
+    "SMOOTH": True,                # perform smoothing
+    "UNCORRELATE YEARS": True,     # add year postfix to systematics for decorrelation in Higgs combine
     "TRIGGER EFFICIENCY": False,
   },
   "COMBINE": {
-    "TTHF SYST": True,
-    "PDF": True,
-    "ABCDNN": True,
-    "SMOOTH": True
+    "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
+    "SMOOTH": False,    # use smoothed systematic histograms
+    "GROUPS": False,    # evaluate significance and limits with combinations of systematic groups
+    "IMPACTS": {
+      "MASKED": False,  # include evaluations of impacts with channels masked
+      "FREEZE": False,  # include evaluations of impacts with NP frozen
+    }
   }
 }
 # non-boolean parameters used in creating templates
@@ -73,17 +76,17 @@ params = {
   "ABCDNN": {
     "TAG": "nJ7pnB3pnHOT1p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
     "TF": {
-      "16APV": 0.01489,       # nJ5pnB2p = 0.02610, nJ7pnB3p = 0.01489
-      "16": 0.01522,          # nJ5pnB2p = 0.02805, nJ7pnB3p = 0.01522   
-      "17": 0.00724,          # nJ5pnB2p = 0.01210, nJ7pnB3p = 0.00724
-      "18": 0.01123,          # nJ5pnB2p = 0.02060, nJ7pnB3p = 0.01123
+      "16APV": 0.01627,       # nJ5pnB2p = 0.02610, nJ7pnB3p = 0.01489, nJ7pnB3pnHOT1p = 0.01627
+      "16": 0.01261,          # nJ5pnB2p = 0.02805, nJ7pnB3p = 0.01522, nJ7pnB3pnHOT1p = 0.01261
+      "17": 0.00669,          # nJ5pnB2p = 0.01210, nJ7pnB3p = 0.00724, nJ7pnB3pnHOT1p = 0.00669 
+      "18": 0.01101,          # nJ5pnB2p = 0.02060, nJ7pnB3p = 0.01123, nJ7pnB3pnHOT1p = 0.01101 
     },                        
     "TF SCALE": 1.0,          # scale extended ABCD transfer factor with additional cut
     "CONTROL VARIABLES":  [ "NJ", "NB" ],       # X and Y control variables to define regions
-    "TRANSFER VARIABLES": [ "CSVB_3", "DNN" ],  # transformed variables
+    "TRANSFER VARIABLES": [ "HT", "DNN" ],  # transformed variables
     "GROUPS": [ "TTBB", "TTNOBB" ],         # MC samples used in ABCDnn training
     "MINOR BKG": [ "TTH", "TOP", "EWK" ],   # Minor backgrounds to include with ABCDnn in SR
-    "SYSTEMATICS": [ "ABCDNNCLOSURE" ],
+    "SYSTEMATICS": [ "ABCDNNCLOSURE", "EXTABCDSYST", "EXTABCDSTAT", "EXTABCDCLOSURE" ],
   },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
@@ -94,60 +97,87 @@ params = {
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
-    "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
-    "MIN MERGE": 1,             # merge at least this number of bins
+    "STAT THRESHOLD": 0.20,     # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
+    "MIN MERGE": 2,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
+    "LOWESS": 0.33,             # relative proportion of neighboring datapoints to consider during smoothing 
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
       "NJET", "NJETSF", "PSWGT", "BTAG"
     ],
-    "EXCLUDE SMOOTH": [
-      "HT" 
-    ]
+    "EXCLUDE SMOOTH": []
   },
   "COMBINE": {
-    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "QCD", "TTH" ], 
+    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "TTH", "QCD" ], 
     "DATA": [ "data_obs" ],
     "SIGNALS": [ "TTTW", "TTTJ" ],
-  }  
+    "FITS": { # arguments used with Combine -M MultiDimFit
+      "ARGS": [
+        "--cminDefaultMinimizerStrategy=0",
+        #"--setCrossingTolerance=0.0001", # default is 0.0001
+        #"--setRobustFitTolerance=0.1",   # default is 0.1
+        "--robustFit=1",
+        "--rMin -30",
+        "--rMax 30",
+        #"--robustHesse=1",
+        #"--freezeParameter TOPPTLOWESS",
+        #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,HOTCLOSURELOWESS16APV,", # 2016APV freeze
+        #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,FSRTTBARLOWESS,ISRTTBARLOWESS", # 2016 freeze
+        "--expectSignal=1",
+        "-t -1",
+        "-m 125", # higgs mass, doesn't really matter for three top
+      ]
+    },
+    "SIGNIFICANCE": { # arguments used with Combine -M Significance
+      "ARGS": [
+        "--cminDefaultMinimizerStrategy=0",
+        "--expectSignal=1",
+        "-t -1",
+        "-m 125"
+      ]
+    },
+    "LIMITS": { # arguments used with Combine -M AsymptoticLimits
+      "ARGS": [
+        "--cminDefaultMinimizerStrategy=0",
+        "--run=blind",
+      ]
+    }
+  }
 }
 
 
-# systematic uncertainty sources
+# shape systematic uncertainty sources
 systematics = {
-  "MC": {  # to be added as histograms
-    "pileup": True, 
-    "prefire": True,
-    "pileupJetID": True,
-    "trigeff": False,   
-    "muRFcorrd": True, 
-    "muR": True, 
-    "muF": True, 
-    "isr": True, 
-    "fsr": True, 
-    "hotstat": True, 
-    "hotcspur": True, 
-    "hotclosure": True,
-    "njet": False,
-    "njetsf": False,
-    "LF": True, 
-    "lfstats1": True, 
-    "lfstats2": True, 
-    "HF": True, 
-    "hfstats1": True, 
-    "hfstats2": True, 
-    "cferr1": True, 
-    "cferr2": True,
-    "toppt": True, 
-    "ht": False,
-    "ABCDNNSAMPLE": True,      # Normal error propagation of extended ABCD equation in analysis SR
-    "ABCDNNMODEL": True,
-    "ABCDNNCLOSURE": True,
-    "JER": True, 
-    "JEC": True,
-    "HD": False,
-    "UE": False
+  "MC": {  # Include, Symmetrize, Smooth
+    "pileup": ( True, False, False ), 
+    "prefire": ( True, False, False ),
+    "pileupJetID": ( True, False, False ),
+    "trigeff": ( False, False, False ),   
+    "muRFcorrd": ( True, False, False ),
+    "muR": ( True, False, False ),
+    "muF": ( True, False, False ),
+    "isr": ( True, False, False ),
+    "fsr": ( True, False, False ),
+    "hotstat": ( True, False, False ),
+    "hotcspur": ( True, False, False ),
+    "hotclosure": ( True, False, False ),
+    "LF": ( True, False, False ),
+    "lfstats1": ( True, False, False ),
+    "lfstats2": ( True, False, False ),
+    "HF": ( True, False, False ),
+    "hfstats1": ( True, False, False ),
+    "hfstats2": ( True, False, False ),
+    "cferr1": ( True, False, False ),
+    "cferr2": ( True, False, False ),
+    "toppt": ( False, False, False ),
+    "ABCDNNSAMPLE": ( False, False, False ),     
+    "ABCDNNMODEL": ( False, False, False ),
+    "ABCDNNCLOSURE": ( True, False, True ),
+    "JER": ( True, False, True ),
+    "JEC": ( True, False, True ), # calls from REDUCED JEC list
+    "HD": ( False, False, False ), 
+    "UE": ( False, False, False )
   },
   "REDUCED JEC": {
     "Total": False,
@@ -219,7 +249,7 @@ systematics = {
     "18": 1.023      # nJ6nB2 = 1.023, nJ6nB1 = 1.042
   },
   "PILEUP": 1.046,
-  "TTHF": { year: 1.13 for year in years },
+  "TTHF": { year: 1.04 for year in years },
   "HDAMP": 1.085,
   "MU SF": { # Theory uncertainty SFs to include acceptance/event migration, values calculated by Sinan in May 2022
     "16APV": { "DN": 0.7524, "UP": 1.2888 }, 
@@ -277,11 +307,11 @@ region_prefix = {
 hist_bins = {
   "SR": {
     "LEPTON": [ "E", "M" ],
-    "NHOT": [ "0p" ],
+    "NHOT": [ "0", "1p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
-    "NJ": [ "5", "6", "7p" ]
+    "NJ": [ "6", "7p" ]
   },
   "VR": {
     "LEPTON": [ "E", "M" ],
@@ -296,7 +326,7 @@ hist_bins = {
     "NHOT": [ "0p" ],
     "NT": [ "0p" ],
     "NW": [ "0p" ],
-    "NB": [ "1p" ],
+    "NB": [ "2p" ],
     "NJ": [ "4p" ]
   },
   "ABCDNN": { # edit these based on ABCDnn training signal region

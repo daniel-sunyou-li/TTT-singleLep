@@ -47,7 +47,7 @@ def theory_systematics( categories, groups ):
         systematics[ hist_tag( process, category ) ] = 0.
     for group in groups[ "BKG" ][ "SUPERGROUP" ]:
       if group == "TTBB": 
-        systematics[ hist_tag( group, category ) ] = math.sqrt( ( np.mean( config.systematics[ "XSEC" ][ "TTBAR" ] ) - 1.0 )**2 + ( config.systematics[ "TTHF" ] - 1.0 )**2  )
+        systematics[ hist_tag( group, category ) ] = math.sqrt( ( np.mean( config.systematics[ "XSEC" ][ "TTBAR" ] ) - 1.0 )**2 + ( config.systematics[ "TTHF" ][ args.year ] - 1.0 )**2  )
       elif group == "TTNOBB":
         systematics[ hist_tag( group, category ) ] = math.sqrt( ( np.mean( config.systematics[ "XSEC" ][ "TTBAR" ] ) - 1.0 )**2  )
       elif group in config.systematics[ "XSEC" ].keys():
@@ -152,7 +152,7 @@ def cms_lumi( pad, postfix, blind ):
 
 def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_signal_yield, norm_bin_width, smooth, doABCDNN ):
   file_name = "template_combine_{}_UL{}".format( args.variable, args.year )
-  if rebinned: file_name += "_rebinned_stat{}".format( str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) 
+  if rebinned: file_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) 
   rFile = ROOT.TFile.Open( os.path.join( templateDir, file_name + ".root" ) )
   histograms = { key: {} for key in [ "BKG", "SIG", "DAT", "TOTAL BKG", "TOTAL SIG", "TOTAL DAT" ] }
   
@@ -162,7 +162,8 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   hist_names = [ key.GetName() for key in rFile.GetListOfKeys() ]
   categories = []
   for hist_name in sorted( hist_names ):
-    if args.year in hist_name or "isL" in hist_name: continue # skip the decorrelated histograms and lepton categories
+    if "isL" in hist_name: continue # skip the decorrelated histograms and lepton categories
+    if args.year in hist_name and not "JEC" in hist_name: continue
     if hist_name.endswith( "Down" ) or hist_name.endswith( "Up" ) or hist_name.endswith( "NOMINAL" ): continue # skip combine hists
     if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in hist_name and not smooth: continue
     if not doABCDNN and "ABCDNN" in hist_name: continue 
@@ -171,11 +172,12 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
     syst_name = parse[ "SYST" ]
     process = parse[ "PROCESS" ]
     category = parse[ "CATEGORY" ]
+    if "JEC" in hist_name and not syst_name.endswith( "20" + args.year ) and syst_name.endswith( args.year ): continue
     if ( "HOTCLOSURE" in syst_name or "HOTCSPUR" in syst_name or "HOTSTAT" in syst_name ) and "nHOT0p" in category: continue
     if syst and config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() not in hist_name and smooth: continue
     if "ELTRIG" in syst_name or "MUTRIG" in syst_name or "BIN" in syst_name: continue
     if syst_name in config_plot.params[ "EXCLUDE SYST" ]: continue
-    if syst_name in config.systematics[ "MC" ] and not config.systematics[ "MC" ][ syst_name ]: continue
+    if syst_name in config.systematics[ "MC" ] and not config.systematics[ "MC" ][ syst_name ][0]: continue
     if syst and syst_name not in syst_list: syst_list.append( syst_name )
     if category not in categories: categories.append( category )
 
@@ -705,19 +707,20 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         pull.Draw( "HIST" )
       
     save_name = hist_tag( args.variable, category )
-    if rebinned: save_name += "_rebinned_stat{}".format( str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+    plot_folder = "plots_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+    if rebinned: save_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
     if real_pull: save_name += "_pull"
     if blind: save_name += "_blind"
     if config_plot.options[ "Y LOG" ]: save_name += "_logy"
     save_name += ".png"
-    if not os.path.exists( os.path.join( templateDir, "plots/" ) ): os.system( "mkdir -vp {}".format( os.path.join( templateDir, "plots/" ) ) )
-    canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
+    if not os.path.exists( os.path.join( templateDir, plot_folder ) ): os.system( "mkdir -vp {}".format( os.path.join( templateDir, plot_folder ) ) )
+    canvas.SaveAs( os.path.join( templateDir, plot_folder, save_name ) )
     templateName = templateDir.split("/")[-1]
     try:
-      if os.path.exists( os.path.join( args.html, templateName, "plots/", save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, "plots/", save_name ) ) )
-      if not os.path.exists( os.path.join( args.html, templateName, "plots/" ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, "plots/" ) ) )
-      if not os.path.exists( os.path.join( args.html, templateName, "plots/index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, "plots/" ) ) )
-      os.system( "cp {} {}".format( os.path.join( templateDir, "plots/", save_name ), os.path.join( args.html, templateName, "plots/" ) ) )
+      if os.path.exists( os.path.join( args.html, templateName, plot_folder, save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, plot_folder, save_name ) ) )
+      if not os.path.exists( os.path.join( args.html, templateName, plot_folder ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
+      if not os.path.exists( os.path.join( args.html, templateName, plot_folder, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
+      os.system( "cp {} {}".format( os.path.join( templateDir, plot_folder, save_name ), os.path.join( args.html, templateName, plot_folder ) ) )
     except:
       print( "[WARN] No public_html area setup for user" )
     ROOT.SetOwnership(canvas,False)
@@ -832,30 +835,32 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
 
   save_name = "background_{}_ratio.png".format( lepton ) if not blind else "background_{}_ratio_blind.png".format( lepton )
   templateName = templateDir.split("/")[-1]
-  if not os.path.exists( os.path.join( templateDir, "plots/" ) ): os.system( "mkdir -p {}".format( os.path.join( templateDir, "plots/" ) ) )
-  canvas.SaveAs( os.path.join( templateDir, "plots/", save_name ) )
+  plot_folder = "plots_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+  if not os.path.exists( os.path.join( templateDir, plot_folder ) ): os.system( "mkdir -p {}".format( os.path.join( templateDir, plot_folder ) ) )
+  canvas.SaveAs( os.path.join( templateDir, plot_folder, save_name ) )
   try:
-    if os.path.exists( os.path.join( args.html, templateName, "plots/", save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, "plots/", save_name ) ) )
-    if not os.path.exists( os.path.join( args.html, templateName, "plots/" ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, "plots/" ) ) )
-    if not os.path.exists( os.path.join( args.html, templateName, "plots/index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, "plots/" ) ) )
-    os.system( "cp {} {}".format( os.path.join( templateDir, "plots/", save_name ), os.path.join( args.html, templateName, "plots/" ) ) )
+    if os.path.exists( os.path.join( args.html, templateName, plot_folder, save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, plot_folder, save_name ) ) )
+    if not os.path.exists( os.path.join( args.html, templateName, plot_folder ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
+    if not os.path.exists( os.path.join( args.html, templateName, plot_folder, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
+    os.system( "cp {} {}".format( os.path.join( templateDir, plot_folder, save_name ), os.path.join( args.html, templateName, plot_folder ) ) )
   except:
     print( "[INFO] --html not given or not set up correctly" )
   ROOT.SetOwnership( canvas, False )
 
-def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categories, lumiStr, blind, log, doABCDNN, rebinned, syst_list ):
-  print( "[START] Plotting histograms for systematic shifts" )
+def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, categories, lumiStr, blind, log, doABCDNN, rebinned, syst_list ):
+  print( "[START] Plotting systematic shift background histograms" )
   progress = tqdm( [ category for category in categories if "is" + lep in category ] )
   for category in progress:
     progress.set_description( "Category: {}".format( category ) )
     for syst in syst_list:
       if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in syst: continue
       if syst in config_plot.params[ "EXCLUDE SYST" ]: continue 
+      if "SIG" in syst: continue
       if "TOPPT" in syst and hist_parse( category, samples )[ "ABCDNN" ]: continue
       if "ABCD" in syst and not hist_parse( category, samples )[ "ABCDNN" ]: continue
       systSmooth = syst + config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
       if args.test and syst != syst_list[0]: continue
-      canvas = ROOT.TCanvas( hist_tag( category, syst ), hist_tag( category, syst ), 60, 60, config_plot.params[ "CANVAS" ][ "W REF" ], config_plot.params[ "CANVAS" ][ "H REF" ] )
+      canvas = ROOT.TCanvas( hist_tag( category, syst, "BKG" ), hist_tag( category, syst, "BKG" ), 60, 60, config_plot.params[ "CANVAS" ][ "W REF" ], config_plot.params[ "CANVAS" ][ "H REF" ] )
       canvas.cd()
       canvas.SetFillColor(0)
       canvas.SetBorderMode(0)
@@ -962,6 +967,7 @@ def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categor
           hist_shift_smooth[ "DN" ].SetLineWidth(2)
           hist_shift_smooth[ "DN" ].Draw( "SAME HIST" )
 
+
       histograms[ "TOTAL BKG" ][ category ].SetLineColor( ROOT.kBlack )
       histograms[ "TOTAL BKG" ][ category ].SetLineStyle(0)
       histograms[ "TOTAL BKG" ][ category ].SetFillStyle(0)
@@ -969,6 +975,12 @@ def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categor
       histograms[ "TOTAL BKG" ][ category ].GetXaxis().SetRangeUser( config.plot_params[ "VARIABLES" ][ args.variable ][1][0], config.plot_params[ "VARIABLES" ][ args.variable ][1][-1] )
       format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL BKG" ][ category ], False, False )
       histograms[ "TOTAL BKG" ][ category ].Draw( "SAME HIST" )
+
+      histograms[ "TOTAL SIG" ][ category ].SetLineColor( ROOT.kBlack )
+      histograms[ "TOTAL SIG" ][ category ].SetLineStyle(3)
+      histograms[ "TOTAL SIG" ][ category ].SetFillStyle(0)
+      histograms[ "TOTAL SIG" ][ category ].SetLineWidth(2)
+      histograms[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
 
       latex = ROOT.TLatex()
       latex.SetNDC()
@@ -1009,13 +1021,17 @@ def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categor
       legend.SetTextFont(42)
       legend.SetTextSize( config_plot.params[ "LEGEND" ][ "TEXT SIZE" ] )
 
-      if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
-        legend.AddEntry( histograms[ "TOTAL BKG" ][ category ], "ABCDNN", "f" )
+      if config_plot.options[ "SCALE SIGNAL YIELD" ]:
+        legend.AddEntry( histograms[ "TOTAL SIG" ][ category ], "SIGNAL x {}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "f" )
       else:
-        legend.AddEntry( histograms[ "TOTAL BKG" ][ category ], "NOMINAL", "f" )
+        legend.AddEntry( histograms[ "TOTAL SIG" ][ category ], "SIGNAL", "f" )
+      if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
+        legend.AddEntry( histograms[ "TOTAL BKG" ][ category ], "ABCDNN BKG", "f" )
+      else:
+        legend.AddEntry( histograms[ "TOTAL BKG" ][ category ], "NOMINAL BKG", "f" )
       for shift in [ "UP", "DN" ]:
-        legend.AddEntry( hist_shift[ shift ], syst + shift, "f" )
-        legend.AddEntry( hist_shift_smooth[ shift ], systSmooth + shift, "f" )
+        legend.AddEntry( hist_shift[ shift ], syst + shift + " BKG", "f" )
+        legend.AddEntry( hist_shift_smooth[ shift ], systSmooth + shift + " BKG", "f" )
       legend.Draw( "SAME" )
 
       cms_lumi( pad[ "UPPER" ], config_plot.params[ "POSTFIX TEXT" ], blind )
@@ -1026,57 +1042,260 @@ def plot_shifts( templateDir, lep, groups, histograms, histogramsSmooth, categor
       pad[ "LOWER" ].cd()
       pad[ "LOWER" ].SetTopMargin( 0 )
       pad[ "LOWER" ].SetBottomMargin( 0.25 )
+
+      ratio[ "NOMINAL" ] = hist_shift[ "UP" ].Clone()
+      ratio[ "NOMINAL" ].Divide( hist_shift[ "UP" ] )
+      ratio[ "NOMINAL" ].SetLineColor( ROOT.kBlack )
+      ratio[ "NOMINAL" ].SetLineStyle(0)
+      ratio[ "NOMINAL" ].SetLineWidth(1)
+      ratio[ "NOMINAL" ].SetFillStyle(0)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitle( config.plot_params[ "VARIABLES" ][ args.variable ][2] )
+      ratio[ "NOMINAL" ].GetXaxis().SetLabelSize(0.10)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitleSize(0.09)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitleOffset(1)
+      ratio[ "NOMINAL" ].GetXaxis().SetNdivisions(506)
+      ratio[ "NOMINAL" ].GetYaxis().SetTitle( "Shift/Nominal" )
+      ratio[ "NOMINAL" ].GetYaxis().SetTitleOffset(1)
+      ratio[ "NOMINAL" ].GetYaxis().SetTitleSize(0.09)
+      ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
+      ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
+      ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.47, 1.53 )
+      ratio[ "NOMINAL" ].Draw( "HIST" )
       for shift in [ "UP", "DN" ]:
         if shift == "UP": 
           ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
-          ratio[ shift ].SetFillColor(0)
-          ratio[ shift ].SetLineStyle(2)
-          ratio[ shift ].GetXaxis().SetTitle( config.plot_params[ "VARIABLES" ][ args.variable ][2] )
-          ratio[ shift ].GetXaxis().SetLabelSize(0.10)
-          ratio[ shift ].GetXaxis().SetTitleSize(0.09)
-          ratio[ shift ].GetXaxis().SetTitleOffset(1)
-          ratio[ shift ].GetXaxis().SetNdivisions(506)
-          ratio[ shift ].GetYaxis().SetTitle( "Shift/Nominal" )
-          ratio[ shift ].GetYaxis().SetTitleOffset(1)
-          ratio[ shift ].GetYaxis().SetTitleSize(0.09)
-          ratio[ shift ].GetYaxis().SetLabelSize(0.08)
-          ratio[ shift ].GetYaxis().SetNdivisions(506)
-          ratio[ shift ].GetYaxis().CenterTitle()
-          ratio[ shift ].GetYaxis().SetRangeUser( 0.78, 1.22 )
-          ratio[ shift ].Draw( "HIST" )
           ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
-          ratio_smooth[ shift ].SetFillColor(0)
-          ratio_smooth[ shift ].SetLineStyle(0)
-          ratio_smooth[ shift ].Draw( "SAME HIST" )
         else: 
           ratio[ shift ].SetLineColor( ROOT.kRed - 3 )
-          ratio[ shift ].SetFillColor(0)
-          ratio[ shift ].SetLineStyle(2)
-          ratio[ shift ].Draw( "SAME HIST" )
           ratio_smooth[ shift ].SetLineColor( ROOT.kRed - 3 )
-          ratio_smooth[ shift ].SetFillColor(0)
-          ratio_smooth[ shift ].SetLineStyle(0)
-          ratio_smooth[ shift ].Draw( "SAME HIST" )
+        ratio[ shift ].SetFillColor(0)
+        ratio[ shift ].SetLineStyle(2)
+        ratio_smooth[ shift ].SetFillColor(0)
+        ratio_smooth[ shift ].SetLineWidth(2)
+        ratio_smooth[ shift ].SetLineStyle(0)
+        ratio[ shift ].Draw( "SAME HIST" )
+        ratio_smooth[ shift ].Draw( "SAME HIST" )
 
       # save the plot
 
       save_name = hist_tag( args.variable, category, syst )
+      plot_folder = "plots_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+      if rebinned: save_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
       if hist_parse( category, samples )[ "ABCDNN" ] and doABCDNN: save_name += "_ABCDnn"
       if blind: save_name += "_blind"
       if config_plot.options[ "Y LOG" ]: save_name += "_logy"
       save_name += ".png"
-      if not os.path.exists( os.path.join( templateDir, "plots/{}/".format( syst ) ) ): os.system( "mkdir -p {}".format( os.path.join( templateDir, "plots/{}/".format( syst ) ) ) )
-      canvas.SaveAs( os.path.join( templateDir, "plots/{}/".format( syst ), save_name ) )
+      if not os.path.exists( os.path.join( templateDir, plot_folder, syst ) ): os.system( "mkdir -p {}".format( os.path.join( templateDir, plot_folder, syst ) ) )
+      canvas.SaveAs( os.path.join( templateDir, plot_folder, syst, save_name ) )
       templateName = templateDir.split("/")[-1]
       try:
-        if os.path.exists( os.path.join( args.html, templateName, "plots/{}/".format( syst ), save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, "plots/{}/".format( syst ), save_name ) ) )
-        if not os.path.exists( os.path.join( args.html, templateName, "plots/{}/".format( syst ) ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, "plots/{}/".format( syst ) ) ) )
-        if not os.path.exists( os.path.join( args.html, templateName, "plots/{}/index.php".format( syst ) ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, "plots/{}/".format( syst ) ) ) )
-        os.system( "cp {} {}".format( os.path.join( templateName, "plots/{}/".format( syst ), save_name ), os.path.join( args.html, templateName, "plots/{}/".format( syst ) ) ) )
+        if os.path.exists( os.path.join( args.html, templateName, plot_folder, syst, save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, plot_folder, syst, save_name ) ) )
+        if not os.path.exists( os.path.join( args.html, templateName, plot_folder, syst ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, plot_folder, syst ) ) )
+        if not os.path.exists( os.path.join( args.html, templateName, plot_folder, syst, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder, syst ) ) )
+        os.system( "cp {} {}".format( os.path.join( templateName, plot_folder, syst, save_name ), os.path.join( args.html, templateName, plot_folder, syst ) ) )
       except:
         print( "[WARN] No public_html area setup for user {}" )
       ROOT.SetOwnership( canvas, False )
+      del canvas
       
+def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, categories, lumiStr, blind, log, rebinned, syst_list ):
+  print( "[START] Plotting systematic shift signal histograms" )
+  progress = tqdm( [ category for category in categories if "is" + lep in category ] )
+  for category in progress:
+    progress.set_description( "Category: {}".format( category ) )
+    for syst in syst_list:
+      if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in syst: continue
+      if syst in config_plot.params[ "EXCLUDE SYST" ]: continue 
+      if ( "QCD" in syst and "FLAVOR" not in syst ) or "TOP" in syst or "TTBAR" in syst or "EWK" in syst or "TTH" in syst: continue
+      if "TOPPT" in syst: continue
+      if "ABCD" in syst: continue
+      systSmooth = syst + config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+      if args.test and syst != syst_list[0]: continue
+      canvas = ROOT.TCanvas( hist_tag( category, syst, "SIG" ), hist_tag( category, syst, "SIG" ), 60, 60, config_plot.params[ "CANVAS" ][ "W REF" ], config_plot.params[ "CANVAS" ][ "H REF" ] )
+      canvas.cd()
+      canvas.SetFillColor(0)
+      canvas.SetBorderMode(0)
+      canvas.SetFrameFillStyle(0)
+      canvas.SetFrameBorderMode(0)
+
+      y_divisions = config_plot.params[ "Y DIV" ]
+
+      pad = { 
+        "UPPER": ROOT.TPad( "UPPER", "", 0, y_divisions, 1, 1 ),
+        "LOWER": ROOT.TPad( "LOWER", "", 0, 0, 1, y_divisions )
+      }
+
+      for key in pad:
+        pad[ key ].SetLeftMargin( config_plot.params[ "CANVAS" ][ "L" ] / config_plot.params[ "CANVAS" ][ "W" ] )
+        pad[ key ].SetRightMargin( config_plot.params[ "CANVAS" ][ "R" ] / config_plot.params[ "CANVAS" ][ "W" ] )
+        pad[ key ].SetFillColor(0)
+        pad[ key ].SetBorderMode(0)
+        pad[ key ].SetFrameFillStyle(0)
+        pad[ key ].SetFrameBorderMode(0)
+        if pad == "LOWER":
+          pad[ key ].SetGridy()
+        pad[ key ].Draw()
+      pad[ "UPPER" ].cd()
+      
+      hist_shift = {}
+      hist_shift_smooth = {}
+      ratio = {}
+      ratio_smooth = {}
+      for shift in [ "UP", "DN" ]:
+        for group in config.params[ "COMBINE" ][ "SIGNALS" ]:
+          try:    
+            hist_shift[ shift ].Add( histograms[ "SIG" ][ hist_tag( group, category, syst + shift ) ] )
+            hist_shift_smooth[ shift ].Add( histogramsSmooth[ "SIG" ][ hist_tag( group, category, systSmooth + shift ) ] )
+          except: 
+            hist_shift[ shift ] = histograms[ "SIG" ][ hist_tag( group, category, syst + shift ) ].Clone()
+            hist_shift_smooth[ shift ] = histogramsSmooth[ "SIG" ][ hist_tag( group, category, systSmooth + shift ) ].Clone()
+        ratio[ shift ] = hist_shift[ shift ].Clone()
+        ratio[ shift ].Divide( histograms[ "TOTAL SIG" ][ category ] )
+        ratio_smooth[ shift ] = hist_shift_smooth[ shift ].Clone()
+        ratio_smooth[ shift ].Divide( histogramsSmooth[ "TOTAL SIG" ][ category ] )
+        if shift == "UP":
+          hist_shift[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift[ "UP" ].SetFillColor(0)
+          hist_shift[ "UP" ].SetLineStyle(2)
+          hist_shift[ "UP" ].SetLineWidth(2)
+          hist_shift[ "UP" ].Draw( "HIST" )
+          hist_shift_smooth[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift_smooth[ "UP" ].SetFillColor(0)
+          hist_shift_smooth[ "UP" ].SetLineStyle(0)
+          hist_shift_smooth[ "UP" ].SetLineWidth(2)
+          hist_shift_smooth[ "UP" ].Draw( "SAME HIST" )
+        else:
+          hist_shift[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift[ "DN" ].SetFillColor(0)
+          hist_shift[ "DN" ].SetLineStyle(2)
+          hist_shift[ "DN" ].SetLineWidth(2)
+          hist_shift[ "DN" ].Draw( "SAME HIST" )
+          hist_shift_smooth[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift_smooth[ "DN" ].SetFillColor(0)
+          hist_shift_smooth[ "DN" ].SetLineStyle(0)
+          hist_shift_smooth[ "DN" ].SetLineWidth(2)
+          hist_shift_smooth[ "DN" ].Draw( "SAME HIST" )
+
+      histograms[ "TOTAL SIG" ][ category ].SetLineColor( ROOT.kBlack )
+      histograms[ "TOTAL SIG" ][ category ].SetLineStyle(0)
+      histograms[ "TOTAL SIG" ][ category ].SetFillStyle(0)
+      histograms[ "TOTAL SIG" ][ category ].SetLineWidth(2)
+      histograms[ "TOTAL SIG" ][ category ].GetXaxis().SetRangeUser( config.plot_params[ "VARIABLES" ][ args.variable ][1][0], config.plot_params[ "VARIABLES" ][ args.variable ][1][-1] )
+      format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL SIG" ][ category ], False, False )
+      histograms[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
+
+      latex = ROOT.TLatex()
+      latex.SetNDC()
+      latex_size = 0.6 * config_plot.params[ "LATEX SIZE" ]
+      latex.SetTextSize( latex_size )
+      latex.SetTextAlign(11)
+
+      splits = category.split( "n" )
+      cat_text = {
+        "LEP": splits[0][-1] + " + jets",
+        "NHOT": "N_{HOT}#geq" + splits[1][3:-1] if "p" in splits[1] else "N_{HOT}=" + splits[1][-1],
+        "NT": "N_{T}#geq" + splits[2][1:-1] if "p" in splits[2] else "N_{t}=" + splits[2][-1],
+        "NW": "N_{W}#geq" + splits[3][1:-1] if "p" in splits[3] else "N_{W}=" + splits[3][-1],
+        "NB": "N_{b}#geq" + splits[4][1:-1] if "p" in splits[4] else "N_{b}=" + splits[4][-1],
+        "NJ": "N_{j}#geq" + splits[5][1:-1] if "p" in splits[5] else "N_{j}=" + splits[5][-1]
+      }
+
+      mod_x = 0.9
+      mod_y = 1.1
+
+      latex.DrawLatex(
+        config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, config_plot.params[ "CANVAS" ][ "TAG Y" ] * mod_y,
+        cat_text[ "LEP" ]
+      )
+      latex.DrawLatex(
+        config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, ( config_plot.params[ "CANVAS" ][ "TAG Y" ] - 0.05 ) * mod_y,
+        ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )
+      )
+
+      legend = ROOT.TLegend( 0.75, 0.68, 0.95, 0.88 )
+      legend.SetShadowColor(0)
+      legend.SetFillColor(0)
+      legend.SetFillStyle(0)
+      legend.SetLineColor(0)
+      legend.SetLineStyle(0)
+      legend.SetBorderSize(0)
+      legend.SetNColumns(1)
+      legend.SetTextFont(42)
+      legend.SetTextSize( config_plot.params[ "LEGEND" ][ "TEXT SIZE" ] )
+
+      if config_plot.options[ "SCALE SIGNAL YIELD" ]:
+        legend.AddEntry( histograms[ "TOTAL SIG" ][ category ], "SIGNAL x {}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "f" )
+      else:
+        legend.AddEntry( histograms[ "TOTAL SIG" ][ category ], "SIGNAL", "f" )
+      for shift in [ "UP", "DN" ]:
+        legend.AddEntry( hist_shift[ shift ], syst + shift + " SIG", "f" )
+        legend.AddEntry( hist_shift_smooth[ shift ], systSmooth + shift + " SIG", "f" )
+      legend.Draw( "SAME" )
+
+      cms_lumi( pad[ "UPPER" ], config_plot.params[ "POSTFIX TEXT" ], blind )
+      
+      pad[ "UPPER" ].Update()
+      pad[ "UPPER" ].RedrawAxis()
+
+      pad[ "LOWER" ].cd()
+      pad[ "LOWER" ].SetTopMargin( 0 )
+      pad[ "LOWER" ].SetBottomMargin( 0.25 )
+
+      ratio[ "NOMINAL" ] = hist_shift[ "UP" ].Clone()
+      ratio[ "NOMINAL" ].Divide( hist_shift[ "UP" ] )
+      ratio[ "NOMINAL" ].SetLineColor( ROOT.kBlack )
+      ratio[ "NOMINAL" ].SetLineStyle(0)
+      ratio[ "NOMINAL" ].SetLineWidth(1)
+      ratio[ "NOMINAL" ].SetFillStyle(0)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitle( config.plot_params[ "VARIABLES" ][ args.variable ][2] )
+      ratio[ "NOMINAL" ].GetXaxis().SetLabelSize(0.10)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitleSize(0.09)
+      ratio[ "NOMINAL" ].GetXaxis().SetTitleOffset(1)
+      ratio[ "NOMINAL" ].GetXaxis().SetNdivisions(506)
+      ratio[ "NOMINAL" ].GetYaxis().SetTitle( "Shift/Nominal" )
+      ratio[ "NOMINAL" ].GetYaxis().SetTitleOffset(1)
+      ratio[ "NOMINAL" ].GetYaxis().SetTitleSize(0.09)
+      ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
+      ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
+      ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.47, 1.53 )
+      ratio[ "NOMINAL" ].Draw( "HIST" )
+      for shift in [ "UP", "DN" ]:
+        if shift == "UP": 
+          ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
+          ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
+        else: 
+          ratio[ shift ].SetLineColor( ROOT.kRed - 3 )
+          ratio_smooth[ shift ].SetLineColor( ROOT.kRed - 3 )
+        ratio[ shift ].SetFillColor(0)
+        ratio[ shift ].SetLineStyle(2)
+        ratio_smooth[ shift ].SetFillColor(0)
+        ratio_smooth[ shift ].SetLineWidth(2)
+        ratio_smooth[ shift ].SetLineStyle(0)
+        ratio[ shift ].Draw( "SAME HIST" )
+        ratio_smooth[ shift ].Draw( "SAME HIST" )
+
+      # save the plot
+
+      save_name = hist_tag( args.variable, category, "SIG", syst )
+      plot_folder = "plots_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+      if rebinned: save_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+      if blind: save_name += "_blind"
+      if config_plot.options[ "Y LOG" ]: save_name += "_logy"
+      save_name += ".png"
+      if not os.path.exists( os.path.join( templateDir, plot_folder, syst ) ): os.system( "mkdir -p {}".format( os.path.join( templateDir, plot_folder, syst ) ) )
+      canvas.SaveAs( os.path.join( templateDir, plot_folder, syst, save_name ) )
+      templateName = templateDir.split("/")[-1]
+      try:
+        if os.path.exists( os.path.join( args.html, templateName, plot_folder, syst, save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, plot_folder, syst, save_name ) ) )
+        if not os.path.exists( os.path.join( args.html, templateName, plot_folder, syst ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, plot_folder, syst ) ) )
+        if not os.path.exists( os.path.join( args.html, templateName, plot_folder, syst, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder, syst ) ) )
+        os.system( "cp {} {}".format( os.path.join( templateName, plot_folder, syst, save_name ), os.path.join( args.html, templateName, plot_folder, syst ) ) )
+      except:
+        print( "[WARN] No public_html area setup for user {}" )
+      ROOT.SetOwnership( canvas, False )
+      del canvas
  
 def main():
   tdrstyle.setTDRStyle()
@@ -1131,7 +1350,7 @@ def main():
           real_pull = config_plot.options[ "REAL PULL" ]
         )
       if args.shifts and config_plot.options[ "REBINNED" ] and config_plot.options[ "SMOOTH" ]:
-        plot_shifts( 
+        plot_shifts_bkg( 
           templateDir = templateDir, 
           lep = lep, 
           groups = samples.groups, 
@@ -1142,6 +1361,19 @@ def main():
           blind = blind, 
           log = config_plot.options[ "Y LOG" ], 
           doABCDNN = config_plot.options[ "ABCDNN" ], 
+          rebinned = config_plot.options[ "REBINNED" ],
+          syst_list = syst_list
+        )
+        plot_shifts_sig(
+          templateDir = templateDir,
+          lep = lep,
+          groups = samples.groups,
+          histograms = hists,
+          histogramsSmooth = hists_smooth,
+          categories = categories,
+          lumiStr = config.lumiStr[ args.year ],
+          blind = blind,
+          log = config_plot.options[ "Y LOG" ],
           rebinned = config_plot.options[ "REBINNED" ],
           syst_list = syst_list
         )

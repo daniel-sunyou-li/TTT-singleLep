@@ -56,7 +56,7 @@ def negative_bin_correction( hist ):
     hist.Scale( integral / hist.Integral() )
 
 
-def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess" , symmetrize = True ):
+def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess", symmetrize = False ):
   hist_name = hist_n.GetName()
   graph_error = {
     path: {
@@ -93,7 +93,7 @@ def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess" , symmetrize = T
     elif algo.upper() == "KERN":
       graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothKern( graph_error[ "IN" ][ shift ], "normal", 5.0 )
     elif algo.upper() == "LOWESS":
-      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", 0.9 )
+      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", config.params[ "MODIFY BINNING" ][ "LOWESS" ] )
 
   for i in range( 1, hist_n.GetNbinsX() + 1 ):
     for shift in [ "UP", "DN" ]:
@@ -534,12 +534,12 @@ class ModifyTemplate():
           hist_muRF[ "MURFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
           hist_muRF[ "MURFDN" ].SetBinError( i, weight_error[ "MIN" ] )
 
-        if self.options[ "NORM THEORY SIG SYST" ] and hist_key == "SIG SYST":
+        if not self.options[ "NORM THEORY SIG SYST" ] and hist_key == "SIG SYST":
           hist_muRF[ "MURFUP" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "UP" ] )
           hist_muRF[ "MURFDN" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "DN" ] )
         if self.options[ "NORM THEORY BKG SYST" ] and hist_key == "BKG SYST":
-          hist_muRF[ "MURFUP" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFUP" ].Integral() + config.params[ "ZERO" ] ) )
-          hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "ZERO" ] ) )
+          hist_muRF[ "MURFUP" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
+          hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
 
         for shift in [ "UP", "DN" ]:
           self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
@@ -614,6 +614,10 @@ class ModifyTemplate():
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
             if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
+              shift_scale = 1.0
+              if shift == "UP": shift_scale = 0.707
+              if shift == "DN": shift_scale = 1.414
+              self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].Scale( shift_scale ) 
               self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].SetDirectory(0)
             elif parse[ "COMBINE" ] in config.params[ "COMBINE" ][ "SIGNALS" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
@@ -668,7 +672,7 @@ class ModifyTemplate():
           hist_PDF[ "PDFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
           hist_PDF[ "PDFDN" ].SetBinError( i, weight_error[ "MIN" ] )
 
-        if hist_key == "SIG SYST" and self.options[ "NORM THEORY SIG SYST" ]:
+        if hist_key == "SIG SYST" and not self.options[ "NORM THEORY SIG SYST" ]:
           hist_PDF[ "PDFUP" ].Scale( 1. / config.systematics[ "PDF SF" ][ args.year ][ "UP" ] )
           hist_PDF[ "PDFDN" ].Scale( 1. / config.systematics[ "PDF SF" ][ args.year ][ "DN" ] )
         elif hist_key == "BKG SYST" and self.options[ "NORM THEORY BKG SYST" ]:
@@ -694,6 +698,7 @@ class ModifyTemplate():
     print( "[START] Smoothing systematic shapes using {} smoothing".format( self.params[ "SMOOTHING ALGO" ] ) )
     sTime = time.time()
     count = 0
+    symmetrize_list = [ nSyst.upper() for nSyst in config.systematics[ "MC" ] if config.systematics[ "MC" ][ nSyst ][1] ]
     for hist_key in [ "BKG SYST", "SIG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
@@ -709,7 +714,8 @@ class ModifyTemplate():
         except:
           continue
         count += 1
-        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ] , symmetrize = self.options[ "SYMM SMOOTHING" ] )
+        bSymmetrize = True if parse[ "SYST" ].upper() in symmetrize_list else False
+        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ], symmetrize = False )
         for shift in [ "UP", "DN" ]:
           smooth_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + self.params[ "SMOOTHING ALGO" ].upper() + shift ) 
           self.rebinned[ hist_key ][ smooth_name ] = smooth_hist[ shift ].Clone( smooth_name )
@@ -717,7 +723,7 @@ class ModifyTemplate():
     print( "[DONE] Added {} smoothed systematic histograms".format( count ) )
       
   def write_combine( self ):
-    self.outpath = self.filepath.replace( ".root", "_rebinned_stat{}.root".format( str( self.params[ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) )
+    self.outpath = self.filepath.replace( ".root", "_rebinned_merge{}_stat{}.root".format( self.params[ "MIN MERGE" ], str( self.params[ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) )
     print( "[START] Storing modified histograms in {}".format( self.outpath ) )
     self.rFile[ "OUTPUT" ] = ROOT.TFile( self.outpath, "RECREATE" )
     count = 0

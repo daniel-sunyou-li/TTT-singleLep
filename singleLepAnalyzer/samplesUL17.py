@@ -7,12 +7,12 @@ samples = {
   "TEST": {
     #"TTToSemiLeptonicttjj10": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10",
     #"TTToSemiLeptonHT500ttcc": "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc",
-    "TTToSemiLeptonicHT500ttcc": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc",
+    #"TTToSemiLeptonicHT500ttcc": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc",
     #"TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
     #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
-    #"TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
+    "TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
   },
   "DAT": {
     "DataE": "SingleElectron",
