@@ -69,17 +69,17 @@ def normalization_uncertainty( hist, i, theory_systematic ):
     if args.year in [ "17", "18" ]:
       correlated_syst += ( config.systematics[ "LUMI_17_18" ][ args.year ] - 1.0 )**2
     if "isE" in parse[ "CATEGORY" ]:
-      correlated_syst += ( config.systematics[ "TRIG" ][ "E" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ID" ][ "E" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ISO" ][ "E" ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "TRIG" ][ "E" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ID" ][ "E" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ISO" ][ "E" ][ args.year ] - 1.0 )**2
     elif "isM" in parse[ "CATEGORY" ]:
-      correlated_syst += ( config.systematics[ "TRIG" ][ "M" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ID" ][ "M" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ISO" ][ "M" ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "TRIG" ][ "M" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ID" ][ "M" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ISO" ][ "M" ][ args.year ] - 1.0 )**2
     elif "isL" in parse[ "CATEGORY" ]:
-      correlated_syst += ( config.systematics[ "TRIG" ][ "M" ] - 1.0 )**2 + ( config.systematics[ "TRIG" ][ "E" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ID" ][ "M" ] - 1.0 )**2 + ( config.systematics[ "ID" ][ "E" ] - 1.0 )**2
-      correlated_syst += ( config.systematics[ "ISO" ][ "M" ] - 1.0)**2 + ( config.systematics[ "ISO" ][ "E" ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "TRIG" ][ "M" ][ args.year ] - 1.0 )**2 + ( config.systematics[ "TRIG" ][ "E" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ID" ][ "M" ][ args.year ] - 1.0 )**2 + ( config.systematics[ "ID" ][ "E" ][ args.year ] - 1.0 )**2
+      correlated_syst += ( config.systematics[ "ISO" ][ "M" ][ args.year ] - 1.0)**2 + ( config.systematics[ "ISO" ][ "E" ][ args.year ] - 1.0 )**2
   
   correlated_syst = math.sqrt( correlated_syst )
   uncertainty = np.sqrt( ( correlated_syst**2 + theory_systematic**2 ) * hist.GetBinContent(i)**2 )
@@ -159,6 +159,10 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   print( "[START] Loading histograms from: {}".format( file_name + ".root" ) )
   count = 0
   syst_list = []
+  smooth_syst = [ nSyst.upper() for nSyst in config.systematics[ "MC" ] if config.systematics[ "MC" ][ nSyst ][2] ]
+  if smooth:
+    print( "[INFO] Including the following smoothed systematic uncertainties: " )
+    for syst_ in smooth_syst: print( "  + {}".format( syst_ ) )
   hist_names = [ key.GetName() for key in rFile.GetListOfKeys() ]
   categories = []
   for hist_name in sorted( hist_names ):
@@ -173,8 +177,15 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
     process = parse[ "PROCESS" ]
     category = parse[ "CATEGORY" ]
     if "JEC" in hist_name and not syst_name.endswith( "20" + args.year ) and syst_name.endswith( args.year ): continue
+    if "BIN" in syst_name.upper(): continue
     if ( "HOTCLOSURE" in syst_name or "HOTCSPUR" in syst_name or "HOTSTAT" in syst_name ) and "nHOT0p" in category: continue
-    if syst and config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() not in hist_name and smooth: continue
+    if syst and smooth:
+      if "JEC" in syst_name.upper():
+        if "JEC" in smooth_syst and config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in hist_name and syst_name not in syst_list: syst_list.append( syst_name )
+      else:
+        if syst_name.upper() in smooth_syst and config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in hist_name and syst_name not in syst_list: syst_list.append( syst_name )
+        elif syst_name.upper() not in smooth_syst and config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() not in hist_name and syst_name not in syst_list: syst_list.append( syst_name )
+
     if "ELTRIG" in syst_name or "MUTRIG" in syst_name or "BIN" in syst_name: continue
     if syst_name in config_plot.params[ "EXCLUDE SYST" ]: continue
     if syst_name in config.systematics[ "MC" ] and not config.systematics[ "MC" ][ syst_name ][0]: continue
@@ -237,15 +248,16 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
         normalization_bin_width( histograms[ key ][ hist_name ] )      
     print( "[DONE]" )
 
-  print( "[START] Computing the uncertainty for different background iterations: SHAPE ONLY, SHAPE + NORMALIZATION, ALL" )
+  print( "[START] Computing the uncertainty for: {}".format( ", ".join( config_plot.params[ "ERROR BAND" ] ) ) )
   error_bkg = {}
   
   systematics = theory_systematics( categories, groups )
   print( "  [START] Calculating uncertainty sources" )
   for category in categories:
-    print( "     + {}".format( category ) )
+    if args.verbose: print( "[CATEGORY] {}".format( category ) )
     error_bkg[ category ] = {}
     for i in range( 1, histograms[ "TOTAL BKG" ][ category ].GetNbinsX() + 1 ):
+      if args.verbose: print( ">> [BIN] {}/{}".format( i, histograms[ "TOTAL BKG" ][ category ].GetNbinsX() ) )
       error_bkg[ category ][i] = {
         "STAT": histograms[ "TOTAL BKG" ][ category ].GetBinError(i),      # statistical
         "NORM": 0,                                                         # normalization
@@ -260,24 +272,41 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
       else:
         for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
           try: error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( group, category ) ], i, systematics[ hist_tag( group, category ) ] )
-          except: pass
+          except: quit( "[ERR] Unable to add normalization uncertainty for {} in bin {}".format( hist_tag( group, category ), i ) )
       if config_plot.options[ "ALL SYSTEMATICS" ]: # shape systematics
         for syst in syst_list:
           if syst.upper() in [ "HOTSTAT", "HOTCSPUR", "HOTCLOSURE" ] and "nHOT0p" in category: continue
           if syst.upper() in [ "LF", "LFSTATS1", "LFSTATS2", "HF", "HFSTATS1", "HFSTATS2", "CFERR1", "CFERR2" ] and "nB0p" in category: continue
           if syst.upper() in [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE" ] and not hist_parse( category, samples )[ "ABCDNN" ]: continue
+          systTotalUp, systTotalDn = 0, 0
           for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
             try:
               error_up = histograms[ "BKG" ][ hist_tag( group, category, syst + "UP" ) ].GetBinContent(i) - histograms[ "BKG" ][ hist_tag( group, category ) ].GetBinContent(i)
               error_dn = histograms[ "BKG" ][ hist_tag( group, category ) ].GetBinContent(i) - histograms[ "BKG" ][ hist_tag( group, category, syst + "DN" ) ].GetBinContent(i)
-              if error_up > 0: error_bkg[ category ][i]["UP"] += error_up**2
-              else: error_bkg[ category ][i]["DN"] += error_up**2
-              if error_dn > 0: error_bkg[ category ][i]["DN"] += error_dn**2
-              else: error_bkg[ category ][i]["UP"] += error_dn**2
+              if error_up > 0: 
+                error_bkg[ category ][i]["UP"] += error_up**2
+                systTotalUp += error_up**2
+              else: 
+                error_bkg[ category ][i]["DN"] += error_up**2
+                systTotalDn += error_up**2
+              if error_dn > 0: 
+                error_bkg[ category ][i]["DN"] += error_dn**2
+                systTotalDn += error_dn**2
+              else: 
+                error_bkg[ category ][i]["UP"] += error_dn**2
+                systTotalUp += error_dn**2
             except:
+              if args.verbose:
+                print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
               pass
+          if args.verbose: print( "[INFO] {} Bin {} {} = + {:.3f}, - {:.3f}".format( category, i, syst.upper(), np.sqrt( systTotalUp ), np.sqrt( systTotalDn ) ) )
       error_bkg[ category ][i][ "UP" ] = np.sqrt( error_bkg[ category ][i][ "UP" ] )
       error_bkg[ category ][i][ "DN" ] = np.sqrt( error_bkg[ category ][i][ "DN" ] )
+      if args.verbose:
+        print( "   >> Statistical Uncertainty = {:.3f}".format( error_bkg[ category ][i][ "STAT" ] ) )
+        print( "   >> Normalization Uncertainty = {:.3f}".format( error_bkg[ category ][i][ "NORM" ] ) )
+        print( "   >> Systematic Uncertainty Up = {:.3f}".format( error_bkg[ category ][i][ "UP" ] ) )
+        print( "   >> Systematic Uncertainty Down = {:.3f}".format( error_bkg[ category ][i][ "DN" ] ) )
   print( "[DONE] Finished calculating statistical and systematic uncertainties" )
 
   print( "[START] Loading uncertainty bands into histograms" )
@@ -343,7 +372,7 @@ def format_upper_hist( pad, hist, hist_bkg, blind, log_scale ):
   if log_scale:
     pad.SetLogy()
     hist.SetMaximum( 3e1 * hist_bkg.GetMaximum() )
-    hist.SetMinimum( 0.5e-1 )
+    hist.SetMinimum( 5e-1 )
   else:
     hist.SetMaximum( 1.5 * hist_bkg.GetMaximum() )
     hist.SetMinimum( -1.0 )
@@ -358,10 +387,7 @@ def format_lower_hist( pad, hist, real_pull, variable ):
   hist.GetXaxis().SetTitleOffset(0.95)
   hist.GetXaxis().SetNdivisions(506)
   
-  if "NTJETS" in variable: hist.GetXaxis().SetNdivisions(5)
-  elif "NWJETS" in variable: hist.GetXaxis().SetNdivisions(5)
-  elif "NBJETS" in variable: hist.GetXaxis().SetNdivisions(6)
-  else: hist.GetXaxis().SetNdivisions(506)
+  hist.GetXaxis().SetNdivisions(506)
   
   hist.GetYaxis().SetLabelSize(0.10)
   hist.GetYaxis().SetTitleSize(0.12)
@@ -497,7 +523,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
           bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
       except: pass
     else:
-      for group in sorted( groups[ "BKG" ][ "SUPERGROUP" ].keys(), reverse = True ):
+      for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         try:
           hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
           hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
@@ -613,12 +639,9 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         # draw the ratio plot
         pull.Divide( hists[ "TOTAL DAT" ][ category ], hists[ "TOTAL BKG" ][ category ] )
         for i in range( 1, hists[ "TOTAL DAT" ][ category ].GetNbinsX() + 1 ):
-          i_label = i - 1
-          if args.variable.upper() in [ "NJETS" ]:
-            if i_label % 2 == 0: pull.GetXaxis().SetBinLabel( i, str( i_label ) )
-            else: pull.GetXaxis().SetBinLabel( i, "" )
-          elif args.variable.upper() in [ "NBJETS", "NWJETS", "NTJETS", "NHOTJETS" ]:
-            pull.GetXaxis().SetBinLabel( i, str( i_label ) )
+          i_label = ( hists[ "TOTAL DAT" ][ category ].GetBinLowEdge(i) + hists[ "TOTAL DAT" ][ category ].GetBinLowEdge(i+1) ) / 2.
+          if args.variable.upper() in [ "NJETS", "NPU", "NBJETS", "NWJETS", "NTJETS", "NHOTJETS" ]:
+            pull.GetXaxis().SetBinLabel( i, str( int( i_label - 0.5 ) ) )
             
           if hists[ "TOTAL BKG" ][ category ].GetBinContent(i) != 0:
             pull.SetBinError( i, hists[ "TOTAL DAT" ][ category ].GetBinError(i) / hists[ "TOTAL BKG" ][ category ].GetBinContent(i) )
@@ -634,7 +657,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
           args.variable
         )
         pull.Draw( "E1" )
-        line = ROOT.TLine( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), 1, max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), 1 )
+        line = ROOT.TLine( hists[ "TOTAL DAT" ][ category ].GetBinLowEdge(1), 1, hists[ "TOTAL DAT" ][ category ].GetBinLowEdge( hists[ "TOTAL DAT" ][ category ].GetNbinsX() + 1 ), 1 )
         line.SetLineColor( ROOT.kBlack )
         line.SetLineWidth(2)
         line.Draw("SAME")
@@ -722,7 +745,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
       if not os.path.exists( os.path.join( args.html, templateName, plot_folder, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
       os.system( "cp {} {}".format( os.path.join( templateDir, plot_folder, save_name ), os.path.join( args.html, templateName, plot_folder ) ) )
     except:
-      print( "[WARN] No public_html area setup for user" )
+      pass
     ROOT.SetOwnership(canvas,False)
     del canvas, pad, frame, legend, bkg_stack, latex
 
@@ -1010,7 +1033,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
         ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )
       )
 
-      legend = ROOT.TLegend( 0.75, 0.68, 0.95, 0.88 )
+      legend = ROOT.TLegend( 0.60, 0.75, 0.80, 0.88 )
       legend.SetShadowColor(0)
       legend.SetFillColor(0)
       legend.SetFillStyle(0)
@@ -1060,7 +1083,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
       ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
       ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
       ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
-      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.47, 1.53 )
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.77, 1.23 )
       ratio[ "NOMINAL" ].Draw( "HIST" )
       for shift in [ "UP", "DN" ]:
         if shift == "UP": 
@@ -1182,7 +1205,7 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
       histograms[ "TOTAL SIG" ][ category ].SetFillStyle(0)
       histograms[ "TOTAL SIG" ][ category ].SetLineWidth(2)
       histograms[ "TOTAL SIG" ][ category ].GetXaxis().SetRangeUser( config.plot_params[ "VARIABLES" ][ args.variable ][1][0], config.plot_params[ "VARIABLES" ][ args.variable ][1][-1] )
-      format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL SIG" ][ category ], False, False )
+      format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL SIG" ][ category ], False, True )
       histograms[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
 
       latex = ROOT.TLatex()
@@ -1213,7 +1236,7 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
         ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )
       )
 
-      legend = ROOT.TLegend( 0.75, 0.68, 0.95, 0.88 )
+      legend = ROOT.TLegend( 0.60, 0.75, 0.80, 0.88 )
       legend.SetShadowColor(0)
       legend.SetFillColor(0)
       legend.SetFillStyle(0)
@@ -1259,7 +1282,7 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
       ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
       ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
       ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
-      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.47, 1.53 )
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.77, 1.23 )
       ratio[ "NOMINAL" ].Draw( "HIST" )
       for shift in [ "UP", "DN" ]:
         if shift == "UP": 

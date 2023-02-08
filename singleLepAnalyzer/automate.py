@@ -110,7 +110,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --shifts {6} \n\
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --shifts --systematics {6} \n\
 python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates {6}".format( 
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
@@ -418,7 +418,7 @@ def impact_plots_era():
         if freezeTag != "NOMINAL" and not config.options[ "COMBINE" ][ "IMPACTS" ][ "FREEZE" ]: continue
         for systTag in systCombo:
           if systTag != "" and not config.options[ "COMBINE" ][ "GROUPS" ]: continue
-          postfix = tagABCDnn + systTag + tagSmooth
+          postfix = tagABCDnn + systTag + tagSmooth + "_merge" + str( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ] ) + "_stat" + str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" )
           freezeParam = "" if freezeTag == "NOMINAL" else "--freezeParameters {}".format( freezeParams[ freezeTag ] )
           tagFreeze = "noFreeze" if freezeTag == "NOMINAL" else "freeze" + freezeTag
           os.chdir( "combine" )
@@ -428,7 +428,7 @@ def impact_plots_era():
           html_line = ""
           if len( args.html ) > 0:
             if not os.path.exists( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ): os.mkdir( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) )
-            html_line = "cp impacts*_{}.pdf {}".format( postfix, os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ) 
+            html_line = "cp impacts*.pdf {}".format( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ) 
           shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
           shell.write(
 "#!/bin/bash\n\
@@ -441,10 +441,10 @@ mkdir {7} \n\
 cd {7} \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --parallel 40 {10}\n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --parallel 40 --exclude rgx{8} {9} {10} \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json --exclude rgx{8} \n\
-plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{6}_{7}.json -o impacts_UL{2}_{4}_{3}_{5}_{6}_{7} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{12}.json --exclude rgx{8} \n\
+plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{12}.json -o impacts_UL{2}_{4}_{3}_{5}_{12} \n\
 {11} \n".format(
-  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], postfix, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), html_line 
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + systTag + tagSmooth, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), html_line, postfix 
 )
           )
           shell.close()

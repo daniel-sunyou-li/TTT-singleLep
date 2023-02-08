@@ -29,7 +29,7 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": True,
+    "ABCDNN": False,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
@@ -50,6 +50,8 @@ options = {
     "SYMM SMOOTHING": True,       # symmetrize the systematics per bin before smoothing
     "SYMM TOP PT": True,           # symmetrize top pt systematic
     "SYMM HOTCLOSURE": True,       # symmetrize hotclosure systematic
+    "SYMM THEORY": True,
+    "NORM ABCDNN": True,
     "SCALE SIGNAL XSEC": False,    
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,                # perform smoothing
@@ -57,8 +59,8 @@ options = {
     "TRIGGER EFFICIENCY": False,
   },
   "COMBINE": {
-    "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
-    "SMOOTH": False,    # use smoothed systematic histograms
+    "ABCDNN": False,    # use ABCDnn and extended ABCD corrected histograms
+    "SMOOTH": True,    # use smoothed systematic histograms
     "GROUPS": False,    # evaluate significance and limits with combinations of systematic groups
     "IMPACTS": {
       "MASKED": False,  # include evaluations of impacts with channels masked
@@ -97,29 +99,29 @@ params = {
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
-    "STAT THRESHOLD": 0.20,     # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
-    "MIN MERGE": 2,             # merge at least this number of bins
+    "STAT THRESHOLD": 0.30,     # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
+    "MIN MERGE": 10,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
-    "LOWESS": 0.33,             # relative proportion of neighboring datapoints to consider during smoothing 
+    "LOWESS": 0.30,             # relative proportion of neighboring datapoints to consider during smoothing 
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
       "NJET", "NJETSF", "PSWGT", "BTAG"
     ],
-    "EXCLUDE SMOOTH": []
   },
   "COMBINE": {
-    "BACKGROUNDS": [ "TTNOBB", "TTBB", "TOP", "EWK", "TTH", "QCD" ], 
+    "BACKGROUNDS": [ "TTH", "EWK", "TTBB", "TOP", "QCD", "TTNOBB" ], 
     "DATA": [ "data_obs" ],
     "SIGNALS": [ "TTTW", "TTTJ" ],
     "FITS": { # arguments used with Combine -M MultiDimFit
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=0",
-        #"--setCrossingTolerance=0.0001", # default is 0.0001
-        #"--setRobustFitTolerance=0.1",   # default is 0.1
+        "--cminDefaultMinimizerStrategy=1",
+        "--setCrossingTolerance=0.0005",   # default is 0.0001
+        "--setRobustFitTolerance=10000",   # default is 0.1, setting higher to account for poor EDM initial state
+        "--stepSize=0.01",                 # default is 0.2
         "--robustFit=1",
-        "--rMin -30",
-        "--rMax 30",
+        "--rMin -35",
+        "--rMax 35",
         #"--robustHesse=1",
         #"--freezeParameter TOPPTLOWESS",
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,HOTCLOSURELOWESS16APV,", # 2016APV freeze
@@ -131,7 +133,8 @@ params = {
     },
     "SIGNIFICANCE": { # arguments used with Combine -M Significance
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=0",
+        "--cminDefaultMinimizerStrategy=1",
+        #"--robustFit=1",
         "--expectSignal=1",
         "-t -1",
         "-m 125"
@@ -154,11 +157,11 @@ systematics = {
     "prefire": ( True, False, False ),
     "pileupJetID": ( True, False, False ),
     "trigeff": ( False, False, False ),   
-    "muRFcorrd": ( True, False, False ),
-    "muR": ( True, False, False ),
-    "muF": ( True, False, False ),
-    "isr": ( True, False, False ),
-    "fsr": ( True, False, False ),
+    "muRFcorrd": ( True, False, True ),
+    "muR": ( True, False, True ),
+    "muF": ( True, False, True ),
+    "isr": ( True, False, True ),
+    "fsr": ( True, False, True ),
     "hotstat": ( True, False, False ),
     "hotcspur": ( True, False, False ),
     "hotclosure": ( True, False, False ),
@@ -173,7 +176,7 @@ systematics = {
     "toppt": ( False, False, False ),
     "ABCDNNSAMPLE": ( False, False, False ),     
     "ABCDNNMODEL": ( False, False, False ),
-    "ABCDNNCLOSURE": ( True, False, True ),
+    "ABCDNNCLOSURE": ( True, False, False ),
     "JER": ( True, False, True ),
     "JEC": ( True, False, True ), # calls from REDUCED JEC list
     "HD": ( False, False, False ), 
@@ -312,6 +315,14 @@ hist_bins = {
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
     "NJ": [ "6", "7p" ]
+  },
+  "EXCLUDE": {
+    "LEPTON": [ "E", "M" ],
+    "NHOT": [ "0" ],
+    "NT": [ "0p" ],
+    "NW": [ "0p" ],
+    "NB": [ "2" ],
+    "NJ": [ "5", "6", "7p" ]
   },
   "VR": {
     "LEPTON": [ "E", "M" ],

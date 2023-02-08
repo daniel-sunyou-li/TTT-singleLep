@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os, sys, time, math, fnmatch
+import numpy as np
 sys.path.append( os.path.dirname( os.getcwd() ) )
 from array import array
 from utils import hist_tag, hist_parse
@@ -81,23 +82,26 @@ def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess", symmetrize = Fa
       "UP": hist[ "IN" ][ "UP" ].GetBinContent(i),
       "DN": hist[ "IN" ][ "DN" ].GetBinContent(i)
     }
-    if symmetrize:
-      graph_error[ "IN" ][ "UP" ].SetPoint( i - 1, x, 1 + ( y[ "UP" ] - y[ "DN" ] ) / 2 )
-      graph_error[ "IN" ][ "DN" ].SetPoint( i - 1, x, 1 - ( y[ "UP" ] - y[ "DN" ] ) / 2 )
-    else:
-      for shift in [ "UP", "DN" ]:
-        graph_error[ "IN" ][ shift ].SetPoint( i - 1, x, y[ shift ] )
-  for shift in [ "UP", "DN" ]:
-    if algo.upper() == "SUPER":
-      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothSuper( graph_error[ "IN" ][ shift ], "", 9, 0 )
-    elif algo.upper() == "KERN":
-      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothKern( graph_error[ "IN" ][ shift ], "normal", 5.0 )
-    elif algo.upper() == "LOWESS":
-      graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", config.params[ "MODIFY BINNING" ][ "LOWESS" ] )
+    for shift in [ "UP", "DN" ]:
+      graph_error[ "IN" ][ shift ].SetPoint( i - 1, x, y[ shift ] )
+      if algo.upper() == "SUPER":
+        graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothSuper( graph_error[ "IN" ][ shift ], "", 9, 0 )
+      elif algo.upper() == "KERN":
+        graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothKern( graph_error[ "IN" ][ shift ], "normal", 5.0 )
+      elif algo.upper() == "LOWESS":
+        graph_error[ "OUT" ][ shift ] = graph_smooth[ shift ].SmoothLowess( graph_error[ "IN" ][ shift ], "", config.params[ "MODIFY BINNING" ][ "LOWESS" ] )
 
   for i in range( 1, hist_n.GetNbinsX() + 1 ):
-    for shift in [ "UP", "DN" ]:
-      hist[ "OUT" ][ shift ].SetBinContent( i, hist_n.GetBinContent(i) * graph_error[ "OUT" ][ shift ].GetY()[i-1] )
+    if symmetrize:
+      upShift = abs( 1 - graph_error[ "OUT" ][ "UP" ].GetY()[i-1] )
+      dnShift = abs( 1 - graph_error[ "OUT" ][ "DN" ].GetY()[i-1] )
+      meanShift = ( upShift + dnShift ) / 2.
+    
+      hist[ "OUT" ][ "UP" ].SetBinContent( i, hist_n.GetBinContent(i) * ( 1 + meanShift ) )
+      hist[ "OUT" ][ "DN" ].SetBinContent( i, hist_n.GetBinContent(i) * ( 1 - meanShift ) )
+    else:
+      for shift in [ "UP", "DN" ]:
+        hist[ "OUT" ][ shift ].SetBinContent( i, hist_n.GetBinContent(i) * graph_error[ "OUT" ][ shift ].GetY()[i-1] )
   return hist[ "OUT" ]
 
 class ModifyTemplate():
@@ -209,7 +213,7 @@ class ModifyTemplate():
     print( "[DONE] Adding {} histograms to modified Combine template".format( count, total_count ) )
   
   def get_xbins( self ): # done
-  # get the new histogram bins that satisfy the requirement bin error / yield <= threshold
+    # get the new histogram bins that satisfy the requirement bin error / yield <= threshold
     print( "[START] Determining modified histogram binning" )
     self.xbins = { key: {} for key in [ "MERGED", "LIMIT", "MODIFY" ] } 
     for channel in sorted( self.channels ):
@@ -220,9 +224,12 @@ class ModifyTemplate():
         key_lep: {
           key_type: {
             key_stat: 0. for key_stat in [ "YIELD", "ERROR" ]
-          } for key_type in [ "TOTAL BKG", "TOTAL DAT" ]
+          } for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ]
         } for key_lep in [ "isE", "isM" ]
       }
+      for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
+        for key_lep in [ "isE", "isM" ]:
+          bin_content[ key_lep ][ process ] = { key_stat: 0. for key_stat in [ "YIELD", "ERROR" ] }
       N_MERGED = 0
       for i in range( 1, N_BINS + 1 ):
         N_MERGED += 1
@@ -232,34 +239,49 @@ class ModifyTemplate():
           else:
             self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
             N_MERGED = 0
+        elif self.variable in [ "NPU", "NJETS", "NBJETS", "NHOT" ]:
+          if self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetBinContent( N_BINS + 1 - i ) > 0:
+            self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
+          N_MERGED = 0
         else:
-          for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
+          for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
             for key_lep in [ "isE", "isM" ]:
-              bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
-              bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
+              if key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ]:
+                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
+                bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
+              else:
+                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinContent( N_BINS + 1 - i )
+                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinError( N_BINS + 1 - i )**2
           if N_MERGED < self.params[ "MIN MERGE" ]: 
             continue
           else:
-            if bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ] > 0 and bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ] > 0:    
-              ratio_e = math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ]
-              ratio_m = math.sqrt( bin_content[ "isM" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ]
-              if ratio_e <= self.params[ "STAT THRESHOLD" ] and ratio_m <= self.params[ "STAT THRESHOLD" ]:
-                for key_type in [ "TOTAL BKG", "TOTAL DAT" ]:
-                  for key_lep in [ "isE", "isM" ]:
-                    for key_stat in [ "YIELD", "ERROR" ]:
-                      bin_content[ key_lep ][ key_type ][ key_stat ] = 0
-                      N_MERGED = 0
-                self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) ) 
+            bPass = False
+            for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
+              if not ( bin_content[ "isE" ][ key_type ][ "YIELD" ] > 0 and bin_content[ "isM" ][ key_type ][ "YIELD" ] > 0 ): bPass = True
+            if bPass: continue
+            ratio_e = math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ]
+            ratio_m = math.sqrt( bin_content[ "isM" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ]
+            ratio_sig = math.sqrt( bin_content[ "isE" ][ "TOTAL SIG" ][ "ERROR" ]**2 + bin_content[ "isM" ][ "TOTAL SIG" ][ "ERROR" ]**2  ) / ( bin_content[ "isE" ][ "TOTAL SIG" ][ "YIELD" ] + bin_content[ "isM" ][ "TOTAL SIG" ][ "YIELD" ] )
+            if ratio_e <= self.params[ "STAT THRESHOLD" ] and ratio_m <= self.params[ "STAT THRESHOLD" ] and ratio_sig <= self.params[ "STAT THRESHOLD" ]:
+              for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
+                for key_lep in [ "isE", "isM" ]:
+                  for key_stat in [ "YIELD", "ERROR" ]:
+                    bin_content[ key_lep ][ key_type ][ key_stat ] = 0
+                    N_MERGED = 0
+              self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) ) 
+      if self.xbins[ "MERGED" ][ channel ][-1] != self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1): 
+        self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1) )
       if self.params[ "STAT THRESHOLD" ] <= 1.0:
-        if self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) == 0.:
-          if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
-            del self.xbins[ "MERGED" ][ channel ][-2]
+        if self.variable in [ "NJETS", "NBJETS", "NPU", "NHOT" ]:
+          if self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetBinContent(1) == 0.:
+            del self.xbins[ "MERGED" ][ channel ][-1]
         else:
-          for key_lep in [ "isE", "isM" ]:
-            if self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ key_lep + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
-              if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
-                del self.xbins[ "MERGED" ][ channel ][-2]
-                continue
+          if self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL SIG" ][ "isE" + channel ].GetBinContent(1) == 0. or self.histograms[ "TOTAL SIG" ][ "isM" + channel ].GetBinContent(1) == 0.:
+            if len( self.xbins[ "MERGED" ][ channel ] ) > 2: 
+              del self.xbins[ "MERGED" ][ channel ][-2]
+          elif self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ "isE" + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ] or self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinError(1) / self.histograms[ "TOTAL BKG" ][ "isM" + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ] or self.histograms[ "TOTAL SIG" ][ "isL" + channel ].GetBinError(1) / self.histograms[ "TOTAL SIG" ][ "isL" + channel ].GetBinContent(1) > self.params[ "STAT THRESHOLD" ]:
+            if len( self.xbins[ "MERGED" ][ channel ] ) > 2:
+              del self.xbins[ "MERGED" ][ channel ][-2]
       
       self.N_NEWBINS = len( self.xbins[ "MERGED" ][ channel ] )
       self.xbins[ "LIMIT" ][ channel ] = []
@@ -268,17 +290,13 @@ class ModifyTemplate():
       
       self.xbins[ "LIMIT" ][ channel ][0] = max( min( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][0] )
       self.xbins[ "LIMIT" ][ channel ][-1] = min( max( config.plot_params[ "VARIABLES" ][ args.variable ][1] ), self.xbins[ "LIMIT" ][ channel ][-1] )
-      i = 1
-      while i < len( self.xbins[ "LIMIT" ][ channel ] ) - 1:
-        if self.xbins[ "LIMIT" ][ channel ][i] <= self.xbins[ "LIMIT" ][ channel ][0] or self.xbins[ "LIMIT" ][ channel ][i] >= self.xbins[ "LIMIT" ][ channel ][-1]:
+      for i in range( 1, len( self.xbins[ "LIMIT" ][ channel ] ) - 1 ):
+        if self.xbins[ "LIMIT" ][ channel ][i] < self.xbins[ "LIMIT" ][ channel ][0] or self.xbins[ "LIMIT" ][ channel ][i] > self.xbins[ "LIMIT" ][ channel ][-1]:
           del self.xbins[ "LIMIT" ][ channel ][i]
-        else:
-          i += 1
           
       self.xbins[ "MODIFY" ][ channel ] = array( "d", self.xbins[ "LIMIT" ][ channel ] )
-      print( "   + New binning: [{},{}] ({}) with {} threshold".format( 
-        self.xbins[ "MODIFY" ][ channel ][0], self.xbins[ "MODIFY" ][ channel ][1], i + 1, 
-        self.params[ "STAT THRESHOLD" ] 
+      print( "   >> New binning ({} bins): {}".format( 
+        i, self.xbins[ "MODIFY" ][ channel ]
       ) )
         
   def rebin( self ): # done
@@ -385,6 +403,25 @@ class ModifyTemplate():
         count += 1
     print( "[DONE] Adjusted {} toppt histograms".format( count ) )
 
+  def symmetrize_theory_shift( self ):
+    print( "[START] Symmetrizing the ISR, FSR, MUR, MUF and MURFCORRD systematic shifts" )
+    count = 0
+    for hist_key in [ "SIG SYST", "BKG SYST" ]:
+      hist_names = self.rebinned[ hist_key ].keys()
+      for hist_name in hist_names:
+        parse = hist_parse( hist_name, samples )
+        if parse[ "SYST" ] not in [ "ISR", "FSR", "MUR", "MUF", "MURFCORRD" ] and parse[ "SHIFT" ] != "UP": continue
+        for i in range( 1, self.rebinned[ hist_key ][ hist_name ].GetNbinsX() + 1 ):
+          nNominal = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].GetBinContent(i)
+          nUp = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].GetBinContent(i)
+          nDn = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" ) ].GetBinContent(i)
+          scaleShift = 0.707
+          shift = scaleShift * abs( nUp - nDn ) / 2.
+          self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "UP" ) ].SetBinContent( i, nNominal + shift )
+          self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + "DN" ) ].SetBinContent( i, nNominal - shift )
+        count += 1
+    print( "[DONE] Adjusted {} theory histograms".format( count ) )
+
   def add_statistical_shapes( self ): # done
   # add shifts to the bin content for the statistical shape uncertainty
     def write_statistical_hists( category, group, i, nBB ):
@@ -453,7 +490,10 @@ class ModifyTemplate():
     for category in self.categories:
       count = { "INCLUDE": 0, "EXCLUDE": 0 }
       for i in range( 1, self.rebinned[ "TOTAL BKG" ][ category ].GetNbinsX() + 1 ):
-        error_ratio = self.rebinned[ "TOTAL BKG" ][ category ].GetBinError(i) / self.rebinned[ "TOTAL BKG" ][ category ].GetBinContent(i)
+        if self.rebinned[ "TOTAL BKG" ][ category ].GetBinContent(i) == 0.:
+          error_ratio = 0.
+        else:
+          error_ratio = self.rebinned[ "TOTAL BKG" ][ category ].GetBinError(i) / self.rebinned[ "TOTAL BKG" ][ category ].GetBinContent(i)
         if error_ratio <= self.params[ "THRESHOLD BB" ]: # don't include the bin shape uncertainty if it's already very small
           count[ "EXCLUDE" ] += 1
           continue
@@ -463,6 +503,19 @@ class ModifyTemplate():
       if args.verbose: print( "[INFO] {}: {}/{} bins shapes included".format( category, count[ "INCLUDE" ], count[ "EXCLUDE" ] + count[ "INCLUDE" ] ) )
     print( "[DONE] {} Signal bin shapes added, {} Background bin shapes added".format( nBB[ "SIG" ], nBB[ "BKG" ] ) )
       
+  def normalize_abcdnn( self ):
+    print( "[START] Normalizing the ABCDnn systematic shifts" )
+    count = 0
+    hist_names = self.rebinned[ "BKG SYST" ].keys()
+    for hist_name in hist_names:
+      if not self.doABCDNN: continue
+      parse = hist_parse( hist_name, samples )
+      if "ABCDNN" not in parse[ "SYST" ]: continue
+      count += 1
+      self.rebinned[ "BKG SYST" ][ hist_name ].Scale( self.rebinned[ "BKG" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Integral() / self.rebinned[ "BKG SYST" ][ hist_name ].Integral() ) 
+
+    print( "[DONE] Normalized {} ABCDnn histograms".format( count ) )
+
 
   def symmetrize_HOTclosure( self ): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
@@ -496,8 +549,8 @@ class ModifyTemplate():
       hist_names = self.rebinned[ hist_key ].keys()
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
+        if "ABCDNN" in hist_name: continue
         if parse[ "SYST" ].upper() != "MUR" and parse[ "SHIFT" ] != "UP": continue 
-        if parse[ "COMBINE" ] == "ABCDNN" and "MURF" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
         count += 1 
         hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
@@ -505,36 +558,21 @@ class ModifyTemplate():
         hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         for i in range( 1, hist_muRF[ "NOMINAL" ].GetNbinsX() + 1 ):
-          weight_dict = { key: hist_muRF[ key ].Clone() for key in hist_muRF }
           weight_key = {
             "MAX": "NOMINAL",
             "MIN": "NOMINAL"
           }
-          weight_limit = {
-            "MAX": weight_dict[ "NOMINAL" ].GetBinContent(i),
-            "MIN": weight_dict[ "NOMINAL" ].GetBinContent(i)
-          }
-          weight_error = {
-            "MAX": weight_dict[ "NOMINAL" ].GetBinError(i),
-            "MIN": weight_dict[ "NOMINAL" ].GetBinError(i)
-          }
           # only retain the largest systematic shift between muR, muF, muRFcorrd
-          for key in hist_muRF:
-            if weight_dict[ key ].GetBinContent(i) > weight_limit[ "MAX" ]: 
-              weight_limit[ "MAX" ] = weight_dict[ key ].GetBinContent(i)
-              weight_error[ "MAX" ] = weight_dict[ key ].GetBinError(i)
+          for key in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
+            if hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) < hist_muRF[ key ].GetBinContent(i): 
               weight_key[ "MAX" ] = key
-            if weight_dict[ key ].GetBinContent(i) < weight_limit[ "MIN" ]: 
-              weight_limit[ "MIN" ] = weight_dict[ key ].GetBinContent(i)
-              weight_error[ "MIN" ] = weight_dict[ key ].GetBinError(i)
+            if hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) > hist_muRF[ key ].GetBinContent(i): 
               weight_key[ "MIN" ] = key
 
-          hist_muRF[ "MURFUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
-          hist_muRF[ "MURFUP" ].SetBinError( i, weight_error[ "MAX" ] )
-          hist_muRF[ "MURFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
-          hist_muRF[ "MURFDN" ].SetBinError( i, weight_error[ "MIN" ] )
+          hist_muRF[ "MURFUP" ].SetBinContent( i, hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) ) 
+          hist_muRF[ "MURFDN" ].SetBinContent( i, hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) )
 
-        if not self.options[ "NORM THEORY SIG SYST" ] and hist_key == "SIG SYST":
+        if self.options[ "NORM THEORY SIG SYST" ] and hist_key == "SIG SYST":
           hist_muRF[ "MURFUP" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "UP" ] )
           hist_muRF[ "MURFDN" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "DN" ] )
         if self.options[ "NORM THEORY BKG SYST" ] and hist_key == "BKG SYST":
@@ -572,6 +610,7 @@ class ModifyTemplate():
         for syst in [ "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
             hist_PSWeight[ syst + shift ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].Clone()
+
         for i in range( 1, hist_PSWeight[ "NOMINAL" ].GetNbinsX() + 1 ):
           weight_key = {
             "MAX": "NOMINAL",
@@ -585,6 +624,7 @@ class ModifyTemplate():
             "MAX": hist_PSWeight[ "NOMINAL" ].GetBinError(i),
             "MIN": hist_PSWeight[ "NOMINAL" ].GetBinError(i)
           }
+
           # only retain the largest systematic shift between ISR, FSR 
           for key in hist_PSWeight: 
             if hist_PSWeight[ key ].GetBinContent(i) > weight_limit[ "MAX" ]:
@@ -597,8 +637,7 @@ class ModifyTemplate():
               weight_key[ "MIN" ] = key
         
           # in-case symmetrization is needed for PSWGTUP:
-          hist_PSWeight[ "PSWGTUP" ].SetBinContent( i, 2 * hist_PSWeight[ "NOMINAL" ].GetBinContent(i) - weight_limit[ "MIN" ] )
-          #hist_PSWeight[ "PSWGTUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
+          hist_PSWeight[ "PSWGTUP" ].SetBinContent( i, weight_limit[ "MAX" ] )
           hist_PSWeight[ "PSWGTUP" ].SetBinError( i, weight_error[ "MAX" ] )
           hist_PSWeight[ "PSWGTDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
           hist_PSWeight[ "PSWGTDN" ].SetBinError( i, weight_error[ "MIN" ] )
@@ -614,17 +653,13 @@ class ModifyTemplate():
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
             if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
-              shift_scale = 1.0
-              if shift == "UP": shift_scale = 0.707
-              if shift == "DN": shift_scale = 1.414
-              self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].Scale( shift_scale ) 
               self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].SetDirectory(0)
             elif parse[ "COMBINE" ] in config.params[ "COMBINE" ][ "SIGNALS" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].SetDirectory(0)
             else:
-              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ], shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ], shift ) )
-              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ], shift ) ].SetDirectory(0)
+              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ].upper(), shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ], shift ) )
+              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, parse[ "COMBINE" ].upper(), shift ) ].SetDirectory(0)
              
     print( "[DONE] Created {} PS Weight histograms".format( count ) )
           
@@ -704,7 +739,6 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SHIFT" ] != "UP": continue
-        if parse[ "SYST" ].upper() in [ syst_exclude.upper() for syst_exclude in self.params[ "EXCLUDE SMOOTH" ] ]: continue
         try:
           hist_syst = {
             "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone(),
@@ -715,7 +749,7 @@ class ModifyTemplate():
           continue
         count += 1
         bSymmetrize = True if parse[ "SYST" ].upper() in symmetrize_list else False
-        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ], symmetrize = False )
+        smooth_hist = smooth_shape( hist_syst[ "NOMINAL" ], hist_syst[ "DN" ], hist_syst[ "UP" ], syst = parse[ "SYST" ], algo = self.params[ "SMOOTHING ALGO" ], symmetrize = bSymmetrize )
         for shift in [ "UP", "DN" ]:
           smooth_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + self.params[ "SMOOTHING ALGO" ].upper() + shift ) 
           self.rebinned[ hist_key ][ smooth_name ] = smooth_hist[ shift ].Clone( smooth_name )
@@ -762,20 +796,9 @@ def main():
   params = config.params[ "MODIFY BINNING" ].copy()
   options = config.options[ "MODIFY BINNING" ].copy()
   if args.region == "BASELINE":
-    #print( "[WARN] Running BASELINE region, overriding the following options and parameters:" )
-    #print( "   > STAT THRESHOLD: {} --> 1.1".format( params[ "STAT THRESHOLD" ] ) )
-    #print( "   > SMOOTHING: {} --> False".format( options[ "SMOOTH" ] ) )
-    #params[ "STAT THRESHOLD" ] = 1.1 
-    #options[ "SMOOTH" ] = False
-    if args.variable.upper() == "HT" or args.variable.upper() == "LEPPT":
-      print( "   > MIN MERGE ({}): {} --> 4".format( args.variable, params[ "MIN MERGE" ] ) )
-      params[ "MIN MERGE" ] = 4
-    elif "NJET" in args.variable.upper() or "NBJET" in args.variable.upper() or "NHOT" in args.variable.upper():
+    if "NJET" in args.variable.upper() or "NBJET" in args.variable.upper() or "NHOT" in args.variable.upper() or args.variable.upper() == "NPU":
       print( "   > MIN MERGE ({}): {} --> 1".format( args.variable, params[ "MIN MERGE" ] ) )
       params[ "MIN MERGE" ] = 1
-    else:
-      print( "   > MIN MERGE: {} --> 2".format( params[ "MIN MERGE" ] ) )
-      params[ "MIN MERGE" ] = 2
   else:
     if not config.options[ "GENERAL" ][ "FINAL ANALYSIS" ]:
       print( "[WARN] Running {} region, turning on blinding".format( args.region ) )
@@ -796,12 +819,16 @@ def main():
     template.add_statistical_shapes()
   if options[ "SYMM HOTCLOSURE" ]:
     template.symmetrize_HOTclosure()
+  if options[ "SYMM THEORY" ]:
+    template.symmetrize_theory_shift()
   if options[ "MURF SHAPES" ]:
     template.add_muRF_shapes()
   if options[ "PS WEIGHTS" ]:
     template.add_PSWeight_shapes()
   if options[ "PDF" ]:
     template.add_PDF_shapes()
+  if options[ "NORM ABCDNN" ]:
+    template.normalize_abcdnn()
   if options[ "SMOOTH" ]:
     template.add_smooth_shapes()
   if options[ "UNCORRELATE YEARS" ]:
