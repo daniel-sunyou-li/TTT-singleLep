@@ -126,10 +126,6 @@ class DataCard():
     self.backgrounds = self.params[ "BACKGROUNDS" ]
     self.minor_backgrounds = config.params[ "ABCDNN" ][ "MINOR BKG" ]
     self.data = self.params[ "DATA" ]
-    self.muRF_norm = config.systematics[ "MURF NORM" ]
-    self.isr_norm = config.systematics[ "ISR NORM" ]
-    self.fsr_norm = config.systematics[ "FSR NORM" ]
-    self.pdf_norm = config.systematics[ "PDF NORM" ]
     self.category_arr = { category: [ ( 0, "" ) ] for category in self.categories[ "ALL" ] }
     
     self.hist_groups = { key: {} for key in [ "SIG", "BKG", "DAT" ] }
@@ -446,14 +442,22 @@ class DataCard():
       self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], False )
       if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
 
-    for syst in [ "MURF", "ISR", "FSR" ]:
+    for syst in [ "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ]: # MURF adds MUR and MUF together in the same shift whereas MUENV takes the envelope
       if syst == "ISR" and not config.systematics[ "MC" ][ "isr" ][0]: continue
       if syst == "FSR" and not config.systematics[ "MC" ][ "fsr" ][0]: continue
-      if syst == "MURF" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] or config.systematics[ "MC" ][ "muRFcorrd" ][0] ): continue
+      if syst == "MUR" and not config.systematics[ "MC" ][ "muR" ][0]: continue
+      if syst == "MUF" and not config.systematics[ "MC" ][ "muF" ][0]: continue
+      if syst == "MURFCORRD" and not config.systematics[ "MC" ][ "muRFcorrd" ][0]: continue
+      if syst == "MURF" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] ): continue
+      if syst == "MUENV" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] or config.systematics[ "MC" ][ "muRFcorrd" ][0] ): continue
       bSmooth = False
       if syst == "ISR" and config.systematics[ "MC" ][ "isr" ][2]: bSmooth = True
-      elif syst == "FSR" and config.systematics[ "MC" ][ "fsr" ][2]: bSmooth = True
-      elif syst == "MURF" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] or config.systematics[ "MC" ][ "muRFcorrd" ][2] ): bSmooth = True
+      if syst == "FSR" and config.systematics[ "MC" ][ "fsr" ][2]: bSmooth = True
+      if syst == "MUR" and config.systematics[ "MC" ][ "muR" ][2]: bSmooth = True
+      if syst == "MUF" and config.systematics[ "MC" ][ "muF" ][2]: bSmooth = True
+      if syst == "MURFCORRD" and config.systematics[ "MC" ][ "muRFcorrd" ][2]: bSmooth = True
+      if syst == "MURF" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] ): bSmooth = True
+      if syst == "MUENV" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] or config.systematics[ "MC" ][ "muRFcorrd" ][2] ): bSmooth = True
 
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         if group in [ "TTNOBB", "TTBB" ]:
@@ -468,8 +472,8 @@ class DataCard():
   
   def add_ABCDNN_systematics( self ): 
     if args.normSyst:
-      if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSYST", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSYST" ] )
-      if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSTAT", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSTAT" ] )
+      if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSYST$ERA", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSYST" ] )
+      if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSTAT$ERA", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSTAT" ] )
       if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDCLOSURE" ] )
 
     if args.shapeSyst:
@@ -481,7 +485,7 @@ class DataCard():
         self.add_shape( "ABCDNNSAMPLE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
       if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
         bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
-        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
+        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 

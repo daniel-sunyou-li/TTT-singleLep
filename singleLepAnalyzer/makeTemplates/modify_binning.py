@@ -272,7 +272,7 @@ class ModifyTemplate():
       if self.xbins[ "MERGED" ][ channel ][-1] != self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1): 
         self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1) )
       if self.params[ "STAT THRESHOLD" ] <= 1.0:
-        if self.variable in [ "NJETS", "NBJETS", "NPU", "NHOT" ]:
+        if self.variable in [ "NJETS", "NBJETS", "NPU", "NHOT", "NFWD" ]:
           if self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetBinContent(1) == 0.:
             del self.xbins[ "MERGED" ][ channel ][-1]
         else:
@@ -541,6 +541,36 @@ class ModifyTemplate():
           self.rebinned[ hist_key ][ HOT_name[ "DN" ] ].SetBinContent( i, self.rebinned[ hist_key.split( " " )[0] ][ HOT_name[ "NOM" ] ].GetBinContent(i) - max_shift )
     print( "[DONE] Adjusted the HOT closure systematic shift for {} histograms".format( count ) )
     
+  def normalize_theory( self ):
+    print( "[START] Normalizing theory shift templates for acceptance before selection" )
+    norm_bkg = 0
+    norm_sig = 0
+    if self.options[ "NORM THEORY BKG SYST" ]:
+      for hist_name in self.rebinned[ "BKG SYST" ]:
+        parse = hist_parse( hist_name, samples )
+        if "ABCDNN" in hist_name: continue
+        if parse[ "SYST" ].upper() in [ "MUR", "MUF", "MURFCORRD" ]: 
+          self.rebinned[ "BKG SYST" ][ hist_name ].Scale( config.systematics[ "{} SF".format( parse[ "SYST" ].upper() ) ][ args.year ][ parse[ "SHIFT" ] ] )
+          norm_bkg += 1
+        elif parse[ "SYST" ].upper() in [ "ISR", "FSR" ]:
+          self.rebinned[ "BKG SYST" ][ hist_name ].Scale( config.systematics[ "{} SF".format( parse[ "SYST" ].upper() ) ][ "BKG" ][ args.year ][ parse[ "SHIFT" ] ] )
+          norm_bkg += 1
+        else:
+         continue
+
+    if self.options[ "NORM THEORY SIG SYST" ]:
+      for hist_name in self.rebinned[ "SIG SYST" ]:
+        parse = hist_parse( hist_name, samples )
+        if "ABCDNN" in hist_name: cotninue
+        if parse[ "SYST" ].upper() in [ "ISR", "FSR" ]:
+          self.rebinned[ "SIG SYST" ][ hist_name ].Scale( config.systematics[ "{} SF".format( parse[ "SYST" ].upper() ) ][ "SIG" ][ args.year ][ parse[ "SHIFT" ] ] )
+          norm_sig += 1
+        else:
+          continue
+
+    print( "[DONE] Normalized {} background histograms and {} signal histograms".format( norm_bkg, norm_sig ) )
+      
+
   def add_muRF_shapes( self ): 
   # adding MU R+F shape systematics
     print( "[START] Adding QCD UV Renormalization and IR Factorization Scale Factors (mu) systematic shapes" )
@@ -551,10 +581,13 @@ class ModifyTemplate():
         parse = hist_parse( hist_name, samples )
         if "ABCDNN" in hist_name: continue
         if parse[ "SYST" ].upper() != "MUR" and parse[ "SHIFT" ] != "UP": continue 
+
         count += 1 
         hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
           hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst ) ].Clone()
+        hist_muRF[ "MUENVUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
+        hist_muRF[ "MUENVDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_muRF[ "MURFDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         for i in range( 1, hist_muRF[ "NOMINAL" ].GetNbinsX() + 1 ):
@@ -562,35 +595,31 @@ class ModifyTemplate():
             "MAX": "NOMINAL",
             "MIN": "NOMINAL"
           }
-          # only retain the largest systematic shift between muR, muF, muRFcorrd
+          # only retain the largest systematic shift between muR, muF, muRFcorrd for envelope
           for key in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
             if hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) < hist_muRF[ key ].GetBinContent(i): 
               weight_key[ "MAX" ] = key
             if hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) > hist_muRF[ key ].GetBinContent(i): 
               weight_key[ "MIN" ] = key
 
-          hist_muRF[ "MURFUP" ].SetBinContent( i, hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) ) 
-          hist_muRF[ "MURFDN" ].SetBinContent( i, hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) )
+          hist_muRF[ "MUENVUP" ].SetBinContent( i, hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) ) 
+          hist_muRF[ "MUENVDN" ].SetBinContent( i, hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) )
+          hist_muRF[ "MURFUP" ].SetBinContent( i, hist_muRF[ "MURUP" ].GetBinContent(i) + hist_muRF[ "MUFUP" ].GetBinContent(i) )
+          hist_muRF[ "MURFDN" ].SetBinContent( i, hist_muRF[ "MURDN" ].GetBinContent(i) + hist_muRF[ "MUFDN" ].GetBinContent(i) )
 
-        if self.options[ "NORM THEORY SIG SYST" ] and hist_key == "SIG SYST":
-          hist_muRF[ "MURFUP" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "UP" ] )
-          hist_muRF[ "MURFDN" ].Scale( 1. / config.systematics[ "MU SF" ][ args.year ][ "DN" ] )
-        if self.options[ "NORM THEORY BKG SYST" ] and hist_key == "BKG SYST":
-          hist_muRF[ "MURFUP" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
-          hist_muRF[ "MURFDN" ].Scale( hist_muRF[ "NOMINAL" ].Integral() / ( hist_muRF[ "MURFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
-
-        for shift in [ "UP", "DN" ]:
-          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
-          self.rebinned[ hist_key ][ "{}_{}_MURF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
-          if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]: # correlate all MURF ttbar theory systematics together
-            self.rebinned[ hist_key ][ "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
-            self.rebinned[ hist_key ][ "{}_{}_MURFTTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
-          elif parse[ "COMBINE" ] in config.params[ "COMBINE" ][ "SIGNALS" ]: # correlate signal processes together
-            self.rebinned[ hist_key ][ "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
-            self.rebinned[ hist_key ][ "{}_{}_MURFSIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ].SetDirectory(0)
-          else: # correlate MURF theory systematics by group
-            self.rebinned[ hist_key ][ "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ] = hist_muRF[ "MURF{}".format( shift ) ].Clone( "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) )
-            self.rebinned[ hist_key ][ "{}_{}_MURF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ].SetDirectory(0)
+        for key in [ "MUR", "MUF", "MURFCORRD", "MUENV", "MURF" ]:
+          for shift in [ "UP", "DN" ]:
+            self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
+            self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
+            if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]: # correlate all MURF ttbar theory systematics together
+              self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
+              self.rebinned[ hist_key ][ "{}_{}_{}TTBAR{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
+            elif parse[ "COMBINE" ] in config.params[ "COMBINE" ][ "SIGNALS" ]: # correlate signal processes together
+              self.rebinned[ hist_key ][ "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
+              self.rebinned[ hist_key ][ "{}_{}_{}SIG{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
+            else: # correlate MURF theory systematics by group
+              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) )
+              self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ].SetDirectory(0)
             
     print( "[DONE] Created {} MU Renormalization and Factorization histograms".format( count ) ) 
   
@@ -602,7 +631,8 @@ class ModifyTemplate():
       for hist_name in hist_names:
         parse = hist_parse( hist_name, samples )
         if parse[ "SYST" ].upper() != "ISR" and parse[ "SHIFT" ] != "UP": continue 
-        if parse[ "COMBINE" ] == "ABCDNN" and ( "ISR" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and "FSR" not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] ): continue
+        if parse[ "COMBINE" ] == "ABCDNN": continue
+
         count += 1
         hist_PSWeight = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
         hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
@@ -641,11 +671,6 @@ class ModifyTemplate():
           hist_PSWeight[ "PSWGTUP" ].SetBinError( i, weight_error[ "MAX" ] )
           hist_PSWeight[ "PSWGTDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
           hist_PSWeight[ "PSWGTDN" ].SetBinError( i, weight_error[ "MIN" ] )
-        
-        if self.options[ "NORM THEORY {}".format( hist_key ) ]:
-          for shift in [ "UP", "DN" ]:
-            for syst in [ "PSWGT", "ISR", "FSR" ]:
-              hist_PSWeight[ syst + shift ].Scale( hist_PSWeight[ "NOMINAL" ].Integral() / ( hist_PSWeight[ syst + shift ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
         
         for syst in [ "PSWGT", "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
@@ -706,13 +731,6 @@ class ModifyTemplate():
           hist_PDF[ "PDFUP" ].SetBinError( i, weight_error[ "MAX" ] )
           hist_PDF[ "PDFDN" ].SetBinContent( i, weight_limit[ "MIN" ] )
           hist_PDF[ "PDFDN" ].SetBinError( i, weight_error[ "MIN" ] )
-
-        if hist_key == "SIG SYST" and not self.options[ "NORM THEORY SIG SYST" ]:
-          hist_PDF[ "PDFUP" ].Scale( 1. / config.systematics[ "PDF SF" ][ args.year ][ "UP" ] )
-          hist_PDF[ "PDFDN" ].Scale( 1. / config.systematics[ "PDF SF" ][ args.year ][ "DN" ] )
-        elif hist_key == "BKG SYST" and self.options[ "NORM THEORY BKG SYST" ]:
-          hist_PDF[ "PDFUP" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFUP" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
-          hist_PDF[ "PDFDN" ].Scale( hist_PDF[ "NOMINAL" ].Integral() / ( hist_PDF[ "PDFDN" ].Integral() + config.params[ "GENERAL" ][ "ZERO" ] ) )
         
         for shift in [ "UP", "DN" ]:
           self.rebinned[ hist_key ][ "{}_{}_PDF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], shift ) )
@@ -821,6 +839,8 @@ def main():
     template.symmetrize_HOTclosure()
   if options[ "SYMM THEORY" ]:
     template.symmetrize_theory_shift()
+  if options[ "NORM THEORY SIG SYST" ] or options[ "NORM THEORY BKG SYST" ]:
+    template.normalize_theory()
   if options[ "MURF SHAPES" ]:
     template.add_muRF_shapes()
   if options[ "PS WEIGHTS" ]:

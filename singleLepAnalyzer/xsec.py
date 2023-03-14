@@ -40,11 +40,11 @@ xsec = {
   "TTZlM1to10": 0.05324,
   "TTHB": 0.291,
   "TTHnoB": 0.209,
-  "Ts": 3.44,
-  "Tt": 136.02,
-  "Tbt": 80.95,
-  "TtW": 35.83,
-  "TbtW": 35.83,
+  "Ts": 3.549,      # NLO https://cms-gen-dev.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%3DST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8
+  "Tt": 134.2,     # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
+  "Tbt": 80.0,     # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
+  "TtW": 39.65,    # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
+  "TbtW": 39.65,   # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
   "QCD200": 1712000,
   "QCD300": 347700,
   "QCD500": 32100,
