@@ -74,7 +74,7 @@ def format_templates():
   for training in trainings:
     for variable in training[ "variable" ]:
       os.chdir( "makeTemplates" )
-      nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
       nameCondor = "SLA_step2_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
       if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
       shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
@@ -101,8 +101,9 @@ def plot_templates():
   for training in trainings:
     for variable in training[ "variable" ]:
       os.chdir( "makeTemplates" )
-      nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
       nameCondor = "SLA_step3_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
       shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
       shell.write(
 "#!/bin/bash \n\
@@ -140,7 +141,7 @@ def run_combine():
         postfix = tagABCDnn + systTag + tagSmooth
         if ( systTag != "" and systTag != "noShapenoNormnoTheory" ) and not config.options[ "COMBINE" ][ "GROUPS" ]: continue
         os.chdir( "combine" )
-        nameLog = "log_UL{}_{}_{}_{}{}".format( training[ "year" ], variable, args.region, training[ "tag" ], systTag )
+        nameLog = "log_UL{}_{}_{}{}".format( training[ "year" ], args.region, training[ "tag" ], systTag )
         nameCondor = "SLA_step4_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
         if not os.path.exists( nameLog ): os.system( "mkdir {}".format( nameLog ) )
         shell = open( os.path.join( nameLog, nameCondor + ".sh" ), "w" )
@@ -370,7 +371,7 @@ def systematics_correlation():
         if systematic in [ "HFSTATS1", "HFSTATS2", "HOTCLOSURE", "HOTCSPUR", "HOTSTAT", "JECABSOLUTE20$ERA", "JECBBEC120$ERA", "JECEC220$ERA", "JECHF20$ERA", "JECRELATIVESAMPLE20$ERA", "LFSTATS1", "LFSTATS2", "PREFIRE" ]:
           systName += training[ "year" ]
         os.chdir( "combine" )
-        nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+        nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
         nameCondor = "SLA_correlation_{}_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ], systName )
         if not os.path.exists( nameLog ): os.system( "mkdir {}".format( nameLog ) )
         shell = open( os.path.join( nameLog, nameCondor + ".sh" ), "w" )
@@ -423,7 +424,7 @@ def impact_plots_era():
           tagFreeze = "noFreeze" if freezeTag == "NOMINAL" else "freeze" + freezeTag
           os.chdir( "combine" )
           nameCondor = "SLA_impacts_{}_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix, tagFreeze )
-          nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+          nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
           if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
           html_line = ""
           if len( args.html ) > 0:
@@ -490,7 +491,7 @@ def impact_plots_era_masked():
             if "isM" in cardName: continue # mask electron and muon channels together
             tagCard = cardName.split( "." )[0].replace( "isE", "" ).split( "_" )[1]
             os.chdir( "combine" )
-            nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+            nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
             if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
             nameCondor = "SLA_impacts_{}_{}_{}_{}_{}_mask{}".format( training[ "year" ], training[ "tag" ], variable, postfix, tagFreeze, tagCard )
             shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
@@ -572,7 +573,7 @@ def uncertainty_breakdown_era():
     for variable in training[ "variable" ]:
       os.chdir( "combine" )
       nameCondor = "SLA_step8_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix )
-      nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
       if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
       shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
       shell.write(
@@ -662,7 +663,7 @@ def likelihood_fit_era():
           else:
             fitName = fitName.replace( "ERA", "" ) + training[ "year" ]
         nameCondor = "SLA_MDFit_{}_{}_{}_{}_{}".format( training[ "year" ], training[ "tag" ], variable, postfix, fitName )
-        nameLog = "log_UL{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+        nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
         os.chdir( "combine" ) 
         if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
         shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )

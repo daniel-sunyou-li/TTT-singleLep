@@ -127,58 +127,58 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     if config.systematics[ "MC" ][ "muF" ][0]:
       mc_weights[ "MUF" ] = { "UP": "renormWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isr" ]: 
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isr" ]: 
       mc_weights[ "ISR" ] = { "UP": "renormPSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[2] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsr" ]:
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsr" ]:
       mc_weights[ "FSR" ] = { "UP": "renormPSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
                               "DN": "renormPSWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrG2GGmuR" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrG2GGmuR" ]: 
       mc_weights[ "FSRG2GGMUR" ] = { "UP": "renormPSWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[4] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrG2QQmuR" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrG2QQmuR" ]: 
       mc_weights[ "FSRG2QQMUR" ] = { "UP": "renormPSWeights[7] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[6] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrQ2QGmuR" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrQ2QGmuR" ]: 
       mc_weights[ "FSRQ2QGMUR" ] = { "UP": "renormPSWeights[9] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[8] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrX2XGmuR" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrX2XGmuR" ]: 
       mc_weights[ "FSRX2XGMUR" ] = { "UP": "renormPSWeights[11] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[10] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrG2GGcNS" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrG2GGcNS" ]: 
       mc_weights[ "FSRG2GGCNS" ] = { "UP": "renormPSWeights[13] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[12] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrG2QQcNS" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrG2QQcNS" ]: 
       mc_weights[ "FSRG2QQCNS" ] = { "UP": "renormPSWeights[15] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[14] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrQ2QGcNS" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrQ2QGcNS" ]: 
       mc_weights[ "FSRQ2QGCNS" ] = { "UP": "renormPSWeights[17] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[16] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "fsrX2XGcNS" ]: 
+    if config.systematics[ "MC" ][ "fsr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "fsrX2XGcNS" ]: 
       mc_weights[ "FSRX2XGCNS" ] = { "UP": "renormPSWeights[19] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[18] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrG2GGmuR" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrG2GGmuR" ]:
       mc_weights[ "ISRG2GGMUR" ] = { "UP": "renormPSWeights[21] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[20] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrG2QQmuR" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrG2QQmuR" ]:
       mc_weights[ "ISRG2QQMUR" ] = { "UP": "renormPSWeights[23] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[22] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrQ2QGmuR" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrQ2QGmuR" ]:
       mc_weights[ "ISRQ2GQMUR" ] = { "UP": "renormPSWeights[25] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[24] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrX2XGmuR" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrX2XGmuR" ]:
       mc_weights[ "ISRX2XGMUR" ] = { "UP": "renormPSWeights[27] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[26] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrG2GGcNS" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrG2GGcNS" ]:
       mc_weights[ "ISRG2GGCNS" ] = { "UP": "renormPSWeights[29] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[28] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrG2QQcNS" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrG2QQcNS" ]:
       mc_weights[ "ISRG2QQCNS" ] = { "UP": "renormPSWeights[31] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[30] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrQ2QGcNS" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrQ2QGcNS" ]:
       mc_weights[ "ISRQ2QGCNS" ] = { "UP": "renormPSWeights[33] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[32] * {}".format( mc_weights[ "NOMINAL" ] ) }
-    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "MC" ][ "PS BREAKDOWN" ][ "isrX2XGcNS" ]:
+    if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrX2XGcNS" ]:
       mc_weights[ "ISRX2XGMUR" ] = { "UP": "renormPSWeights[35] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[34] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "toppt" ][0]:
@@ -325,15 +325,22 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
           )
           nSyst += 1
         if syst.upper() in [ "ISR", "FSR" ]:
-          for term in [ "CNS", "MUR" ]:
+          for term in [ "cNS", "muR" ]:
             for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+              if not config.systematics[ "PS BREAKDOWN" ][ syst + pQCD + term ]: continue
               rTree[ process ].Draw(
                 "{} >> {}".format( variableName, histTag ),
                 "{} * ({})".format( mc_weights[ syst.upper() + pQCD + term ][ shift ], cuts[ "NOMINAL" ] ),
                 "GOFF"
               )
               nSyst += 1
-        if syst.upper() in [ "PILEUP", "PILEUPJETID", "MURFCORRD", "MUR", "MUF" ]:
+          if config.systematics[ "MC" ][ syst ][0]:
+            rTree[ process ].Draw(
+              "{} >> {}".format( variableName, histTag ),
+              "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ),
+              "GOFF"
+            )
+        elif syst.upper() in [ "PILEUP", "PILEUPJETID", "MURFCORRD", "MUR", "MUF" ]:
           rTree[ process ].Draw( 
             "{} >> {}".format( variableName, histTag ), 
             "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] ), 

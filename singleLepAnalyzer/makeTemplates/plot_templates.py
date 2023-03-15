@@ -264,6 +264,8 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
     error_bkg[ category ] = {}
     for i in range( 1, histograms[ "TOTAL BKG" ][ category ].GetNbinsX() + 1 ):
       if args.verbose: print( ">> [BIN] {}/{}".format( i, histograms[ "TOTAL BKG" ][ category ].GetNbinsX() ) )
+      if histograms[ "TOTAL BKG" ][ category ].GetBinContent(i) <= 0:
+        histograms[ "TOTAL BKG" ][ category ].SetBinError(i,0)
       error_bkg[ category ][i] = {
         "STAT": histograms[ "TOTAL BKG" ][ category ].GetBinError(i),      # statistical
         "NORM": 0,                                                         # normalization
@@ -656,8 +658,11 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
           if args.variable.upper() in [ "NJETS", "NPU", "NBJETS", "NWJETS", "NTJETS", "NHOTJETS" ]:
             pull.GetXaxis().SetBinLabel( i, str( int( i_label - 0.5 ) ) )
             
-          if hists[ "TOTAL BKG" ][ category ].GetBinContent(i) != 0:
+          if hists[ "TOTAL BKG" ][ category ].GetBinContent(i) > 100. * config.params[ "GENERAL" ][ "ZERO" ]:
             pull.SetBinError( i, hists[ "TOTAL DAT" ][ category ].GetBinError(i) / hists[ "TOTAL BKG" ][ category ].GetBinContent(i) )
+          else: 
+            pull.SetBinContent( i, -999 )
+            pull.SetBinError( i, 0.001 )
         
         pull.SetMaximum(2)
         pull.SetMinimum(0)
@@ -683,7 +688,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         stat_error = ROOT.TGraphAsymmErrors( bkg_to_bkg.Clone() )
         
         for j in range( 0, hists[ "TOTAL BKG" ][ category ].GetNbinsX() + 2 ):
-          if hists[ "TOTAL BKG" ][ category ].GetBinContent(j) != 0:
+          if hists[ "TOTAL BKG" ][ category ].GetBinContent(j) > 100. * config.params[ "GENERAL" ][ "ZERO" ]:
             pull_error.SetPointEYhigh( 
               j - 1, 
               hists[ "TOTAL BKG ERR" ][ category ].GetErrorYhigh(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j) 
@@ -700,6 +705,11 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
               j - 1,
               hists[ "STAT BKG ERR" ][ category ].GetErrorYlow(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j)
             )
+          else:
+            pull_error.SetPointEYhigh( j - 1, 0 )
+            pull_error.SetPointEYlow( j - 1, 0 )
+            stat_error.SetPointEYhigh( j - 1, 0 )
+            stat_error.SetPointEYlow( j - 1, 0 )
           stat_error.SetFillStyle(3001)
           stat_error.SetFillColor(ROOT.kRed + 2)
           stat_error.SetMarkerSize(1)

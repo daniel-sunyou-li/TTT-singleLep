@@ -233,7 +233,7 @@ class ModifyTemplate():
       N_MERGED = 0
       for i in range( 1, N_BINS + 1 ):
         N_MERGED += 1
-        if self.params[ "STAT THRESHOLD" ] > 1.0:
+        if self.params[ "STAT THRESHOLD" ] >= 1.0:
           if N_MERGED < self.params[ "MIN MERGE" ]: 
             continue
           else:
@@ -252,8 +252,7 @@ class ModifyTemplate():
               else:
                 bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinContent( N_BINS + 1 - i )
                 bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinError( N_BINS + 1 - i )**2
-          if N_MERGED < self.params[ "MIN MERGE" ]: 
-            continue
+          if N_MERGED < self.params[ "MIN MERGE" ]: continue
           else:
             bPass = False
             for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:

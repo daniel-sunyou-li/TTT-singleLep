@@ -104,7 +104,7 @@ params = {
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
-    "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
+    "STAT THRESHOLD": 1.0,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
     "MIN MERGE": 1,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
@@ -189,10 +189,10 @@ systematics = {
   "REDUCED JEC": {
     "Total": False,             # use either Total or FlavorQCD, RelativeBal, RelativeSampel_Era, HF, HF_Era, BBEC1, BBEC1_Era, EC2, EC2_Era, Absolute, Absolute_Era
     "FlavorQCD": True,          # use either FlavorQCD or FlavorPureGluon/Quark/Charm/Bottom (breakdown)
-    "FlavorPureGluon": True,
-    "FlavorPureQuark": True,
-    "FlavorPureCharm": True,
-    "FlavorPureBottom": True,
+    "FlavorPureGluon": False,
+    "FlavorPureQuark": False,
+    "FlavorPureCharm": False,
+    "FlavorPureBottom": False,
     "RelativeBal": True,
     "RelativeSample_Era": True,
     "HF": True,
@@ -212,9 +212,9 @@ systematics = {
     "fsrQ2QGmuR": False,
     "fsrX2XGmuR": False,
     "fsrG2GGcNS": False,
-    "fsrG2QQmuR": False,
-    "fsrQ2QGmuR": False,
-    "fsrX2XGmuR": False,
+    "fsrG2QQcNS": False,
+    "fsrQ2QGcNS": False,
+    "fsrX2XGcNS": False,
     "isrG2GGmuR": False,
     "isrG2QQmuR": False,
     "isrQ2QGmuR": False,
@@ -348,7 +348,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
-    "NJ": [ "6", "7p" ]
+    "NJ": [ "5", "6", "7p" ]
   },
   "EXCLUDE": { # these regions get excluded in Combine
     "LEPTON": [ "E", "M" ],
@@ -385,14 +385,14 @@ hist_bins = {
 }
 
 event_cuts = {
-  "pt_electron": 20, # BASELINE = 20,  S1/2 = 20
-  "pt_muon": 20,     # BASELINE = 20,  S1/2 = 20
-  "met": 20,         # BASELINE = 20,  S1/2 = 20 
-  "mtW": 0,          # BASELINE = 0,   S1/2 = 0
-  "met+mtW": 0.,     # BASELINE = 0,   S1 = 0, S2 = 70
-  "ht": 350,         # BASELINE = 350, S1/2 = 390
-  "mindr_lj": 0.,    # BASELINE = 0,   S1/2 = 0.2
-  "dnn": 0.          # BASELINE = 0,   S1 = 0, S2 = 0.2
+  "pt_electron": 20,  # BASELINE = 20,  S1/2 = 20
+  "pt_muon": 20,      # BASELINE = 20,  S1/2 = 20
+  "met": 20,          # BASELINE = 20,  S1/2 = 20 
+  "mtW": 0,           # BASELINE = 0,   S1/2 = 0
+  "met+mtW": 70.,     # BASELINE = 0,   S1 = 0, S2 = 70
+  "ht": 390,          # BASELINE = 350, S1/2 = 390
+  "mindr_lj": 0.2,    # BASELINE = 0,   S1/2 = 0.2
+  "dnn": 0.2          # BASELINE = 0,   S1 = 0, S2 = 0.2
 }
 
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
