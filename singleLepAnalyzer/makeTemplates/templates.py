@@ -127,7 +127,7 @@ def clean_histograms( hists, hist_key, scale, rebin ):
       hist_.SetBinError( 0, 0 )
       return hist_
     
-    if args.verbose: print( "  [START] Correcting {} over/under-flow bins".format( hist_key ) )
+    print( "  [START] Correcting {} over/under-flow bins".format( hist_key ) )
     for hist_name in hists_[ hist_key ]:
       hists_[ hist_key ][ hist_name ] = overflow( hists_[ hist_key ][ hist_name ] )
       hists_[ hist_key ][ hist_name ] = underflow( hists_[ hist_key ][ hist_name ] )
@@ -249,16 +249,36 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
     print( "   + {}: {}".format( key, count[ key ] ) )
   return hists
 
-def write_combine( hists, variable, categories, groups, templateDir, doABCDNN ):
+def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, pseudoData ):
   print( "[START] Writing Combine templates" )
   sTime = time.time()
-  combine_name = "{}/template_combine_{}_UL{}.root".format( templateDir, variable, args.year )
-  combine_file = TFile( combine_name, "RECREATE" )
+  combine_name = "{}/template_combine_{}_UL{}".format( templateDir, variable, args.year )
+  if pseudoData:
+    combine_name += "_pseudo"
+  combine_file = TFile( combine_name + ".root", "RECREATE" )
 
   for category in categories:
     print( ">> Writing category: {}".format( category ) )
+    if pseudoData:
+      print( "[INFO] Substituting data with unfiltered MC background as pseudo data to test filtering" )
+
+      for i in range( 0, hists[ "CMB" ][ hist_tag( "data_obs", category ) ].GetNbinsX() + 1 ):
+        yieldMC_i = 0
+        errorMC_i = 0
+        for group in groups[ "BKG" ][ "SUPERGROUP" ]:
+          yieldMC_i += hists[ "CMB" ][ hist_tag( group, category ) ].GetBinContent( i )
+          errorMC_i += ( hists[ "CMB" ][ hist_tag( group, category ) ].GetBinError( i ) )**2
+        for process in groups[ "SIG" ][ "PROCESS" ]:
+          yieldMC_i += hists[ "CMB" ][ hist_tag( process, category ) ].GetBinContent( i )
+          errorMC_i += ( hists[ "CMB" ][ hist_tag( process, category ) ].GetBinError( i ) )**2
+        hists[ "CMB" ][ hist_tag( "data_obs", category ) ].SetBinContent( i, yieldMC_i )
+        hists[ "CMB" ][ hist_tag( "data_obs", category ) ].SetBinError( i, math.sqrt( errorMC_i ) )
     hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Write()
-    print( "  + DAT > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
+    if pseudoData:
+      print( "  + Pseudo data > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
+    elif config.options[ "GENERAL" ][ "FINAL ANALYSIS" ]:
+      print( "  + DAT > {}: {}".format( hist_tag( "data_obs", category ), hists[ "CMB" ][ hist_tag( "data_obs", category ) ].Integral() ) )
+      
 
     for process in groups[ "SIG" ][ "PROCESS" ]:
       hists[ "CMB" ][ hist_tag( process, category ) ].Write()
@@ -605,7 +625,7 @@ def main():
       if len( hists[ hist_key ].keys() ) <= 0: continue
       hists = clean_histograms( hists, hist_key, config.params[ "HISTS" ][ "LUMISCALE" ], config.params[ "HISTS" ][ "REBIN" ] )
     hists = combine_histograms( hists, variable, categories, groups, config.options[ "GENERAL" ][ "ABCDNN" ] )
-    write_combine( hists, variable, categories, groups, templateDir, config.options[ "GENERAL" ][ "ABCDNN" ] )
+    write_combine( hists, variable, categories, groups, templateDir, config.options[ "GENERAL" ][ "ABCDNN" ], config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] )
     tables = make_tables( hists, categories, groups, variable, templateDir, config.lumiStr[ args.year ], config.options[ "GENERAL" ][ "ABCDNN" ] )
     print_tables( tables, categories, groups, variable, templateDir )
     del hists

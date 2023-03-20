@@ -46,7 +46,7 @@ def jet_count( category ):
   return jet_count
 
 class DataCard():
-  def __init__( self, variable, year, region, tag, params, options,samples, prefix ):
+  def __init__( self, variable, year, region, tag, params, options, samples, prefix ):
     self.harvester = ch.CombineHarvester()
     self.variable = variable
     self.year = year
@@ -65,9 +65,10 @@ class DataCard():
     self.options = options
     self.prefix = prefix
     
-    self.templateName = "template_combine_{}_UL{}_rebinned_merge{}_stat{}.root".format( 
+    self.templateName = "template_combine_{}_UL{}_{}rebinned_merge{}_stat{}.root".format( 
       self.variable,
       self.year,
+      "pseudo_" if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else "",
       config.params[ "MODIFY BINNING" ][ "MIN MERGE" ],
       str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" )
     )
@@ -82,7 +83,10 @@ class DataCard():
     )
      
     self.templatePath = os.path.join( self.templateDir, self.templateName )
-    self.limitPath = "limits_UL{}_{}_{}_{}/".format( self.year, self.variable, self.region, self.tag )
+    self.limitPath = "limits_UL{}_{}_{}_{}".format( self.year, self.variable, self.region, self.tag )
+    if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ]:
+      self.limitPath += "_pseudo"
+    self.limitPath += "/"
     if not os.path.exists( self.limitPath ): os.system( "mkdir -v {}".format( self.limitPath ) )
     os.system( "cp -vp {} {}".format( self.templatePath, os.path.join( os.getcwd(), self.limitPath ) ) )
     
@@ -134,33 +138,28 @@ class DataCard():
     exclude_count = 0
     for hist_name in hist_list:
       parse = hist_parse( hist_name, samples )
+      if parse[ "IS SYST" ]: 
+        continue
       if parse[ "CATEGORY" ] in self.categories[ "EXCLUDE" ]: continue
       if parse[ "GROUP" ] == "SIG":
-        if parse[ "IS SYST" ]: 
-          continue
-        else: 
-          if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
-            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-          else:
-            self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
+        if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
+          self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
+        else:
+          self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "BKG":
         if templateFile.Get( hist_name ).Integral() < 1e-5: 
           print( "[WARN] {} is beneath yield threshold, excluding...".format( hist_name )  )
           exclude_count += 1
           continue
-        if self.abcdnn and parse[ "ABCDNN" ]:
-          if parse[ "IS SYST" ]:
-            continue
-          else:
-            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ]
+        if parse[ "ABCDNN" ] and self.abcdnn:
+          self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ "ABCDNN" ] + config.params[ "ABCDNN" ][ "MINOR BKG" ]
+        elif parse[ "COMBINE" ] == "ABCDNN" and not self.abcdnn:
+          continue
         else:
-          if parse[ "IS SYST" ]: 
-            continue
-          else: 
-            if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ]:
-              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-            else:
-              self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
+          if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ]:
+            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
+          else:
+            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "DAT":
         if parse[ "CATEGORY" ] not in self.hist_groups[ "DAT" ].keys():
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]

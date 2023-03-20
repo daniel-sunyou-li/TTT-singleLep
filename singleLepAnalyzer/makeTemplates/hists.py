@@ -164,7 +164,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
       mc_weights[ "ISRG2QQMUR" ] = { "UP": "renormPSWeights[23] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[22] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrQ2QGmuR" ]:
-      mc_weights[ "ISRQ2GQMUR" ] = { "UP": "renormPSWeights[25] * {}".format( mc_weights[ "NOMINAL" ] ),
+      mc_weights[ "ISRQ2QGMUR" ] = { "UP": "renormPSWeights[25] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[24] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrX2XGmuR" ]:
       mc_weights[ "ISRX2XGMUR" ] = { "UP": "renormPSWeights[27] * {}".format( mc_weights[ "NOMINAL" ] ),
@@ -179,7 +179,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
       mc_weights[ "ISRQ2QGCNS" ] = { "UP": "renormPSWeights[33] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[32] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "isr" ][0] and config.systematics[ "PS BREAKDOWN" ][ "isrX2XGcNS" ]:
-      mc_weights[ "ISRX2XGMUR" ] = { "UP": "renormPSWeights[35] * {}".format( mc_weights[ "NOMINAL" ] ),
+      mc_weights[ "ISRX2XGCNS" ] = { "UP": "renormPSWeights[35] * {}".format( mc_weights[ "NOMINAL" ] ),
                                      "DN": "renormPSWeights[34] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "toppt" ][0]:
       mc_weights[ "TOPPT" ] = { "UP": "({}) * {}".format( "topPtWeight13TeV" if "TTTo" in process else "1", mc_weights[ "NOMINAL" ] ),
@@ -269,6 +269,15 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
               if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
               histTag = hist_tag( process, categoryTag, "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift )
               hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
+          elif syst.upper() in [ "ISR", "FSR" ]:
+            for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+              for term in [ "cNS", "muR" ]:
+                if not config.systematics[ "PS BREAKDOWN" ][ syst + pQCD + term ]: continue
+                histTag = hist_tag( process, categoryTag, syst.upper() + pQCD + term.upper() + shift )
+                hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
+            if config.systematics[ "PS BREAKDOWN" ][ syst ]:
+              histTag = hist_tag( process, categoryTag, syst.upper() + shift )
+              hists[ histTag ] = ROOT.TH1D( histTag, xLabel, len( histBins ) - 1, histBins )
           else:
             histTag = hist_tag( process, categoryTag, syst.upper() + shift )
             if syst.upper() == "PREFIRE" and year not in [ "16APV", "16", "17" ]: continue
@@ -328,9 +337,10 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
           for term in [ "cNS", "muR" ]:
             for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
               if not config.systematics[ "PS BREAKDOWN" ][ syst + pQCD + term ]: continue
+              pQCDTag = hist_tag( process, categoryTag, syst.upper() + pQCD + term.upper() + shift )
               rTree[ process ].Draw(
-                "{} >> {}".format( variableName, histTag ),
-                "{} * ({})".format( mc_weights[ syst.upper() + pQCD + term ][ shift ], cuts[ "NOMINAL" ] ),
+                "{} >> {}".format( variableName, pQCDTag ),
+                "{} * ({})".format( mc_weights[ syst.upper() + pQCD + term.upper() ][ shift ], cuts[ "NOMINAL" ] ),
                 "GOFF"
               )
               nSyst += 1

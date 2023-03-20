@@ -18,7 +18,7 @@ parser.add_argument( "--html", help = "Path to public_html for displaying plots"
 parser.add_argument( "--verbose", action = "store_true" )
 parser.add_argument( "--templates", action = "store_true" )
 parser.add_argument( "--ratios", action = "store_true" )
-parser.add_argument( "--shifts", action = "store_true" )
+parser.add_argument( "--shifts", action = "store_true", help = "This should be run seprately from templates if using smoothing" )
 parser.add_argument( "--systematics", action = "store_true" )
 parser.add_argument( "--test", action = "store_true" )
 args = parser.parse_args()
@@ -150,7 +150,7 @@ def cms_lumi( pad, postfix, blind ):
   pad.Update()
   del latex
 
-def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_signal_yield, norm_bin_width, smooth, doABCDNN ):
+def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_signal_yield, norm_bin_width, smooth, doABCDNN, doShifts ):
   file_name = "template_combine_{}_UL{}".format( args.variable, args.year )
   if rebinned: file_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) 
   rFile = ROOT.TFile.Open( os.path.join( templateDir, file_name + ".root" ) )
@@ -185,14 +185,17 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
     if "JEC" in hist_name and not syst_name.endswith( "20" + args.year ) and syst_name.endswith( args.year ): continue # don't double count the decorrelated systematics
     if ( "HOTCLOSURE" in syst_name or "HOTCSPUR" in syst_name or "HOTSTAT" in syst_name ) and "nHOT0p" in category: continue # not using HOT tagged jets
     if syst and smooth: # check if including smoothed systematic 
-      if "JEC" in syst_name.upper():
-        if "JEC" in smooth_syst and not algoSmooth.upper() in hist_name.upper(): continue
-        elif "JEC" not in smooth_syst and algoSmooth.upper() in hist_name.upper(): continue
-        elif syst_name not in syst_list: syst_list.append( syst_name )
+      if doShifts: # when plotting the smooth vs nominal templates, don't discriminate which histograms being kept
+        if syst_name not in syst_list: syst_list.append( syst_name )
       else:
-        if algoSmooth.upper() in syst_name.upper() and syst_name.upper().replace( algoSmooth.upper(), "" ) not in smooth_syst: continue
-        elif algoSmooth.upper() not in syst_name.upper() and syst_name.upper().replace( algoSmooth.upper(), "" ) in smooth_syst: continue
-        elif syst_name not in syst_list: syst_list.append( syst_name )
+        if "JEC" in syst_name.upper():
+          if "JEC" in smooth_syst and not algoSmooth.upper() in hist_name.upper(): continue
+          elif "JEC" not in smooth_syst and algoSmooth.upper() in hist_name.upper(): continue
+          elif syst_name not in syst_list: syst_list.append( syst_name )
+        else:
+          if algoSmooth.upper() in syst_name.upper() and syst_name.upper().replace( algoSmooth.upper(), "" ) not in smooth_syst: continue
+          elif algoSmooth.upper() not in syst_name.upper() and syst_name.upper().replace( algoSmooth.upper(), "" ) in smooth_syst: continue
+          elif syst_name not in syst_list: syst_list.append( syst_name )
 
     if syst_name.upper() in shape_systs_all and syst_name.upper() not in shape_systs_pass: continue
     if syst and syst_name not in syst_list: syst_list.append( syst_name )
@@ -304,8 +307,8 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
                 error_bkg[ category ][i]["UP"] += error_dn**2
                 systTotalUp += error_dn**2
             except:
-              if args.verbose:
-                print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
+              #if args.verbose:
+              #  print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
               pass
           if args.verbose: print( "[INFO] {} Bin {} {} = + {:.3f}, - {:.3f}".format( category, i, syst.upper(), np.sqrt( systTotalUp ), np.sqrt( systTotalDn ) ) )
       error_bkg[ category ][i][ "UP" ] = np.sqrt( error_bkg[ category ][i][ "UP" ] )
@@ -343,7 +346,6 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   for category in categories:
     for i in range( 1, histograms[ "TOTAL BKG" ][ category ].GetNbinsX() + 1 ):
       avgErr = 0.5 * ( histograms[ "TOTAL BKG ERR" ][ category ].GetErrorYlow( i - 1 ) + histograms[ "TOTAL BKG ERR" ][ category ].GetErrorYhigh( i - 1 ) )
-      histograms[ "TOTAL BKG" ][ category ].SetBinError( i, avgErr )
       histograms[ "TOTAL BKG ERR" ][ category ].SetPointEYhigh( i - 1, avgErr )
       histograms[ "TOTAL BKG ERR" ][ category ].SetPointEYlow( i - 1, avgErr )
 
@@ -635,6 +637,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" ) 
 
     legend.AddEntry( hists[ "TOTAL BKG ERR" ][ category ], "+".join( config_plot.params[ "ERROR BAND" ] ), "f" )
+    legend.AddEntry( hists[ "STAT BKG ERR" ][ category ], "STAT", "f" )
       
     if scale_signal_yield:
       legend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG x{}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "l" )
@@ -691,19 +694,19 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
           if hists[ "TOTAL BKG" ][ category ].GetBinContent(j) > 100. * config.params[ "GENERAL" ][ "ZERO" ]:
             pull_error.SetPointEYhigh( 
               j - 1, 
-              hists[ "TOTAL BKG ERR" ][ category ].GetErrorYhigh(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j) 
+              hists[ "TOTAL BKG ERR" ][ category ].GetErrorYhigh(j - 1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j) 
             )
             pull_error.SetPointEYlow(
               j - 1, 
-              hists[ "TOTAL BKG ERR" ][ category ].GetErrorYlow(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j) 
+              hists[ "TOTAL BKG ERR" ][ category ].GetErrorYlow(j - 1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j) 
             )
             stat_error.SetPointEYhigh(
               j - 1,
-              hists[ "STAT BKG ERR" ][ category ].GetErrorYhigh(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j)
+              hists[ "STAT BKG ERR" ][ category ].GetErrorYhigh(j - 1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j)
             )
             stat_error.SetPointEYlow(
               j - 1,
-              hists[ "STAT BKG ERR" ][ category ].GetErrorYlow(j-1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j)
+              hists[ "STAT BKG ERR" ][ category ].GetErrorYlow(j - 1) / hists[ "TOTAL BKG" ][ category ].GetBinContent(j)
             )
           else:
             pull_error.SetPointEYhigh( j - 1, 0 )
@@ -769,6 +772,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     save_name = hist_tag( args.variable, category )
     plot_folder = "plots_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
     if rebinned: save_name += "_rebinned_merge{}_stat{}".format( config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ) )
+    if doABCDNN: save_name += "_ABCDNN"
     if real_pull: save_name += "_pull"
     if blind: save_name += "_blind"
     if config_plot.options[ "Y LOG" ]: save_name += "_logy"
@@ -1371,7 +1375,8 @@ def main():
       scale_signal_yield = config_plot.options[ "SCALE SIGNAL YIELD" ],
       norm_bin_width = config_plot.options[ "NORM BIN WIDTH" ],
       smooth = True,
-      doABCDNN = config_plot.options[ "ABCDNN" ]
+      doABCDNN = config_plot.options[ "ABCDNN" ],
+      doShifts = args.shifts
     )
   hists, categories, syst_list = load_histograms( 
     groups = samples.groups,
@@ -1381,7 +1386,8 @@ def main():
     scale_signal_yield = config_plot.options[ "SCALE SIGNAL YIELD" ],
     norm_bin_width = config_plot.options[ "NORM BIN WIDTH" ],
     smooth = False,
-    doABCDNN = config_plot.options[ "ABCDNN" ]
+    doABCDNN = config_plot.options[ "ABCDNN" ],
+    doShifts = False
   )
   #table = stat_test( hists, categories )
   blind = config_plot.options[ "BLIND" ] 

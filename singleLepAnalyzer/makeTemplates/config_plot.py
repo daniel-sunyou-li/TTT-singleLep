@@ -68,7 +68,7 @@ params = {
     "EWK": ROOT.kAzure + 2, 
     "QCD": ROOT.kSpring + 6,
     "TTBAR": ROOT.kOrange - 2,
-    "ABCDNN": ROOT.kRed - 3,
+    "ABCDNN": ROOT.kOrange + 1,
     "ERROR": ROOT.kBlack,
   },
   "Y DIV": 0.35,

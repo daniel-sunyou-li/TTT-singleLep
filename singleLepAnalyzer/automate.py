@@ -111,8 +111,8 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --shifts --systematics {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --templates {6}".format( 
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts --systematics {6} \n\
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6}".format( 
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )
@@ -152,7 +152,7 @@ cd {0} \n\
 eval `scramv1 runtime -sh`\n\
 cd {1} \n\
 python create_datacard.py -y {2} -v {3} -r {4} -t {5} {6} \n\
-cd limits_UL{2}_{3}_{4}_{5}_{7}\n\
+cd limits_UL{2}_{3}_{4}_{5}_{7}{13}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 8\n\
 ValidateDatacards.py cmb/combined.txt.cmb --printLevel 2\n\
 mv validation.json validation_UL{2}_{3}_{4}_{5}_{7}.json\n\
@@ -162,14 +162,15 @@ mv *.png cmb/FitDiagnostics_UL{2}_{3}_{4}_{5}_{7}/ \n\
 combine -M Significance cmb/workspace.root {9} > significance_merge{11}_stat{12}.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root {10} > limits_merge{11}_stat{12}.txt\n\
 cd ..\n\
-python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
+python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}{13}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}{13}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
             cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], 
             systCombo[ systTag ], postfix, 
             " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
             " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] ),
             " ".join( config.params[ "COMBINE" ][ "LIMITS" ][ "ARGS" ] ),
             config.params[ "MODIFY BINNING" ][ "MIN MERGE" ],
-            str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" )
+            str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ),
+            "_pseudo" if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else ""
           )
         )
         shell.close()
@@ -179,14 +180,15 @@ python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}/cmb/combined.txt.cmb 
 def combine_years():
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN" 
+  tagPseudo = "" if not config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else "_pseudo"
   for variable in args.variables:
     for tag in args.tags:
       os.chdir( "combine" )
       nameLog = "log_{}_{}_{}".format( variable, args.region, tag )
       nameCondor = "SLA_step5_{}_{}_{}_{}".format( variable, args.region, tag, tagABCDnn + tagSmooth )
       if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
-      tagAllSyst = "{}_{}_{}_{}{}".format( variable, args.region, tag, tagABCDnn, tagSmooth )
-      tagNoSyst = "{}_{}_{}_{}noShapenoNormnoTheory{}".format( variable, args.region, tag, tagABCDnn, tagSmooth )
+      tagAllSyst = "{}_{}_{}_{}{}{}".format( variable, args.region, tag, tagABCDnn, tagSmooth, tagPseudo )
+      tagNoSyst = "{}_{}_{}_{}noShapenoNormnoTheory{}{}".format( variable, args.region, tag, tagABCDnn, tagSmooth, tagPseudo )
       shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
       shell.write(
 "#!/bin/bash\n\

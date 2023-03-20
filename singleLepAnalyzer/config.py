@@ -56,7 +56,8 @@ options = {
     "ADD SHAPE SYST YIELD": True,
     "SMOOTH": True,                # perform smoothing
     "UNCORRELATE YEARS": True,     # add year postfix to systematics for decorrelation in Higgs combine
-    "TRIGGER EFFICIENCY": False,
+    "TRIGGER EFFICIENCY": False,   #
+    "TEST PSEUDO DATA": False      # treat the unfiltered background MC as pseudo data to test the effect of filtering
   },
   "COMBINE": {
     "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
@@ -71,13 +72,13 @@ options = {
 # non-boolean parameters used in creating templates
 params = {
   "GENERAL": {
-    "ZERO": 1e-12,      # default non-zero value for zero to prevent division by zero
+    "ZERO": 1e-12,        # default non-zero value for zero to prevent division by zero
     "REBIN": -1,        # rebin histogram binning, use -1 to keep original binning
     "PDF RANGE": 100,   # PDF range
   },
   "ABCDNN": {
     "TAG": "nJ7pnB3pnHOT1p",                      # ABCDnn transformed variable tag i.e. <varname>_<tag>
-    "TF": {
+    "TF": { # extended ABCD prediction
       "16APV": 0.01707,       # nJ5pnB2p = 0.02610, nJ7pnB3p = 0.01489, nJ7pnB3pnHOT1p = 0.01707
       "16": 0.01289,          # nJ5pnB2p = 0.02805, nJ7pnB3p = 0.01522, nJ7pnB3pnHOT1p = 0.01289
       "17": 0.00672,          # nJ5pnB2p = 0.01210, nJ7pnB3p = 0.00724, nJ7pnB3pnHOT1p = 0.00672 
@@ -100,11 +101,11 @@ params = {
     "REBIN": -1,            # rebin histograms to have this number of bins
     "TTHFSF": 4.7/3.9,      # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
     "TTLFSF": -1.,          # if ttLFsf -1, compute automatically using ttHFsf, else set manually
-    "MIN BKG YIELD": 0.015, # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.015 )
+    "MIN BKG YIELD": 0.003,   # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.003 )
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
-    "STAT THRESHOLD": 1.0,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
+    "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
     "MIN MERGE": 1,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
@@ -348,7 +349,7 @@ hist_bins = {
     "NT": [ "0p" ],
     "NW": [ "0p" ],
     "NB": [ "2", "3p" ],
-    "NJ": [ "5", "6", "7p" ]
+    "NJ": [ "6", "7p" ]
   },
   "EXCLUDE": { # these regions get excluded in Combine
     "LEPTON": [ "E", "M" ],
@@ -385,14 +386,14 @@ hist_bins = {
 }
 
 event_cuts = {
-  "pt_electron": 20,  # BASELINE = 20,  S1/2 = 20
-  "pt_muon": 20,      # BASELINE = 20,  S1/2 = 20
-  "met": 20,          # BASELINE = 20,  S1/2 = 20 
-  "mtW": 0,           # BASELINE = 0,   S1/2 = 0
-  "met+mtW": 70.,     # BASELINE = 0,   S1 = 0, S2 = 70
-  "ht": 390,          # BASELINE = 350, S1/2 = 390
-  "mindr_lj": 0.2,    # BASELINE = 0,   S1/2 = 0.2
-  "dnn": 0.2          # BASELINE = 0,   S1 = 0, S2 = 0.2
+  "pt_electron": 20,  # BASELINE = 20,  S1/2/3 = 20
+  "pt_muon": 20,      # BASELINE = 20,  S1/2/3 = 20
+  "met": 20,          # BASELINE = 20,  S1/2/3 = 20 
+  "mtW": 0,           # BASELINE = 0,   S1/2/3 = 0
+  "met+mtW": 70.,     # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
+  "ht": 390,          # BASELINE = 350, S1/2 = 390, S3 = 390
+  "mindr_lj": 0.2,    # BASELINE = 0,   S1/2 = 0.2, S3 = 0.2
+  "dnn": 0.2          # BASELINE = 0,   S1 = 0, S2 = 0.2, S3 = 0
 }
 
 base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "

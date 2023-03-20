@@ -55,7 +55,8 @@ def negative_bin_correction( hist ):
       hist.SetBinError( i, config.params[ "GENERAL" ][ "ZERO" ] )
   if hist.Integral() != 0 and integral > 0: 
     hist.Scale( integral / hist.Integral() )
-
+  if hist.Integral() < 1e-6: # combine will not be able to handle hists with integrals less than 1e-6
+    hist.Scale( 1e-1 / hist.Integral() )
 
 def smooth_shape( hist_n, hist_d, hist_u, syst, algo = "lowess", symmetrize = False ):
   hist_name = hist_n.GetName()
@@ -145,7 +146,6 @@ class ModifyTemplate():
         except:
           self.histograms[ "TOTAL DAT" ][ parse[ "CATEGORY" ] ] = self.histograms[ "DAT" ][ hist_name ].Clone( hist_tag( "DAT", parse[ "CATEGORY" ] ) )
         count[ "DAT" ] += 1
-
       elif parse[ "GROUP" ] == "BKG":
         if args.verbose and not parse[ "IS SYST" ]: print( "   + BKG: {}".format( hist_name ) )
         if parse[ "IS SYST" ]:
@@ -244,25 +244,26 @@ class ModifyTemplate():
             self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) )
           N_MERGED = 0
         else:
-          for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
+          for key_type in [ "TOTAL BKG", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
             for key_lep in [ "isE", "isM" ]:
-              if key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ]:
+              if key_type in [ "TOTAL BKG", "TOTAL SIG" ]:
                 bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinContent( N_BINS + 1 - i )
                 bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ key_type ][ key_lep + channel ].GetBinError( N_BINS + 1 - i )**2
               else:
                 bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinContent( N_BINS + 1 - i )
-                bin_content[ key_lep ][ key_type ][ "YIELD" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinError( N_BINS + 1 - i )**2
+                bin_content[ key_lep ][ key_type ][ "ERROR" ] += self.histograms[ "SIG" ][ hist_tag( key_type, key_lep + channel ) ].GetBinError( N_BINS + 1 - i )**2
           if N_MERGED < self.params[ "MIN MERGE" ]: continue
           else:
             bPass = False
-            for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
+            for key_type in [ "TOTAL BKG", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
               if not ( bin_content[ "isE" ][ key_type ][ "YIELD" ] > 0 and bin_content[ "isM" ][ key_type ][ "YIELD" ] > 0 ): bPass = True
             if bPass: continue
+
             ratio_e = math.sqrt( bin_content[ "isE" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isE" ][ "TOTAL BKG" ][ "YIELD" ]
             ratio_m = math.sqrt( bin_content[ "isM" ][ "TOTAL BKG" ][ "ERROR" ] ) / bin_content[ "isM" ][ "TOTAL BKG" ][ "YIELD" ]
             ratio_sig = math.sqrt( bin_content[ "isE" ][ "TOTAL SIG" ][ "ERROR" ]**2 + bin_content[ "isM" ][ "TOTAL SIG" ][ "ERROR" ]**2  ) / ( bin_content[ "isE" ][ "TOTAL SIG" ][ "YIELD" ] + bin_content[ "isM" ][ "TOTAL SIG" ][ "YIELD" ] )
             if ratio_e <= self.params[ "STAT THRESHOLD" ] and ratio_m <= self.params[ "STAT THRESHOLD" ] and ratio_sig <= self.params[ "STAT THRESHOLD" ]:
-              for key_type in [ "TOTAL BKG", "TOTAL DAT", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
+              for key_type in [ "TOTAL BKG", "TOTAL SIG" ] + config.params[ "COMBINE" ][ "SIGNALS" ]:
                 for key_lep in [ "isE", "isM" ]:
                   for key_stat in [ "YIELD", "ERROR" ]:
                     bin_content[ key_lep ][ key_type ][ key_stat ] = 0
@@ -270,7 +271,7 @@ class ModifyTemplate():
               self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge( N_BINS + 1 - i ) ) 
       if self.xbins[ "MERGED" ][ channel ][-1] != self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1): 
         self.xbins[ "MERGED" ][ channel ].append( self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetXaxis().GetBinLowEdge(1) )
-      if self.params[ "STAT THRESHOLD" ] <= 1.0:
+      if self.params[ "STAT THRESHOLD" ] < 1.0:
         if self.variable in [ "NJETS", "NBJETS", "NPU", "NHOT", "NFWD" ]:
           if self.histograms[ "TOTAL BKG" ][ "isL" + channel ].GetBinContent(1) == 0.:
             del self.xbins[ "MERGED" ][ channel ][-1]
@@ -783,12 +784,12 @@ class ModifyTemplate():
       hist_names = self.rebinned[ hist_key ].keys()
       print( ">> Loading {}".format( hist_key ) )
       for hist_name in hist_names:
+        parse = hist_parse( hist_name, samples )
         if "PDF" in hist_name and not ( hist_name.endswith( "UP" ) or hist_name.endswith( "DN" ) ): continue
+        if parse[ "SYST" ] == "ABCDNN" and not hist_name.startswith( "ABCDNN" ): continue
         negative_bin_correction( self.rebinned[ hist_key ][ hist_name ] )
         self.rebinned[ hist_key ][ hist_name ].Write() # for plotting
         count += 1
-        parse = hist_parse( hist_name, samples )
-        if parse[ "SYST" ] == "ABCDNN" and not hist_name.startswith( "ABCDNN" ): continue
         shift = "Down" if hist_name.endswith( "DN" ) else "Up"
         combine_tag = "NOMINAL" if not parse[ "IS SYST" ] else parse[ "SYST" ] + shift
         combine_name = hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], combine_tag )
@@ -821,8 +822,10 @@ def main():
       print( "[WARN] Running {} region, turning on blinding".format( args.region ) )
       options[ "BLIND" ] = True
     
-  file_name = "template_combine_{}_UL{}.root".format( args.variable, args.year ) 
-  file_path = os.path.join( templateDir, file_name )
+  file_name = "template_combine_{}_UL{}".format( args.variable, args.year ) 
+  if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ]:
+    file_name += "_pseudo"
+  file_path = os.path.join( templateDir, file_name + ".root" )
 
   # default rebin/merge histograms
   template = ModifyTemplate( file_path, options, params, samples.groups, args.variable, args.abcdnn )  
