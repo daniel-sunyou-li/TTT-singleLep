@@ -32,7 +32,7 @@ def setup( modelNames, jsonNames ):
     taglist = []
     jetlist = []
     # load in the json parameter files and get the variables used and the jet cut
-    for jsonName in sorted(jsonNames):
+    for jsonName in sorted( jsonNames ):
         jsonFile = ( load_json( open( jsonName ).read() ) ) 
         varlist.append( list( jsonFile[ "variables" ] ) )
         indexlist.append( [ jsonFile[ "start_index" ], jsonFile[ "end_index" ] ] )
@@ -97,8 +97,18 @@ def fill_tree( fileName, modelNames, jetlist, varlist, indexlist, disclist, tagl
 def main():
     print( "[START] Running the step3 production..." )
     models, varlist, jetlist, indexlist, taglist = setup( modelNames, jsonNames )
-    rootFile = TFile.Open( args.file );
-    rootTree = rootFile.Get( "ljmet" ); 
+    rootFile = TFile.Open( args.file )
+    rootTree = rootFile.Get( "ljmet" ) 
+    rootTree.SetBranchStatus( "*", 0 )
+    branches = []
+    for varlist_ in varlist:
+      for bName in varlist_:
+        if bName not in branches: branches.append( str(bName) )
+    for bName in config.branches:
+      if bName not in branches: branches.append( str(bName) )
+    for branch in branches: 
+      print( "[INFO] Including branch: {}".format( branch ) ) 
+      rootTree.SetBranchStatus( branch, 1 )
     print( ">> Creating step3 for sample: {}".format( args.file ) )
     disclist = get_predictions( models, varlist, args.file, "ljmet" )
     fill_tree( args.file, modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree )

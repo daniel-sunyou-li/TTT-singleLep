@@ -53,52 +53,61 @@ for var_data in config.varList["DNN"]:
     loader.AddVariable( var_data[0], var_data[1], "", "F" )
     
 # Add signal and background trees to loader
-signals = []
-signal_trees = []
-backgrounds = []
-background_trees = []  
+print( ">> Loading trees" )
+sFiles, bFiles = [], []
+sTrees, bTrees = [], []
 for sig in config.sig_training[ args.year ]:
-  signals.append( TFile.Open( inputDir + sig ) )
-  signal_trees.append( signals[-1].Get("ljmet") )
-  signal_trees[-1].GetEntry(0)
-  loader.AddSignalTree( signal_trees[-1], 1 )
+  sFiles.append( TFile.Open( inputDir + sig ) )
+  sTree = sFiles[-1].Get("ljmet")
+  sTree.SetBranchStatus( "*", 0 )
+  for vName in config.branches:
+    sTree.SetBranchStatus( vName, 1 )
+  sTrees.append( sTree )
+  sTrees[-1].GetEntry(0)
+  loader.AddSignalTree( sTrees[-1], 1 )
 
 
 for bkg in config.bkg_training[ args.year ]:
-  backgrounds.append( TFile.Open( inputDir + bkg ) )
-  background_trees.append( backgrounds[-1].Get( "ljmet" ) )
-  background_trees[-1].GetEntry(0)
-  if background_trees[-1].GetEntries() != 0:
-    loader.AddBackgroundTree( background_trees[-1], 1 )
+  bFiles.append( TFile.Open( inputDir + bkg ) )
+  bTree = bFiles[-1].Get( "ljmet" )
+  bTree.SetBranchStatus( "*", 0 )
+  for vName in config.branches:
+    bTree.SetBranchStatus( vName, 1 )
+  bTrees.append( bTree )
+  bTrees[-1].GetEntry(0)
+  if bTree.GetEntries() != 0:
+    loader.AddBackgroundTree( bTrees[-1], 1 )
 
 
 # Set weights and cuts
 cutStr = config.base_cut
-cutStr += " && ( isTraining == 1 )"
+cutStr += " && ( isTraining == 2 || isTraining == 3 )"
 cutStr += " && ( NJetsCSV_JetSubCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( args.NBJETS, args.NJETS ) 
 cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet > {} ) && ( minDR_lepJet > {} )".format( args.AK4HT, args.MET, args.MT, args.MINDR )
-cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( args.LEPPT, args.LEPPT ) 
+cutStr += " && ( leptonPt_MultiLepCalc > {})".format( args.LEPPT ) 
 
 loader.SetSignalWeightExpression( "1" )
-loader.SetBackgroundWeightExpression( config.weightStr )
+#loader.SetBackgroundWeightExpression( config.weightStr )
+loader.SetBackgroundWeightExpression( "1" )
 
 cut = TCut( cutStr )
 
 # Prepare tree
 loader.PrepareTrainingAndTestTree( 
     cut, cut, 
-    "SplitMode=Random:NormMode=NumEvents:!V"
+    "SplitMode=Random:NormMode=NumEvents:!V:nTrain_Signal=10000:nTrain_Background=10000"
 )
 
 # Build model
+print( ">> Building Model" )
 model_name = "TTT_TMVA_model.h5"
 model = Sequential()
 model.add( Dense( num_vars,
                 input_dim = num_vars,
                 activation = "relu") )
 for _ in range( 2 ):
-    model.add( Dropout( 0.3 ) )
-    model.add( Dense( 50, activation = "relu" ) )
+    model.add( Dropout( 0.5 ) )
+    model.add( Dense( 32, activation = "relu" ) )
 model.add( Dense( 2, activation="sigmoid" ) )
 
 model.compile(
@@ -114,12 +123,13 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=5:BatchSize=512:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=15:BatchSize=128:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"
 
 # Train
+print( ">> Training model" )
 factory.TrainAllMethods()
 factory.TestAllMethods()
 factory.EvaluateAllMethods()

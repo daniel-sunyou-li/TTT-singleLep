@@ -35,7 +35,7 @@ year = jsonFile[ "year" ]
 
 files = [
   step2DirXRD[ year ] + "nominal/" + sig_training[ year ][0], # tttj
-  #step2DirXRD[ year ] + "nominal/" + sig_training[ year ][1], # tttw
+  step2DirXRD[ year ] + "nominal/" + sig_training[ year ][1], # tttw
   step2DirXRD[ year ] + "nominal/" + bkg_training[ year ][5], 
   #config.step2DirXRD[ year ] + "nominal/" + config.bkg_training[ year ][1]  # ttjj
 ]
@@ -54,7 +54,9 @@ for file in files:
     eventList.append( eventDict[variable] )
   events = np.array( eventList ).transpose()
   disc = model.predict( events )[:,0]
+  hist = np.histogram( disc, bins = np.linspace( 0, 1, 11 ) )
   print( "{}: {:.4f} pm {:.4f}".format( file.split("/")[-1], np.mean( disc ), np.std( disc ) ) )
   print( "  >> {} events".format( len( disc ) ) )
   print( "  >> Minimum: {}".format( min( disc ) ) )
   print( "  >> Maximum: {}".format( max( disc ) ) ) 
+  print( "  >> Bins: {}".format( hist[0] ) )

@@ -11,16 +11,16 @@ import config
 parser = ArgumentParser()
 parser.add_argument( "-p",   "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
 parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from: 16, 17, 18" )
-parser.add_argument( "-n",   "--seeds",       default = "500",       help = "The number of seeds to submit (only in submit mode)." )
+parser.add_argument( "-n",   "--seeds",       default = "200",       help = "The number of seeds to submit (only in submit mode)." )
 parser.add_argument( "-c",   "--correlation", default = "60",        help = "The correlation cutoff percentage." )
 parser.add_argument( "-l",   "--varlist",     default = "all",       help = "The variables to use when generating seeds." )
 parser.add_argument( "-nj",  "--NJETS",       default = "4",         help = "Number of jets to cut on" )
 parser.add_argument( "-nb",  "--NBJETS",      default = "2",         help = "Number of b jets to cut on" )
-parser.add_argument( "-ht",  "--AK4HT",       default = "500",       help = "AK4 Jet HT cut" )
-parser.add_argument( "-met", "--MET",         default = "60",        help = "MET cut" )
+parser.add_argument( "-ht",  "--AK4HT",       default = "350",       help = "AK4 Jet HT cut" )
+parser.add_argument( "-met", "--MET",         default = "20",        help = "MET cut" )
 parser.add_argument( "-lpt", "--LEPPT",       default = "20",        help = "Lepton PT cut" )
-parser.add_argument( "-mt",  "--MT",          default = "60",        help = "MT of lepton and MET" )
-parser.add_argument( "-dr",  "--MINDR",       default = "0.4",       help = "min DR between lepton and jet" )
+parser.add_argument( "-mt",  "--MT",          default = "0",        help = "MT of lepton and MET" )
+parser.add_argument( "-dr",  "--MINDR",       default = "0.2",       help = "min DR between lepton and jet" )
 parser.add_argument(         "--verbose",     action = "store_true", help = "Display detailed logs." )
 parser.add_argument(         "--resubmit",    action = "store_true", help = "Resubmit failed jobs from the specified folders." )
 parser.add_argument(         "--test",        action = "store_true", help = "Only submit one job to test submission mechanics." )
@@ -114,7 +114,7 @@ def submit_job(job):
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
-    "MEMORY": "8 GB",
+    "MEMORY": "2 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
     "SEEDVARS": seed_vars,
@@ -128,7 +128,7 @@ def submit_job(job):
     "MT": args.MT,
     "MINDR": args.MINDR,
   }
-  if args.resubmit: condorParams[ "MEMORY" ] = "12 GB" 
+  if args.resubmit: condorParams[ "MEMORY" ] = "4 GB" 
  
   with open( job.path, "w" ) as f:
     f.write(

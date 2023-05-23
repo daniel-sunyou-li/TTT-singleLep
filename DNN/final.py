@@ -79,14 +79,12 @@ for config_num, config_path in enumerate(config_order):
   # Load variables list
   with open(config_path.replace("optimized_params", "config"), "r") as f:
     config_json = load_json(f.read())
-    parameters["variables"] = config_json["variables"]
-    #parameters["patience"] = config_json["patience"][-1] if type(config_json["patience"]) == list else config_json["patience"]
-    parameters["patience"] = 5
-    #parameters["epochs"] = config_json["epochs"][-1] if type(config_json["epochs"]) == list else config_json["epochs"]
-    parameters["epochs"] = 50
+    parameters["variables"] = sorted( config_json["variables"] )
+    parameters["patience"] = 10
+    parameters["epochs"] = 1000
   print( ">> Using njets >= {} and nbjets >= {}".format( config_json[ "njets" ], config_json[ "nbjets" ] ) )
   
-  model_path = os.path.join(folder, "final_model_{}j_{}to{}.tf".format( config_json[ "njets" ], config_json[ "start_index" ], config_json[ "end_index" ] ) )
+  model_path = os.path.join(folder, "final_model_{}to{}.tf".format( config_json[ "start_index" ], config_json[ "end_index" ] ) )
   parts = 1
   if int( config_json["ak4ht"] ) >= 500: parts = 1
   elif int( config_json["ak4ht"] ) >= 400: parts = 2
@@ -139,10 +137,12 @@ for config_num, config_path in enumerate(config_order):
     "auc_train": model.auc_train,
     "auc_test_k": [ np.mean(model.auc_test), np.std(model.auc_test) ],
     "auc_train_k": [ np.mean(model.auc_train), np.std(model.auc_train) ],
-    "fpr_train": [",".join([str(x) for x in fpr]) for fpr in model.fpr_train],
-    "tpr_train": [",".join([str(x) for x in tpr]) for tpr in model.tpr_train],
-    "fpr_test": [",".join([str(x) for x in fpr]) for fpr in model.fpr_test],
-    "tpr_test": [",".join([str(x) for x in tpr]) for tpr in model.tpr_test]
+    "train_loss": model.loss_train[ model.best_fold ],
+    "train_validation": model.loss_validation[ model.best_fold ],
+    "fpr_train": [",".join(["{:.5f}".format(x) for x in fpr]) for fpr in model.fpr_train],
+    "tpr_train": [",".join(["{:.5f}".format(x) for x in tpr]) for tpr in model.tpr_train],
+    "fpr_test": [",".join(["{:.5f}".format(x) for x in fpr]) for fpr in model.fpr_test],
+    "tpr_test": [",".join(["{:.5f}".format(x) for x in tpr]) for tpr in model.tpr_test]
   }
 
   print( ">> Preserving best model file as {}".format( model_path ) )

@@ -54,12 +54,12 @@ def check_samples( inLoc, outLoc, shifts, year ):
       fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
     elif inLoc == "BRUX":
       status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step2DirBRUX[ year ].split( "//" )[-1], shift ) )
+      print( dirList )
       fStep2[ shift ] = [ item.name for item in dirList ]
 
     if outLoc == "LPC":
       try:
         eosDir = os.path.join( "/eos/uscms/", config.step3DirEOS[ year ].split( "///" )[1] )
-        print( os.path.join( eosDir, shift ) )
         fStep3[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
       except:
         fStep3[ shift ] = []
@@ -154,9 +154,9 @@ def check_model( folders ):
    
  
 def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params ):
-  request_memory = "10240" 
+  request_memory = "10000" 
   if "tttosemilepton" in fileName.lower() and "ttjj" in fileName.lower(): request_memory = "16384" 
-  if args.resubmit: request_memory = "16384"
+  if args.resubmit: request_memory = "10240"
   dict = {
     "MODEL"     : models,       
     "PARAMFILE" : params,
@@ -200,7 +200,7 @@ def submit_jobs( sFiles, shift, inputDir, outputDir, logDir, models, params ):
 def main():    
   print( "[START] Submitting step3 application jobs...")
   voms_init()
-  shifts = [ "nominal" ] if not args.shifts else [ "JECup", "JECdown", "JERup", "JERdown" ]
+  shifts = [ "nominal" ] 
   if args.shifts:
     shifts = []
     for nShift in config.shifts:

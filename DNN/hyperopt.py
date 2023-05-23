@@ -183,19 +183,19 @@ CONFIG = {
     "LMI",
     "QMI"
   ],
-    "epochs": 20,
-    "patience": 5,
+    "epochs": 100,
+    "patience": 10,
     "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
 
     "hidden_layers": [ 1, 2 ],
-    "initial_nodes": [ len(variables), len(variables) * 5 ],
+    "initial_nodes": [ 2, len(variables) ],
     "node_pattern": [ "static", "dynamic" ],
-    "batch_power": [ 7, 8, 9 ],
-    "learning_rate": [ 1e-5, 1e-4 ],
-    "regulator": [ "dropout", "none" ],
-    "activation_function": [ "softplus", "elu" ],
+    "batch_power": [ 4, 5, 6, 7 ],
+    "learning_rate": [ 1e-5, 1e-4, 1e-3 ],
+    "regulator": [ "dropout", "batch norm", "none" ],
+    "activation_function": [ "softplus", "elu", "relu" ],
 
-    "n_calls": 20,
+    "n_calls": 30,
     "n_starts": 15,
     "start_index": subDirName.split( "to" )[0],
     "end_index": subDirName.split( "to" )[1]
@@ -359,4 +359,3 @@ with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["t
 with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".json"), "w") as f:
   f.write(write_json(dict([(key, res_gp.x[val]) for key, val in opt_order.iteritems()]), indent=2))
 print( "[OK ] Finished optimization in: {}".format( datetime.now() - start_time ) )
-quit()

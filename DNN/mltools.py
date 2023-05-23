@@ -38,7 +38,7 @@ WEIGHT_VARIABLES = [
 ]
 
 base_cut =  "( %(DataPastTriggerX)s == 1 and %(MCPastTriggerX)s == 1 ) and " + \
-            "( %(isTraining)s == 2 )"
+            "( %(isTraining)s == 2 or %(isTraining)s == 3 )"
 
 ML_VARIABLES = [ x[0] for x in config.varList[ "DNN" ] ]
 VARIABLES = list( sorted( list( set( ML_VARIABLES ).union( set( CUT_VARIABLES ) ).union( set( WEIGHT_VARIABLES ) ) ) ) )
@@ -275,11 +275,12 @@ class HyperParameterModel(MLTrainingInstance):
       kernel_regularizer="l2",
       activation=self.parameters[ "activation_function" ]
     ) )
-    self.model.add( BatchNormalization() )
+    if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
+      self.model.add( Dropout( 0.5 ) )
     partition = int( self.parameters[ "initial_nodes" ] / self.parameters[ "hidden_layers" ] )
     for i in range( self.parameters[ "hidden_layers" ] ):
-      if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
-        self.model.add( Dropout( 0.3 ) )
+      if self.parameters[ "regulator" ] in [ "batch norm" ]:
+        self.model.add( BatchNormalization() )
       if self.parameters[ "node_pattern" ] == "dynamic":
         self.model.add( Dense(
           self.parameters[ "initial_nodes" ] - ( partition * i ),
@@ -294,7 +295,8 @@ class HyperParameterModel(MLTrainingInstance):
           kernel_regularizer = "l2",
           activation=self.parameters[ "activation_function" ]
         ) )
-      self.model.add( BatchNormalization() )
+      if self.parameters[ "regulator" ] in [ "dropout", "both" ]:
+        self.model.add( Dropout( 0.5 ) )
       # Final classification node
     self.model.add( Dense(
       1,
@@ -440,9 +442,9 @@ class CrossValidationModel( HyperParameterModel ):
             
       fold_data.append( {
         "train_x": self.select_ml_variables(
-          sig_train_k, bkg_train_k, self.parameters[ "variables" ] ),
+          sig_train_k, bkg_train_k, sorted( self.parameters[ "variables" ] ) ),
         "test_x": self.select_ml_variables(
-          sig_test_k, bkg_test_k, self.parameters[ "variables" ] ),
+          sig_test_k, bkg_test_k, sorted( self.parameters[ "variables" ] ) ),
 
         "train_y": np.concatenate( (
           np.full( np.shape( sig_train_k )[0], 1 ).astype( "bool" ),
@@ -457,6 +459,8 @@ class CrossValidationModel( HyperParameterModel ):
     self.model_paths = []
     self.mean_disc_res = []
     self.loss = []
+    self.loss_train = {}
+    self.loss_validation = {}
     self.accuracy = []
     self.fpr_train = []
     self.fpr_test = []
@@ -498,9 +502,11 @@ class CrossValidationModel( HyperParameterModel ):
         shuffle = True,
         verbose = 1,
         callbacks = [ early_stopping, model_checkpoint ],
-        validation_split = 0.25
+        validation_split = 0.33
       )
 
+      self.loss_train[k] = history.history[ "loss" ]
+      self.loss_validation[k] = history.history[ "val_loss" ] 
       model_ckp = load_model(model_name)
       loss, accuracy = model_ckp.evaluate(shuffled_test_x, shuffled_test_y, verbose=1)
          
