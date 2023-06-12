@@ -18,6 +18,17 @@ Install `scikit-optimize` (`skopt`) for hyper parameter optimization:
 
     pip install --user scikit-optimize  
 
+Setup the `CMSSW` environment
+
+    source /cvmfs/cms.cern.ch/cmsset_default.csh
+    setenv SCRAM_ARCH slc7_amd64_gcc700
+    cmsrel CMSSW_10_6_29
+    cd CMSSW_10_6_29/src/
+    git clone https://github.com/daniel-sunyou-li/TTT-singleLep.git
+    cd src/TTT-singleLep/DNN/
+    
+Depending on the step being run, set-up the `DNN` environment with the commands listed in `start.txt`.
+
 Edit `config.py` to define user and variable parameters. Make sure that the following are in agreement with your `step2` samples:
 * `postfix`
     
