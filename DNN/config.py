@@ -32,6 +32,37 @@ step2DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUs
 
 step3DirEOS = { year: "root://cmseos.fnal.gov///store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
+params = {
+  "WEIGHT XSEC": True, # weight MC samples by cross-section
+  "TRAIN TEST SPLIT": 0.20, # fraction of all events passing selection, used for validation test after training model
+  "VALIDATION SPLIT": 0.20, # fraction of remaining events after training-test split, used during each epoch for validation loss
+  "DROPOUT": 0.50, # dropout rate if dropout is used in DNN, default value is 0.50 per original paper by Hinton, et. al. (2012)
+  "HPO": { # hyper parameter optimization settings
+    "CALLS":    30,  # total number of hpo iterations
+    "STARTS":   20,  # number of randomly sampled hpo iterations
+    "EPOCHS":   100, # number of epochs to survey at each hpo iteration
+    "PATIENCE": 5,  # number of epochs before early stopping 
+    "OPT SPACE": { # add multiple values to list VALUE for HPO search, otherwise sets fixed value 
+      "HIDDEN LAYERS":          { "TYPE": "INTEGER",     "VALUE": [ 1, 3 ] },  # number of hidden layers
+      "HIDDEN NODES":           { "TYPE": "INTEGER",     "VALUE": [ 10, 40 ] }, # number of nodes per hidden layer
+      "BATCH POWER":            { "TYPE": "INTEGER",     "VALUE": [ 4, 7 ] },  # number of events in batch as 2^N
+      "LEARNING RATE":          { "TYPE": "CATEGORICAL", "VALUE": [ 0.0001, 0.0005, 0.001, 0.005 ] }, # learning rate step size for Adam optimizer
+      "TRAINING REGULATOR":     { "TYPE": "CATEGORICAL", "VALUE": [ "DROPOUT", "BATCH NORMALIZATION", "BOTH", "NONE" ] }, # training regulators
+      "ACTIVATION FUNCTION":    { "TYPE": "CATEGORICAL", "VALUE": [ "relu", "elu", "softplus" ] }, # non-linear activation function for hidden node output
+      "ACTIVATION REGULARIZER": { "TYPE": "CATEGORICAL", "VALUE": [ "NONE" ] }, # adds the activation output to loss function
+      "KERNEL INITIALIZER":     { "TYPE": "CATEGORICAL", "VALUE": [ "he_normal", "RandomNormal" ] }, # prior to sample initial node weights from
+      "KERNEL REGULARIZER":     { "TYPE": "CATEGORICAL", "VALUE": [ "l2", "NONE" ] }, # adds the node weight value to the loss function
+      "KERNEL CONSTRAINT":      { "TYPE": "CATEGORICAL", "VALUE": [ "maxnorm", "NONE" ] }, # constrains weights of hidden layer 
+      "BIAS REGULARIZER":       { "TYPE": "CATEGORICAL", "VALUE": [ "NONE" ] }, # adds the node bias value to the loss function
+    }
+  },
+  "KFCV": { # k-fold cross validation settings
+    "EPOCHS": 5000,
+    "PATIENCE": 20,
+    "SAVE AUC POINTS": 20,
+  }
+}
+
 # sample JES shifts
 shifts = {
   "JER": True,
@@ -56,8 +87,9 @@ shifts = {
 # signal sample to be used in training
 sig_training = { 
   year: [
-    "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
-    "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
+    #"TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
+    #"TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
+    "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root"
   ] for year in years
 }
 
@@ -84,21 +116,21 @@ bkg_training = {
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    "TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"  
+    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"  
   ] for year in years
 }
 
@@ -137,8 +169,8 @@ varList["DNN"] = [
   ("mass_lepBJet0", "M(l,b_{1}) [GeV]", 0, 1800, 101),
   ("mass_lepBJet_mindr", "M(l,b) with min[#DeltaR(l,b)] [GeV]", 0, 800, 51),
   ("secondJetPt", "p_{T}(j_{2}) [GeV]", 0, 2500, 101),
-  #("fifthJetPt", "p_{T}(j_{5}) [GeV]", 0, 400, 101), # poor data/MC 
-  #("sixthJetPt", "p_{T}(j_{6}) [GeV]", 0, 400, 51),  # poor data/MC
+  ("fifthJetPt", "p_{T}(j_{5}) [GeV]", 0, 400, 101), # poor data/MC 
+  ("sixthJetPt", "p_{T}(j_{6}) [GeV]", 0, 400, 51),  # poor data/MC
   #("PtFifthJet", "5^{th} jet p_{T} [GeV]", -1, 2000, 101), # poor data/MC
   ("mass_minLLdr", "M(j,j) with min[#DeltaR(j,j)], j #neq b [GeV]", 0, 600, 51),
   ("mass_maxBBmass", "max[M(b,b)] [GeV]", 0, 2000, 101),

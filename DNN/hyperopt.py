@@ -10,13 +10,14 @@ from skopt.utils import use_named_args
 from skopt import gp_minimize
 
 parser = ArgumentParser()
-parser.add_argument(      "dataset", help="The dataset folder to use variable importance results from.")
-parser.add_argument("-o", "--sort-order", default="significance", help="Which attribute to sort variables by. Choose from (significance, freq, sum, mean, rms, or specify a filepath).")
-parser.add_argument(      "--sort-increasing", action="store_true", help="Sort in increasing instead of decreasing order")
-parser.add_argument("-n", "--numvars", default="all", help="How many variables, from the top of the sorted order, to use.")
-parser.add_argument("-r", "--ratio", default = "-1", help="Ratio of background to signal training samples. Default = -1 to use all background" )
-parser.add_argument("-p", "--parameters", default=None, help="Specify a JSON folder with static and hyper parameters.")
-parser.add_argument("-t", "--tag", default="", help="Tag to add to the results directory name" )
+parser.add_argument(      "dataset", help = "The dataset folder to use variable importance results from.")
+parser.add_argument("-o", "--sort-order", default = "significance", help = "Which attribute to sort variables by. Choose from (significance, freq, sum, mean, rms, or specify a filepath).")
+parser.add_argument(      "--sort-increasing", action = "store_true", help = "Sort in increasing instead of decreasing order")
+parser.add_argument("-n", "--numvars", default = "all", help = "How many variables, from the top of the sorted order, to use.")
+parser.add_argument("-r", "--ratio", default = "1", help = "Ratio of background to signal training samples. Default = 1, -1 to use all background" )
+parser.add_argument("-t", "--tag", default = "", help = "Tag to add to the results directory name (i.e. DNN_[N1]to[N2]_[TAG]") 
+parser.add_argument("--override", action = "store_true", help = "Override existing ROOT file containing events for training" )
+parser.add_argument("--Run2", action = "store_true", help = "Run on the full Run 2 dataset for training" )
 args = parser.parse_args()
 
 sys.argv = []
@@ -38,24 +39,24 @@ if datafile_path == None:
   
 print( ">> Loading variable importance data from {}.".format( datafile_path ) )
 # Read the data file
-cut_variables = [ "AK4HT", "NJETS", "NBJETS", "MET", "LEPPT", "MT", "MINDR" ]
-cut = { variable: 0 for variable in cut_variables }
+selection = ""
 var_data = {}
-year = None
+years = []
 with open( datafile_path, "r" ) as f:
   # Scroll to variable entries
   line = f.readline()
   if "Year" in line: 
-    year = line.split(":")[-1][:-1] 
-    print( ">> Running year: {}".format( year ) )
+    years_ = line.split(":")[-1][:-1].split(",")
+    for year in years_:
+      years.append( year )
+    print( ">> Including years: {}".format( year ) )
   while not "Normalization" in line:
     line = f.readline()
+    if "Selection" in line:
+      selection = line.split(":")[-1][:-1]
+      print( ">> Event selection: {}".format( selection ) )
     if line == "":
       raise IOError( ">> End of File Reached, no data found." )
-    for variable in cut_variables:
-      if variable in line:
-        cut[ variable ] = line.split(":")[-1][:-1]
-        print( "{}: {}".format( variable, cut[ variable] ) )
   # Data reached.
   # Read headers
   headers = [ h.strip().rstrip().lower().replace(".", "") for h in f.readline().rstrip().split("/") ]
@@ -77,8 +78,6 @@ with open( datafile_path, "r" ) as f:
         var_data[h].append( float( content[i] ) if "." in content[i] else int( content[i] ) )
     line = f.readline().rstrip()
 
-
-    
 # Determine variable sort order
 var_order = []
 if os.path.exists(args.sort_order):
@@ -108,7 +107,7 @@ else:
 # Determine the variables to use
 variables = None
 subDirName = None
-if args.numvars == "all":
+if args.numvars == "ALL":
   variables = var_order
   subDirName = "1to{}".format( len(variables) )
 else:
@@ -125,57 +124,55 @@ print( ">> Creating hyper parameter optimization sub-directory: {}".format( args
 os.system( "mkdir ./{}/".format( os.path.join( args.dataset, subDirName ) ) ) 
 print( ">> Variables used in optimization:\n - {}".format( "\n - ".join( variables ) ) )
 
-tree_folder = config.step2DirXRD[ year ] + "nominal/"
-signal_files = [ os.path.join( tree_folder, sig ) for sig in ( config.sig_training[ year ] ) ]
-background_files = [ os.path.join( tree_folder, bkg ) for bkg in ( config.bkg_training[ year ] ) ]
+signal_files = []
+background_files = []
+if args.Run2: years = [ "16APV", "16", "17", "18" ]
+for year in years:
+  tree_folder = config.step2DirXRD[ year ] + "nominal/"
+  for sig_ in config.sig_training[ year ]:
+    signal_files.append( os.path.join( tree_folder, sig_ ) )
+  for bkg_ in config.bkg_training[ year ]:
+    if year == "18" and "TTTT" in bkg_: bkg_ = bkg_.replace( "_hadd", "_1_hadd" )
+    background_files.append( os.path.join( tree_folder, bkg_ ) )
 
 # Calculate re-weighted significance
 LMS, QMS = reweight_importances( 
-  year, variables, [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], 
-  cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut["MET"], cut["MT"], cut["MINDR"]
+  year, variables, [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ], selection
 )
 LMI, QMI = reweight_importances( 
-  year, variables, [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ], 
-  cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut["MET"], cut["MT"], cut["MINDR"] 
+  year, variables, [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ], selection
 )
 LSI = sum( [ var_data[ "mean" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
 LSS = sum( [ var_data[ "significance" ][ var_data[ "variable name" ].index(v) ] for v in variables ] )
 
-print( ">> Cumulative Importance Metrics:" )
-print( "   o LSI: {:.4f}".format( LSI ) )
-print( "   o LMI: {:.4f}".format( sum(LMI) ) )
-print( "   o QMI: {:.4f}".format( sum(QMI) ) )
-print( "   o LSS: {:.4f}".format( LSS ) )
-print( "   o LMS: {:.4f}".format( sum(LMS) ) )
-print( "   o QMS: {:.4f}".format( sum(QMS) ) )
+print( "[INFO] Cumulative Importance Metrics:" )
+print( "  + LSI: {:.4f}".format( LSI ) )
+print( "  + LMI: {:.4f}".format( sum(LMI) ) )
+print( "  + QMI: {:.4f}".format( sum(QMI) ) )
+print( "  + LSS: {:.4f}".format( LSS ) )
+print( "  + LMS: {:.4f}".format( sum(LMS) ) )
+print( "  + QMS: {:.4f}".format( sum(QMS) ) )
 
-# Determine static and hyper parameter
+# Set static parameters and hyper parameter ranges
 timestamp = datetime.now()
 CONFIG = {
-  "static": [
-    "year",
-    "background",
-    "ratio",
-    "static",
-    "epochs",
-    "patience",
-    "model_name",
-    "tag",
-    "log_file",
-    "n_calls",
-    "n_starts",
-    "njets",
-    "nbjets",
-    "ak4ht",
-    "mindr",
-    "met",
-    "mt",
-    "leppt",
-    "weight_string",
-    "cut_string",
-    "start_index",
-    "end_index",
-    "variables",
+  "STATIC": [
+    "YEAR",
+    "BACKGROUND FILES",
+    "SIGNAL FILES",
+    "RATIO",
+    "EPOCHS",
+    "PATIENCE",
+    "MODEL NAME",
+    "TAG",
+    "LOG FILE",
+    "HPO CALLS",
+    "HPO STARTS",
+    "EVENT WEIGHT",
+    "EVENT CUT",
+    "START INDEX",
+    "END INDEX",
+    "VARIABLES",
     "LMS",
     "QMS",
     "LSI",
@@ -183,91 +180,65 @@ CONFIG = {
     "LMI",
     "QMI"
   ],
-    "epochs": 100,
-    "patience": 10,
-    "model_name": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
-
-    "hidden_layers": [ 1, 2 ],
-    "initial_nodes": [ 2, len(variables) ],
-    "node_pattern": [ "static", "dynamic" ],
-    "batch_power": [ 4, 5, 6, 7 ],
-    "learning_rate": [ 1e-5, 1e-4, 1e-3 ],
-    "regulator": [ "dropout", "batch norm", "none" ],
-    "activation_function": [ "softplus", "elu", "relu" ],
-
-    "n_calls": 30,
-    "n_starts": 15,
-    "start_index": subDirName.split( "to" )[0],
-    "end_index": subDirName.split( "to" )[1]
+    "EPOCHS": config.params[ "HPO" ][ "EPOCHS" ],
+    "PATIENCE": config.params[ "HPO" ][ "PATIENCE" ],
+    "MODEL NAME": os.path.join( args.dataset, subDirName, "hpo_model.h5" ),
+    "HPO CALLS": config.params[ "HPO" ][ "CALLS" ],
+    "HPO STARTS": config.params[ "HPO" ][ "STARTS" ],
+    "START INDEX": subDirName.split( "to" )[0],
+    "END INDEX": subDirName.split( "to" )[1].split( "_" )[0]
 }
 
-# Update parameters given file
-if args.parameters != None and os.path.exists(args.parameters):
-  print(">> Loading updated parameters from {}.".format(args.parameters))
-  with open(args.parameters, "r") as f:
-    u_params = load_json(f.read())
-    CONFIG.update(u_params)
-    
 tag = "{}to{}".format( subDirName.split( "to" )[0], subDirName.split( "to" )[1] )
 CONFIG.update({
-  "year":year,
-  "background": background_files, 
-  "ratio": args.ratio,
-  "tag": tag,
-  "log_file": os.path.join(args.dataset, subDirName, "hpo_log_" + tag + ".txt"),
-  "weight_string": config.weightStr,
-  "variables": variables,
+  "YEAR":",".join(years),
+  "BACKGROUND FILES": background_files, 
+  "SIGNAL FILES": signal_files,
+  "RATIO": args.ratio,
+  "TAG": tag,
+  "LOG FILE": os.path.join(args.dataset, subDirName, "hpo_log_" + tag + ".txt"),
+  "EVENT WEIGHT": config.weightStr,
+  "VARIABLES": variables,
   "LMS": sum(LMS),
   "QMS": sum(QMS),
   "LMI": sum(LMI),
   "QMI": sum(QMI),
   "LSI": LSI,
   "LSS": LSS,
-  "njets": cut["NJETS"],
-  "nbjets": cut["NBJETS"],
-  "ak4ht": cut["AK4HT"],
-  "met": cut["MET"],
-  "leppt": cut["LEPPT"],
-  "mt": cut["MT"],
-  "mindr": cut["MINDR"],
+  "EVENT CUT": selection
 } )
 
 # Save used parameters to file
-config_file = os.path.join( args.dataset, subDirName, "config_" + CONFIG["tag"] + ".json" )
+config_file = os.path.join( args.dataset, subDirName, "config_" + CONFIG["TAG"] + ".json" )
 with open( config_file, "w" ) as f:
   f.write( write_json( CONFIG, indent=2 ) )
-print( "[OK ] Parameters saved to dataset folder." )
+print( "[OK] Configuration file saved." )
 
 # Start the logfile
-logfile = open( CONFIG["log_file"], "w" )
-logfile.write("{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n".format(
-      "Hidden",
-      "Nodes",
-      "Rate",
-      "Batch",
-      "Pattern",
-      "Regulator",
-      "Activation",
-      "AUC"
-    )
-  )
+logfile = open( CONFIG["LOG FILE"], "w" )
+headers = " ".join( [ param_ for param_ in config.params[ "HPO" ][ "OPT SPACE" ] ] )
+logfile.write( headers + " AUC\n" )
 
 # Determine optimization space
-opt_space = []
-opt_order = {}
+opt_space = [] # hyper parameter ranges input for scikit-optimize
+opt_order = {} # bookkeeping for order in which the hyper parameters are input, necessary to retrieve optimized value from X
 i = 0
-for param, value in CONFIG.iteritems():
-  if param not in CONFIG["static"]:
-    print(param,value)
-    if type(value[0]) == str:
-      opt_space.append( Categorical(value, name=param) )
-    elif param == "learning_rate":
-      opt_space.append( Categorical(value, name=param) )
-    else:
-      opt_space.append( Integer(*value, name=param) )
-    opt_order[param] = i
+for param in config.params[ "HPO" ][ "OPT SPACE" ]:
+  if len( config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ] ) < 2: continue
+  if param not in CONFIG[ "STATIC" ]:
+    opt_order[ param ] = i
     i += 1
-
+  if config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "TYPE" ] == "CATEGORICAL":
+    opt_space.append( Categorical( config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ], name = param ) )
+  elif config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "TYPE" ] == "INTEGER":
+    opt_space.append( Integer( *config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ], name = param ) )
+  elif config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "TYPE" ] == "REAL LINEAR":
+    opt_space.append( Real( *config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ], name = param ) )
+  elif config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "TYPE" ] == "REAL LOG":
+    opt_space.append( Real( *config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ], name = param, prior = "log-uniform", base = 10 ) )
+  else:
+    quit( "[ERR] Invalid hyper parameter optimization category '{}' for parameter '{}'. Options are: CATEGORICAL, INTEGER, REAL LINEAR, REAL LOG.".format( config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "TYPE" ], param ) )
+    
 # Objective function
 
 # Persist cut events to speed up process
@@ -278,84 +249,72 @@ def objective(**X):
   global cut_events
     
   print(">> Configuration:\n{}\n".format(X))
-  if not "variables" in X: X["variables"] = CONFIG["variables"]
-  if not "patience" in X: X["patience"] = CONFIG["patience"]
-  if not "epochs" in X: X["epochs"] = CONFIG["epochs"]
+  for param in config.params[ "HPO" ][ "OPT SPACE" ]:
+    if len( config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ] ) == 1:
+      X[param] = config.params[ "HPO" ][ "OPT SPACE" ][ param ][ "VALUE" ][0]
+  if not "VARIABLES" in X: X["VARIABLES"] = CONFIG["VARIABLES"]
+  if not "PATIENCE" in X: X["PATIENCE"] = CONFIG["PATIENCE"]
+  if not "EPOCHS" in X: X["EPOCHS"] = CONFIG["EPOCHS"]
   model = mltools.HyperParameterModel(
     X, 
-    signal_files, background_files, float(args.ratio),
-    cut["NJETS"], cut["NBJETS"], cut["AK4HT"], cut["LEPPT"], cut[ "MET" ], cut[ "MT" ], cut[ "MINDR" ],
-    CONFIG["model_name"]
+    signal_files, background_files, var_order, 
+    float(args.ratio), selection, CONFIG["MODEL NAME"],
   )
-  save_paths = []
-  parts = 1
-  if int( cut["AK4HT"] ) >= 500: parts = 1
-  elif int( cut["AK4HT"] ) >= 400: parts = 2
-  elif int( cut["AK4HT"] ) >= 300: parts = 3
-  else: parts = 4
 
-  for i in range( parts ):
-    save_paths.append( os.path.join( os.getcwd(), "TTT_DNN_nJ{}_nB{}_HT{}_{}_{}.pkl".format( cut["NJETS"], cut["NBJETS"], cut["AK4HT"], year, i + 1 ) ) )
-
+  save_path = os.path.join( args.dataset, "events.root" )
   if cut_events is None:
-    if not os.path.exists(save_paths[0]):
-      print( ">> Generating saved cut event .pkl file." )
-      print( "   >> Applying Cuts..." )
+    if not os.path.exists(save_path):
+      print( "[START] Formatting events passing filter into ROOT file." )
       model.apply_cut()
-      print( "   >> Saving Events to .pkl" )
-      model.save_cut_events( save_paths )
+      model.save_cut_events( save_path, weighted = config.params[ "WEIGHT XSEC" ] )
+      print( "[DONE]" )
+      model.load_cut_events( save_path, weighted = config.params[ "WEIGHT XSEC" ], override = False )
     else:
-      print( ">> Loading saved cut event .pkl files." )
-      model.load_cut_events( save_paths )
+      print( "[START] Loading events from ROOT file {}/events.root".format( args.dataset ) )
+      model.load_cut_events( save_path, weighted = config.params[ "WEIGHT XSEC" ], override = args.override )
+      print( "[DONE]" )
     cut_events = model.cut_events.copy()
   else:
     model.cut_events = cut_events.copy()
     
   model.build_model()
-  model.train_model()
+  model.train_model( variables )
     
-  print( ">> Obtained ROC-Integral value: {}".format(model.auc_test))
-  logfile.write('{:7}, {:7}, {:7}, {:7}, {:9}, {:14}, {:10}, {:7}\n'.format(
-    str(X["hidden_layers"]),
-    str(X["initial_nodes"]),
-    str(X["learning_rate"]),
-    str(2**X["batch_power"]),
-    str(X["node_pattern"]),
-    str(X["regulator"]),
-    str(X["activation_function"]),
-    str(round(model.auc_test, 5))
-    )
-  )
-  opt_metric = log(1 - model.auc_test)
-  print( ">> Metric: {:.4f}".format( opt_metric ) )
+  print( "[INFO] Obtained validation AUC score: {:.4f}".format( model.auc_test ) )
+  row = " ".join( [ "{:<" + str( len( param_ ) ) + "}" for param_ in config.params[ "HPO" ][ "OPT SPACE" ] if len( config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ] ) > 1 ] )
+  logfile.write( row.format( *[ X[param_] for param_ in config.params[ "HPO" ][ "OPT SPACE" ] ] ) + " {}\n".format( round( model.auc_test, 4 ) ) )
+
+  opt_metric = log( 1. - model.auc_test)
+  print( "  + Optimization Metric: log( 1 - AUC ) = {:.4f}".format( opt_metric ) )
   return opt_metric
 
 # Perform the optimization
 start_time = datetime.now()
 
 res_gp = gp_minimize(
-            func = objective,
-            dimensions = opt_space,
-            n_calls = CONFIG["n_calls"],
-            n_random_starts = CONFIG["n_starts"],
-            verbose = True
-            )
+  func = objective,
+  dimensions = opt_space,
+  n_calls = CONFIG["HPO CALLS"],
+  n_random_starts = CONFIG["HPO STARTS"],
+  verbose = True
+)
 
 logfile.close()
 
 # Report results
-print(">> Writing optimized parameter log to: optimized_params_" + CONFIG["tag"] + ".txt and .json")
-with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".txt"), "w") as f:
-  f.write("TTT DNN Hyper Parameter Optimization Parameters \n")
-  f.write("Static and Parameter Space stored in: {}\n".format(config_file))
-  f.write("Optimized Parameters:\n")
-  f.write("    Hidden Layers: {}\n".format(res_gp.x[opt_order["hidden_layers"]]))
-  f.write("    Initial Nodes: {}\n".format(res_gp.x[opt_order["initial_nodes"]]))
-  f.write("    Batch Power: {}\n".format(res_gp.x[opt_order["batch_power"]]))
-  f.write("    Learning Rate: {}\n".format(res_gp.x[opt_order["learning_rate"]]))
-  f.write("    Node Pattern: {}\n".format(res_gp.x[opt_order["node_pattern"]]))
-  f.write("    Regulator: {}\n".format(res_gp.x[opt_order["regulator"]]))
-  f.write("    Activation Function: {}\n".format(res_gp.x[opt_order["activation_function"]]))
-with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["tag"] + ".json"), "w") as f:
-  f.write(write_json(dict([(key, res_gp.x[val]) for key, val in opt_order.iteritems()]), indent=2))
-print( "[OK ] Finished optimization in: {}".format( datetime.now() - start_time ) )
+print(">> Writing optimized parameter log to: optimized_params_" + CONFIG["TAG"] + ".txt and .json")
+with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["TAG"] + ".txt"), "w") as f:
+  f.write("CONFIG FILE: {}\n".format( config_file ) )
+  f.write("HPO:\n")
+  for param_ in config.params[ "HPO" ][ "OPT SPACE" ]:
+    if len( config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ] ) > 1:
+      f.write( "{}:{}\n".format( param_, res_gp.x[opt_order[param_]] ) )
+    else:
+      f.write( "{}:{}\n".format( param_, config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ][0] ) )
+with open( os.path.join( args.dataset, subDirName, "optimized_params_" + CONFIG["TAG"] + ".json"), "w") as f:
+  json_dict = dict( [ ( key, res_gp.x[val] ) for key, val in opt_order.iteritems() ] )
+  for param_ in config.params[ "HPO" ][ "OPT SPACE" ]:
+    if len( config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ] ) == 1:
+      json_dict.update( { param_: config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ][0] } )
+  f.write( write_json( json_dict, indent = 2 ) )
+print( "[DONE] Finished hyper parameter optimization in: {}".format( datetime.now() - start_time ) )
