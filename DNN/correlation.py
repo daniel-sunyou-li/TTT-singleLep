@@ -10,16 +10,11 @@ import config
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
-  # Returns the correlation matrix of the given variables
-  # Get signal and background paths
-  tttw_path =   os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
-  tttj_path =   os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][1] )
-  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
-
+# Returns the correlation matrix of the given variables
+def get_correlation_matrix( year, variables, selection ):
   # Create ROOT.TMVA object
   loader = TMVA.DataLoader("tmva_data")
-
+ 
   # Load used variables
   for var in variables:
     try:
@@ -28,19 +23,20 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
     except ValueError:
       print( "[WARN] The variable {} was not found. Omitting.".format(var) )
 
-  # Open ROOT files
-  print( tttw_path )
-  tttw_f = TFile.Open( tttw_path )
-  tttw = tttw_f.Get( "ljmet" )
-  tttj_f = TFile.Open( tttj_path )
-  tttj = tttj_f.Get( "ljmet" )
-  bkgrnd_f = TFile.Open( bkgrnd_path )
-  bkgrnd = bkgrnd_f.Get( "ljmet" )
-
   # Load signal and background
-  loader.AddSignalTree(tttw)
-  loader.AddSignalTree(tttj)
-  loader.AddBackgroundTree(bkgrnd)
+  rFile = {} 
+  rTree = {}
+  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
+  rFile["BKG"] = TFile.Open( bkgrnd_path )
+  rTree["BKG"] = rFile["BKG"].Get( "ljmet" )
+  loader.AddBackgroundTree( rTree["BKG"] )
+  
+  for signal in config.sig_training[ str(year) ]:
+    signal_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", signal )
+    rFile[signal] = TFile.Open( signal_path )
+    rTree[signal] = rFile[signal].Get( "ljmet" )
+    loader.AddSignalTree( rTree[signal] )
+
 
   # Set weights
   weight_string = config.weightStr
@@ -48,13 +44,7 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
   loader.SetBackgroundWeightExpression( weight_string )
 
   # Set cuts
-  cutStr = config.base_cut
-  cutStr += " && ( NJetsCSV_JetSubCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( nbjets, njets ) 
-  cutStr += " && ( minDR_lepJet > {} )".format( minDR )
-  cutStr += " && ( AK4HT >= {} ) && ( MT_lepMet > {} ) && ( corr_met_MultiLepCalc > {} ) ".format( ak4ht, mt, met )
-  cutStr += " && ( ( leptonPt_MultiLepCalc > {} && isElectron ) ||".format( lepPt )
-  cutStr += " ( leptonPt_MultiLepCalc > {} && isMuon ) )".format( lepPt )
-  cut_string = TCut( cutStr )
+  cut_string = TCut( selection )
   loader.PrepareTrainingAndTestTree(
     cut_string, cut_string,
     "nTrain_Signal=0:nTrain_Background=0:SplitMode=Random:NormMode=NumEvents:!V:VerboseLevel=Info"
@@ -75,11 +65,11 @@ def get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt
     
   return sig_corr
 
-def reweight_importances( year, variables, importances, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
+def reweight_importances( year, variables, importances, selection ):
   # Re-weight the variable importances
   for i, importance in enumerate( importances ):
     if importance < 0: importances[i] = 0 
-  corr_mat = abs( get_correlation_matrix( year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR) / 100.0 )
+  corr_mat = abs( get_correlation_matrix( year, variables, selection ) / 100.0 )
   mod_corr_mat = np.zeros( ( len( corr_mat ), len( corr_mat ) ) )
   for i in range(len(corr_mat)):
     for j in range(len(corr_mat)):
@@ -106,8 +96,6 @@ def reweight_importances( year, variables, importances, njets, nbjets, ak4ht, le
   for i in range( len( weightQSig ) ):
     if weightQSig[i] < 0: weightQSig[i] = 0
   
-#  print("Weighted Quadratic Sum: {}".format(np.sum(np.sqrt(weightQSig))))
-#  print("Weighted Linear Sum: {}".format(np.sum(weightLSig)))
   return weightLSig, np.sqrt(weightQSig)
 
 def get_correlated_groups(corr_mat, variables, cutoff):

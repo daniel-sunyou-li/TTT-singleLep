@@ -30,21 +30,19 @@ def setup( modelNames, jsonNames ):
     varlist = []
     indexlist = []
     taglist = []
-    jetlist = []
     # load in the json parameter files and get the variables used and the jet cut
-    for jsonName in sorted(jsonNames):
+    for jsonName in sorted( jsonNames ):
         jsonFile = ( load_json( open( jsonName ).read() ) ) 
-        varlist.append( list( jsonFile[ "variables" ] ) )
-        indexlist.append( [ jsonFile[ "start_index" ], jsonFile[ "end_index" ] ] )
-        taglist.append( jsonFile[ "tag" ] )
-        jetlist.append( jsonFile[ "njets"] )
-        print( ">> Using parameters file: {} with {} variables and {} jets".format( jsonName, len( jsonFile[ "variables" ] ), jsonFile[ "njets" ] ) )
+        varlist.append( sorted( jsonFile[ "VARIABLES" ] ) )
+        indexlist.append( [ jsonFile[ "START INDEX" ], jsonFile[ "END INDEX" ] ] )
+        taglist.append( jsonFile[ "TAG" ] )
+        print( ">> Using parameters file: {} with {} variables".format( jsonName, len( jsonFile[ "VARIABLES" ] ) ) )
     # load in the keras DNN models
     for modelName in sorted( modelNames ):
         print( ">> Testing model: {}".format( modelName ) )
         models.append( tf.keras.models.load_model( modelName ) )
 
-    return models, varlist, jetlist, indexlist, taglist
+    return models, varlist, indexlist, taglist
 
 
 def get_predictions( models, varlist, fName, tName = "ljmet" ):
@@ -71,7 +69,7 @@ def get_predictions( models, varlist, fName, tName = "ljmet" ):
     return discs 
         
 
-def fill_tree( fileName, modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree ): 
+def fill_tree( fileName, modelNames, varlist, indexlist, disclist, taglist, rootTree ): 
     out = TFile( fileName.split( "/" )[-1], "RECREATE" );
     out.cd()
     newTree = rootTree.CloneTree(0);
@@ -96,12 +94,22 @@ def fill_tree( fileName, modelNames, jetlist, varlist, indexlist, disclist, tagl
 
 def main():
     print( "[START] Running the step3 production..." )
-    models, varlist, jetlist, indexlist, taglist = setup( modelNames, jsonNames )
-    rootFile = TFile.Open( args.file );
-    rootTree = rootFile.Get( "ljmet" ); 
+    models, varlist, indexlist, taglist = setup( modelNames, jsonNames )
+    rootFile = TFile.Open( args.file )
+    rootTree = rootFile.Get( "ljmet" ) 
+    rootTree.SetBranchStatus( "*", 0 )
+    branches = []
+    for varlist_ in varlist:
+      for bName in varlist_:
+        if bName not in branches: branches.append( str(bName) )
+    for bName in config.branches:
+      if bName not in branches: branches.append( str(bName) )
+    for branch in branches: 
+      print( "[INFO] Including branch: {}".format( branch ) ) 
+      rootTree.SetBranchStatus( branch, 1 )
     print( ">> Creating step3 for sample: {}".format( args.file ) )
     disclist = get_predictions( models, varlist, args.file, "ljmet" )
-    fill_tree( args.file, modelNames, jetlist, varlist, indexlist, disclist, taglist, rootTree )
+    fill_tree( args.file, modelNames, varlist, indexlist, disclist, taglist, rootTree )
     print( "[DONE] Finished adding {} DNN discriminator branches to {}".format( len( disclist ), args.file ) )
 
 main()
