@@ -31,16 +31,13 @@ elif args.region == "ABCDNN":
 else:
   quit( "[ERR] Invalid region argument used. Quitting." )
 
-categories = list(
+categories_bin = list(
   itertools.product(
-    bins[ "LEPTON" ],
-    bins[ "NHOT" ],
-    bins[ "NT" ],
-    bins[ "NW" ],
-    bins[ "NB" ],
-    bins[ "NJ" ]
+    *[ bins[ key_ ] for key_ in sorted( bins.keys() ) ]
   )
 )
+
+categories_key = [ key_ for key_ in sorted( bins.keys() ) ]
 	
 subDir = "{}_UL{}_{}".format( config.region_prefix[ args.region ], args.year, args.postfix )
 outputPath = os.path.join( os.getcwd(), subDir )
@@ -49,18 +46,20 @@ if not os.path.exists( outputPath ): os.system( "mkdir -vp {}".format( outputPat
 nJobs = 0
 for variable in args.variables:
   print( ">> Generating templates for {}".format( variable ) )
-  for category in categories:
-    categoryTag = "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( 
-      category[0],
-      category[1],
-      category[2],
-      category[3],
-      category[4],
-      category[5]
-    )
-    if ( int(category[1][0]) + int(category[2][0]) + int(category[3][0]) + int(category[4][0]) ) > int(category[5][0]):
-      print( "[WARN] {} is not topologically possible, skipping...".format( categoryTag ) )
-      continue
+
+  for category in categories_bin:
+    categoryTag = "is{}".format( category[ categories_key.index("LEPTON") ] )
+    for key_ in categories_key:
+      if key_ == "LEPTON": continue
+      categoryTag += key_ + category[ categories_key.index(key_) ]
+    skip = False
+    if "NJ" in categories_key:
+      jet_max = int( category[ categories_key.index("NJ") ].strip("p").strip("m").split("b")[-1] )
+      jet_sum = 0
+      for nj_ in [ "NH", "NT", "NW", "NB" ]:
+        if nj_ in categories_key:
+          jet_sum += int( category[ categories_key.index(nj_) ].strip("p").strip("m").split("b")[-1] )
+      if jet_sum > jet_max: skip = True
       
     if not os.path.exists( os.path.join( outputPath, categoryTag ) ): os.system( "mkdir -vp {}".format( os.path.join( outputPath, categoryTag ) ) )
     os.chdir( os.path.join( outputPath, categoryTag ) )
@@ -68,12 +67,7 @@ for variable in args.variables:
     jobParams = {
       "VARIABLE": variable,
       "YEAR": args.year,
-      "LEPTON": category[0],
-      "NHOT":  category[1],
-      "NT": category[2],
-      "NW": category[3],
-      "NB": category[4],
-      "NJ": category[5],
+      "CATEGORY": categoryTag,
       "EXEDIR": thisDir,
       "SUBDIR": subDir,
       "POSTFIX": args.postfix
@@ -91,7 +85,7 @@ Error = condor_step1_%(VARIABLE)s.err
 Log = condor_step1_%(VARIABLE)s.log
 JobBatchName = SLA_step1_%(YEAR)s_%(VARIABLE)s_%(POSTFIX)s
 Notification = Error
-Arguments = %(VARIABLE)s %(YEAR)s %(LEPTON)s %(NHOT)s %(NT)s %(NW)s %(NB)s %(NJ)s %(EXEDIR)s %(SUBDIR)s
+Arguments = %(VARIABLE)s %(YEAR)s %(CATEGORY)s %(EXEDIR)s %(SUBDIR)s
 Queue 1"""%jobParams
     )
     jdf.close()

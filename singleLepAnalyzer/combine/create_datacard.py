@@ -6,7 +6,7 @@ import itertools
 import ROOT
 from argparse import ArgumentParser
 sys.path.append( ".." )
-from utils import hist_parse
+from utils import hist_parse, abcdnn_tag
 import config
 
 parser = ArgumentParser()
@@ -97,15 +97,19 @@ class DataCard():
     self.categories[ "ABCDNN" ] = [ category for category in self.categories[ "ALL" ] if hist_parse( category, self.samples )[ "ABCDNN" ] ]
     categories_exclude = list( 
       itertools.product( 
-        config.hist_bins[ "EXCLUDE" ][ "LEPTON" ],
-        config.hist_bins[ "EXCLUDE" ][ "NHOT" ],
-        config.hist_bins[ "EXCLUDE" ][ "NT" ],
-        config.hist_bins[ "EXCLUDE" ][ "NW" ],
-        config.hist_bins[ "EXCLUDE" ][ "NB" ],
-        config.hist_bins[ "EXCLUDE" ][ "NJ" ]
+        *[ config.hist_bins[ "EXCLUDE" ][var_] for var_ in sorted( config.hist_bins[ "EXCLUDE" ] ) ]
       )
     )
-    self.categories[ "EXCLUDE" ] = [ "is{}nHOT{}nT{}nW{}nB{}nJ{}".format( category[0], category[1], category[2], category[3], category[4], category[5] ) for category in categories_exclude ]
+    self.categories[ "EXCLUDE" ] = []
+    for category in categories_exclude:
+      cat_str = ""
+      for i, var_ in enumerate( sorted( config.hist_bins[ "EXCLUDE" ] ) ):
+        if var_ == "LEPTON":
+          cat_str += "is" + category[i]
+        else:
+          cat_str += var_ + category[i]
+      self.categories[ "EXCLUDE" ].append( cat_str )
+    print( self.categories[ "EXCLUDE" ] )
     self.categories[ "SF" ] = self.categories[ "ALL" ]
     print( "All {} categories: {}".format( len( self.categories[ "ALL" ] ), self.categories[ "ALL" ] ) )
     print( "ABCDnn categories: {}".format( self.categories[ "ABCDNN" ] ) )
@@ -147,7 +151,7 @@ class DataCard():
         else:
           self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "BKG":
-        if templateFile.Get( hist_name ).Integral() < 1e-5: 
+        if templateFile.Get( hist_name ).Integral() < 1: 
           print( "[WARN] {} is beneath yield threshold, excluding...".format( hist_name )  )
           exclude_count += 1
           continue
@@ -339,70 +343,70 @@ class DataCard():
 
     hot_backgrounds = [ background for background in self.backgrounds if background not in [ "QCD", "EWK" ] ]
     hot_minor_backgrounds = [ background for background in self.minor_backgrounds if background not in [ "QCD", "EWK" ] ]
-    if config.systematics[ "MC" ][ "hotstat" ] and useHOT:
+    if config.systematics[ "MC" ][ "hotstat" ][0] and useHOT:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "hotstat" ][2]
       #if args.year not in [ "16" ]: self.add_shape( "HOTSTAT", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTSTAT", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTSTAT", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "HOTSTAT", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
-    if config.systematics[ "MC" ][ "hotclosure" ] and useHOT:
+    if config.systematics[ "MC" ][ "hotclosure" ][0] and useHOT:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "hotclosure" ][2]
       #if args.year not in [ "16" ]: self.add_shape( "HOTCLOSURE", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTCLOSURE", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTCLOSURE", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "HOTCLOSURE", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
-    if config.systematics[ "MC" ][ "hotcspur" ] and useHOT:
+    if config.systematics[ "MC" ][ "hotcspur" ][0] and useHOT:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "hotcspur" ][2]
       #if args.year not in [ "16" ]: self.add_shape( "HOTCSPUR", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTCSPUR", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HOTCSPUR", hot_backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "HOTCSPUR", hot_minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
-    if config.systematics[ "MC" ][ "HF" ] and useCSV:
+    if config.systematics[ "MC" ][ "HF" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "HF" ][2]
       self.add_shape( "HF", self.signals, self.categories[ "ALL" ], bSmooth, False )
       self.add_shape( "HF", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
       if self.abcdnn: self.add_shape( "HF", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
     
-    if config.systematics[ "MC" ][ "LF" ] and useCSV:
+    if config.systematics[ "MC" ][ "LF" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "LF" ][2]
       self.add_shape( "LF", self.signals, self.categories[ "ALL" ], bSmooth, False )
       self.add_shape( "LF", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
       if self.abcdnn: self.add_shape( "LF", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
          
-    if config.systematics[ "MC" ][ "hfstats1" ] and useCSV:
+    if config.systematics[ "MC" ][ "hfstats1" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "hfstats1" ][2]
       self.add_shape( "HFSTATS1", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HFSTATS1", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "HFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
-    if config.systematics[ "MC" ][ "hfstats2" ] and useCSV:
+    if config.systematics[ "MC" ][ "hfstats2" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "hfstats2" ][2]
       self.add_shape( "HFSTATS2", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "HFSTATS2", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "HFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
 
-    if config.systematics[ "MC" ][ "lfstats1" ] and useCSV:
+    if config.systematics[ "MC" ][ "lfstats1" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "lfstats1" ][2]
       self.add_shape( "LFSTATS1", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "LFSTATS1", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "LFSTATS1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
-    if config.systematics[ "MC" ][ "lfstats2" ] and useCSV:
+    if config.systematics[ "MC" ][ "lfstats2" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "lfstats2" ][2]
       self.add_shape( "LFSTATS2", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "LFSTATS2", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
       if self.abcdnn: self.add_shape( "LFSTATS2", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, True )
     
-    if config.systematics[ "MC" ][ "cferr1" ] and useCSV:
+    if config.systematics[ "MC" ][ "cferr1" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "cferr1" ][2]
       self.add_shape( "CFERR1", self.signals, self.categories[ "ALL" ], bSmooth, False )
       self.add_shape( "CFERR1", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
       if self.abcdnn: self.add_shape( "CFERR1", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
-    if config.systematics[ "MC" ][ "cferr2" ] and useCSV:
+    if config.systematics[ "MC" ][ "cferr2" ][0] and useCSV:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "cferr2" ][2]
       self.add_shape( "CFERR2", self.signals, self.categories[ "ALL" ], bSmooth, False )
       self.add_shape( "CFERR2", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
@@ -441,50 +445,74 @@ class DataCard():
       self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], False )
       if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
 
-    for syst in [ "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ]: # MURF adds MUR and MUF together in the same shift whereas MUENV takes the envelope
-      if syst == "ISR" and not config.systematics[ "MC" ][ "isr" ][0]: continue
-      if syst == "FSR" and not config.systematics[ "MC" ][ "fsr" ][0]: continue
-      if syst == "MUR" and not config.systematics[ "MC" ][ "muR" ][0]: continue
-      if syst == "MUF" and not config.systematics[ "MC" ][ "muF" ][0]: continue
-      if syst == "MURFCORRD" and not config.systematics[ "MC" ][ "muRFcorrd" ][0]: continue
-      if syst == "MURF" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] ): continue
-      if syst == "MUENV" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] or config.systematics[ "MC" ][ "muRFcorrd" ][0] ): continue
+    # handle PS weight uncertainty
+    for syst in [ "isr", "fsr" ]:
+      if not config.systematics[ "MC" ][ syst ][0]: continue
+      bSmooth = True if config.systematics[ "MC" ][ syst ][2] else False
+      if config.systematics[ "PS BREAKDOWN" ][ syst ]:
+        for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+          if group in [ "TTNOBB", "TTBB" ]:
+            self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
+          else:
+            self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
+            if self.abcdnn:
+              self.add_model( syst.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
+        self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
+      for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+        for term in [ "muR", "cNS" ]:
+          if not config.systematics[ "PS BREAKDOWN" ][ syst + pQCD + term ]: continue
+          for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+            psTag = syst + pQCD + term
+            if group in [ "TTNOBB", "TTBB" ]:
+              self.add_model( psTag.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
+            else:
+              self.add_model( psTag.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
+              if self.abcdnn:
+                self.add_model( psTag.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
+          self.add_model( psTag.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
+
+    for syst in [ "muR", "muF", "muRFcorrd" ]: # MURF adds MUR and MUF together in the same shift whereas MUENV takes the envelope
+      if syst == "muR" and not config.systematics[ "MC" ][ "muR" ][0]: continue
+      if syst == "muF" and not config.systematics[ "MC" ][ "muF" ][0]: continue
+      if syst == "muRFcorrd" and not config.systematics[ "MC" ][ "muRFcorrd" ][0]: continue
+      if syst == "muRF" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] ): continue
+      if syst == "muENV" and not ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] or config.systematics[ "MC" ][ "muRFcorrd" ][0] ): continue
       bSmooth = False
-      if syst == "ISR" and config.systematics[ "MC" ][ "isr" ][2]: bSmooth = True
-      if syst == "FSR" and config.systematics[ "MC" ][ "fsr" ][2]: bSmooth = True
-      if syst == "MUR" and config.systematics[ "MC" ][ "muR" ][2]: bSmooth = True
-      if syst == "MUF" and config.systematics[ "MC" ][ "muF" ][2]: bSmooth = True
-      if syst == "MURFCORRD" and config.systematics[ "MC" ][ "muRFcorrd" ][2]: bSmooth = True
-      if syst == "MURF" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] ): bSmooth = True
-      if syst == "MUENV" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] or config.systematics[ "MC" ][ "muRFcorrd" ][2] ): bSmooth = True
+      if syst == "muR" and config.systematics[ "MC" ][ "muR" ][2]: bSmooth = True
+      if syst == "muF" and config.systematics[ "MC" ][ "muF" ][2]: bSmooth = True
+      if syst == "muRFcorrd" and config.systematics[ "MC" ][ "muRFcorrd" ][2]: bSmooth = True
+      if syst == "muRF" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] ): bSmooth = True
+      if syst == "muENV" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] or config.systematics[ "MC" ][ "muRFcorrd" ][2] ): bSmooth = True
 
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         if group in [ "TTNOBB", "TTBB" ]:
-          self.add_model( syst + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
+          self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
         else:
-          self.add_model( syst + group, [ group ], self.categories[ "SF" ], bSmooth )
+          self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
           if self.abcdnn:
-            self.add_model( syst + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
-      self.add_model( syst + "SIG", self.signals, self.categories[ "ALL" ], bSmooth ) 
+            self.add_model( syst.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
+      self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth ) 
     
     print( "[DONE] Added theoretical systematics" )
   
   def add_ABCDNN_systematics( self ): 
-    if args.normSyst:
-      if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSYST$ERA", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSYST" ] )
-      if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDSTAT$ERA", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDSTAT" ] )
-      if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], config.systematics[ "EXTABCDCLOSURE" ] )
+    for category in self.categories[ "ABCDNN" ]:
+      tag = abcdnn_tag( category )
+      if args.normSyst:
+        if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSYST$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ] )
+        if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSTAT$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ]  )
+        if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE$ERA", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ] )
 
     if args.shapeSyst:
-      if config.systematics[ "MC" ][ "ABCDNNMODEL" ] and "ABCDNNMODEL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNMODEL" ][2]
-        self.add_shape( "ABCDNNMODEL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
-      if config.systematics[ "MC" ][ "ABCDNNSAMPLE" ] and "ABCDNNSAMPLE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNSAMPLE" ][2]
-        self.add_shape( "ABCDNNSAMPLE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
-      if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+      if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNPEAK" ][2]
+        self.add_shape( "ABCDNNPEAK", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
+      if config.systematics[ "MC" ][ "ABCDNNTAIL" ][0] and "ABCDNNTAIL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNTAIL" ][2]
+        self.add_shape( "ABCDNNTAIL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
+      if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][0] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
         bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
-        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
+        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 
@@ -567,7 +595,7 @@ def main():
     datacard.add_theory_systematics()
     datacard.add_TTHF_systematics()
   if options[ "ABCDNN" ]:
-    datacard.add_ABCDNN_systematics()
+   datacard.add_ABCDNN_systematics()
   datacard.add_shapes()
   datacard.add_auto_MC_statistics()
   datacard.rename_and_write()

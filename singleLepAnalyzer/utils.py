@@ -1,15 +1,46 @@
 #!/usr/bin/python
 
+import itertools
 import sys,math
 import numpy as np
 import config
 from ROOT import *
 
 def contains_category( category, categories ):
-  for key in config.params[ "ABCDNN" ][ "CONTROL VARIABLES" ]:
-    if category[ key ][0] not in categories[ key ]:
-      return False
-  return True
+  categories_keys = sorted( [ key for key in categories.keys() ] )
+  categories_comb = list(
+    itertools.product(
+      *[ categories[key_] for key_ in categories_keys ]
+    )
+  )
+  category_tags = []
+  for category_ in categories_comb:
+    tag_ = "is{}".format( category_[ categories_keys.index( "LEPTON" ) ] )
+    for key_ in categories_keys:
+      if key_ == "LEPTON": continue
+      tag_ += key_ + category_[ categories_keys.index( key_ ) ]
+    category_tags.append( tag_ )
+
+  if category in category_tags: return True
+  else: return False
+
+def category_tag( category ):
+  tag = category[ "LEPTON" ][0]
+  for key_ in sorted( category ):
+    if key_ == "LEPTON": continue
+    tag += key_.upper() + category[key_][0]
+  return tag
+
+def abcdnn_tag( category ):
+  tag = ""
+  for tag_ in config.params["ABCDNN"]["TAG"]:
+    tagABCDNN = ""
+    for key_ in sorted( config.params["ABCDNN"]["TAG"][tag_] ):
+      if key_ == "LEPTON": continue
+      tagABCDNN += key_ + config.params["ABCDNN"]["TAG"][tag_][key_][0]
+    if tagABCDNN in category:
+      tag = tag_
+  return tag
 
 def hist_parse( hist_name, samples ):
   parse = {
@@ -60,14 +91,16 @@ def hist_parse( hist_name, samples ):
       parse[ "CATEGORY" ] = part
       parse[ "CHANNEL" ] = part[3:]
   
-  def check_abcdnn( param, bins, category ):
-    for bin_ in bins:
-      if param + bin_ in category:
-        return True
-    return False
+  check_tag = {}
+  for tag_ in config.params["ABCDNN"]["TAG"]:
+    check_tag[tag_] = False
+    if contains_category( parse["CATEGORY"], config.params["ABCDNN"]["TAG"][tag_] ):
+      check_tag[tag_] = True
 
-  if check_abcdnn( "nHOT", config.hist_bins[ "ABCDNN" ][ "NHOT" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nJ", config.hist_bins[ "ABCDNN" ][ "NJ" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nB", config.hist_bins[ "ABCDNN" ][ "NB" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nT", config.hist_bins[ "ABCDNN" ][ "NT" ], parse[ "CATEGORY" ] ) and check_abcdnn( "nW", config.hist_bins[ "ABCDNN" ][ "NW" ], parse[ "CATEGORY" ] ):
-    parse[ "ABCDNN" ] = True
+  # check each possible ABCDnn category and if histogram is in at least one of the categories, then flag as using ABCDnn
+  for tag_ in check_tag:
+    if check_tag[tag_]:
+      parse["ABCDNN"] = True
 
   return parse
 

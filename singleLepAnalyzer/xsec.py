@@ -19,14 +19,16 @@ filtEff_tt = {
 }
 
 k_factor = {
-  "WJetsMG": 1.21
+  "WJetsMG": 1.21,
+  "TTTJ": 1.75,    # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
+  "TTTW": 1.86     # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
 }
 
 tt_xsec = 831.8
 
 xsec = {
-  "TTTJ": 0.0003974,
-  "TTTW": 0.0007314,
+  "TTTJ": 0.0003974 * k_factor[ "TTTJ" ],
+  "TTTW": 0.0007314 * k_factor[ "TTTW" ],
   "TTTT": 0.01197,
   "TTWW": 0.00703,
   "TTWZ": 0.002453,

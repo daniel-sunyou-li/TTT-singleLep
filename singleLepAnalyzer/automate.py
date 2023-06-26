@@ -111,8 +111,8 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts --systematics {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6}".format( 
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6} \n\
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts --systematics {6}".format(
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )

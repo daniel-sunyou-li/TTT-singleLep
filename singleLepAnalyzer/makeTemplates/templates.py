@@ -165,7 +165,6 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
-          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst: continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
@@ -177,6 +176,17 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
                 hists_[ "CMB" ][ hist_tag( "TTBB", category, systJEC_.upper() + shift ) ].Scale( scaleHF )
                 hists_[ "CMB" ][ hist_tag( "TTNOBB", category, systJEC_.upper() + shift ) ].Scale( scaleLF )
                 count += 1
+            elif syst.upper() in [ "ISR", "FSR" ]:
+              for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                for term in [ "muR", "cNS" ]:
+                  psTag = syst + pQCD + term
+                  if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                  hists_[ "CMB" ][ hist_tag( "TTBB", category, psTag.upper() + shift ) ].Scale( scaleHF )
+                  hists_[ "CMB" ][ hist_tag( "TTNOBB", category, psTag.upper() + shift ) ].Scale( scaleLF )
+                  count += 1
+              if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+              hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
+              hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
             else:
               hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
               hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
@@ -214,10 +224,12 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
       if doABCDNN and "ABCDNN" in hist_name: 
         if parse[ "IS SYST" ] and parse[ "SYST" ] in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           try: 
+            if args.verbose: print( "Adding {} to {}".format( hist_name, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
           except: 
-            if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
+            if args.verbose and "PDF" not in parse[ "SYST" ]:
+              print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( "ABCDNN", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
         elif not parse[ "IS SYST" ]:
           try: 
             hists[ "CMB" ][ hist_tag( "ABCDNN", parse[ "CATEGORY" ] ) ].Add( hists[ hist_key ][ hist_name ] )
@@ -230,7 +242,6 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
         try: 
           hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ].Add( hists[ hist_key ][ hist_name ] )
         except:
-          if args.verbose: print( "  + Creating {} histogram: {}".format( hist_key, hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ) )
           hists[ "CMB" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] = hists[ hist_key ][ hist_name ].Clone( hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) )
       elif "ABCDNN" not in hist_name:
         try: 
@@ -286,17 +297,23 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         if args.verbose: print( "  + SIG SYST > {}".format( hist_tag( process, category ) ) )
         for syst in config.systematics[ "MC" ].keys():
-          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst: continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-          if args.verbose: print( "[INFO] Including {} to Combine template".format( syst ) )
           for shift in [ "UP", "DN" ]:
             if syst == "JEC":
               for systJEC in config.systematics[ "REDUCED JEC" ]:
                 if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
                 systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
                 hists[ "CMB" ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Write()
+            elif syst.upper() in [ "ISR", "FSR" ]:
+              for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                for term in [ "muR", "cNS" ]:
+                  psTag = syst + pQCD + term
+                  if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                  hists[ "CMB" ][ hist_tag( process, category, psTag.upper() + shift ) ].Write()
+              if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+              hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
             else:
               hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
       if config.options[ "GENERAL" ][ "PDF" ]:
@@ -321,7 +338,6 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
       print( "  + BKG > {}: {}".format( hist_tag( group, category ), hists[ "CMB" ][ hist_tag( group, category ) ].Integral() ) ) 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
-          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           if "ABCD" in syst or not config.systematics[ "MC" ][ syst ][0]: continue
@@ -333,6 +349,18 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
                 if scale_group:
                   hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
                 hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
+            elif syst.upper() in [ "ISR", "FSR" ]:
+              for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                for term in [ "muR", "cNS" ]:
+                  psTag = syst + pQCD + term
+                  if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                  if scale_group:
+                    hists[ "CMB" ][ hist_tag( group, category, psTag.upper() + shift ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+                  hists[ "CMB" ][ hist_tag( group, category, psTag.upper() + shift ) ].Write()
+              if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+              if scale_group:
+                hists[ "CMB" ][ hist_tag( group, category, syst.upper() + shift ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
+              hists[ "CMB" ][ hist_tag( group, category, syst.upper() + shift ) ].Write()
             else:
               sysTag = syst.upper() + shift
               if scale_group:
@@ -353,13 +381,9 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
           if syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
-          if args.year == "18" and syst.upper() == "PREFIRE": continue
           for shift in [ "UP", "DN" ]:
             if config.systematics[ "MC" ][ syst ][0]:
               hists[ "CMB" ][ hist_tag( "ABCDNN", category, syst.upper() + shift ) ].Write()
-        if config.options[ "GENERAL" ][ "PDF" ] and "PDF" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-          for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
-            hists[ "CMB" ][ hist_tag( "ABCDNN", category, "PDF" + str(i) ) ].Write()
         if args.verbose: print( "  + BKG SYST > ABCDNN" )
 
   combine_file.Close()
@@ -373,7 +397,6 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
           if not config.systematics[ "MC" ][ syst ][0]: continue
-          if args.year == "18" and syst.upper() == "PREFIRE": continue
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
@@ -382,6 +405,14 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
                 if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
                 systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
                 for stat in yield_table: yield_table[ stat ][ hist_tag( category, systJEC_.upper() + shift ) ] = {}
+            elif syst.upper() in [ "ISR", "FSR" ]:
+              for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                for term in [ "muR", "cNS" ]:
+                  psTag = syst + pQCD + term
+                  if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                  for stat in yield_table: yield_table[ stat ][ hist_tag( category, psTag.upper() + shift ) ] = {}
+              if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+              for stat in yield_table: yield_table[ stat ][ hist_tag( category, syst.upper() + shift ) ] = {}
             else:
               for stat in yield_table: yield_table[ stat ][ hist_tag( category, syst.upper() + shift ) ] = {}
     return yield_table
@@ -394,7 +425,6 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
           for syst in config.systematics[ "MC" ].keys():
             if not config.systematics[ "MC" ][ syst ][0]: continue
-            if args.year == "18" and syst.upper() == "PREFIRE": continue
             if process == "ABCDNN" and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
             if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
@@ -405,6 +435,14 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
                   if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
                   systJEC_ = "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" )
                   table[ "YIELD" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Integral()
+              elif syst.upper() in [ "ISR", "FSR" ]:
+                for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                  for term in [ "muR", "cNS" ]:
+                    psTag = syst + pQCD + term
+                    if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                    table[ "YIELD" ][ hist_tag( category, psTag.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, psTag.upper() + shift ) ].Integral()
+                if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+                table[ "YIELD" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
               else:
                 table[ "YIELD" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
       return table
@@ -451,7 +489,6 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
             if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
             if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-            if syst.upper() == "PREFIRE" and args.year not in [ "16APV", "16", "17" ]: continue
             for shift in [ "UP", "DN" ]:
               if syst == "JEC":
                 for systJEC in config.systematics[ "REDUCED JEC" ]:
@@ -460,12 +497,22 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
                   table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = 0
                   for i in range( 1, hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
                     table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].GetBinError(i)**2
-                  table[ "ERROR" ][ hist_tag( category, systJEC_.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, systJEC_.upper() + shift ) ].Integral()
+              elif syst.upper() in [ "ISR", "FSR" ]:
+                for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
+                  for term in [ "muR", "cNS" ]:
+                    psTag = syst + pQCD + term
+                    if not config.systematics[ "PS BREAKDOWN" ][ psTag ]: continue
+                    table[ "ERROR" ][ hist_tag( category, psTag.upper() + shift ) ][ process ] = 0
+                    for i in range( 1, hists[ hist_key ][ hist_tag( process, category, psTag.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
+                      table[ "ERROR" ][ hist_tag( category, psTag.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, psTag.upper() + shift ) ].GetBinError(i)**2
+                if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+                table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = 0
+                for i in range( 1, hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
+                  table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetBinError(i)**2
               else:
                 table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = 0
                 for i in range( 1, hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetXaxis().GetNbins() + 1 ):
                   table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] += hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].GetBinError(i)**2
-                table[ "ERROR" ][ hist_tag( category, syst.upper() + shift ) ][ process ] = hists[ hist_key ][ hist_tag( process, category, syst.upper() + shift ) ].Integral()
       return table
 
     for category in categories:

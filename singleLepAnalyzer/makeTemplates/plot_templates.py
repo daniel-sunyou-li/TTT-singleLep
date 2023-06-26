@@ -7,7 +7,7 @@ sys.path.append( "../" )
 import config
 import tdrstyle
 import config_plot
-from utils import hist_tag, hist_parse
+from utils import hist_tag, hist_parse, abcdnn_tag
 
 parser = ArgumentParser()
 parser.add_argument( "-y", "--year", required = True, help = "16APV,16,17,18" )
@@ -59,9 +59,10 @@ def normalization_uncertainty( hist, i, theory_systematic ):
   parse = hist_parse( hist.GetName(), samples )
   correlated_syst = 0
   if parse[ "ABCDNN" ] and parse[ "COMBINE" ] == "ABCDNN":
-    correlated_syst += ( config.systematics[ "EXTABCDSYST" ][ args.year ] - 1.0 )**2
-    correlated_syst += ( config.systematics[ "EXTABCDSTAT" ][ args.year ] - 1.0 )**2
-    correlated_syst += ( config.systematics[ "EXTABCDCLOSURE" ][ args.year ] - 1.0 )**2
+    tagABCDNN = abcdnn_tag( parse[ "CATEGORY" ] )
+    correlated_syst += ( config.systematics[ "EXTABCDSYST" ][ tagABCDNN ][ args.year ] - 1.0 )**2
+    correlated_syst += ( config.systematics[ "EXTABCDSTAT" ][ tagABCDNN ][ args.year ] - 1.0 )**2
+    correlated_syst += ( config.systematics[ "EXTABCDCLOSURE" ][ tagABCDNN ][ args.year ] - 1.0 )**2
   else:
     correlated_syst += ( config.systematics[ "PILEUP" ] - 1.0 )**2
     correlated_syst += ( config.systematics[ "LUMI" ][ args.year ] - 1.0 )**2
@@ -169,21 +170,20 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   hist_names = [ key.GetName() for key in rFile.GetListOfKeys() ]
   categories = []
   for hist_name in sorted( hist_names ):
-    if "isL" in hist_name: continue # skip the decorrelated histograms and lepton categories
-    if args.year in hist_name and not "JEC" in hist_name: continue
-    if hist_name.endswith( "Down" ) or hist_name.endswith( "Up" ) or hist_name.endswith( "NOMINAL" ): continue # skip combine hists
-    if algoSmooth.upper() in hist_name.upper() and not smooth: continue
-    if not doABCDNN and "ABCDNN" in hist_name: continue 
     parse = hist_parse( hist_name, samples )
     syst = parse[ "IS SYST" ]
     syst_name = parse[ "SYST" ]
     process = parse[ "PROCESS" ]
     category = parse[ "CATEGORY" ]
-    # checks for including/excluding systematics
-    if syst_name.upper() in config_plot.params[ "EXCLUDE SYST" ]: continue
-    if "ELTRIG" in syst_name.upper() or "MUTRIG" in syst_name.upper() or "BIN" in syst_name.upper(): continue
+    if "isL" in hist_name: continue # skip the decorrelated histograms and lepton categories
+    if args.year in hist_name and not "JEC" in hist_name: continue # some of the JEC systematic base names include the era
+    if hist_name.endswith( "Down" ) or hist_name.endswith( "Up" ) or hist_name.endswith( "NOMINAL" ): continue # skip hists with combine naming convention
+    if algoSmooth.upper() in hist_name.upper() and not smooth: continue # include either the smooth or unsmoothed histogram version, not both
+    if not doABCDNN and "ABCDNN" in hist_name: continue # exclude ABCDnn histograms when not running on ABCDnn option 
+    if syst_name.upper() in config_plot.params[ "EXCLUDE SYST" ]: continue # manually exclude systematics
+    if "ELTRIG" in syst_name.upper() or "MUTRIG" in syst_name.upper() or "BIN" in syst_name.upper(): continue # don't include these histograms for plotting
     if "JEC" in hist_name and not syst_name.endswith( "20" + args.year ) and syst_name.endswith( args.year ): continue # don't double count the decorrelated systematics
-    if ( "HOTCLOSURE" in syst_name or "HOTCSPUR" in syst_name or "HOTSTAT" in syst_name ) and "nHOT0p" in category: continue # not using HOT tagged jets
+    if ( "HOTCLOSURE" in syst_name or "HOTCSPUR" in syst_name or "HOTSTAT" in syst_name ) and "NH0p" in category: continue # not using HOT tagged jets in NH0p category
     if syst and smooth: # check if including smoothed systematic 
       if doShifts: # when plotting the smooth vs nominal templates, don't discriminate which histograms being kept
         if syst_name not in syst_list: syst_list.append( syst_name )
@@ -276,19 +276,18 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
         "DN": 0                                                            # shape down
       }
       if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
-        try: 
-          error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( "ABCDNN", category ) ], i, systematics[ hist_tag( "ABCDNN", category ) ] )
-        except: 
-          quit( "[ERR] There is no ABCDNN category, quitting..." )
+        error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( "ABCDNN", category ) ], i, systematics[ hist_tag( "ABCDNN", category ) ] )
+        for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
+          if group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+            error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( group, category ) ], i, systematics[ hist_tag( group, category ) ] )
       else:
         for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
-          try: error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( group, category ) ], i, systematics[ hist_tag( group, category ) ] )
-          except: quit( "[ERR] Unable to add normalization uncertainty for {} in bin {}".format( hist_tag( group, category ), i ) )
+          error_bkg[ category ][i][ "NORM" ] += normalization_uncertainty( histograms[ "BKG" ][ hist_tag( group, category ) ], i, systematics[ hist_tag( group, category ) ] )
       if config_plot.options[ "ALL SYSTEMATICS" ]: # shape systematics
         for syst in syst_list:
-          if syst.upper() in [ "HOTSTAT", "HOTCSPUR", "HOTCLOSURE" ] and "nHOT0p" in category: continue
-          if syst.upper() in [ "LF", "LFSTATS1", "LFSTATS2", "HF", "HFSTATS1", "HFSTATS2", "CFERR1", "CFERR2" ] and "nB0p" in category: continue
-          if syst.upper() in [ "ABCDNNSAMPLE", "ABCDNNMODEL", "ABCDNNCLOSURE" ] and not hist_parse( category, samples )[ "ABCDNN" ]: continue
+          if syst.upper() in [ "HOTSTAT", "HOTCSPUR", "HOTCLOSURE" ] and "NH0p" in category: continue
+          if syst.upper() in [ "LF", "LFSTATS1", "LFSTATS2", "HF", "HFSTATS1", "HFSTATS2", "CFERR1", "CFERR2" ] and "NB0p" in category: continue
+          if syst.upper() in [ "ABCDNNTAIL", "ABCDNNPEAK", "ABCDNNCLOSURE" ] and not hist_parse( category, samples )[ "ABCDNN" ]: continue
           systTotalUp, systTotalDn = 0, 0
           for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
             try:
@@ -307,10 +306,9 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
                 error_bkg[ category ][i]["UP"] += error_dn**2
                 systTotalUp += error_dn**2
             except:
-              #if args.verbose:
-              #  print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
+              #print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
               pass
-          if args.verbose: print( "[INFO] {} Bin {} {} = + {:.3f}, - {:.3f}".format( category, i, syst.upper(), np.sqrt( systTotalUp ), np.sqrt( systTotalDn ) ) )
+          if args.verbose and ( systTotalUp != 0 or systTotalDn != 0 ): print( "[INFO] {} Bin {} {} = + {:.3f}, - {:.3f}".format( category, i, syst.upper(), np.sqrt( systTotalUp ), np.sqrt( systTotalDn ) ) )
       error_bkg[ category ][i][ "UP" ] = np.sqrt( error_bkg[ category ][i][ "UP" ] )
       error_bkg[ category ][i][ "DN" ] = np.sqrt( error_bkg[ category ][i][ "DN" ] )
       if args.verbose:
@@ -363,9 +361,6 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
   return histograms, categories, syst_list
   
 def format_upper_hist( pad, hist, hist_bkg, blind, log_scale ):
-  if "NTJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(5)
-  elif "NWJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(5)
-  elif "NBJETS" in hist.GetName(): hist.GetXaxis().SetNdivisions(6)
   pad.cd()
   hist.GetYaxis().CenterTitle()
   
@@ -385,11 +380,14 @@ def format_upper_hist( pad, hist, hist_bkg, blind, log_scale ):
     pad.SetBottomMargin(0)
   if log_scale:
     pad.SetLogy()
-    hist.SetMaximum( 3e1 * hist_bkg.GetMaximum() )
+    if blind:
+      hist.SetMaximum( 3e1 * hist_bkg.GetMaximum() )
+    else:
+      hist.SetMaximum( 7e1 * hist_bkg.GetMaximum() )
     hist.SetMinimum( 5e-1 )
   else:
-    hist.SetMaximum( 1.5 * hist_bkg.GetMaximum() )
-    hist.SetMinimum( -1.0 )
+    hist.SetMaximum( 1.7 * hist_bkg.GetMaximum() )
+    hist.SetMinimum( 0 )
 
 def format_lower_hist( pad, hist, real_pull, variable ): 
   pad.SetTopMargin(0)
@@ -524,31 +522,24 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
    
     # prepare and draw the background histograms
     bkg_stack = ROOT.THStack( "BKG STACK", "" )
+    plot_order = []
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
-      try:
-        hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ "ABCDNN" ] )
-        hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ "ABCDNN" ] )
-        hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ].SetLineWidth(2)
-        for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineWidth(2)
-          bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
-        bkg_stack.Add( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ] )
-      except: pass
+      for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]: plot_order.append( group )
+      plot_order.append( "ABCDNN" )
+      for group in plot_order:
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetLineWidth(2)
+        bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
     else:
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
-        try:
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
-          hists[ "BKG" ][ hist_tag( group, category ) ].SetLineWidth(2)
-          bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
-        except: pass
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
+        hists[ "BKG" ][ hist_tag( group, category ) ].SetLineWidth(2)
+        bkg_stack.Add( hists[ "BKG" ][ hist_tag( group, category ) ] )
       if plot_yields:
-        try:
-          hists[ "TOTAL BKG" ][ category ].SetMarkerSize(4)
-          hists[ "TOTAL BKG" ][ category ].SetMarkerColor( config_plot.params[ "BKG COLORS" ][ group ] )
-        except: pass
+        hists[ "TOTAL BKG" ][ category ].SetMarkerSize(4)
+        hists[ "TOTAL BKG" ][ category ].SetMarkerColor( config_plot.params[ "BKG COLORS" ][ group ] )
     
     bkg_stack.Draw( "SAME HIST" )
     hists[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
@@ -583,7 +574,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         ROOT.gStyle.SetPaintTextFormat( "1.0f" )
         hists[ "TOTAL DAT" ][ category ].Draw( "SAME TEXT00" )
     
-    #pad[ "UPPER" ].RedrawAxis()
+    pad[ "UPPER" ].RedrawAxis()
     
     # latex 
     latex = ROOT.TLatex()
@@ -592,58 +583,96 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     latex.SetTextSize( latex_size )
     latex.SetTextAlign(11)
     
-    splits = category.split( "n" )
-    cat_text = {
-      "LEP": splits[0][-1] + " + jets",
-      "NHOT": "N_{HOT}#geq" + splits[1][3:-1] if "p" in splits[1] else "N_{HOT}=" + splits[1][-1],
-      "NT": "N_{t}#geq" + splits[2][1:-1] if "p" in splits[2] else "N_{t}=" + splits[2][-1],
-      "NW": "N_{W}#geq" + splits[3][1:-1] if "p" in splits[3] else "N_{W}=" + splits[3][-1],
-      "NB": "N_{b}#geq" + splits[4][1:-1] if "p" in splits[4] else "N_{b}=" + splits[4][-1],
-      "NJ": "N_{j}#geq" + splits[5][1:-1] if "p" in splits[5] else "N_{j}=" + splits[5][-1]
-    }
-    mod_x = 0.88 
-    mod_y = 1.11 
+    cat_text = {}
+    if "isE" in category: 
+      cat_text[ "LEPTON" ] = "e + jets" 
+    elif "isM" in category: 
+      cat_text[ "LEPTON" ] = "#mu + jets"
+    else:
+      cat_text[ "LEPTON" ] = "e/#mu + jets"
+
+    category_vars = []
+    category_cond = {}
+    for param_ in sorted( config.plot_params[ "VARIABLES" ].keys() ):
+      if str(param_) in category:
+        category_vars.append( str(param_) )
+    for var_a in category_vars:
+      if category_vars.index( var_a ) == len( category_vars ) - 1:
+        category_cond[var_a] = category.split( var_a )[1]
+      else:
+        for var_b in category_vars:
+          if category_vars.index( var_b ) - category_vars.index( var_a ) == 1:
+            category_cond[var_a] = category.split( var_a )[1].split( var_b )[0]
+
+    for key_ in category_cond:
+      sign_ = "="
+      if "b" in category_cond[ key_ ]:
+        cat_text[key_] = "{1}#leq{0}#leq{2}".format( config.plot_params["VARIABLES"][key_][2], *category_cond[ key_ ].split("b") )
+      else:
+        if "p" in category_cond[ key_ ]: sign_ = "#geq"
+        elif "m" in category_cond[ key_ ]: sign_ = "#leq"
+        cat_text[key_] = "{}{}{}".format( config.plot_params["VARIABLES"][key_][2], sign_, category_cond[key_] if sign_ == "=" else category_cond[key_][:-1] )
+
+    mod_x = 0.85
+    mod_y = 1.11 if blind else 1.08
     latex.DrawLatex( 
       config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, config_plot.params[ "CANVAS" ][ "TAG Y" ] * mod_y,
-      cat_text[ "LEP" ]
+      cat_text[ "LEPTON" ]
     )
     latex.DrawLatex(
       config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, ( config_plot.params[ "CANVAS" ][ "TAG Y" ] - 0.06 ) * mod_y,
-      ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )#, cat_text[ "NW" ], cat_text[ "NT" ] ] )
+      ", ".join( [ cat_text[key_] for key_ in cat_text if key_ != "LEPTON" ] )
     )
     
     if blind:
-      legend = ROOT.TLegend( 0.40, 0.75, 0.92, 0.88 )
+      legend = ROOT.TLegend( 0.40, 0.83, 0.92, 0.88 )
+      sublegend = ROOT.TLegend( 0.40, 0.76, 0.92, 0.82 )
     else:
-      legend = ROOT.TLegend( 0.40, 0.75, 0.92, 0.88 )
+      legend = ROOT.TLegend( 0.40, 0.83, 0.92, 0.88 )
+      sublegend = ROOT.TLegend( 0.40, 0.76, 0.92, 0.82 )
+
+    nColumns = 5 if ( doABCDNN and hist_parse( category, samples )[ "ABCDNN" ] ) else len( groups[ "BKG" ][ "SUPERGROUP" ] )
+    nSubColumns = 3 if blind else 4
+
     legend.SetShadowColor(0)
     legend.SetFillColor(0)
     legend.SetFillStyle(0)
     legend.SetLineColor(0)
     legend.SetLineStyle(0)
     legend.SetBorderSize(0)
-    legend.SetNColumns(3)
+    legend.SetNColumns(nColumns)
     legend.SetTextFont(42)
     legend.SetTextSize( config_plot.params[ "LEGEND" ][ "TEXT SIZE" ] )
+    sublegend.SetShadowColor(0)
+    sublegend.SetFillColor(0)
+    sublegend.SetFillStyle(0)
+    sublegend.SetLineColor(1)
+    sublegend.SetLineStyle(1)
+    sublegend.SetBorderSize(1)
+    sublegend.SetNColumns(nSubColumns)
+    sublegend.SetTextFont(42)
+    sublegend.SetTextSize( config_plot.params[ "LEGEND" ][ "TEXT SIZE" ] )
 
     if not blind:
-      legend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
+      sublegend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       legend.AddEntry( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ], "ABCDNN", "f" )
-      for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
-        legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" )
+      for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+        if group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+          legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" )
     else:
-      for group in list( groups[ "BKG" ][ "SUPERGROUP" ].keys() ):
+      for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         legend.AddEntry( hists[ "BKG" ][ hist_tag( group, category ) ], group, "f" ) 
 
-    legend.AddEntry( hists[ "TOTAL BKG ERR" ][ category ], "+".join( config_plot.params[ "ERROR BAND" ] ), "f" )
-    legend.AddEntry( hists[ "STAT BKG ERR" ][ category ], "STAT", "f" )
+    sublegend.AddEntry( hists[ "TOTAL BKG ERR" ][ category ], "+".join( config_plot.params[ "ERROR BAND" ] ), "f" )
+    sublegend.AddEntry( hists[ "STAT BKG ERR" ][ category ], "STAT", "f" )
       
     if scale_signal_yield:
-      legend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG x{}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "l" )
+      sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG x{}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "l" )
     else:
-      legend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG", "l" )
+      sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG", "l" )
     legend.Draw( "SAME" )
+    sublegend.Draw( "SAME" )
     
     cms_lumi( pad[ "UPPER" ], config_plot.params[ "POSTFIX TEXT" ], blind )
     
@@ -658,7 +687,7 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
         pull.Divide( hists[ "TOTAL DAT" ][ category ], hists[ "TOTAL BKG" ][ category ] )
         for i in range( 1, hists[ "TOTAL DAT" ][ category ].GetNbinsX() + 1 ):
           i_label = ( hists[ "TOTAL DAT" ][ category ].GetBinLowEdge(i) + hists[ "TOTAL DAT" ][ category ].GetBinLowEdge(i+1) ) / 2.
-          if args.variable.upper() in [ "NJETS", "NPU", "NBJETS", "NWJETS", "NTJETS", "NHOTJETS" ]:
+          if args.variable.upper() in [ "NJ", "NPU", "NB", "NW", "NT", "NH" ]:
             pull.GetXaxis().SetBinLabel( i, str( int( i_label - 0.5 ) ) )
             
           if hists[ "TOTAL BKG" ][ category ].GetBinContent(i) > 100. * config.params[ "GENERAL" ][ "ZERO" ]:
@@ -784,8 +813,9 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
       if os.path.exists( os.path.join( args.html, templateName, plot_folder, save_name ) ): os.system( "rm {}".format( os.path.join( args.html, templateName, plot_folder, save_name ) ) )
       if not os.path.exists( os.path.join( args.html, templateName, plot_folder ) ): os.system( "mkdir -p {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
       if not os.path.exists( os.path.join( args.html, templateName, plot_folder, "index.php" ) ): os.system( "cp index.php {}".format( os.path.join( args.html, templateName, plot_folder ) ) )
-      os.system( "cp {} {}".format( os.path.join( templateDir, plot_folder, save_name ), os.path.join( args.html, templateName, plot_folder ) ) )
+      os.system( "cp -v {} {}".format( os.path.join( templateDir, plot_folder, save_name ), os.path.join( args.html, templateName, plot_folder ) ) )
     except:
+      print( "[WARN] Could not copy plots to html page." )
       pass
     ROOT.SetOwnership(canvas,False)
     del canvas, pad, frame, legend, bkg_stack, latex
@@ -848,7 +878,7 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
 
   ratio_hists = {}
 
-  for group in sorted( groups[ "BKG" ][ "SUPERGROUP" ].keys() ) + [ "ABCDNN" ]:
+  for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ] + [ "ABCDNN" ]:
     if group in [ "ABCDNN" ] and not doABCDNN: continue
     ratio_hists[ group ] = ROOT.TH1F( group, group, len( categories_lep ), 0, len( categories_lep ) )
     ratio_legend.AddEntry( ratio_hists[ group ], group, "f" )
@@ -860,7 +890,7 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
       else:
         ratio_hists[ group ].SetBinContent( i + 1, float( hists[ "BKG" ][ hist_tag( group, category ) ].Integral() ) / float( hists[ "TOTAL BKG" ][ category ].Integral() ) )
       if blind:
-        ratio_hists[ group ].GetXaxis().SetBinLabel( i + 1, category.replace( "nT0p", "" ).replace( "nW0p", "" ).replace( "nHOT0p", "" ) )
+        ratio_hists[ group ].GetXaxis().SetBinLabel( i + 1, category )
         ratio_hists[ group ].GetXaxis().SetLabelSize(0.03)
     ratio_hists[ group ].SetLineColor( config_plot.params[ "BKG COLORS" ][ group ] )
     ratio_hists[ group ].SetFillColor( config_plot.params[ "BKG COLORS" ][ group ] )
@@ -1009,23 +1039,23 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
         ratio_smooth[ shift ] = hist_shift_smooth[ shift ].Clone()
         ratio_smooth[ shift ].Divide( histogramsSmooth[ "TOTAL BKG" ][ category ] )
         if shift == "UP":
-          hist_shift[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift[ "UP" ].SetLineColor( ROOT.kRed - 3 )
           hist_shift[ "UP" ].SetFillColor(0)
           hist_shift[ "UP" ].SetLineStyle(2)
           hist_shift[ "UP" ].SetLineWidth(2)
           hist_shift[ "UP" ].Draw( "HIST" )
-          hist_shift_smooth[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift_smooth[ "UP" ].SetLineColor( ROOT.kRed - 3 )
           hist_shift_smooth[ "UP" ].SetFillColor(0)
           hist_shift_smooth[ "UP" ].SetLineStyle(0)
           hist_shift_smooth[ "UP" ].SetLineWidth(2)
           hist_shift_smooth[ "UP" ].Draw( "SAME HIST" )
         else:
-          hist_shift[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift[ "DN" ].SetLineColor( ROOT.kAzure - 3 )
           hist_shift[ "DN" ].SetFillColor(0)
           hist_shift[ "DN" ].SetLineStyle(2)
           hist_shift[ "DN" ].SetLineWidth(2)
           hist_shift[ "DN" ].Draw( "SAME HIST" )
-          hist_shift_smooth[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift_smooth[ "DN" ].SetLineColor( ROOT.kAzure - 3 )
           hist_shift_smooth[ "DN" ].SetFillColor(0)
           hist_shift_smooth[ "DN" ].SetLineStyle(0)
           hist_shift_smooth[ "DN" ].SetLineWidth(2)
@@ -1051,27 +1081,47 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
       latex_size = 0.6 * config_plot.params[ "LATEX SIZE" ]
       latex.SetTextSize( latex_size )
       latex.SetTextAlign(11)
+    
+      cat_text = {}
+      if "isE" in category: 
+        cat_text[ "LEPTON" ] = "e + jets" 
+      elif "isM" in category: 
+        cat_text[ "LEPTON" ] = "#mu + jets"
+      else:
+        cat_text[ "LEPTON" ] = "e/#mu + jets"
 
-      splits = category.split( "n" )
-      cat_text = {
-        "LEP": splits[0][-1] + " + jets",
-        "NHOT": "N_{HOT}#geq" + splits[1][3:-1] if "p" in splits[1] else "N_{HOT}=" + splits[1][-1],
-        "NT": "N_{T}#geq" + splits[2][1:-1] if "p" in splits[2] else "N_{t}=" + splits[2][-1],
-        "NW": "N_{W}#geq" + splits[3][1:-1] if "p" in splits[3] else "N_{W}=" + splits[3][-1],
-        "NB": "N_{b}#geq" + splits[4][1:-1] if "p" in splits[4] else "N_{b}=" + splits[4][-1],
-        "NJ": "N_{j}#geq" + splits[5][1:-1] if "p" in splits[5] else "N_{j}=" + splits[5][-1]
-      }
+      category_vars = []
+      category_cond = {}
+      for param_ in sorted( config.plot_params[ "VARIABLES" ].keys() ):
+        if str(param_) in category:
+          category_vars.append( str(param_) )
+      for var_a in category_vars:
+        if category_vars.index( var_a ) == len( category_vars ) - 1:
+          category_cond[var_a] = category.split( var_a )[1]
+        else:
+          for var_b in category_vars:
+            if category_vars.index( var_b ) - category_vars.index( var_a ) == 1:
+              category_cond[var_a] = category.split( var_a )[1].split( var_b )[0]
+
+      for key_ in category_cond:
+        sign_ = "="
+        if "b" in category_cond[ key_ ]:
+          cat_text[key_] = "{1}#leq{0}#leq{2}".format( config.plot_params["VARIABLES"][key_][2], *category_cond[ key_ ].split("b") )
+        else:
+          if "p" in category_cond[ key_ ]: sign_ = "#geq"
+          elif "m" in category_cond[ key_ ]: sign_ = "#leq"
+          cat_text[key_] = "{}{}{}".format( config.plot_params["VARIABLES"][key_][2], sign_, category_cond[key_] if sign_ == "=" else category_cond[key_][:-1] )
 
       mod_x = 0.9
       mod_y = 1.1
 
       latex.DrawLatex(
         config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, config_plot.params[ "CANVAS" ][ "TAG Y" ] * mod_y,
-        cat_text[ "LEP" ]
+        cat_text[ "LEPTON" ]
       )
       latex.DrawLatex(
         config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, ( config_plot.params[ "CANVAS" ][ "TAG Y" ] - 0.05 ) * mod_y,
-        ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )
+        ", ".join( [ cat_text[ key_ ] for key_ in cat_text if key_ != "LEPTON" ] )
       )
 
       legend = ROOT.TLegend( 0.60, 0.75, 0.80, 0.88 )
@@ -1124,15 +1174,15 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
       ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
       ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
       ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
-      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.77, 1.23 )
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.67, 1.33 )
       ratio[ "NOMINAL" ].Draw( "HIST" )
       for shift in [ "UP", "DN" ]:
         if shift == "UP": 
-          ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
-          ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
-        else: 
           ratio[ shift ].SetLineColor( ROOT.kRed - 3 )
           ratio_smooth[ shift ].SetLineColor( ROOT.kRed - 3 )
+        else: 
+          ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
+          ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
         ratio[ shift ].SetFillColor(0)
         ratio[ shift ].SetLineStyle(2)
         ratio_smooth[ shift ].SetFillColor(0)
@@ -1219,23 +1269,23 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
         ratio_smooth[ shift ] = hist_shift_smooth[ shift ].Clone()
         ratio_smooth[ shift ].Divide( histogramsSmooth[ "TOTAL SIG" ][ category ] )
         if shift == "UP":
-          hist_shift[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift[ "UP" ].SetLineColor( ROOT.kRed - 3 )
           hist_shift[ "UP" ].SetFillColor(0)
           hist_shift[ "UP" ].SetLineStyle(2)
           hist_shift[ "UP" ].SetLineWidth(2)
           hist_shift[ "UP" ].Draw( "HIST" )
-          hist_shift_smooth[ "UP" ].SetLineColor( ROOT.kAzure - 3 )
+          hist_shift_smooth[ "UP" ].SetLineColor( ROOT.kRed - 3 )
           hist_shift_smooth[ "UP" ].SetFillColor(0)
           hist_shift_smooth[ "UP" ].SetLineStyle(0)
           hist_shift_smooth[ "UP" ].SetLineWidth(2)
           hist_shift_smooth[ "UP" ].Draw( "SAME HIST" )
         else:
-          hist_shift[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift[ "DN" ].SetLineColor( ROOT.kAzure - 3 )
           hist_shift[ "DN" ].SetFillColor(0)
           hist_shift[ "DN" ].SetLineStyle(2)
           hist_shift[ "DN" ].SetLineWidth(2)
           hist_shift[ "DN" ].Draw( "SAME HIST" )
-          hist_shift_smooth[ "DN" ].SetLineColor( ROOT.kRed - 3 )
+          hist_shift_smooth[ "DN" ].SetLineColor( ROOT.kAzure - 3 )
           hist_shift_smooth[ "DN" ].SetFillColor(0)
           hist_shift_smooth[ "DN" ].SetLineStyle(0)
           hist_shift_smooth[ "DN" ].SetLineWidth(2)
@@ -1246,7 +1296,7 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
       histograms[ "TOTAL SIG" ][ category ].SetFillStyle(0)
       histograms[ "TOTAL SIG" ][ category ].SetLineWidth(2)
       histograms[ "TOTAL SIG" ][ category ].GetXaxis().SetRangeUser( config.plot_params[ "VARIABLES" ][ args.variable ][1][0], config.plot_params[ "VARIABLES" ][ args.variable ][1][-1] )
-      format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL SIG" ][ category ], False, True )
+      format_upper_hist( pad[ "UPPER" ], hist_shift[ "UP" ], histograms[ "TOTAL SIG" ][ category ], False, False )
       histograms[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
 
       latex = ROOT.TLatex()
@@ -1255,26 +1305,46 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
       latex.SetTextSize( latex_size )
       latex.SetTextAlign(11)
 
-      splits = category.split( "n" )
-      cat_text = {
-        "LEP": splits[0][-1] + " + jets",
-        "NHOT": "N_{HOT}#geq" + splits[1][3:-1] if "p" in splits[1] else "N_{HOT}=" + splits[1][-1],
-        "NT": "N_{T}#geq" + splits[2][1:-1] if "p" in splits[2] else "N_{t}=" + splits[2][-1],
-        "NW": "N_{W}#geq" + splits[3][1:-1] if "p" in splits[3] else "N_{W}=" + splits[3][-1],
-        "NB": "N_{b}#geq" + splits[4][1:-1] if "p" in splits[4] else "N_{b}=" + splits[4][-1],
-        "NJ": "N_{j}#geq" + splits[5][1:-1] if "p" in splits[5] else "N_{j}=" + splits[5][-1]
-      }
+      cat_text = {}
+      if "isE" in category: 
+        cat_text[ "LEPTON" ] = "e + jets" 
+      elif "isM" in category: 
+        cat_text[ "LEPTON" ] = "#mu + jets"
+      else:
+        cat_text[ "LEPTON" ] = "e/#mu + jets"
+
+      category_vars = []
+      category_cond = {}
+      for param_ in sorted( config.plot_params[ "VARIABLES" ].keys() ):
+        if str(param_) in category:
+          category_vars.append( str(param_) )
+      for var_a in category_vars:
+        if category_vars.index( var_a ) == len( category_vars ) - 1:
+          category_cond[var_a] = category.split( var_a )[1]
+        else:
+          for var_b in category_vars:
+            if category_vars.index( var_b ) - category_vars.index( var_a ) == 1:
+              category_cond[var_a] = category.split( var_a )[1].split( var_b )[0]
+
+      for key_ in category_cond:
+        sign_ = "="
+        if "b" in category_cond[ key_ ]:
+          cat_text[key_] = "{1}#leq{0}#leq{2}".format( config.plot_params["VARIABLES"][key_][2], *category_cond[ key_ ].split("b") )
+        else:
+          if "p" in category_cond[ key_ ]: sign_ = "#geq"
+          elif "m" in category_cond[ key_ ]: sign_ = "#leq"
+          cat_text[key_] = "{}{}{}".format( config.plot_params["VARIABLES"][key_][2], sign_, category_cond[key_] if sign_ == "=" else category_cond[key_][:-1] )
 
       mod_x = 0.9
       mod_y = 1.1
 
       latex.DrawLatex(
         config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, config_plot.params[ "CANVAS" ][ "TAG Y" ] * mod_y,
-        cat_text[ "LEP" ]
+        cat_text[ "LEPTON" ]
       )
       latex.DrawLatex(
         config_plot.params[ "CANVAS" ][ "TAG X" ] * mod_x, ( config_plot.params[ "CANVAS" ][ "TAG Y" ] - 0.05 ) * mod_y,
-        ", ".join( [ cat_text[ "NJ" ], cat_text[ "NB" ], cat_text[ "NHOT" ] ] )
+        ", ".join( [ cat_text[ key_ ] for key_ in cat_text if key_ != "LEPTON" ] )
       )
 
       legend = ROOT.TLegend( 0.60, 0.75, 0.80, 0.88 )
@@ -1323,15 +1393,15 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
       ratio[ "NOMINAL" ].GetYaxis().SetLabelSize(0.08)
       ratio[ "NOMINAL" ].GetYaxis().SetNdivisions(506)
       ratio[ "NOMINAL" ].GetYaxis().CenterTitle()
-      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.77, 1.23 )
+      ratio[ "NOMINAL" ].GetYaxis().SetRangeUser( 0.67, 1.33 )
       ratio[ "NOMINAL" ].Draw( "HIST" )
       for shift in [ "UP", "DN" ]:
         if shift == "UP": 
-          ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
-          ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
-        else: 
           ratio[ shift ].SetLineColor( ROOT.kRed - 3 )
           ratio_smooth[ shift ].SetLineColor( ROOT.kRed - 3 )
+        else: 
+          ratio[ shift ].SetLineColor( ROOT.kAzure - 3 )
+          ratio_smooth[ shift ].SetLineColor( ROOT.kAzure - 3 )
         ratio[ shift ].SetFillColor(0)
         ratio[ shift ].SetLineStyle(2)
         ratio_smooth[ shift ].SetFillColor(0)

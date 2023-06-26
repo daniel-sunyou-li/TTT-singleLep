@@ -12,7 +12,7 @@ samples = {
     #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
     #"DataE": "SingleElectron",
-    "TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
+    "TTToSemiLeptonicHT500ttbb": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj"
   },
   "DAT": {
     "DataE": "SingleElectron",
@@ -138,16 +138,18 @@ groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ proce
 groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTNOBB": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).tolist(),
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
-  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] ] ).tolist(),
+  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB", "TTTT" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
-  "TTH": [ "TTHB", "TTHnoB" ]
+  "TTH": [ "TTHB", "TTHnoB" ],
+  "TTTT": [ "TTTT" ],
 }
 
 groups[ "BKG" ][ "ABCDNN" ] = []
 for group in config.params[ "ABCDNN" ][ "GROUPS" ]:
   for process in groups[ "BKG" ][ "SUPERGROUP" ][ group ]:
-    groups[ "BKG" ][ "ABCDNN" ].append( process )
+    if "TTToSemiLeptonic" in process:
+      groups[ "BKG" ][ "ABCDNN" ].append( process )
   
 groups[ "BKG" ][ "TTBAR_GROUPS" ] = {
   group: groups[ "BKG" ][ "SUPERGROUP" ][ group ] for group in [ "TTNOBB", "TTBB" ]
