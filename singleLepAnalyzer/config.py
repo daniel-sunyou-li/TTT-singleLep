@@ -436,7 +436,7 @@ plot_params = {
     "NB": ( "NJetsCSV_JetSubCalc", bins( 0, 6, 7 ), "N_{B}" ),
     "NW": ( "NJetsWtagged", bins( 0, 6, 7 ), "W-tagged Jet Multiplicity" ),
     "NT": ( "NJetsTtagged", bins( 0, 4, 5 ), "t-tagged Jet Multiplicity" ),
-    "DNN": ( "DNN_1to40_Run2_nJ4pnB1p", bins( 0, 1, 21 ), "DNN" ),
+    "DNN": ( "DNN_1to40_Run2_nJ4pnB1p", bins( 0, 1, 101 ), "DNN" ),
     "DNN3": ( "DNN_1to3_3t", bins( 0, 1, 41 ), "DNN (1-3)" ),
     "DNN5": ( "DNN_1to5_3t", bins( 0, 1, 41 ), "DNN (1-5)" ),
     "DNN10": ( "DNN_1to10_3t", bins( 0, 1, 41 ), "DNN (1-10)" ),

@@ -15,7 +15,7 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "REAL PULL": False,
   "BLIND": False,
-  "Y LOG": False,
+  "Y LOG": True,
   "SMOOTH": True,
 }
 
