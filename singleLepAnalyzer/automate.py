@@ -566,6 +566,44 @@ cd .. \n".format(
         condor_template( nameLog, nameCondor )
         os.chdir( ".." )
 
+def uncertainty_breakdown_combined():
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN" 
+  postfix = tagABCDnn + tagSmooth
+  for tag in args.tags:
+    for variable in args.variables:
+      tagAllSyst = "{}_{}_{}_{}".format( variable, args.region, tag, postfix )
+      os.chdir( "combine" )
+      nameCondor = "SLA_breakdown_Run2_{}_{}_{}_{}".format( variable, args.region, tag, postfix )
+      nameLog = "log_Run2_{}_{}_{}".format( variable, args.region, tag, postfix )
+      if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
+      shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
+      shell.write(
+"#!/bin/bash\n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
+cd {0} \n\
+eval `scramv1 runtime -sh` \n\
+cd {1} \n\
+text2workspace.py Results/{2}/workspace.txt -o Results/{2}/workspace.root --channel-masks \n\
+cd Results/{2}/ \n\
+combine workspace.root -M MultiDimFit --saveWorkspace {3} -n .postfit \n\
+combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {3} -n .workspace.total \n\
+combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {3} --freezeNuisanceGroups THEORY -n .workspace.freeze_theory \n\
+combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {3} --freezeNuisanceGroups THEORY,SHAPE -n .workspace.freeze_theory_shape \n\
+combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {3} --freezeNuisanceGroups THEORY,SHAPE,NORM -n .workspace.freeze_theory_shape_norm \n\
+".format( cmsswbase, os.getcwd(), tagAllSyst, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ) )
+)
+      if config.options[ "COMBINE" ][ "ABCDNN" ]:
+        shell.write( "combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {} --freezeNuisanceGroups THEORY,SHAPE,NORM,ABCDNN -n .workspace.freeze_theory_shape_norm_abcdnn \n".format( " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ) ) )
+      shell.write( "combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid --snapshotName MultiDimFit {} --freezeParameters allConstrainedNuisances -n .workspace.freeze_all \n".format( " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ) ) )
+      shell.write( "plot1DScan.py higgsCombine.workspace.total.MultiDimFit.mH125.root --main-label \"Total Uncertainty\" --others higgsCombine.workspace.freeze_theory.MultiDimFit.mH125.root:\"Freeze Theory\":4 higgsCombine.workspace.freeze_theory_shape.MultiDimFit.mH125.root:\"Freeze Theory+Shape\":7 higgsCombine.workspace.freeze_theory_shape_norm.MultiDimFit.mH125.root:\"Freeze Theory+Shape+Norm\":6 " )
+      if config.options[ "COMBINE" ][ "ABCDNN" ]:
+        shell.write( "higgsCombine.workspace.freeze_theory_shape_norm_abcdnn.MultiDimFit.mH125:\"Freeze All\":8 " )
+      shell.write( "--output breakdown_Run2_{}_{}_{}_{} --y-max 2 --y-cut 5 --breakdown \"Theory,Shape,Norm,{}Stat\" \n".format( variable, args.region, tag, postfix, "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDnn," ) )
+      shell.close()
+      condor_template( nameLog, nameCondor )
+      os.chdir( ".." )
+
 def uncertainty_breakdown_era():
   trainings = get_trainings( args.tags, args.years, args.variables )
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
@@ -584,7 +622,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-cd limits_UL{2}_{3}_{4}_{5}_{6}/cmb/ \n\
+cd Results/{2}/{3}/ \n\
 combine workspace.root -M MultiDimFit -t -1 --saveWorkspace --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --cminDefaultMinimizerType Minuit -n postfit \n\
 combine workspace.root -M MultiDimFit -t -1 --algo grid --snapshotName MultiDimFit --setParameterRanges r=-100,100 -n workspace.total \n\
 combine workspace.root -M MultiDimFit -t -1 --algo grid --snapShotName MultiDimFit --setParameterRanges r=-100,100 --freezeNuisanceGroups SHAPE,NORM -n workspace.freeze_shape_norm \n\
@@ -598,7 +636,6 @@ cd .. \n".format(
       shell.close()
       condor_template( nameLog, nameCondor )
       os.chdir( ".." )
-  
 
   return
 

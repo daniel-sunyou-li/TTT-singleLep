@@ -29,7 +29,7 @@ options = {
     "UE": False,          # ue systematics
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
-    "ABCDNN": True,
+    "ABCDNN": False,
     "FINAL ANALYSIS": False
   },
   "HISTS": {
@@ -63,7 +63,7 @@ options = {
     "TEST PSEUDO DATA": False      # treat the unfiltered background MC as pseudo data to test the effect of filtering
   },
   "COMBINE": {
-    "ABCDNN": False,    # use ABCDnn and extended ABCD corrected histograms
+    "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
     "SMOOTH": True,    # use smoothed systematic histograms
     "GROUPS": False,    # evaluate significance and limits with combinations of systematic groups
     "IMPACTS": {
@@ -116,7 +116,7 @@ params = {
   },
   "MODIFY BINNING": {
     "STAT THRESHOLD": 0.1,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
-    "MIN MERGE": 1,             # merge at least this number of bins
+    "MIN MERGE": 5,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
     "LOWESS": 0.67,             # relative proportion of neighboring datapoints to consider during smoothing 
@@ -175,7 +175,7 @@ systematics = {
     "muRFcorrd": ( True, False, False ),
     "muR": ( True, False, False ),
     "muF": ( True, False, False ),
-    "isr": ( True, False, True ), # calls from PS breakdown
+    "isr": ( True, False, False ), # calls from PS breakdown
     "fsr": ( True, False, False ), # calls from PS breakdown
     "hotstat": ( True, False, False ),
     "hotcspur": ( True, False, False ),
@@ -268,6 +268,8 @@ systematics = {
   "XSEC": {
     "TTBAR": [ 0.91, 1.11 ], # hDamp uncertainty of +10/-7% added in quadrature with x-sec uncertainty of +4.8/-5.5%
     "TTH": 1.20,             # 15APR21 4tops meeting agreement
+    "TTTJ": [ 1.10, 1.12 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
+    "TTTW": [ 1.15, 1.16 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
     "TTTT": 1.04,            # same as TOP group
     "TOP": 1.04,             # aligning with 50% ttV, ttH and tt+xy uncertainties from OSDL and SSDL 4T analyses
     "EWK": 1.038             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV scale and pdf added in quadrature 
@@ -388,14 +390,14 @@ hist_bins = {
   "VR": {
     "LEPTON": [ "E", "M" ],
     "NH": [ "0", "1p" ],
-    "NB": [ "1", "2p" ],
-    "NJ": [ "4", "5", "6p" ]
+    "NB": [ "2", "3p" ],
+    "NJ": [ "4", "5", "6", "7p" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],
     "NH": [ "0p" ],
     "NB": [ "2p" ],
-    "NJ": [ "4b5" ]
+    "NJ": [ "4p" ]
   },
 }
 
@@ -404,9 +406,9 @@ event_cuts = {
   "pt_muon": 20,      # BASELINE = 20,  S1/2/3 = 20
   "met": 20,          # BASELINE = 20,  S1/2/3 = 20 
   "mtW": 0,           # BASELINE = 0,   S1/2/3 = 0
-  "met+mtW": 70.,     # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
-  "ht": 390,          # BASELINE = 350, S1/2 = 390, S3 = 390
-  "mindr_lj": 0.2,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
+  "met+mtW": 0.,     # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
+  "ht": 350,          # BASELINE = 350, S1/2 = 390, S3 = 390
+  "mindr_lj": 0.,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
   "dnn": 0.           # BASELINE = 0,   S1 = 0, S2 = 0.2, S3 = 0
 }
 
@@ -437,28 +439,29 @@ plot_params = {
     "NW": ( "NJetsWtagged", bins( 0, 6, 7 ), "W-tagged Jet Multiplicity" ),
     "NT": ( "NJetsTtagged", bins( 0, 4, 5 ), "t-tagged Jet Multiplicity" ),
     "DNN": ( "DNN_1to40_Run2_nJ4pnB1p", bins( 0, 1, 101 ), "DNN" ),
-    "DNN3": ( "DNN_1to3_3t", bins( 0, 1, 41 ), "DNN (1-3)" ),
-    "DNN5": ( "DNN_1to5_3t", bins( 0, 1, 41 ), "DNN (1-5)" ),
-    "DNN10": ( "DNN_1to10_3t", bins( 0, 1, 41 ), "DNN (1-10)" ),
-    "DNN20": ( "DNN_1to20_3t", bins( 0, 1, 41 ), "DNN (1-20)" ),
-    "DNN30": ( "DNN_1to30_3t", bins( 0, 1, 41 ), "DNN (1-30)" ),
-    "DNN40": ( "DNN_1to40_3t", bins( 0, 1, 41 ), "DNN (1-40)" ),
-    "ST": ( "AK4HTpMETpLepPt", bins( 0, 4000, 21 ), "S_T [GeV]"  ),
-    "MINM_LB": ( "minMleppBjet", bins( 0, 1000, 21 ), "min[M(l,b)] [GeV]" ),
-    "M_MINBBDR": ( "mass_minBBdr", bins( 0, 1400, 21 ), "M(b,b) with min(#DeltaR(b,b)) [GeV]" ),
+    #"DNN3": ( "DNN_1to3_3t", bins( 0, 1, 41 ), "DNN (1-3)" ), 
+    #"DNN5": ( "DNN_1to5_3t", bins( 0, 1, 41 ), "DNN (1-5)" ),
+    #"DNN10": ( "DNN_1to10_3t", bins( 0, 1, 41 ), "DNN (1-10)" ),
+    #"DNN20": ( "DNN_1to20_3t", bins( 0, 1, 41 ), "DNN (1-20)" ),
+    #"DNN30": ( "DNN_1to30_3t", bins( 0, 1, 41 ), "DNN (1-30)" ),
+    #"DNN40": ( "DNN_1to40_3t", bins( 0, 1, 41 ), "DNN (1-40)" ),
+    #"ST": ( "AK4HTpMETpLepPt", bins( 0, 4000, 21 ), "S_T [GeV]"  ),
+    #"MINM_LB": ( "minMleppBjet", bins( 0, 1000, 21 ), "min[M(l,b)] [GeV]" ),
+    #"M_MINBBDR": ( "mass_minBBdr", bins( 0, 1400, 21 ), "M(b,b) with min(#DeltaR(b,b)) [GeV]" ),
     "DR_LB": ( "deltaR_lepBJet_maxpt", bins( 0, 6.0, 21 ), "#DeltaR(l,b) with max[p_{T}(l,b)]" ),
-    "DR_LBB": ( "lepDR_minBBdr", bins( -1, 10, 21 ), "#DeltaR(l,bb) with min[#DeltaR(b,b)]" ),
+    #"DR_LBB": ( "lepDR_minBBdr", bins( -1, 10, 21 ), "#DeltaR(l,bb) with min[#DeltaR(b,b)]" ),
     "CENTRALITY": ( "centrality", bins( 0, 1.0, 21 ), "Centrality" ),
-    "DE_BB": ( "deltaEta_maxBB", bins( -6, 11, 21 ), "max[#Delta#eta(b,b)]" ),
-    "PT_CSV": ( "aveCSVpt", bins( -0.3, 1.1, 21 ), "ave(p_{T} weighted CSVv2) [GeV]" ),
+    "JETETA_AVG": ( "theJetEtaAverage_JetSubCalc", bins( -2.4, 2.4, 21 ), "Average Jet |#eta|" ),
+    #"DE_BB": ( "deltaEta_maxBB", bins( -6, 11, 21 ), "max[#Delta#eta(b,b)]" ),
+    #"PT_CSV": ( "aveCSVpt", bins( -0.3, 1.1, 21 ), "ave(p_{T} weighted CSVv2) [GeV]" ),
     "DR_BB": ( "aveBBdr", bins( 0, 6.0, 21 ), "ave[#DeltaR(b,b)]" ),
-    "FW0": ( "FW_momentum_0", bins( 0, 1, 21 ), "0^{th} FW moment [GeV]" ),
+    #"FW0": ( "FW_momentum_0", bins( 0, 1, 21 ), "0^{th} FW moment [GeV]" ),
     "FW1": ( "FW_momentum_1", bins( 0, 1, 21 ), "1^{st} FW moment [GeV]" ),
-    "FW2": ( "FW_momentum_2", bins( 0, 1, 21 ), "2^{nd} FW moment [GeV]" ),
+    #"FW2": ( "FW_momentum_2", bins( 0, 1, 21 ), "2^{nd} FW moment [GeV]" ),
     "FW3": ( "FW_momentum_3", bins( 0, 1, 21 ), "3^{rd} FW moment [GeV]" ),
     "FW4": ( "FW_momentum_4", bins( 0, 1, 21 ), "4^{th} FW moment [GeV]" ),
-    "FW5": ( "FW_momentum_5", bins( 0, 1, 21 ), "5^{th} FW moment [GeV]" ),
-    "FW6": ( "FW_momentum_6", bins( 0, 1, 21 ), "6^{th} FW moment [GeV]" ),
+    #"FW5": ( "FW_momentum_5", bins( 0, 1, 21 ), "5^{th} FW moment [GeV]" ),
+    #"FW6": ( "FW_momentum_6", bins( 0, 1, 21 ), "6^{th} FW moment [GeV]" ),
     "M_JJJ": ( "mass_maxJJJpt", bins( 0, 3000, 21 ), "M(jjj) with max[p_{T}(jjj)] [GeV]" ),
     "PT_B1": ( "BJetLeadPt", bins( 0, 500, 21 ), "p_{T}{b_{1}) [GeV]" ),
     "MINDR_BB": ( "deltaR_minBB", bins( 0, 4, 21 ), "min[#DeltaR(b,b)]" ),
@@ -466,48 +469,48 @@ plot_params = {
     "MT_LMET": ( "MT_lepMet", bins( 0, 600, 16 ), "M_{T}(l,#slash{E}_{T}) [GeV]" ),
     "HEMIOUT": ( "hemiout", bins( 0, 2000, 21 ), "Hemiout [GeV]" ),
     "M_LJ0": ( "mass_lepJets0", bins( 0, 2000, 21 ), "M(l,j_{1}) [GeV]" ),
-    "M_LJ1": ( "mass_lepJets1", bins( 0, 2000, 21 ), "M(l,j_{2}) [GeV]" ),
-    "M_LJ2": ( "mass_lepJets2", bins( 0, 2000, 21 ), "M(l,j_{3}) [GeV]" ),
+    #"M_LJ1": ( "mass_lepJets1", bins( 0, 2000, 21 ), "M(l,j_{2}) [GeV]" ),
+    #"M_LJ2": ( "mass_lepJets2", bins( 0, 2000, 21 ), "M(l,j_{3}) [GeV]" ),
     "MT2BB": ( "MT2bb", bins( 0, 400, 21 ), "MT2bb [GeV]" ),
-    "M_LB0": ( "mass_lepBJet0", bins( 0, 2000, 21 ), "M(l,b_{1}) [GeV]" ),
+    #"M_LB0": ( "mass_lepBJet0", bins( 0, 2000, 21 ), "M(l,b_{1}) [GeV]" ),
     "M_MINDR_LB": ( "mass_lepBJet_mindr", bins( 0, 1000, 21 ), "M(l,b) with min[#DeltaR(l,b)] [GeV]" ),
     "PT_J1": ( "theJetLeadPt", bins( 0, 500, 21 ), "p_{T}(j_{1}) [GeV]" ),
     "PT_J2": ( "secondJetPt", bins( 0, 500, 21 ), "2^{nd} Jet p_{T} [GeV]" ),
-    "PT_J5": ( "fifthJetPt", bins( 0, 300, 21 ), "5^{th} Jet p_{T} [GeV]" ),
-    "PT_J6": ( "sixthJetPt", bins( 0, 200, 21 ), "6^{th} Jet p_{T} [GeV]" ),
-    "J5PT": ( "PtFifthJet", bins( 0, 800, 21 ), "5^{th} Jet p_{T} [GeV]" ),
-    "M_MINLLDR": ( "mass_minLLdr", bins( 0, 600, 21 ), "M(j,j) with min[#DeltaR(j,j)], j #neq b [GeV]" ),
+    #"PT_J5": ( "fifthJetPt", bins( 0, 300, 21 ), "5^{th} Jet p_{T} [GeV]" ),
+    #"PT_J6": ( "sixthJetPt", bins( 0, 200, 21 ), "6^{th} Jet p_{T} [GeV]" ),
+    #"J5PT": ( "PtFifthJet", bins( 0, 800, 21 ), "5^{th} Jet p_{T} [GeV]" ),
+    #"M_MINLLDR": ( "mass_minLLdr", bins( 0, 600, 21 ), "M(j,j) with min[#DeltaR(j,j)], j #neq b [GeV]" ),
     "M_MAXBB": ( "mass_maxBBmass", bins( 0, 2000, 21 ), "max[M(b,b)] [GeV]" ),
-    "DR_MINLJ": ( "deltaR_lepJetInMinMljet", bins( 0, 4.5, 21 ), "#DeltaR(l,j) with min M(l, j)" ),
-    "DP_MINLJ": ( "deltaPhi_lepJetInMinMljet", bins( -4, 4, 21 ), "#Delta #Phi(l,j) with min M(l, j)" ),
-    "DR_MINLB": ( "deltaR_lepbJetInMinMlb", bins( 0, 4.5, 21 ), "#DeltaR(l,b) with min M(l, b)" ),
-    "DP_MINLB": ( "deltaPhi_lepbJetInMinMlb", bins( -11, 5, 21 ), "#Delta #Phi(l,b) with min M(l, b)" ),
+    #"DR_MINLJ": ( "deltaR_lepJetInMinMljet", bins( 0, 4.5, 21 ), "#DeltaR(l,j) with min M(l, j)" ),
+    #"DP_MINLJ": ( "deltaPhi_lepJetInMinMljet", bins( -4, 4, 21 ), "#Delta #Phi(l,j) with min M(l, j)" ),
+    #"DR_MINLB": ( "deltaR_lepbJetInMinMlb", bins( 0, 4.5, 21 ), "#DeltaR(l,b) with min M(l, b)" ),
+    #"DP_MINLB": ( "deltaPhi_lepbJetInMinMlb", bins( -11, 5, 21 ), "#Delta #Phi(l,b) with min M(l, b)" ),
     "M_JW": ( "M_allJet_W", bins( 0, 5000, 21 ), "M(J_{all}, W_{lep}) [GeV]" ),
     "HT_B": ( "HT_bjets", bins( 0, 2000, 21 ), "HT(bjets) [GeV]" ),
     "RATIO_HT": ( "ratio_HTdHT4leadjets", bins( 1, 2.5, 16 ),  "HT/HT(4 leading jets)" ),
-    "CSV_J3": ( "csvJet3", bins( 0, 1, 21 ), "DeepCSV(3rdPtJet)" ),
+    #"CSV_J3": ( "csvJet3", bins( 0, 1, 21 ), "DeepCSV(3rdPtJet)" ),
     "CSV_J4": ( "csvJet4", bins( 0, 1, 21 ), "DeepCSV(4thPtJet)" ),
-    "CSVB_1": ( "firstcsvb_bb", bins( 0, 1, 21 ), "DeepJet (1st)" ),
+    #"CSVB_1": ( "firstcsvb_bb", bins( 0, 1, 21 ), "DeepJet (1st)" ),
     "CSVB_2": ( "secondcsvb_bb", bins( 0, 1, 21 ), "DeepJet (2nd)" ),
     "CSVB_3": ( "thirdcsvb_bb", bins( 0, 1, 21 ), "DeepJet (3rd)" ),
     "CSVB_4": ( "fourthcsvb_bb", bins( 0, 1, 21 ), "DeepJet (4th)" ),
     "HT_2M": ( "HT_2m", bins( 0, 2000, 41 ), "H_{T}(b_{1},b_{2}) [GeV]" ),
-    "SPHERICITY": ( "Sphericity", bins( 0, 1.0, 21 ), "Sphericity" ),
+    #"SPHERICITY": ( "Sphericity", bins( 0, 1.0, 21 ), "Sphericity" ),
     "APLANARITY": ( "Aplanarity", bins( 0, 0.5, 21 ), "Aplanarity" ),
     "BDT3J_1": ( "BDTtrijet1", bins( -1, 1, 21 ), "trijet1 discriminator" ),
     "BDT3J_2": ( "BDTtrijet2", bins( -1, 1, 21 ), "trijet2 discriminator" ),
     "BDT3J_3": ( "BDTtrijet3", bins( -1, 1, 21 ), "trijet3 discriminator" ),
-    "BDT3J_4": ( "BDTtrijet4", bins( -1, 1, 21 ), "trijet4 discriminator" ),
-    "NH": ( "NresolvedTops1pFake", bins( 0, 3, 4 ), "N_{HOT}" ),
-    "HOT1_MASS": ( "HOTGoodTrijet1_mass", bins( 0, 250, 21 ), "HOTGoodTrijet1_mass [GeV]" ),
-    "HOT1_DJMASS": ( "HOTGoodTrijet1_dijetmass", bins( 0, 250, 21 ), "HOTGoodTrijet1_dijetmass [GeV]" ),
+    #"BDT3J_4": ( "BDTtrijet4", bins( -1, 1, 21 ), "trijet4 discriminator" ),
+    #"NH": ( "NresolvedTops1pFake", bins( 0, 3, 4 ), "N_{HOT}" ),
+    #"HOT1_MASS": ( "HOTGoodTrijet1_mass", bins( 0, 250, 21 ), "HOTGoodTrijet1_mass [GeV]" ),
+    #"HOT1_DJMASS": ( "HOTGoodTrijet1_dijetmass", bins( 0, 250, 21 ), "HOTGoodTrijet1_dijetmass [GeV]" ),
     "HOT1_PTRATIO": ( "HOTGoodTrijet1_pTratio", bins( 0, 1, 21 ), "HOTGoodTrijet1_pTratio" ),
-    "HOT1_DRJJ": ( "HOTGoodTrijet1_dRtridijet", bins( 0, 4, 21 ), "HOTGoodTrijet1_dRtridijet" ),
-    "HOT1_CSVNOJJ": ( "HOTGoodTrijet1_csvJetnotdijet", bins( -2.2, 1.2, 21 ), "HOTGoodTrijet1_csvJetnotdijet" ),
+    #"HOT1_DRJJ": ( "HOTGoodTrijet1_dRtridijet", bins( 0, 4, 21 ), "HOTGoodTrijet1_dRtridijet" ),
+    #"HOT1_CSVNOJJ": ( "HOTGoodTrijet1_csvJetnotdijet", bins( -2.2, 1.2, 21 ), "HOTGoodTrijet1_csvJetnotdijet" ),
     "HOT1_DRNOJJ": ( "HOTGoodTrijet1_dRtrijetJetnotdijet", bins( 0, 4, 21 ), "HOTGoodTrijet1_dRtrijetJetnotdijet" ),
-    "HOT2_MASS": ( "HOTGoodTrijet2_mass", bins( 0, 300, 21 ), "HOTGoodTrijet2_mass [GeV]" ),
-    "HOT2_DJMASS": ( "HOTGoodTrijet2_dijetmass", bins( 0, 200, 21 ), "HOTGoodTrijet2_dijetmass [GeV]" ),
-    "HOT2_PTRATIO": ( "HOTGoodTrijet2_pTratio", bins( 0, 1, 21 ), "HOTGoodTrijet2_pTratio" ),
+    #"HOT2_MASS": ( "HOTGoodTrijet2_mass", bins( 0, 300, 21 ), "HOTGoodTrijet2_mass [GeV]" ),
+    #"HOT2_DJMASS": ( "HOTGoodTrijet2_dijetmass", bins( 0, 200, 21 ), "HOTGoodTrijet2_dijetmass [GeV]" ),
+    #"HOT2_PTRATIO": ( "HOTGoodTrijet2_pTratio", bins( 0, 1, 21 ), "HOTGoodTrijet2_pTratio" ),
     "HOT2_DRJJ": ( "HOTGoodTrijet2_dRtridijet", bins( 0, 4, 21 ), "HOTGoodTrijet2_dRtridijet" ),
     "HOT2_CSVNOJJ": ( "HOTGoodTrijet2_csvJetnotdijet", bins( 0, 1, 21 ), "HOTGoodTrijet2_csvJetnotdijet" ),
     "HOT2_DRNOJJ": ( "HOTGoodTrijet2_dRtrijetJetnotdijet", bins( 0, 4, 21 ), "HOTGoodTrijet2_dRtrijetJetnotdijet" ),

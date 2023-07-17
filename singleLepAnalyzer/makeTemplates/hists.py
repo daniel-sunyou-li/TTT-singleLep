@@ -59,7 +59,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
   
   # modify weights
-  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==1 by 1.5
+  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==1 by 1.667
   mc_weights = { "NOMINAL": "1.667" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in xsec:
     nTrueHist = nHist[ process ]

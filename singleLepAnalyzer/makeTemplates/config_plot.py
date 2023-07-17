@@ -6,8 +6,8 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": False,
-  "ABCDNN": True,
+  "REBINNED": True,
+  "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
   "COMPARE SHAPES": False,
@@ -15,7 +15,7 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "REAL PULL": False,
   "BLIND": False,
-  "Y LOG": True,
+  "Y LOG": False,
   "SMOOTH": True,
 }
 

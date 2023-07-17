@@ -880,6 +880,8 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
 
   for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ] + [ "ABCDNN" ]:
     if group in [ "ABCDNN" ] and not doABCDNN: continue
+    if group in [ "QCD", "TTNOBB", "TTBB" ] and doABCDNN: continue
+    print( "  + Adding group: {}".format( group ) )
     ratio_hists[ group ] = ROOT.TH1F( group, group, len( categories_lep ), 0, len( categories_lep ) )
     ratio_legend.AddEntry( ratio_hists[ group ], group, "f" )
     for i, category in enumerate( sorted( categories_lep ) ):
@@ -996,7 +998,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
             hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
             hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
             for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
-              if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group != "EWK" ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group != "QCD" ) or ( ( "TOP" in syst and "PT" not in syst ) and group != "TOP" ) or ( "TTH" in syst and group != "TTH" ): # handle theory systematics de-correlated by process
+              if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group != "EWK" ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group != "QCD" ) or ( ( "TOP" in syst and "PT" not in syst ) and group != "TOP" ) or ( "TTH" in syst and group != "TTH" ) or ( "TTTT" in syst and group != "TTTT" ): # handle theory systematics de-correlated by process
                 hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
                 hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
               else: 
@@ -1020,7 +1022,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
                 hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ].Clone()
         else:
           for group in sorted( groups[ "BKG" ][ "SUPERGROUP" ].keys(), reverse = True ):
-            if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group != "EWK" ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group != "QCD" ) or ( ( "TOP" in syst and "PT" not in syst ) and group != "TOP" ) or ( "TTH" in syst and group != "TTH" ): # handle process de-correlated theory systematics
+            if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group != "EWK" ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group != "QCD" ) or ( ( "TOP" in syst and "PT" not in syst ) and group != "TOP" ) or ( "TTH" in syst and group != "TTH" ) or ( "TTTT" in syst and group != "TTTT" ): # handle process de-correlated theory systematics
               try: 
                 hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
                 hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
@@ -1221,7 +1223,7 @@ def plot_shifts_sig( templateDir, lep, groups, histograms, histogramsSmooth, cat
     for syst in syst_list:
       if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in syst: continue
       if syst in config_plot.params[ "EXCLUDE SYST" ]: continue 
-      if ( "QCD" in syst and "FLAVOR" not in syst ) or "TOP" in syst or "TTBAR" in syst or "EWK" in syst or "TTH" in syst: continue
+      if ( "QCD" in syst and "FLAVOR" not in syst ) or "TOP" in syst or "TTBAR" in syst or "EWK" in syst or "TTH" in syst or "TTTT" in syst: continue
       if "TOPPT" in syst: continue
       if "ABCD" in syst: continue
       systSmooth = syst + config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()

@@ -10,10 +10,10 @@ from utils import hist_parse, abcdnn_tag
 import config
 
 parser = ArgumentParser()
-parser.add_argument( "-y", "--year", required = True, help = "16APV,16,17,18" )
-parser.add_argument( "-t", "--tag", required = True )
-parser.add_argument( "-r", "--region", required = True, help = ",".join( list( config.region_prefix.keys() ) ) )
-parser.add_argument( "-v", "--variable", required = True )
+parser.add_argument( "-y", "--year", default = "", help = "16APV,16,17,18" )
+parser.add_argument( "-t", "--tag" )
+parser.add_argument( "-r", "--region", help = ",".join( list( config.region_prefix.keys() ) ) )
+parser.add_argument( "-v", "--variable" )
 parser.add_argument( "-m", "--mode", default = 4, help = "0,1,2,3,4" )
 parser.add_argument( "-c", "--card", help = "Datacard input to add systematic groups to" )
 parser.add_argument( "--shapeSyst", action = "store_true" )
@@ -26,15 +26,16 @@ args = parser.parse_args()
 import CombineHarvester.CombineTools.ch as ch
 import ROOT
 
-if args.year == "16APV": 
-  import samplesUL16APV as samples
-elif args.year == "16":
-  import samplesUL16 as samples
-elif args.year == "17": 
-  import samplesUL17 as samples
-elif args.year == "18": 
-  import samplesUL18 as samples
-else: quit( "[ERR] Invalid -y (--year) argument. Quitting" ) 
+if not args.groups:
+  if args.year == "16APV": 
+    import samplesUL16APV as samples
+  elif args.year == "16":
+    import samplesUL16 as samples
+  elif args.year == "17": 
+    import samplesUL17 as samples
+  elif args.year == "18": 
+    import samplesUL18 as samples
+  else: quit( "[ERR] Invalid -y (--year) argument. Quitting" ) 
 
 def jet_count( category ):
   parts = category.split( "n" )
@@ -265,9 +266,9 @@ class DataCard():
       self.add_norm( "LUMI_17_18", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI_17_18" ] )
       if self.abcdnn: self.add_norm( "LUMI_17_18", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI_17_18" ] )
  
-    self.add_norm( "ID_EL_$ERA", self.signals, self.categories[ "E" ], config.systematics[ "ID" ][ "E" ] )
-    self.add_norm( "ID_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
-    if self.abcdnn: self.add_norm( "ID_EL_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
+    self.add_norm( "ID_EL", self.signals, self.categories[ "E" ], config.systematics[ "ID" ][ "E" ] )
+    self.add_norm( "ID_EL", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
+    if self.abcdnn: self.add_norm( "ID_EL", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "E" ] )
 
     self.add_norm( "TRIG_EL_$ERA", self.signals, self.categories[ "E" ], config.systematics[ "TRIG" ][ "E" ] )
     self.add_norm( "TRIG_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "TRIG" ][ "E" ] )
@@ -277,8 +278,8 @@ class DataCard():
     self.add_norm( "ISO_EL_$ERA", self.backgrounds, [ category for category in self.categories[ "E" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "E" ] )
     if self.abcdnn: self.add_norm( "ISO_EL_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "E" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ISO" ][ "E" ] )
 
-    self.add_norm( "ID_MU_$ERA", self.signals, self.categories[ "M" ], config.systematics[ "ID" ][ "M" ] )
-    self.add_norm( "ID_MU_$ERA", self.backgrounds, [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "M" ] )
+    self.add_norm( "ID_MU", self.signals, self.categories[ "M" ], config.systematics[ "ID" ][ "M" ] )
+    self.add_norm( "ID_MU", self.backgrounds, [ category for category in self.categories[ "M" ] if category not in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "M" ] )
     if self.abcdnn: self.add_norm( "ID_MU_$ERA", self.minor_backgrounds, [ category for category in self.categories[ "M" ] if category in self.categories[ "ABCDNN" ] ], config.systematics[ "ID" ][ "M" ] )
 
     self.add_norm( "TRIG_MU_$ERA", self.signals, self.categories[ "M" ], config.systematics[ "TRIG" ][ "M" ] )
@@ -312,7 +313,7 @@ class DataCard():
       self.add_shape( "PILEUPJETID", self.backgrounds, self.categories[ "SF" ], bSmooth, False )
       if self.abcdnn: self.add_shape( "PILEUPJETID", self.minor_backgrounds, self.categories[ "ABCDNN" ], bSmooth, False )
 
-    if self.year in [ "16APV", "16", "17" ] and config.systematics[ "MC" ][ "prefire" ][0]:
+    if config.systematics[ "MC" ][ "prefire" ][0]:
       bSmooth = self.smooth and config.systematics[ "MC" ][ "prefire" ][2]
       self.add_shape( "PREFIRE", self.signals, self.categories[ "ALL" ], bSmooth, True )
       self.add_shape( "PREFIRE", self.backgrounds, self.categories[ "SF" ], bSmooth, True )
@@ -430,6 +431,9 @@ class DataCard():
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
     
+    self.add_xsec( "XSEC_TTTW", [ "TTTW" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTW" ] )
+    self.add_xsec( "XSEC_TTTJ", [ "TTTJ" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTJ" ] )
+    self.add_xsec( "XSEC_TTTT", [ "TTTT" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTT" ] )
     self.add_xsec( "XSEC_TTBAR", [ "TTBB", "TTNOBB" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTBAR" ] )
     self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "EWK" ] )
     if self.abcdnn and "EWK" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "EWK" ] )
@@ -501,7 +505,7 @@ class DataCard():
       if args.normSyst:
         if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSYST$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ] )
         if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSTAT$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ]  )
-        if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE$ERA", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ] )
+        if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ] )
 
     if args.shapeSyst:
       if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
@@ -601,56 +605,74 @@ def main():
   datacard.rename_and_write()
   
 def add_groups_datacard( nDataCard ):
-  fDataCard = open( nDataCard, "a" )
   tagSmooth = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() if config.options[ "COMBINE"][ "SMOOTH" ] else ""
   doABCDNN = config.options[ "COMBINE" ][ "ABCDNN" ]
   groups = { "NORM": [], "SHAPE": [], "THEORY": [], "ABCDNN": [] }
-  groups[ "NORM" ].append( "LUMI_{}".format( args.year ) )
   groups[ "NORM" ].append( "LUMI_RUN2" )
   groups[ "NORM" ].append( "LUMI_17_18" )
-  groups[ "NORM" ].append( "ID_EL_{}".format( args.year ) )
-  groups[ "NORM" ].append( "TRIG_EL_{}".format( args.year ) )
-  groups[ "NORM" ].append( "ISO_EL_{}".format( args.year ) )
-  groups[ "NORM" ].append( "ID_MU_{}".format( args.year ) )
-  groups[ "NORM" ].append( "TRIG_MU_{}".format( args.year ) )
-  groups[ "NORM" ].append( "ISO_MU_{}".format( args.year ) )
-  groups[ "NORM" ].append( "XSEC_TTBAR" )
-  groups[ "NORM" ].append( "XSEC_EWK" )
-  groups[ "NORM" ].append( "XSEC_TOP" )
-  groups[ "NORM" ].append( "XSEC_TTH" )
-  groups[ "NORM" ].append( "TTHF" )
-  groups[ "SHAPE" ].append( "PILEUP{}".format( tagSmooth ) )
-  groups[ "SHAPE" ].append( "PREFIRE{}{}".format( tagSmooth , args.year ) )
-  groups[ "SHAPE" ].append( "HF{}".format( tagSmooth ) )
-  groups[ "SHAPE" ].append( "LF{}".format( tagSmooth ) )
-  groups[ "SHAPE" ].append( "HFSTATS1{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "HFSTATS2{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "LFSTATS1{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "LFSTATS2{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "CFERR1{}".format( tagSmooth ) )
-  groups[ "SHAPE" ].append( "CFERR2{}".format( tagSmooth ) )
-  groups[ "SHAPE" ].append( "HOTSTAT{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "HOTCSPUR{}{}".format( tagSmooth, args.year ) )
-  groups[ "SHAPE" ].append( "HOTCLOSURE{}{}".format( tagSmooth, args.year ) )
-  for systJEC in config.systematics[ "REDUCED JEC" ]:
-    jecSYST_tag = "JEC{}".format( tagSmooth ).replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) )
-    if "Era" in systJEC:
-      jecSYST_tag += args.year 
-    groups[ "SHAPE" ].append( jecSYST_tag )
-  for theory in [ "PDF", "MURF", "ISR", "FSR" ]:
+  groups[ "NORM" ].append( "ID_EL" )
+  groups[ "NORM" ].append( "ID_MU" )
+  groups[ "THEORY" ].append( "XSEC_TTTW" )
+  groups[ "THEORY" ].append( "XSEC_TTTJ" )
+  groups[ "THEORY" ].append( "XSEC_TTTT" )
+  groups[ "THEORY" ].append( "XSEC_EWK" )
+  groups[ "THEORY" ].append( "XSEC_TOP" )
+  groups[ "THEORY" ].append( "XSEC_TTH" )
+  groups[ "SHAPE" ].append( "PILEUP" )
+  groups[ "SHAPE" ].append( "HF" )
+  groups[ "SHAPE" ].append( "LF" )
+  groups[ "SHAPE" ].append( "CFERR1" )
+  groups[ "SHAPE" ].append( "CFERR2" )
+  if not doABCDNN:
+    groups[ "NORM" ].append( "TTHF" )
+    groups[ "THEORY" ].append( "XSEC_TTBAR" )
+  for era in [ "16APV", "16", "17", "18" ]:
+    if args.year != "" and era != args.year: continue
+    groups[ "NORM" ].append( "LUMI_{}".format( era ) )
+    groups[ "NORM" ].append( "TRIG_EL_{}".format( era ) )
+    groups[ "NORM" ].append( "ISO_EL_{}".format( era ) )
+    groups[ "NORM" ].append( "TRIG_MU_{}".format( era ) )
+    groups[ "NORM" ].append( "ISO_MU_{}".format( era ) )
+    groups[ "SHAPE" ].append( "PREFIRE{}".format( era ) )
+    groups[ "SHAPE" ].append( "HFSTATS1{}".format( era ) )
+    groups[ "SHAPE" ].append( "HFSTATS2{}".format( era ) )
+    groups[ "SHAPE" ].append( "LFSTATS1{}".format( era ) )
+    groups[ "SHAPE" ].append( "LFSTATS2{}".format( era ) )
+    groups[ "SHAPE" ].append( "HOTSTAT{}".format( era ) )
+    groups[ "SHAPE" ].append( "HOTCSPUR{}".format( era ) )
+    groups[ "SHAPE" ].append( "HOTCLOSURE{}".format( era ) )
+
+    for systJEC in config.systematics[ "REDUCED JEC" ]:
+      if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+      jecSYST_tag = "JEC{}".format( tagSmooth ).replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + era ).replace( "APV", "" ).replace( "_", "" ).upper() )
+      if "Era" in systJEC:
+        jecSYST_tag += era
+      groups[ "SHAPE" ].append( jecSYST_tag )
+
+  for theory in [ "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ]:
     groups[ "THEORY" ].append( theory + "SIG" )
     for process in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+      if process in [ "TTNOBB", "TTBB", "QCD" ] and doABCDNN: continue
       if process in [ "TTNOBB", "TTBB" ]:
-        groups[ "THEORY" ].append( theory + "TTBAR" + tagSmooth )
+        groups[ "THEORY" ].append( theory + "TTBAR" )
       else:
-        groups[ "THEORY" ].append( theory + process + tagSmooth )
+        groups[ "THEORY" ].append( theory + process )
+  groups[ "THEORY" ].append( "PDF" )
   if doABCDNN:
-    groups[ "ABCDNN" ].append( "EXTABCDSYST" )
-    groups[ "ABCDNN" ].append( "EXTABCDSTAT" )
+    for era in [ "16APV", "16", "17", "18" ]:
+      if args.year != "" and era != args.year: continue
+      groups[ "ABCDNN" ].append( "EXTABCDSYST{}".format( era ) )
+      groups[ "ABCDNN" ].append( "EXTABCDSTAT{}".format( era ) )
+      groups[ "ABCDNN" ].append( "ABCDNNPEAK{}".format( era ) )
+      groups[ "ABCDNN" ].append( "ABCDNNTAIL{}".format( era ) )
     groups[ "ABCDNN" ].append( "EXTABCDCLOSURE" )
-    groups[ "ABCDNN" ].append( "ABCDNNMODEL" + tagSmooth )
-    groups[ "ABCDNN" ].append( "ABCDNNSAMPLE" + tagSmooth )
+    groups[ "ABCDNN" ].append( "ABCDNNCLOSURE" )
 
+  print( "Adding NORM group: {}".format( " ".join( groups[ "NORM" ] ) ) )
+  print( "Adding SHAPE group: {}".format( " ".join( groups[ "SHAPE" ] ) ) )
+  print( "Adding THEORY group: {}".format( " ".join( groups[ "THEORY" ] ) ) )
+  print( "Adding ABCDNN group: {}".format( " ".join( groups[ "THEORY" ] ) ) )
+  fDataCard = open( nDataCard, "a" )
   fDataCard.write( "NORM   group = {} \n".format( " ".join( groups[ "NORM" ] ) ) )
   fDataCard.write( "SHAPE  group = {} \n".format( " ".join( groups[ "SHAPE" ] ) ) )
   fDataCard.write( "THEORY group = {} \n".format( " ".join( groups[ "THEORY" ] ) ) )
