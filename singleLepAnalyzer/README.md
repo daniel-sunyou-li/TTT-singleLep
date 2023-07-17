@@ -15,6 +15,7 @@ Before running this repository, run the following setup instructions once (prepa
     cd HiggsAnalysis/CombinedLimit
     git fetch origin
     git checkout v8.2.0
+    cd $CMSSW_BASE/src/
     git clone https://github.com/cms-analysis/CombineHarvester.git CombineHarvester
     scramv1 b clean; scramv1 b
     # retrieve singleLepAnalyzer
