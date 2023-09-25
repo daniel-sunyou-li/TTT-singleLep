@@ -59,8 +59,8 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
   
   # modify weights
-  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==1 by 1.667
-  mc_weights = { "NOMINAL": "1.667" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
+  # scale up MC samples used in DNN training where dataset partitioned into 60/20/20 so scale isTraining==2||3 by 2.5
+  mc_weights = { "NOMINAL": "2.5" if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ) else "1" } # weights only applied to MC
   if process in xsec:
     nTrueHist = nHist[ process ]
     for splitPrefix in samples.split:
@@ -107,6 +107,9 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
     if config.systematics[ "MC" ][ "prefire" ]:
       mc_weights[ "PREFIRE" ] = { "UP": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbUp_CommonCalc"),
                                   "DN": mc_weights[ "NOMINAL" ].replace("L1NonPrefiringProb_CommonCalc","L1NonPrefiringProbDown_CommonCalc") }
+    if config.systematics[ "MC" ][ "alphaS" ][0] and config.options[ "GENERAL" ][ "PDF" ]:
+      mc_weights[ "ALPHAS" ] = { "UP": "alphaSWeights[1] * {}".format( mc_weights[ "NOMINAL" ] ),
+                                 "DN": "alphaSWeights[0] * {}".format( mc_weights[ "NOMINAL" ] ) }
     if config.systematics[ "MC" ][ "muRFcorrd" ][0]:
       mc_weights[ "MURFCORRD" ] = { "UP": "renormWeights[5] * {}".format( mc_weights[ "NOMINAL" ] ),
                                     "DN": "renormWeights[3] * {}".format( mc_weights[ "NOMINAL" ] ) }
@@ -192,13 +195,13 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
   
   # modify cuts
   cuts = { "BASE": config.base_cut }
-  cuts[ "LEPTON" ] = " && is Electron == 1" if "isE" in category else " && isMuon == 1"
+  cuts[ "LEPTON" ] = " && isElectron == 1" if "isE" in category else " && isMuon == 1"
   if "TTToSemiLepton" in process and "HT500" in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + cuts[ "LEPTON" ] + " && isHTgt500Njetge9==1"
   elif "TTToSemiLepton" in process and "HT500" not in process: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + cuts[ "LEPTON" ] + " && isHTgt500Njetge9==0"
   else: cuts[ "NOMINAL" ] = cuts[ "BASE" ] + cuts[ "LEPTON" ]
   cuts[ "ABCDNN" ] = cuts[ "BASE" ] + cuts[ "LEPTON" ]
   if ( ( process.startswith( "TTTo" ) or process.startswith( "TTTW" ) or process.startswith( "TTTJ" ) ) and "DNN" in variable ):
-    cuts[ "NOMINAL" ] += " && ( isTraining == 1 )" # isTraining==1 used for application (60%) and isTraining==2 (20%) and 3 (20%) used in training/validation
+    cuts[ "NOMINAL" ] += " && ( isTraining == 2 || isTraining == 3 )" # isTraining==1 used for application (60%) and isTraining==2 (20%) and 3 (20%) used in training/validation
   if year == "18" and "isE" in category: # exclude electrons that fall in this HEM region which resulted in many misidentifications of jets as electrons
     cuts[ "NOMINAL" ] += " && ( leptonEta_MultiLepCalc > -1.3 || ( leptonPhi_MultiLepCalc < -1.57 || leptonPhi_MultiLepCalc > -0.87 ) )"
 
@@ -427,6 +430,11 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
             "{} * ({})".format( mc_weights[ syst.upper() ][ shift ], cuts[ "NOMINAL" ] )
           )
           nSyst += 1
+        elif syst.upper() in [ "ALPHAS" ]:
+          rTree[ process ].Draw(
+            "{} >> {}".format( variableName, histTag ),
+            "{} * ({})".format( mc_weights[ "ALPHAS" ][ shift ], cuts[ "NOMINAL" ] )
+          )
         else:
           print( "[WARN] {} turned on, but excluded for {} in traditional SF {}...".format( syst.upper() + shift, process, category ) )
         if syst.upper() in config.params[ "ABCDNN" ][ "SYSTEMATICS" ] and doABCDNN and config.systematics[ "MC" ][ syst ][0]:
@@ -469,7 +477,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
 def numTrueHist( useJES, useABCDNN ):
   def add_process( nHist, group, key, process, shift, postfix ):
-    rFile = ROOT.TFile.Open( os.path.join( config.inputDir[ args.year ].replace( "step3", "step1hadds" ), shift + "/", samples.samples[ group ][ process ] + "_{}.root".format( postfix ) ) )
+    rFile = ROOT.TFile.Open( os.path.join( config.inputDir[ args.year ].replace( "step3", "step1hadds" ).replace( "step2", "step1hadds" ), shift + "/", samples.samples[ group ][ process ] + "_{}.root".format( postfix ) ) )
     nHist[ key ] = rFile.Get( "NumTrueHist" ).Integral()
     rFile.Close()
     return nHist

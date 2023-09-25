@@ -112,7 +112,7 @@ cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
 python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts --systematics {6}".format(
+python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6}".format(
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )
@@ -816,6 +816,46 @@ rm *{8}*".format(
         else:
           write_shell( fitName, fitVar, fits, tag, variable, postfix )
 
+def likelihood_fit_2D():
+  if all( year_ in [ "16APV", "16", "17", "18" ] for year_ in args.years ):
+    trainings = get_trainings( args.tags, args.years, args.variables )
+    tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+    tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+    postfix = tagABCDnn + tagSmooth
+
+    for training_ in trainings:
+      for variable_ in training_[ "variable" ]:
+        nameCondor = "SLA_2NLL_{}_{}_{}_{}".format( training_[ "year" ], training_[ "tag" ], variable_, postfix )
+        nameLog = "log_UL{}_{}_{}".format( training_[ "year" ], args.region, training_[ "tag" ] )
+        os.chdir( "combine" )
+        if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
+        shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
+        shell.write(
+"#!/bin/bash \n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
+cd {0} \n\
+eval `scramv1 runtime -sh` \n\
+python create_datacard.py -y {2} -v {3} -r {4} -t {5} --xsecSyst \n\
+cd {1}/limits_UL{2}_{3}_{4}_{5}_{6}/ \n\
+combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 8 \n\
+text2workspace.py cmb/combined.txt.cmb -m 125 -P HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel --PO \"map=.*/TTTT:r_TTTT[1,0,10]\" --PO \"map=.*/SIG:r_SIG[1,0,10]\" -o cmb/workspace_2DNLL.root \n\
+combine -M MultiDimFit cmb/workspace_2DNLL.root -n .scan2D --algo grid --points 1600 -t -1 --cminDefaultMinimizer 0 -P r_SIG -P r_TTTT --setParameterRanges r_SIG=0,10:r_TTTT=0,10 \n\
+python plot_2D_scan.py -f cmb/higgsCombine.scan2D.MultiDimFit.mH125.root \n\
+combine -M MultiDimFit cmb/workspace_2NLL.root -n .robustHesse -P r_SIG -P r_TTTT --setParameterRanges r_SIG=0,10:r_TTTT=0,10 --robustHesse 1 --robustHesseSave 1 --saveFitResult --cminDefaultMinimizer 1 -t -1 \n\
+".format(
+  cmsswbase, os.getcwd(), training_[ "year" ], variable_, args.region, training_[ "tag" ], postfix,
+  " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
+  " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] )
+
+)
+        )
+        shell.close()
+        condor_template( nameLog, nameCondor )
+        os.chdir( ".." )
+  elif args.years in [ "Run2" ]:
+    quit()
+  else:
+    quit( "[ERR] Invalid -y (--year) argument used. Accepted inputs: 16APV, 16, 17, 18, Run2" )
 
 if args.step == "1": make_templates()
 elif args.step == "2": format_templates()
@@ -839,6 +879,8 @@ elif args.step == "fit":
     likelihood_fit_combined()
   if "16APV" in args.years or "16" in args.years or "17" in args.years or "18" in args.years:
     likelihood_fit_era()
+elif args.step == "fit2D":
+  likelihood_fit_2D()
 elif args.step == "breakdown":
   if "Run2" in args.years:
     uncertainty_breakdown_combined()

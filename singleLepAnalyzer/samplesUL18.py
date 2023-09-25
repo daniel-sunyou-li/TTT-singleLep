@@ -122,9 +122,11 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "DYM": [ "DYM200", "DYM400", "DYM600", "DYM800", "DYM1200", "DYM2500" ],
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "VV": [ "WW", "WZ", "ZZ" ],
-  "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
-  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10", "TTHB", "TTHnoB" ], 
-  "TTXY": [ "TTTT1", "TTT2", "TTT3", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+  "ST": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
+  "TTTT": split[ "TTTT" ],
+  "TTH": [ "TTHB", "TTHnoB" ],
+  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10" ], 
+  "TTXY": [ "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
   "TTCC": [ tt + "ttcc" for tt in ttbar ],
   "TT1B": [ tt + "tt1b" for tt in ttbar ],
@@ -141,11 +143,12 @@ groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ proce
 groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTNOBB": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).tolist(),
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
-  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB" ] + split[ "TTTT" ] ] ).tolist(),
+  "ST":  groups[ "BKG" ][ "PROCESS" ][ "ST" ],
+  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTV", "TTXY" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
-  "TTH": [ "TTHB", "TTHnoB" ],
-  "TTTT": split[ "TTTT" ]
+  "TTH": groups[ "BKG" ][ "PROCESS" ][ "TTH" ],
+  "TTTT": groups[ "BKG" ][ "PROCESS" ][ "TTTT" ]
 }
 
 groups[ "BKG" ][ "ABCDNN" ] = []

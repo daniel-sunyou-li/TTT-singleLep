@@ -165,7 +165,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
 
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         for syst in config.systematics[ "MC" ].keys():
-          if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst: continue
+          if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst or syst == "pdf": continue # pdf and data-driven uncertainty methods handled separately
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
@@ -191,7 +191,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
               hists_[ "CMB" ][ hist_tag( "TTBB", category, syst.upper() + shift ) ].Scale( scaleHF )
               hists_[ "CMB" ][ hist_tag( "TTNOBB", category, syst.upper() + shift ) ].Scale( scaleLF )
               count += 1
-      if config.options[ "GENERAL" ][ "PDF" ]:
+      if config.systematics[ "MC" ][ "pdf" ][0]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           hists_[ "CMB" ][ hist_tag( "TTBB", category, "PDF" + str(i) ) ].Scale( scaleHF )
           hists_[ "CMB" ][ hist_tag( "TTNOBB", category, "PDF" + str(i) ) ].Scale( scaleLF )
@@ -221,6 +221,7 @@ def combine_histograms( hists, variable, categories, groups, doABCDNN ):
     count[ hist_key ] = 0
     for hist_name in sorted( hists[ hist_key ].keys() ):
       parse = hist_parse( hist_name, samples )
+      if parse[ "COMBINE" ] == "": print( hist_name )
       if doABCDNN and "ABCDNN" in hist_name: 
         if parse[ "IS SYST" ] and parse[ "SYST" ] in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           try: 
@@ -297,7 +298,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
       if config.options[ "GENERAL" ][ "SYSTEMATICS" ]:
         if args.verbose: print( "  + SIG SYST > {}".format( hist_tag( process, category ) ) )
         for syst in config.systematics[ "MC" ].keys():
-          if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst: continue
+          if not config.systematics[ "MC" ][ syst ][0] or "ABCD" in syst or "pdf" in syst: continue
           if syst == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
           for shift in [ "UP", "DN" ]:
@@ -316,7 +317,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
               hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
             else:
               hists[ "CMB" ][ hist_tag( process, category, syst.upper() + shift ) ].Write()
-      if config.options[ "GENERAL" ][ "PDF" ]:
+      if config.systematics[ "MC" ][ "pdf" ][0]:
         if args.verbose: print( "  + SIG PDF > {}".format( hist_tag( process, category ) ) )
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           hists[ "CMB" ][ hist_tag( process, category, "PDF" + str(i) ) ].Write()
@@ -340,7 +341,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
         for syst in config.systematics[ "MC" ].keys():
           if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
           if syst.upper() == "UE" and not config.options[ "GENERAL" ][ "UE" ]: continue
-          if "ABCD" in syst or not config.systematics[ "MC" ][ syst ][0]: continue
+          if "ABCD" in syst or not config.systematics[ "MC" ][ syst ][0] or "pdf" in syst: continue
           for shift in [ "UP", "DN" ]:
             if syst == "JEC":
               for systJEC in config.systematics[ "REDUCED JEC" ]:
@@ -368,7 +369,7 @@ def write_combine( hists, variable, categories, groups, templateDir, doABCDNN, p
               hists[ "CMB" ][ hist_tag( group, category, sysTag ) ].Write()
         if args.verbose: print( "  + BKG SYST > {}".format( group ) )
             
-      if config.options[ "GENERAL" ][ "PDF" ]:
+      if config.systematics[ "MC" ][ "pdf" ][0]:
         for i in range( config.params[ "GENERAL" ][ "PDF RANGE" ] ):
           if scale_group:
             hists[ "CMB" ][ hist_tag( group, category, "PDF" + str(i) ) ].Scale( config.params[ "GENERAL" ][ "ZERO" ] )
@@ -424,7 +425,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         table[ "YIELD" ][ category ][ process ] = hists[ hist_key ][ hist_tag( process, category ) ].Integral()
         if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
           for syst in config.systematics[ "MC" ].keys():
-            if not config.systematics[ "MC" ][ syst ][0]: continue
+            if not config.systematics[ "MC" ][ syst ][0] or "pdf" in syst: continue
             if process == "ABCDNN" and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
             if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue
@@ -484,7 +485,7 @@ def make_tables( hists, categories, groups, variable, templateDir, lumiStr, doAB
         table[ "ERROR" ][ category ][ process ] = math.sqrt( table[ "ERROR" ][ category ][ process ] )
         if config.options[ "GENERAL" ][ "SYSTEMATICS" ] and "DAT" not in process.upper():
           for syst in config.systematics[ "MC" ].keys():
-            if not config.systematics[ "MC" ][ syst ][0]: continue
+            if not config.systematics[ "MC" ][ syst ][0] or "pdf" in syst: continue
             if "ABCD" in process and syst.upper() not in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: continue
             if "ABCD" in syst.upper() and group not in [ "BKG", "BKG SYST" ]: continue
             if syst.upper() == "HD" and not config.options[ "GENERAL" ][ "HDAMP" ]: continue

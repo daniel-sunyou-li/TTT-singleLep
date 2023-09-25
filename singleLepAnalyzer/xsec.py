@@ -21,12 +21,30 @@ filtEff_tt = {
 k_factor = {
   "WJetsMG": 1.21,
   "TTTJ": 1.75,    # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
-  "TTTW": 1.86     # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
+  "TTTW": 1.86,    # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
+}
+
+scale = { # artificial scaling incorporated in templates.py
+  "TTTJ": 1.,
+  "TTTW": 1.,
+  "TTTT": 1.,
+  "WJetsMG200": 0.978569,   # correction for HT-binned W+jets sample to match yields of inclusive W+jets sample
+  "WJetsMG400": 0.928054,
+  "WJetsMG600": 0.856705,
+  "WJetsMG800": 0.757463,
+  "WJetsMG1200": 0.608292,
+  "WJetsMG2500": 0.454246,
+  "DYM200": 0.992853,       # correction for HT-binned W+jets sample to match yields of inclusive W+jets sample
+  "DYM400": 0.974071,
+  "DYM600": 0.948367,
+  "DYM800": 0.883340,
+  "DYM1200": 0.749894,
+  "DYM2500": 0.617254
 }
 
 tt_xsec = 831.8
 
-xsec = {
+xsec = { #pb
   "TTTJ": 0.0003974 * k_factor[ "TTTJ" ],
   "TTTW": 0.0007314 * k_factor[ "TTTW" ],
   "TTTT": 0.01197,
@@ -42,7 +60,7 @@ xsec = {
   "TTZlM1to10": 0.05324,
   "TTHB": 0.291,
   "TTHnoB": 0.209,
-  "Ts": 3.549,      # NLO https://cms-gen-dev.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%3DST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8
+  "Ts": 3.549,     # NLO https://cms-gen-dev.cern.ch/xsdb/?columns=67108863&currentPage=0&pageSize=10&searchQuery=process_name%3DST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8
   "Tt": 134.2,     # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
   "Tbt": 80.0,     # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef
   "TtW": 39.65,    # NNLO https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef

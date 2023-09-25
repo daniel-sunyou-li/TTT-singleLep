@@ -6,7 +6,7 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": True,
+  "REBINNED": False,
   "ABCDNN": False,
   "YIELDS": False,
   "NORM BIN WIDTH": False,
@@ -15,7 +15,7 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "REAL PULL": False,
   "BLIND": False,
-  "Y LOG": False,
+  "Y LOG": True,
   "SMOOTH": True,
 }
 
@@ -24,14 +24,14 @@ params = {
   "INCLUDE LEP": [ "E", "M", "L" ], # E,M,L
   "ERROR BAND": [ "STAT", "NORM", "SHAPE" ], # STAT, SHAPE, NORM
   "EXCLUDE SYST": [ # templates will contain some systematics that are being unused, so exclude them from the plots 
-    "PDFEWK", "PDFQCD", "PDFTOP", "PDFTTBAR", "PDFTTH", "PDFSIG", "PDFTTTT",
-    "PSWGT", "PSWGTSIG", "PSWGTTTBAR", "PSWGTTOP", "PSWGTTTH", "PSWGTEWK", "PSWGTQCD", "PSWGTTTTT",
+    "PDFEWK", "PDFQCD", "PDFTOP", "PDFTTBAR", "PDFTTH", "PDFSIG", "PDFTTTT", "PDFST",
+    "PSWGT", "PSWGTSIG", "PSWGTTTBAR", "PSWGTTOP", "PSWGTTTH", "PSWGTEWK", "PSWGTQCD", "PSWGTTTTT", "PSWGTST",
     #"PILEUP", 
     #"PREFIRE",
     #"MURSIG", "MURTTBAR", "MURTOP", "MURTTH", "MUREWK", "MURQCD",
     #"MUFSIG", "MUFTTBAR", "MUFTOP", "MUFTTH", "MUFEWK", "MUFQCD",
-    "MURFSIG", "MURFTTBAR", "MURFTOP", "MURFTTH", "MURFEWK", "MURFQCD", "MURFTTTT",
-    "MUENVSIG", "MUENVTTBAR", "MUENVTOP", "MUENVTTH", "MUENVEWK", "MUENVQCD", "MUENVTTTT",
+    "MURFSIG", "MURFTTBAR", "MURFTOP", "MURFTTH", "MURFEWK", "MURFQCD", "MURFTTTT", "MURFST",
+    "MUENVSIG", "MUENVTTBAR", "MUENVTOP", "MUENVTTH", "MUENVEWK", "MUENVQCD", "MUENVTTTT", "MUEVNST",
     #"MURFCORRD", "MURFCORRDSIG", "MURFCORRDTTBAR", "MURFCORRDTOP", "MURFCORRDTTH", "MURFCORRDEWK", "MURFCORRDQCD",
     #"MUENV", "MURF", "MUF", "MUR", "MURFCORRD",
     #"ISR",  
@@ -63,8 +63,9 @@ params = {
     "TTNOBB": ROOT.kOrange - 2,
     "TTTT": ROOT.kAzure - 3,
     "TTH": ROOT.kAzure + 10,  
-    "EWK": ROOT.kTeal + 1,  
-    "TOP": ROOT.kGreen + 2, 
+    "EWK": ROOT.kGreen + 2,
+    "TOP": ROOT.kTeal + 1, 
+    "ST": ROOT.kSpring + 7,
     "QCD": ROOT.kViolet + 1,
     "TTBAR": ROOT.kOrange - 2,
     "ABCDNN": ROOT.kOrange - 2,

@@ -25,13 +25,11 @@ samples = {
     "WW": "WW_TuneCP5_13TeV-pythia8",
     "WZ": "WZ_TuneCP5_13TeV-pythia8",
     "ZZ": "ZZ_TuneCP5_13TeV-pythia8",
-
     "Ts": "ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8",
     "Tt": "ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8",
     "Tbt": "ST_t-channel_antitop_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8",
     "TtW": "ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
     "TbtW": "ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",
-
     "TTTT": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8",
     "TTHH": "TTHH_TuneCP5_13TeV-madgraph-pythia8",
     "TTWH": "TTWH_TuneCP5_13TeV-madgraph-pythia8",
@@ -112,9 +110,11 @@ groups[ "BKG" ][ "PROCESS" ] = {
   "DYM": [ "DYM200", "DYM400", "DYM600", "DYM800", "DYM1200", "DYM2500" ],
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
   "VV": [ "WW", "WZ", "ZZ" ],
-  "TOP": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
-  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10", "TTHB", "TTHnoB" ], 
-  "TTXY": [ "TTTT", "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+  "ST": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
+  "TTH": [ "TTHB", "TTHnoB" ],
+  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10" ], 
+  "TTXY": [ "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
+  "TTTT": [ "TTTT" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
   "TTCC": [ tt + "ttcc" for tt in ttbar ],
   "TT1B": [ tt + "tt1b" for tt in ttbar ],
@@ -131,11 +131,12 @@ groups[ "BKG" ][ "ALL" ] = np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ proce
 groups[ "BKG" ][ "SUPERGROUP" ] = {
   "TTNOBB": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TT1B", "TT2B" ] ] ).tolist(),
   "TTBB": groups[ "BKG" ][ "PROCESS" ][ "TTBB" ],
-  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TOP", "TTV", "TTXY" ] if process not in [ "TTHB", "TTHnoB", "TTTT" ] ] ).tolist(),
+  "ST": groups[ "BKG" ][ "PROCESS" ][ "ST" ],
+  "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTV", "TTXY" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
   "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
-  "TTH": [ "TTHB", "TTHnoB" ],
-  "TTTT": [ "TTTT" ]
+  "TTH": groups[ "BKG" ][ "PROCESS" ][ "TTH" ],
+  "TTTT": groups[ "BKG" ][ "PROCESS" ][ "TTTT" ]
 }
 
 groups[ "BKG" ][ "ABCDNN" ] = []

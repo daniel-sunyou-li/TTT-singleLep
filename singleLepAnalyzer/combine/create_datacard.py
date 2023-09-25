@@ -19,6 +19,7 @@ parser.add_argument( "-c", "--card", help = "Datacard input to add systematic gr
 parser.add_argument( "--shapeSyst", action = "store_true" )
 parser.add_argument( "--normSyst", action = "store_true" )
 parser.add_argument( "--theorySyst", action = "store_true" )
+parser.add_argument( "--xsecSyst", action = "store_true" )
 parser.add_argument( "--verbose", action = "store_true" )
 parser.add_argument( "--groups", action = "store_true", help = "Add systematic groups in datacard for systematic breakdown" )
 args = parser.parse_args()
@@ -57,6 +58,7 @@ class DataCard():
     self.lumistr = config.lumiStr[ self.year ]
     self.smooth = config.options[ "COMBINE" ][ "SMOOTH" ]
     self.smoothing = config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+    self.combine_sig = config.options[ "COMBINE" ][ "COMBINE SIGNALS" ]
     self.regions = {
       "SIGNAL":  [],
       "CONTROL": []
@@ -131,11 +133,17 @@ class DataCard():
     for category in sorted( self.categories[ "ALL" ] ):
       print( "   + {}".format( category ) )
     
-    self.signals = self.params[ "SIGNALS" ]
-    self.backgrounds = self.params[ "BACKGROUNDS" ]
-    self.minor_backgrounds = config.params[ "ABCDNN" ][ "MINOR BKG" ]
+    self.signals = "SIG" if self.combine_sig else self.params[ "SIGNALS" ] 
+    self.backgrounds = self.params[ "BACKGROUNDS" ][:]
+    #self.backgrounds.remove( "TTTT" )
+    self.minor_backgrounds = config.params[ "ABCDNN" ][ "MINOR BKG" ][:]
+    #self.minor_backgrounds.remove( "TTTT" )
     self.data = self.params[ "DATA" ]
     self.category_arr = { category: [ ( 0, "" ) ] for category in self.categories[ "ALL" ] }
+    print( "[INFO] Process groups:" )
+    print( ">> Signals: {}".format( self.signals ) )
+    print( ">> Backgrounds: {}".format( self.backgrounds ) )
+    print( ">> Minor Backgrounds: {}".format( self.minor_backgrounds ) )
     
     self.hist_groups = { key: {} for key in [ "SIG", "BKG", "DAT" ] }
     category_log = { key: {} for key in [ "SIG", "BKG", "DAT" ] }
@@ -143,6 +151,8 @@ class DataCard():
     exclude_count = 0
     for hist_name in hist_list:
       parse = hist_parse( hist_name, samples )
+      if parse[ "GROUP" ] == "SIG" and self.combine_sig and parse[ "COMBINE" ] != "SIG": continue # use only the combined histogram
+      if parse[ "GROUP" ] == "SIG" and not self.combine_sig and parse[ "COMBINE" ] == "SIG": continue
       if parse[ "IS SYST" ]: 
         continue
       if parse[ "CATEGORY" ] in self.categories[ "EXCLUDE" ]: continue
@@ -248,7 +258,7 @@ class DataCard():
   
   def add_normalization_systematics( self ):
     print( "[START] Retrieving normalization systematics from {}".format( self.templateName ) )
-    
+   
     self.categories[ "SF" ] = self.categories[ "ALL" ]
     if self.abcdnn:
       self.categories[ "SF" ] = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
@@ -428,6 +438,14 @@ class DataCard():
       ch.SystMap()( 1.0 )
     )
 
+  def add_xsec_systematics( self ): # this is used for studies only
+    print( "[START] Adding cross-section systematics." )
+    self.add_xsec( "XSEC_TTTW", [ "TTTW" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTW" ] )
+    self.add_xsec( "XSEC_TTTJ", [ "TTTJ" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTJ" ] )
+    self.add_xsec( "XSEC_TTTT", [ "TTTT" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTT" ] )
+    print( "[DONE]" )
+
+
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
     
@@ -442,19 +460,21 @@ class DataCard():
     self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTH" ] )
     if self.abcdnn and "TTH" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTH" ] )
     
-    pdf_groups = [ group for group in self.backgrounds if group not in [ "QCD", "EWK" ] ]
-    minor_pdf_groups = [ group for group in self.minor_backgrounds if group not in [ "QCD", "EWK" ] ]
     if config.options[ "GENERAL" ][ "PDF" ]:
       self.add_model( "PDF", self.signals, self.categories[ "ALL" ], False )
+      #self.add_model( "ALPHAS", self.signals, self.categories[ "ALL" ], False )
       self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], False )
-      if self.abcdnn: self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
+      self.add_model( "ALPHAS", self.backgrounds, self.categories[ "SF" ], False )
+      if self.abcdnn: 
+        self.add_model( "PDF", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
+        self.add_model( "ALPHAS", self.minor_backgrounds, self.categories[ "ABCDNN" ], False )
 
     # handle PS weight uncertainty
     for syst in [ "isr", "fsr" ]:
       if not config.systematics[ "MC" ][ syst ][0]: continue
       bSmooth = True if config.systematics[ "MC" ][ syst ][2] else False
       if config.systematics[ "PS BREAKDOWN" ][ syst ]:
-        for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+        for group in self.backgrounds: # config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
           if group in [ "TTNOBB", "TTBB" ]:
             self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
           else:
@@ -488,14 +508,20 @@ class DataCard():
       if syst == "muRF" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] ): bSmooth = True
       if syst == "muENV" and ( config.systematics[ "MC" ][ "muF" ][2] or config.systematics[ "MC" ][ "muR" ][2] or config.systematics[ "MC" ][ "muRFcorrd" ][2] ): bSmooth = True
 
-      for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+      if config.options[ "COMBINE" ][ "MURF CORR TTTX" ]:
+        self.add_model( syst.upper() + "TTTX", self.signals + [ "TTTT" ], self.categories[ "ALL" ], bSmooth )
+      else:
+        self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
+        self.add_model( syst.upper() + "TTTT", [ "TTTT" ], self.categories[ "ALL" ], bSmooth )
+     
+      for group in self.backgrounds: # config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
+        if group in [ "TTTT" ]: continue
         if group in [ "TTNOBB", "TTBB" ]:
           self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
         else:
           self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
           if self.abcdnn:
             self.add_model( syst.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
-      self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth ) 
     
     print( "[DONE] Added theoretical systematics" )
   
@@ -598,6 +624,8 @@ def main():
   if args.theorySyst:
     datacard.add_theory_systematics()
     datacard.add_TTHF_systematics()
+  if args.xsecSyst:
+    datacard.add_xsec_systematics()
   if options[ "ABCDNN" ]:
    datacard.add_ABCDNN_systematics()
   datacard.add_shapes()
@@ -627,7 +655,7 @@ def add_groups_datacard( nDataCard ):
     groups[ "NORM" ].append( "TTHF" )
     groups[ "THEORY" ].append( "XSEC_TTBAR" )
   for era in [ "16APV", "16", "17", "18" ]:
-    if args.year != "" and era != args.year: continue
+    if era != args.year and args.year != "Run2": continue
     groups[ "NORM" ].append( "LUMI_{}".format( era ) )
     groups[ "NORM" ].append( "TRIG_EL_{}".format( era ) )
     groups[ "NORM" ].append( "ISO_EL_{}".format( era ) )
@@ -649,18 +677,19 @@ def add_groups_datacard( nDataCard ):
         jecSYST_tag += era
       groups[ "SHAPE" ].append( jecSYST_tag )
 
-  for theory in [ "MUR", "MUF", "MURFCORRD", "ISR", "FSR" ]:
+  for theory in [ "MUR", "MUF", "ISR", "FSR" ]:
     groups[ "THEORY" ].append( theory + "SIG" )
     for process in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
-      if process in [ "TTNOBB", "TTBB", "QCD" ] and doABCDNN: continue
+      if process not in config.params[ "ABCDNN" ][ "MINOR BKG" ] and doABCDNN: continue
       if process in [ "TTNOBB", "TTBB" ]:
         groups[ "THEORY" ].append( theory + "TTBAR" )
       else:
         groups[ "THEORY" ].append( theory + process )
   groups[ "THEORY" ].append( "PDF" )
+  groups[ "THEORY" ].append( "ALPHAS" )
   if doABCDNN:
     for era in [ "16APV", "16", "17", "18" ]:
-      if args.year != "" and era != args.year: continue
+      if args.year != "Run2" and era != args.year: continue
       groups[ "ABCDNN" ].append( "EXTABCDSYST{}".format( era ) )
       groups[ "ABCDNN" ].append( "EXTABCDSTAT{}".format( era ) )
       groups[ "ABCDNN" ].append( "ABCDNNPEAK{}".format( era ) )

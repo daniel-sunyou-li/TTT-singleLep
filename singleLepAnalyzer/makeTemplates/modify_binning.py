@@ -5,7 +5,7 @@ import numpy as np
 sys.path.append( os.path.dirname( os.getcwd() ) )
 from array import array
 from utils import hist_tag, hist_parse
-import config
+import config, xsec
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -386,6 +386,23 @@ class ModifyTemplate():
           self.rebinned[ hist_key ][ hist_name_new ].SetDirectory(0)
           count += 1
     print( "[DONE] Adjusted systematic shift names by year for {} histograms".format( count ) )
+
+  def scale_process( self ): 
+    print( "[START] Scaling process cross sections for the following:" )
+    count = {}
+    for process_ in xsec.scale:
+      print( "  + {}: x{}".format( process_, xsec.scale[ process_ ] ) )
+      count[ process_ ] = 0
+    for hist_key in [ "BKG", "SIG", "BKG SYST", "SIG SYST" ]:
+      hist_names = self.rebinned[ hist_key ].keys()
+      for hist_name in hist_names:
+        parse = hist_parse( hist_name, samples )
+        if parse[ "COMBINE" ] in xsec.scale.keys():
+          self.rebinned[ hist_key ][ hist_name ].Scale( xsec.scale[ parse[ "COMBINE" ] ] )
+          count[ parse[ "COMBINE" ] ] += 1
+    print( "[DONE] Finished scaling the following number of histograms:" )
+    for process_ in count:
+      print( "  + {}: {}".format( process_, count[ process_ ] ) )
     
   def symmetrize_topPT_shift( self ): # done
   # symmetrize the up and down shifts for toppt systematic
@@ -592,8 +609,13 @@ class ModifyTemplate():
 
         count += 1 
         hist_muRF = { "NOMINAL": self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone() }
-        for syst in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
-          hist_muRF[ syst ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst ) ].Clone()
+        muRF_syst = []
+        for syst_ in config.systematics[ "MC" ]:
+          if syst_.upper() in [ "MUR", "MUF", "MURFCORRD" ] and config.systematics[ "MC" ][ syst_ ][0]:
+            muRF_syst.append( syst_.upper() )
+        for syst_ in muRF_syst:
+          for shift_ in [ "UP", "DN" ]:
+            hist_muRF[ syst_ + shift_ ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst_ + shift_ ) ].Clone()
         hist_muRF[ "MUENVUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_muRF[ "MUENVDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_muRF[ "MURFUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
@@ -604,18 +626,19 @@ class ModifyTemplate():
             "MIN": "NOMINAL"
           }
           # only retain the largest systematic shift between muR, muF, muRFcorrd for envelope
-          for key in [ "MURUP", "MURDN", "MUFUP", "MUFDN", "MURFCORRDUP", "MURFCORRDDN" ]:
-            if hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) < hist_muRF[ key ].GetBinContent(i): 
-              weight_key[ "MAX" ] = key
-            if hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) > hist_muRF[ key ].GetBinContent(i): 
-              weight_key[ "MIN" ] = key
+          for syst_ in muRF_syst:
+            for shift_ in [ "UP", "DN" ]:
+              if hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) < hist_muRF[ syst_ + shift_ ].GetBinContent(i): 
+                weight_key[ "MAX" ] = syst_ + shift_
+              if hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) > hist_muRF[ syst_ + shift_ ].GetBinContent(i): 
+                weight_key[ "MIN" ] = syst_ + shift_
 
           hist_muRF[ "MUENVUP" ].SetBinContent( i, hist_muRF[ weight_key[ "MAX" ] ].GetBinContent(i) ) 
           hist_muRF[ "MUENVDN" ].SetBinContent( i, hist_muRF[ weight_key[ "MIN" ] ].GetBinContent(i) )
           hist_muRF[ "MURFUP" ].SetBinContent( i, hist_muRF[ "MURUP" ].GetBinContent(i) + hist_muRF[ "MUFUP" ].GetBinContent(i) )
           hist_muRF[ "MURFDN" ].SetBinContent( i, hist_muRF[ "MURDN" ].GetBinContent(i) + hist_muRF[ "MUFDN" ].GetBinContent(i) )
 
-        for key in [ "MUR", "MUF", "MURFCORRD", "MUENV", "MURF" ]:
+        for key in muRF_syst + [ "MUENV", "MURF" ]:
           for shift in [ "UP", "DN" ]:
             self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
             self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
@@ -628,6 +651,9 @@ class ModifyTemplate():
             else: # correlate MURF theory systematics by group
               self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ].SetDirectory(0)
+            if parse[ "COMBINE" ] in [ "TTTT", "TTTJ", "TTTW" ]:
+              self.rebinned[ hist_key ][ "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
+              self.rebinned[ hist_key ][ "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
             
     print( "[DONE] Created {} MU Renormalization and Factorization histograms".format( count ) ) 
   
@@ -646,6 +672,7 @@ class ModifyTemplate():
         hist_PSWeight[ "PSWGTUP" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         hist_PSWeight[ "PSWGTDN" ] = self.rebinned[ hist_key.split( " " )[0] ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Clone()
         for syst in [ "isr", "fsr" ]:
+          if not config.systematics[ "MC" ][ syst ][0]: continue
           for shift in [ "UP", "DN" ]:
             if config.systematics[ "PS BREAKDOWN" ][ syst ]:
               hist_PSWeight[ syst.upper() + shift ] = self.rebinned[ hist_key ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst.upper() + shift ) ].Clone()
@@ -689,8 +716,8 @@ class ModifyTemplate():
         # decorrelate PS weight 
         for syst in [ "PSWGT", "ISR", "FSR" ]:
           for shift in [ "UP", "DN" ]:
-            if syst in [ "ISR", "FSR" ]:
-              if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
+            if syst in [ "ISR", "FSR" ] and not config.systematics[ "MC" ][ syst.lower() ]: continue
+            if syst in [ "ISR", "FSR" ] and not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) )
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
             if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB" ]:
@@ -720,7 +747,7 @@ class ModifyTemplate():
     print( "[DONE] Created {} PS Weight histograms".format( count ) )
 
   def add_PDF_shapes( self ): 
-    print( "[START] Determining PDF shape systematics" )
+    print( "[START] Determining PDF shape systematics and normalizing strong-coupling constant shift histograms" )
     count = 0
     for hist_key in [ "SIG SYST", "BKG SYST" ]:
       hist_names = self.rebinned[ hist_key ].keys()
@@ -776,7 +803,7 @@ class ModifyTemplate():
             self.rebinned[ hist_key ][ "{}_{}_PDF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ] = hist_PDF[ "PDF{}".format( shift ) ].Clone( "{}_{}_PDF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) )
             self.rebinned[ hist_key ][ "{}_{}_PDF{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], parse[ "COMBINE" ], shift ) ].SetDirectory(0)
 
-    print( "[DONE] Determine {} PDF shape systematic histograms".format( count ) )
+    print( "[DONE] Determine {} PDF shape systematic histograms.".format( count ) )
           
   def add_smooth_shapes( self ): 
     print( "[START] Smoothing systematic shapes using {} smoothing".format( self.params[ "SMOOTHING ALGO" ] ) )
@@ -804,6 +831,26 @@ class ModifyTemplate():
           self.rebinned[ hist_key ][ smooth_name ].SetDirectory(0)
     print( "[DONE] Added {} smoothed systematic histograms".format( count ) )
       
+  def combine_signals( self ):
+    print( "[START] Creating combined signal histograms for: {}".format( config.params[ "COMBINE" ][ "SIGNALS" ] ) )
+    count = 0
+    for hist_key in [ "SIG", "SIG SYST" ]:
+      for hist_name in self.rebinned[ hist_key ].keys():
+        parse = hist_parse( hist_name, samples )
+        if parse[ "COMBINE" ] == config.params[ "COMBINE" ][ "SIGNALS" ][0]:
+          if hist_key == "SIG":
+            sig_name = hist_tag( "SIG", parse[ "CATEGORY" ] )
+            self.rebinned[ hist_key ][ sig_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( sig_name )
+            for sig_ in config.params[ "COMBINE" ][ "SIGNALS" ][1:]:
+              self.rebinned[ hist_key ][ sig_name ].Add( self.rebinned[ hist_key ][ hist_tag( sig_, parse[ "CATEGORY" ] ) ] )
+          elif hist_key == "SIG SYST":
+            sig_name = hist_tag( "SIG", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] )
+            self.rebinned[ hist_key ][ sig_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( sig_name )
+            for sig_ in config.params[ "COMBINE" ][ "SIGNALS" ][1:]:
+              self.rebinned[ hist_key ][ sig_name ].Add( self.rebinned[ hist_key ][ hist_tag( sig_, parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] )
+          count += 1
+    print( "[DONE] Created {} combined signal histograms.".format( count ) )
+
   def write_combine( self ):
     self.outpath = self.filepath.replace( ".root", "_rebinned_merge{}_stat{}.root".format( self.params[ "MIN MERGE" ], str( self.params[ "STAT THRESHOLD" ] ).replace( ".", "p" ) ) )
     print( "[START] Storing modified histograms in {}".format( self.outpath ) )
@@ -861,6 +908,8 @@ def main():
   template = ModifyTemplate( file_path, options, params, samples.groups, args.variable, args.abcdnn )  
   
   ## handling systematics
+  if options[ "SCALE PROCESS" ]:
+    template.scale_process()
   if options[ "SYMM TOP PT" ]:
     template.symmetrize_topPT_shift()
   if options[ "TRIGGER EFFICIENCY" ]:
@@ -873,11 +922,11 @@ def main():
     template.symmetrize_theory_shift()
   if options[ "NORM THEORY SIG SYST" ] or options[ "NORM THEORY BKG SYST" ]:
     template.normalize_theory()
-  if options[ "MURF SHAPES" ] and config.systematics[ "MC" ][ "muR" ][0] and config.systematics[ "MC" ][ "muF" ][0] and config.systematics[ "MC" ][ "muRFcorrd" ][0]:
+  if options[ "MURF SHAPES" ] and ( config.systematics[ "MC" ][ "muR" ][0] or config.systematics[ "MC" ][ "muF" ][0] or config.systematics[ "MC" ][ "muRFcorrd" ][0] ):
     template.add_muRF_shapes()
   if options[ "PS WEIGHTS" ]:
     template.add_PSWeight_shapes()
-  if options[ "PDF" ]:
+  if config.systematics[ "MC" ][ "pdf" ][0]:
     template.add_PDF_shapes()
   if options[ "NORM ABCDNN" ]:
     template.normalize_abcdnn()
@@ -885,6 +934,8 @@ def main():
     template.add_smooth_shapes()
   if options[ "UNCORRELATE YEARS" ]:
     template.uncorrelate_years()
+  if options[ "COMBINE SIGNALS" ]:
+    template.combine_signals()
    
   # calculate yields
   #template.compute_yield_stats()
