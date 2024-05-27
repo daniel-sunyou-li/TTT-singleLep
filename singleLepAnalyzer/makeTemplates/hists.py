@@ -69,6 +69,16 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
           if process != splitProcess: nTrueHist += nHist[ splitProcess ]
         print( "[INFO] {} was hadded into more than one file, consolidating numTrueHist across split files: {} --> {}".format( process, nHist[ process ], nTrueHist ) )
     mc_weights[ "PROCESS" ] = "( {:.2f} * {:.10f} / {:.1f} )".format( config.lumi[ args.year ], xsec[ process ], nTrueHist ) 
+    for systJEC in config.systematics[ "REDUCED JEC" ]:
+      if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+      for shift in [ "UP", "DN" ]:
+        jecKey = "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift
+        nTrueHist = nHist[ process + "_" + jecKey ]
+        for splitPrefix in samples.split:
+          if splitPrefix in process:
+            for splitProcess in samples.split[ splitPrefix ]:
+              if process != splitProcess: nTrueHist += nHist[ splitProcess + "_" + jecKey ]
+        mc_weights[ jecKey ] = "{} * {} * ( {:.2f} * {:.10f} / {:.1f} )".format( config.mc_weight, mc_weights[ "NOMINAL" ], config.lumi[ args.year ], xsec[ process ], nTrueHist )
   elif process in samples.samples[ "DAT" ]:
     mc_weights[ "PROCESS" ] = "1"
   else:
@@ -94,9 +104,18 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
   if process not in groups["DAT"] and ( "NB" in category and "NB0p" not in category):
     mc_weights[ "NOMINAL" ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj" 
 
-  if year in [ "16APV" ]: # since 2016 pre-VFP and post-VFP were produced collectively for EOY, use default to custom only for 2016APV
-    mc_weights[ "NOMINAL" ] = mc_weights[ "NOMINAL" ].replace( "triggerSF", "1" )
-   
+  if process not in groups[ "DAT" ]:
+    for systJEC in config.systematics[ "REDUCED JEC" ]:
+      if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+      for shift in [ "UP", "DN" ]:
+        jecKey = "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift
+        if process.startswith( "TTTo" ):
+          mc_weights[ jecKey ] += " * topPtWeight13TeV"
+        if "NB" in category and "NB0p" not in category:
+          mc_weights[ jecKey ] += " * btagDeepJetWeight * btagDeepJet2DWeight_HTnj"
+        if year in [ "16APV" ]:
+          mc_weights[ jecKey ] = mc_weights[ jecKey ].replace( "triggerSF", "1" )
+
   if process not in groups[ "DAT" ] and doSYST:
     if config.systematics[ "MC" ][ "pileup" ][0]:
       mc_weights[ "PILEUP" ] = { "UP": mc_weights[ "NOMINAL" ].replace( "pileupWeight", "pileupWeightUp" ),
@@ -418,9 +437,10 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
         elif syst.upper() in [ "JEC" ]:
           for systJEC in config.systematics[ "REDUCED JEC" ]:
             if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
+            #print( "{}: {}".format( systJEC, mc_weights[ "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift ] ) )
             rTree[ process + "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift ].Draw(
               "{} >> {}".format( variableName, hist_tag( process, category, "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift ) ),
-              "{} * ({})".format( mc_weights[ "NOMINAL" ], cuts[ "NOMINAL" ] ),
+              "{} * ({})".format( mc_weights[ "JEC" + systJEC.upper().replace( "ERA", "20" + args.year ).replace( "APV", "" ).replace( "_", "" ) + shift ], cuts[ "NOMINAL" ] ),
               "GOFF" 
             )
             nSyst += 1
@@ -495,11 +515,11 @@ def numTrueHist( useJES, useABCDNN ):
               if not config.systematics[ "REDUCED JEC" ][ systJEC ]: continue
               systJEC_ = systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" )
               if systJEC.upper() == "TOTAL":
-                add_process( nHist, group, "JEC" + systJEC_.upper() + shift_.upper(), process, "JEC" + shift, "hadd" )
+                nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.upper() + shift_.upper(), process, "JEC" + shift, "hadd" )
               else:
-                add_process( nHist, group, "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, systJEC_ + shift, "hadd" )
+                nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, systJEC_ + shift, "hadd" )
           if config.systematics[ "MC" ][ "JER" ][0]:
-            add_process( nHist, group, "JER" + shift_.upper(), process, "JER" + shift, "hadd" )
+            nHist = add_process( nHist, group, process + "_" + "JER" + shift_.upper(), process, "JER" + shift, "hadd" )
   return nHist
 
 def make_hists( groups, group, category, nHist, useABCDNN ): 

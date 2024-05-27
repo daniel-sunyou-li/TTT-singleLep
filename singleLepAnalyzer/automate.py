@@ -39,7 +39,7 @@ Executable = {0}.sh \n\
 Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
 JobBatchName = {1} \n\
-request_memory = 3072 \n\
+request_memory = 4096 \n\
 Output = {0}.out \n\
 Error = {0}.err \n\
 Log = {0}.log \n\
@@ -121,6 +121,51 @@ python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6}".format(
       condor_template( nameLog, nameCondor )
       os.chdir( ".." )
  
+def run_combine_category():
+  trainings = get_trainings( args.tags, args.years, args.variables )
+  tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
+  tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  postfix = tagABCDnn + tagSmooth
+
+  for training in trainings:
+    for variable in training[ "variable" ]:
+      nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
+      nameCondor = "SLA_step4_category_{}_{}_{}_{}".format( training[ "year" ], variable, args.region, training[ "tag" ] )
+      if not os.path.exists( nameLog ): os.system( "mkdir {}".format( nameLog ) )
+      os.chdir( "combine" )
+      shell = open( os.path.join( nameLog, nameCondor + ".sh" ), "w" )
+      shell.write(
+"#!/bin/bash\n\
+source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
+cd {0} \n\
+eval `scramv1 runtime -sh`\n\
+cd {1} \n\
+cd limits_UL{2}_{3}_{4}_{5}_{6}/cmb/\n\
+".format(
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], postfix
+)
+      )
+      categories = [ file_.split( "." )[0] for file_ in os.listdir( "limits_UL{0}_{1}_{2}_{3}_{4}/cmb/common/".format( training[ "year" ], variable, args.region, training[ "tag" ], postfix ) ) if ".root" in file_ ]
+      for category_ in categories:
+        shell.write(
+"combine -M Significance {0}_0_{7}.txt {1} {2} > significance_{0}_merge{5}_stat{6}.txt \n\
+combine -M AsymptoticLimits {0}_0_{7}.txt {3} {4} > limits_{0}_merge{5}_stat{6}.txt \n\
+".format( 
+    category_,  
+    " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] ),
+    "-t -1 --expectSignal=1" if config.options[ "COMBINE" ][ "BLIND" ] else "",
+    " ".join( config.params[ "COMBINE" ][ "LIMITS" ][ "ARGS" ] ),
+    "--run=blind" if config.options[ "COMBINE" ][ "BLIND" ] else "",
+    config.params[ "MODIFY BINNING" ][ "MIN MERGE" ],
+    str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ),
+    training[ "year" ]
+  )
+        )
+      shell.write( "cd .." )
+      shell.close()
+      condor_template( nameLog, nameCondor )
+      os.chdir( ".." )
+
 def run_combine():
   systCombo = {
     "": "--normSyst --shapeSyst --theorySyst",
@@ -135,10 +180,11 @@ def run_combine():
   trainings = get_trainings( args.tags, args.years, args.variables )
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  tagBlind = "_blind" if config.options[ "COMBINE" ][ "BLIND" ] else "_unblind" 
   for training in trainings:
     for variable in training[ "variable" ]:
       for systTag in systCombo:
-        postfix = tagABCDnn + systTag + tagSmooth
+        postfix = tagABCDnn + systTag + tagSmooth 
         if ( systTag != "" and systTag != "noShapenoNormnoTheory" ) and not config.options[ "COMBINE" ][ "GROUPS" ]: continue
         os.chdir( "combine" )
         nameLog = "log_UL{}_{}_{}{}".format( training[ "year" ], args.region, training[ "tag" ], systTag )
@@ -152,25 +198,28 @@ cd {0} \n\
 eval `scramv1 runtime -sh`\n\
 cd {1} \n\
 python create_datacard.py -y {2} -v {3} -r {4} -t {5} {6} \n\
-cd limits_UL{2}_{3}_{4}_{5}_{7}{13}\n\
+cd limits_UL{2}_{3}_{4}_{5}_{7}{15}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 8\n\
 ValidateDatacards.py cmb/combined.txt.cmb --printLevel 2\n\
 mv validation.json validation_UL{2}_{3}_{4}_{5}_{7}.json\n\
-combine -M FitDiagnostics cmb/combined.txt.cmb {8}\n\
+combine -M FitDiagnostics cmb/combined.txt.cmb {8} {10}\n\
 mkdir -vp cmb/FitDiagnostics_UL{2}_{3}_{4}_{5}_{7}\n\
 mv *.png cmb/FitDiagnostics_UL{2}_{3}_{4}_{5}_{7}/ \n\
-combine -M Significance cmb/workspace.root {9} > significance_merge{11}_stat{12}.txt\n\
-combine -M AsymptoticLimits cmb/workspace.root {10} > limits_merge{11}_stat{12}.txt\n\
+combine -M Significance cmb/workspace.root {9} {10} > significance_merge{13}_stat{14}{16}.txt\n\
+combine -M AsymptoticLimits cmb/workspace.root {11} {12} > limits_merge{13}_stat{14}{16}.txt\n\
 cd ..\n\
-python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}{13}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}{13}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
+python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
             cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], 
             systCombo[ systTag ], postfix, 
             " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
             " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] ),
+            "-t -1 --expectSignal=1" if config.options[ "COMBINE" ][ "BLIND" ] else "",
             " ".join( config.params[ "COMBINE" ][ "LIMITS" ][ "ARGS" ] ),
+            "--run=blind" if config.options[ "COMBINE" ][ "BLIND" ] else "",
             config.params[ "MODIFY BINNING" ][ "MIN MERGE" ],
             str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ),
-            "_pseudo" if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else ""
+            "_pseudo" if config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else "",
+            tagBlind
           )
         )
         shell.close()
@@ -181,6 +230,7 @@ def combine_years():
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN" 
   tagPseudo = "" if not config.options[ "MODIFY BINNING" ][ "TEST PSEUDO DATA" ] else "_pseudo"
+  tagBlind = "_blind" if config.options[ "COMBINE" ][ "BLIND" ] else "_unblind" 
   for variable in args.variables:
     for tag in args.tags:
       os.chdir( "combine" )
@@ -199,8 +249,8 @@ cd {1}\n\
 mkdir -vp Results/{2}/\n\
 combineCards.py UL16APV=limits_UL16APV_{2}/cmb/combined.txt.cmb UL16=limits_UL16_{2}/cmb/combined.txt.cmb UL17=limits_UL17_{2}/cmb/combined.txt.cmb  UL18=limits_UL18_{2}/cmb/combined.txt.cmb > Results/{2}/workspace.txt\n\
 text2workspace.py Results/{2}/workspace.txt -o Results/{2}/workspace.root --channel-masks\n\
-combine -M Significance Results/{2}/workspace.root {5} > Results/{2}/significance_merge{7}_stat{8}.txt\n\
-combine -M AsymptoticLimits Results/{2}/workspace.root {6} > Results/{2}/limits_merge{7}_stat{8}.txt\n\
+combine -M Significance Results/{2}/workspace.root {5} {10} > Results/{2}/significance_merge{7}_stat{8}{9}.txt\n\
+combine -M AsymptoticLimits Results/{2}/workspace.root {6} {10} > Results/{2}/limits_merge{7}_stat{8}{9}.txt\n\
 cd Results/{2}/\n\
 ValidateDatacards.py workspace.root --printLevel 2\n\
 combine -M FitDiagnostics workspace.root {4}\n\
@@ -211,14 +261,17 @@ python systematicsAnalyzer.py Results/{2}/workspace.txt -a > Results/{2}/datacar
 mkdir -vp Results/{3}/\n\
 combineCards.py UL16APV=limits_UL16APV_{3}/cmb/combined.txt.cmb UL16=limits_UL16_{3}/cmb/combined.txt.cmb UL17=limits_UL17_{3}/cmb/combined.txt.cmb  UL18=limits_UL18_{3}/cmb/combined.txt.cmb > Results/{3}/workspace.txt \n\
 text2workspace.py Results/{3}/workspace.txt -o Results/{3}/workspace.root --channel-masks\n\
-combine -M Significance Results/{3}/workspace.root {5} > Results/{3}/significance_merge{7}_stat{8}.txt \n\
-combine -M AsymptoticLimits Results/{3}/workspace.root {6} > Results/{3}/limits_merge{7}_stat{8}.txt\n".format(
+combine -M Significance Results/{3}/workspace.root {5} {10} > Results/{3}/significance_merge{7}_stat{8}{9}.txt \n\
+combine -M AsymptoticLimits Results/{3}/workspace.root {6} {10} > Results/{3}/limits_merge{7}_stat{8}{9}.txt\n".format(
           cmsswbase, os.getcwd(), tagAllSyst, tagNoSyst, 
           " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), 
           " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] ), 
           " ".join( config.params[ "COMBINE" ][ "LIMITS" ][ "ARGS" ] ), 
           config.params[ "MODIFY BINNING" ][ "MIN MERGE" ], 
-          str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" )
+          str( config.params[ "MODIFY BINNING" ][ "STAT THRESHOLD" ] ).replace( ".", "p" ),
+          tagBlind,
+          "-t -1 --expectSignal=1" if config.options[ "COMBINE" ][ "BLIND" ] else "",
+          "--run=blind" if config.options[ "COMBINE" ][ "BLIND" ] else ""
         )
       )
       shell.close()
@@ -414,6 +467,7 @@ def impact_plots_era():
   ]
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  tagBlind = "unblind" if "-t -1" not in config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] else "blind"
  
   for training in trainings:
     for variable in training[ "variable" ]:
@@ -444,10 +498,10 @@ mkdir {7} \n\
 cd {7} \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --parallel 40 {10}\n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --parallel 40 --exclude rgx{8} {9} {10} \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{12}.json --exclude rgx{8} \n\
-plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{12}.json -o impacts_UL{2}_{4}_{3}_{5}_{12} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{12}_{13}.json --exclude rgx{8} \n\
+plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{12}_{13}.json -o impacts_UL{2}_{4}_{3}_{5}_{12}_{13} --cms-label \"Work in Progress\" \n\
 {11} \n".format(
-  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + systTag + tagSmooth, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), html_line, postfix 
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + systTag + tagSmooth, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), html_line, postfix, tagBlind 
 )
           )
           shell.close()
@@ -532,6 +586,7 @@ def impact_plots_combined():
   }
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
+  tagBlind = "unblind" if "-t -1" not in config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] else "blind"
   for tag in args.tags:
     for variable in args.variables:
       for freezeTag in freezeParams:
@@ -554,12 +609,12 @@ cd {1} \n\
 cd Results/{2}/{3}/ \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doInitialFit --parallel 40 {4} {5} \n\
 combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --exclude rgx{6} --parallel 40 {4} {5} \n\
-combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_{2}.json --exclude rgx{6} \n\
-plotImpacts.py -i impacts_{2}.json -o impacts_{2} \n\
+combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_{2}_{7}.json --exclude rgx{6} \n\
+plotImpacts.py -i impacts_{2}_{7}.json -o impacts_{2}_{7} --cms-label=\"Work in Progress\" \n\
 cd .. \n".format(
             cmsswbase, os.getcwd(), tagAllSyst, tagFreeze, freezeParam,
             " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
-            "\{prop_bin.*\}"
+            "", tagBlind
           )
         )
         shell.close()
@@ -599,7 +654,7 @@ combine higgsCombine.postfit.MultiDimFit.mH125.root -M MultiDimFit --algo grid -
       shell.write( "plot1DScan.py higgsCombine.workspace.total.MultiDimFit.mH125.root --main-label \"Total Uncertainty\" --others higgsCombine.workspace.freeze_theory.MultiDimFit.mH125.root:\"Freeze Theory\":4 higgsCombine.workspace.freeze_theory_shape.MultiDimFit.mH125.root:\"Freeze Theory+Shape\":7 higgsCombine.workspace.freeze_theory_shape_norm.MultiDimFit.mH125.root:\"Freeze Theory+Shape+Norm\":6 " )
       if config.options[ "COMBINE" ][ "ABCDNN" ]:
         shell.write( "higgsCombine.workspace.freeze_theory_shape_norm_abcdnn.MultiDimFit.mH125:\"Freeze All\":8 " )
-      shell.write( "--output breakdown_Run2_{}_{}_{}_{} --y-max 2 --y-cut 5 --breakdown \"Theory,Shape,Norm,{}Stat\" \n".format( variable, args.region, tag, postfix, "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDnn," ) )
+      shell.write( "--output breakdown_Run2_{}_{}_{}_{} --logo-sub=\"Work in Progress\" --y-max 2 --y-cut 5 --breakdown \"Theory,Shape,Norm,{}Stat\" \n".format( variable, args.region, tag, postfix, "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDnn," ) )
       shell.close()
       condor_template( nameLog, nameCondor )
       os.chdir( ".." )
@@ -862,6 +917,7 @@ elif args.step == "2": format_templates()
 elif args.step == "3": plot_templates()
 elif args.step == "4": run_combine()
 elif args.step == "5": combine_years()
+elif args.step == "category": run_combine_category()
 elif args.step == "impact":
   if "Run2" in args.years:
     impact_plots_combined()

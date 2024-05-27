@@ -133,7 +133,7 @@ class DataCard():
     for category in sorted( self.categories[ "ALL" ] ):
       print( "   + {}".format( category ) )
     
-    self.signals = "SIG" if self.combine_sig else self.params[ "SIGNALS" ] 
+    self.signals = [ "SIG" ] if self.combine_sig else self.params[ "SIGNALS" ] 
     self.backgrounds = self.params[ "BACKGROUNDS" ][:]
     #self.backgrounds.remove( "TTTT" )
     self.minor_backgrounds = config.params[ "ABCDNN" ][ "MINOR BKG" ][:]
@@ -263,9 +263,18 @@ class DataCard():
     if self.abcdnn:
       self.categories[ "SF" ] = [ category for category in self.categories[ "ALL" ] if category not in self.categories[ "ABCDNN" ] ]
 
-    self.add_norm( "LUMI_$ERA", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI" ] )
-    self.add_norm( "LUMI_$ERA", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI" ] )
-    if self.abcdnn: self.add_norm( "LUMI_$ERA", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI" ] )
+    if args.year in [ "16APV" ]:
+      self.add_norm( "LUMI_16", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI" ] )
+      self.add_norm( "LUMI_16", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI" ] )
+    else:
+      self.add_norm( "LUMI_$ERA", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI" ] )
+      self.add_norm( "LUMI_$ERA", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI" ] )
+      
+    if self.abcdnn: 
+      if args.year in [ "16APV" ]:
+        self.add_norm( "LUMI_16", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI" ] )
+      else:
+        self.add_norm( "LUMI_$ERA", self.minor_backgrounds, self.categories[ "ABCDNN" ], config.systematics[ "LUMI" ] )
 
     self.add_norm( "LUMI_RUN2", self.signals, self.categories[ "ALL" ], config.systematics[ "LUMI_RUN2" ] )
     self.add_norm( "LUMI_RUN2", self.backgrounds, self.categories[ "SF" ], config.systematics[ "LUMI_RUN2" ] )
@@ -449,8 +458,11 @@ class DataCard():
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
     
-    self.add_xsec( "XSEC_TTTW", [ "TTTW" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTW" ] )
-    self.add_xsec( "XSEC_TTTJ", [ "TTTJ" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTJ" ] )
+    if config.options[ "COMBINE" ][ "COMBINE SIGNALS" ]:
+      self.add_xsec( "XSEC_SIG", [ "SIG" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "SIG" ] )
+    else:
+      self.add_xsec( "XSEC_TTTW", [ "TTTW" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTW" ] )
+      self.add_xsec( "XSEC_TTTJ", [ "TTTJ" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTJ" ] )
     self.add_xsec( "XSEC_TTTT", [ "TTTT" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTT" ] )
     self.add_xsec( "XSEC_TTBAR", [ "TTBB", "TTNOBB" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTBAR" ] )
     self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "EWK" ] )
@@ -461,7 +473,7 @@ class DataCard():
     if self.abcdnn and "TTH" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_TTH", [ "TTH" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTH" ] )
     
     if config.options[ "GENERAL" ][ "PDF" ]:
-      self.add_model( "PDF", self.signals, self.categories[ "ALL" ], False )
+      #self.add_model( "PDF", self.signals, self.categories[ "ALL" ], False )
       #self.add_model( "ALPHAS", self.signals, self.categories[ "ALL" ], False )
       self.add_model( "PDF", self.backgrounds, self.categories[ "SF" ], False )
       self.add_model( "ALPHAS", self.backgrounds, self.categories[ "SF" ], False )
@@ -475,25 +487,47 @@ class DataCard():
       bSmooth = True if config.systematics[ "MC" ][ syst ][2] else False
       if config.systematics[ "PS BREAKDOWN" ][ syst ]:
         for group in self.backgrounds: # config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
-          if group in [ "TTNOBB", "TTBB" ]:
-            self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
-          else:
+          if group in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ] and syst == "isr":
+            self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "SF" ], bSmooth )
+            if self.abcdnn:
+              self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "ABCDNN" ], bSmooth )
+          elif group in [ "EWK", "TTTJ", "ST" ] and syst == "isr":
+            self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "SF" ], bSmooth )
+            if self.abcdnn:
+              self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "ABCDNN" ], bSmooth )
+          elif syst == "isr":
             self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
             if self.abcdnn:
               self.add_model( syst.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
-        self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
+          elif syst == "fsr":
+            self.add_model( syst.upper(), [ group ], self.categories[ "SF" ], bSmooth )
+            if self.abcdnn:
+              self.add_model( syst.upper(), [ group ], self.categories[ "ABCDNN" ], bSmooth )
+        for group in self.signals:
+          if group in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ] and syst == "isr":
+            self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "ALL" ], bSmooth )
+          elif group in [ "EWK", "TTTJ", "ST" ] and syst == "isr":
+            self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "ALL" ], bSmooth )
+          elif syst == "fsr":
+            self.add_model( syst.upper(), [ group ], self.categories[ "ALL" ], bSmooth )
       for pQCD in [ "G2GG", "G2QQ", "Q2QG", "X2XG" ]:
         for term in [ "muR", "cNS" ]:
           if not config.systematics[ "PS BREAKDOWN" ][ syst + pQCD + term ]: continue
           for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
             psTag = syst + pQCD + term
-            if group in [ "TTNOBB", "TTBB" ]:
-              self.add_model( psTag.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
+            if group in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ]:
+              self.add_model( psTag.upper() + "QCD", [ group ], self.categories[ "SF" ], bSmooth )
+            elif group in [ "EWK", "TTTJ", "ST" ]:
+              self.add_model( psTag.upper() + "EWK", [ group ], self.categories[ "SF" ], bSmooth )
             else:
               self.add_model( psTag.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
               if self.abcdnn:
                 self.add_model( psTag.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
-          self.add_model( psTag.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
+          for group in self.signals:
+            if group in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ]:
+              self.add_model( psTag.upper() + "QCD", [ group ], self.categories[ "ALL" ], bSmooth )
+            elif group in [ "EWK", "TTTJ", "ST" ]:
+              self.add_model( psTag.upper() + "EWK", [ group ], self.categories[ "ALL" ], bSmooth )
 
     for syst in [ "muR", "muF", "muRFcorrd" ]: # MURF adds MUR and MUF together in the same shift whereas MUENV takes the envelope
       if syst == "muR" and not config.systematics[ "MC" ][ "muR" ][0]: continue
@@ -511,17 +545,23 @@ class DataCard():
       if config.options[ "COMBINE" ][ "MURF CORR TTTX" ]:
         self.add_model( syst.upper() + "TTTX", self.signals + [ "TTTT" ], self.categories[ "ALL" ], bSmooth )
       else:
-        self.add_model( syst.upper() + "SIG", self.signals, self.categories[ "ALL" ], bSmooth )
-        self.add_model( syst.upper() + "TTTT", [ "TTTT" ], self.categories[ "ALL" ], bSmooth )
+        for process in self.signals:
+          if process in [ "TTBB", "TTNOBB", "TOP", "TTH", "TTTT", "QCD", "TTTW" ]:
+            self.add_model( syst.upper() + "QCD", [ process ], self.categories[ "ALL" ], bSmooth )
+          elif process in [ "EWK", "ST", "TTTJ" ]:
+            self.add_model( syst.upper() + "EWK", [ process ], self.categories[ "ALL" ], bSmooth )
+        self.add_model( syst.upper() + "QCD", [ "TTTT" ], self.categories[ "ALL" ], bSmooth )
      
       for group in self.backgrounds: # config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
         if group in [ "TTTT" ]: continue
-        if group in [ "TTNOBB", "TTBB" ]:
-          self.add_model( syst.upper() + "TTBAR", [ group ], self.categories[ "SF" ], bSmooth )
-        else:
-          self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
+        if group in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ]:
+          self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "SF" ], bSmooth )
           if self.abcdnn:
-            self.add_model( syst.upper() + group, [ group ], self.categories[ "ABCDNN" ], bSmooth )
+            self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "ABCDNN" ], bSmooth )
+        elif group in [ "EWK", "ST", "TTTJ" ]:
+          self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "SF" ], bSmooth )
+          if self.abcdnn:
+            self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "ABCDNN" ], bSmooth )
     
     print( "[DONE] Added theoretical systematics" )
   
@@ -573,7 +613,7 @@ class DataCard():
   
   def add_auto_MC_statistics( self ):
     print( "[START] Adding auto MC statistics to DataCard" )
-    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 1." )
+    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 10." )
     print( "[DONE]" )
     
   def rename_and_write( self, limit = True ):
@@ -643,7 +683,6 @@ def add_groups_datacard( nDataCard ):
   groups[ "THEORY" ].append( "XSEC_TTTW" )
   groups[ "THEORY" ].append( "XSEC_TTTJ" )
   groups[ "THEORY" ].append( "XSEC_TTTT" )
-  groups[ "THEORY" ].append( "XSEC_EWK" )
   groups[ "THEORY" ].append( "XSEC_TOP" )
   groups[ "THEORY" ].append( "XSEC_TTH" )
   groups[ "SHAPE" ].append( "PILEUP" )
@@ -656,7 +695,10 @@ def add_groups_datacard( nDataCard ):
     groups[ "THEORY" ].append( "XSEC_TTBAR" )
   for era in [ "16APV", "16", "17", "18" ]:
     if era != args.year and args.year != "Run2": continue
-    groups[ "NORM" ].append( "LUMI_{}".format( era ) )
+    if args.year in [ "16APV", "16" ]:
+      groups[ "NORM" ].append( "LUMI_16" )
+    else:
+      groups[ "NORM" ].append( "LUMI_{}".format( era ) )
     groups[ "NORM" ].append( "TRIG_EL_{}".format( era ) )
     groups[ "NORM" ].append( "ISO_EL_{}".format( era ) )
     groups[ "NORM" ].append( "TRIG_MU_{}".format( era ) )
@@ -675,16 +717,15 @@ def add_groups_datacard( nDataCard ):
       jecSYST_tag = "JEC{}".format( tagSmooth ).replace( "JEC", "JEC" + systJEC.replace( "Era", "20" + era ).replace( "APV", "" ).replace( "_", "" ).upper() )
       if "Era" in systJEC:
         jecSYST_tag += era
-      groups[ "SHAPE" ].append( jecSYST_tag )
+      if jecSYST_tag not in groups[ "SHAPE" ]: groups[ "SHAPE" ].append( jecSYST_tag )
 
-  for theory in [ "MUR", "MUF", "ISR", "FSR" ]:
-    groups[ "THEORY" ].append( theory + "SIG" )
-    for process in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
-      if process not in config.params[ "ABCDNN" ][ "MINOR BKG" ] and doABCDNN: continue
-      if process in [ "TTNOBB", "TTBB" ]:
-        groups[ "THEORY" ].append( theory + "TTBAR" )
-      else:
-        groups[ "THEORY" ].append( theory + process )
+  groups[ "THEORY" ].append( "FSR" )
+  for theory in [ "MUR", "MUF", "ISR" ]:
+    if config.options[ "COMBINE" ][ "COMBINE SIGNALS" ]:
+      groups[ "THEORY" ].append( theory + "SIG" )
+    else:
+      for group in [ "QCD", "EWK" ]:
+        groups[ "THEORY" ].append( theory + group )
   groups[ "THEORY" ].append( "PDF" )
   groups[ "THEORY" ].append( "ALPHAS" )
   if doABCDNN:
@@ -700,7 +741,7 @@ def add_groups_datacard( nDataCard ):
   print( "Adding NORM group: {}".format( " ".join( groups[ "NORM" ] ) ) )
   print( "Adding SHAPE group: {}".format( " ".join( groups[ "SHAPE" ] ) ) )
   print( "Adding THEORY group: {}".format( " ".join( groups[ "THEORY" ] ) ) )
-  print( "Adding ABCDNN group: {}".format( " ".join( groups[ "THEORY" ] ) ) )
+  print( "Adding ABCDNN group: {}".format( " ".join( groups[ "ABCDNN" ] ) ) )
   fDataCard = open( nDataCard, "a" )
   fDataCard.write( "NORM   group = {} \n".format( " ".join( groups[ "NORM" ] ) ) )
   fDataCard.write( "SHAPE  group = {} \n".format( " ".join( groups[ "SHAPE" ] ) ) )

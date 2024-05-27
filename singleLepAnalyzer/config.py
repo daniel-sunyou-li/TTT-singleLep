@@ -8,7 +8,7 @@ inputDir = { year: "/isilon/hadoop/store/user/dali/FWLJMET106XUL_singleLep20{}UL
 # target lumis in 1/pb for each year
 lumi = {
   "16APV": 19520., # from pdmv
-  "16": np.around( 16810. * 0.995 ),    # from pdmv, missing a few LJMet files from Run2016F
+  "16": 16810.,    # from pdmv
   "17": 41480.,    # calculated using brilcalc on GoldenJSON 
   "18": 59832.     # calculated using brilcalc on GoldenJSON
 }
@@ -30,7 +30,7 @@ options = {
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
     "ABCDNN": True,
-    "FINAL ANALYSIS": False
+    "FINAL ANALYSIS": True # true when ready for unblinding, otherwise keep false
   },
   "HISTS": {
     "RENORM PDF": True,        # renormalize the PDF weights
@@ -38,7 +38,7 @@ options = {
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
-    "BLIND": True,                 #  
+    "BLIND": False,                #  
     "PDF": True,                   # add PDF systematic uncertainty
     "CR SYST": False,              # add systematic uncertainty to control region
     "SHAPE SYST": True,            # add systematic shape uncertainty 
@@ -65,6 +65,7 @@ options = {
     "TEST PSEUDO DATA": False      # treat the unfiltered background MC as pseudo data to test the effect of filtering
   },
   "COMBINE": {
+    "BLIND": False,    # use Asimov MC as obs or use data
     "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
     "SMOOTH": True,    # use smoothed systematic histograms
     "GROUPS": False,    # evaluate significance and limits with combinations of systematic groups
@@ -132,10 +133,10 @@ params = {
   "COMBINE": {
     "BACKGROUNDS": [ "TTTT", "TTH", "TOP", "EWK", "ST", "QCD", "TTBB", "TTNOBB" ], 
     "DATA": [ "data_obs" ],
-    "SIGNALS": [ "TTTW", "TTTJ" ],
+    "SIGNALS": [ "TTTJ", "TTTW" ],
     "FITS": { # arguments used with Combine -M MultiDimFit
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=1",
+        "--cminDefaultMinimizerStrategy=0",
         "--setCrossingTolerance=0.001",   # default is 0.0001
         "--setRobustFitTolerance=1000",   # default is 0.1, setting higher to account for poor EDM initial state
         "--stepSize=0.01",                 # default is 0.2
@@ -146,23 +147,26 @@ params = {
         #"--freezeParameter TOPPTLOWESS",
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,HOTCLOSURELOWESS16APV,", # 2016APV freeze
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,FSRTTBARLOWESS,ISRTTBARLOWESS", # 2016 freeze
-        "--expectSignal=1",
-        "-t -1",
+        #"--expectSignal=1",
+        #"-t -1",
         "-m 125", # higgs mass, doesn't really matter for three top
       ]
     },
     "SIGNIFICANCE": { # arguments used with Combine -M Significance
       "ARGS": [
         "--cminDefaultMinimizerStrategy=0",
-        "--expectSignal=1",
-        "-t -1",
-        "-m 125"
+        "--cminDefaultMinimizerTolerance=0.00001",
+        "-m 125",
+        #"--rMin -40",
+        #"--rMax 40"
       ]
     },
     "LIMITS": { # arguments used with Combine -M AsymptoticLimits
       "ARGS": [
         "--cminDefaultMinimizerStrategy=0",
-        "--run=blind",
+        "--cminDefaultMinimizerTolerance=0.00001",
+        #"--rMin=-40",
+        #"--rMax=40"
       ]
     }
   }
@@ -182,7 +186,7 @@ systematics = {
     "isr": ( True, False, False ), # calls from PS breakdown
     "fsr": ( True, False, False ), # calls from PS breakdown
     "pdf": ( True, False, False ),
-    "alphaS": ( True, False, True ),
+    "alphaS": ( True, False, False ),
     "hotstat": ( True, False, False ),
     "hotcspur": ( True, False, False ),
     "hotclosure": ( True, False, False ),
@@ -242,14 +246,14 @@ systematics = {
     "isrX2XGcNS": options[ "MODIFY BINNING" ][ "ISR BREAKDOWN" ]
   },
   "LUMI": { # uncorrelated
-    "16APV": 1.007,
-    "16": 1.007,
+    "16APV": 1.010,
+    "16": 1.010,
     "17": 1.020,
     "18": 1.015
   },
   "LUMI_RUN2": { # Full Run2 correlated
-    "16APV": 1.004,
-    "16": 1.004,
+    "16APV": 1.006,
+    "16": 1.006,
     "17": 1.009,
     "18": 1.020
   },
@@ -260,8 +264,18 @@ systematics = {
     "18": 1.002
   },
   "TRIG": {
-    "E": { year: 1.03 for year in years }, 
-    "M": { year: 1.02 for year in years },
+    "E": {
+       "16APV": 1.20,
+       "16": 1.20,
+       "17": 1.20,
+       "18": 1.20
+       },
+    "M": {
+      "16APV": 1.05,
+      "16": 1.05,
+      "17": 1.05,
+      "18": 1.05
+    }
   },
   "ID": {
     "E": { year: 1.015 for year in years },
@@ -273,27 +287,28 @@ systematics = {
   },
   "XSEC": {
     "TTBAR": [ 0.91, 1.11 ], # hDamp uncertainty of +10/-7% added in quadrature with x-sec uncertainty of +4.8/-5.5%
-    "TTH": 1.20,             # 15APR21 4tops meeting agreement
-    "TTTJ": [ 1.10, 1.12 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
-    "TTTW": [ 1.15, 1.16 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
-    "TTTT": 1.04,            # same as TOP group
-    "TOP": 1.10,             # aligning with ttV, ttH and tt+xy uncertainties from OSDL and SSDL 4T analyses
+    "TTH": 1.08,             # from theory
+    "TTTJ": [ 0.90, 1.12 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
+    "TTTW": [ 0.85, 1.16 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
+    "SIG": [ 0.87, 1.15 ],
+    "TTTT": [ 0.86, 1.08 ],  # same as TOP group
+    "TOP": 1.05,             # aligning with ttV, ttH and tt+xy uncertainties from OSDL and SSDL 4T analyses
     "ST": 1.04,                 
     "EWK": 1.038             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV scale and pdf added in quadrature 
   },
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.021,
-      "16":    1.021,
-      "17":    1.014,
-      "18":    1.011
+      "16APV": 1.023,
+      "16":    1.023,
+      "17":    1.015,
+      "18":    1.014
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": 1.035,
-      "16":    1.035,
-      "17":    1.023,
-      "18":    1.019
+      "16APV": 1.040,
+      "16":    1.039,
+      "17":    1.026,
+      "18":    1.024
     },
     "nJ7pnB3pnHOT1p": {
       "16APV": 1.084,
@@ -304,7 +319,7 @@ systematics = {
   },
   "EXTABCDSTAT": {
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.009,
+      "16APV": 1.010,
       "16":    1.009,
       "17":    1.006,
       "18":    1.005
@@ -322,18 +337,18 @@ systematics = {
       "18": 1.023
     }
   },
-  "EXTABCDCLOSURE": { # evaluated using event weighted ttbar MC, closure is the component not accounted for by the systematic and statistical uncertainties
+  "EXTABCDCLOSURE": { 
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.000, 
-      "16":    1.071,
-      "17":    1.045,
-      "18":    1.000
+      "16APV": 1.150,  # 1.014
+      "16":    1.150,
+      "17":    1.100,
+      "18":    1.100
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": 1.007,
-      "16":    1.000,
-      "17":    1.000,
-      "18":    1.000
+      "16APV": 1.250,
+      "16":    1.250,
+      "17":    1.150,
+      "18":    1.150
     },
     "nJ7pnB3pnHOT1p": {
       "16APV": 1.016,
@@ -403,7 +418,7 @@ hist_bins = {
   "BASELINE": {
     "LEPTON": [ "E", "M" ],
     "NH": [ "0p" ],
-    "NB": [ "2p" ],
+    "NB": [ "1p" ],
     "NJ": [ "4p" ]
   },
 }
@@ -414,8 +429,8 @@ event_cuts = {
   "met": 20,          # BASELINE = 20,  S1/2/3 = 20 
   "mtW": 0,           # BASELINE = 0,   S1/2/3 = 0
   "met+mtW": 0.,      # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
-  "ht": 390,          # BASELINE = 350, S1/2 = 390, S3 = 390
-  "mindr_lj": 0.2,     # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
+  "ht": 450,          # BASELINE = 450 for 2016APV/2016 and 500 for 2017/2018
+  "mindr_lj": 0.2,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
   "dnn": 0.           # BASELINE = 0,   S1 = 0, S2 = 0.2, S3 = 0
 }
 
@@ -423,7 +438,7 @@ base_cut = "DataPastTriggerX == 1 && MCPastTriggerX == 1 "
 base_cut += " && ( ( leptonPt_MultiLepCalc > {} && isElectron == 1 ) || ( leptonPt_MultiLepCalc > {} && isMuon == 1 ) )".format( event_cuts[ "pt_electron" ], event_cuts[ "pt_muon" ] )
 base_cut += " && AK4HT > {} && corr_met_MultiLepCalc > {} && MT_lepMet > {} && minDR_lepJet > {}".format( event_cuts[ "ht" ], event_cuts[ "met" ], event_cuts[ "mtW" ], event_cuts[ "mindr_lj" ] )
 base_cut += " && ( corr_met_MultiLepCalc + 0.667 * MT_lepMet ) > {}".format( event_cuts[ "met+mtW" ] ) # targetting QCD in MTW,MET phase space, values determined against tttW+tttj
-mc_weight = "triggerXSF * triggerSF * pileupWeight * pileupJetIDWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc"
+mc_weight = "triggerSF * pileupWeight * pileupJetIDWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc"
 mc_weight += " * ( MCWeight_MultiLepCalc / abs( MCWeight_MultiLepCalc ) )"
 
 # plotting configuration
@@ -441,7 +456,7 @@ plot_params = {
     "JETPHI": ( "theJetPhi_JetSubCalc_PtOrdered", bins( -3.2, 3.2, 33 ), "AK4 Jet #phi" ),
     "MET": ( "corr_met_MultiLepCalc", bins( 0, 600, 16 ), "E_{T}^{miss} [GeV]" ),
     "METPHI": ( "corr_met_phi_MultiLepCalc", bins( -3.2, 3.2, 33 ), "p_{T}^{miss} #phi" ),
-    "HT": ( "AK4HT", bins( 0, 2000, 21 ), "H_{T} [GeV]" ),
+    "HT": ( "AK4HT", bins( 0, 3000, 21 ), "H_{T} [GeV]" ),
     "NJ": ( "NJets_JetSubCalc", bins( 0, 12, 13 ), "N_{J}" ),
     "NPU": ( "NJetsPU_JetSubCalc", bins( 0, 6, 7 ), "N_{PU}^{T}" ),
     "NFWD": ( "NJetsForward_JetSubCalc", bins( 0, 3, 4 ), "N_{F}" ),
@@ -461,7 +476,7 @@ plot_params = {
     "DR_LB": ( "deltaR_lepBJet_maxpt", bins( 0, 6.0, 21 ), "#DeltaR(l,b) with max[p_{T}(l,b)]" ),
     "DR_LBB": ( "lepDR_minBBdr", bins( -1, 10, 21 ), "#DeltaR(l,bb) with min[#DeltaR(b,b)]" ),
     "CENTRALITY": ( "centrality", bins( 0, 1.0, 21 ), "Centrality" ),
-    "JETETA_AVG": ( "theJetEtaAverage_JetSubCalc", bins( -2.4, 2.4, 21 ), "Average Jet |#eta|" ),
+    "JETETA_AVG": ( "theJetEtaAverage_JetSubCalc", bins( 0, 2.4, 21 ), "Average Jet |#eta|" ),
     "DE_BB": ( "deltaEta_maxBB", bins( -6, 11, 21 ), "max[#Delta#eta(b,b)]" ),
     "PT_CSV": ( "aveCSVpt", bins( -0.3, 1.1, 21 ), "ave(p_{T} weighted CSVv2) [GeV]" ),
     "DR_BB": ( "aveBBdr", bins( 0, 6.0, 21 ), "ave[#DeltaR(b,b)]" ),
@@ -521,7 +536,7 @@ plot_params = {
     "HOT2_MASS": ( "HOTGoodTrijet2_mass", bins( 0, 300, 21 ), "HOTGoodTrijet2_mass [GeV]" ),
     "HOT2_DJMASS": ( "HOTGoodTrijet2_dijetmass", bins( 0, 200, 21 ), "HOTGoodTrijet2_dijetmass [GeV]" ),
     "HOT2_PTRATIO": ( "HOTGoodTrijet2_pTratio", bins( 0, 1, 21 ), "HOTGoodTrijet2_pTratio" ),
-    "HOT2_DRJJ": ( "HOTGoodTrijet2_dRtridijet", bins( 0, 4, 21 ), "HOTGoodTrijet2_dRtridijet" ),
+    "HOT2_DRJJ": ( "HOTGoodTrijet2_dRtridijet", bins( 0, 2, 21 ), "HOTGoodTrijet2_dRtridijet" ),
     "HOT2_CSVNOJJ": ( "HOTGoodTrijet2_csvJetnotdijet", bins( 0, 1, 21 ), "HOTGoodTrijet2_csvJetnotdijet" ),
     "HOT2_DRNOJJ": ( "HOTGoodTrijet2_dRtrijetJetnotdijet", bins( 0, 4, 21 ), "HOTGoodTrijet2_dRtrijetJetnotdijet" ),
   }

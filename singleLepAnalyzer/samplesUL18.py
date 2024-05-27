@@ -5,11 +5,12 @@ import config
 
 samples = {
   "TEST": {
-    "TTToSemiLeptonictt1b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b",
+    #"TTToSemiLeptonictt1b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b",
     #"TTToSemiLeptonicHT500ttjj": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj",
     #"TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
     #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
+    "TTTT1": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_1",
     #"DataE": "SingleElectron",
     #"TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
   },

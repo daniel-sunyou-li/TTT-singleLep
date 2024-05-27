@@ -6,23 +6,25 @@ import ROOT
 options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
-  "REBINNED": False,
-  "ABCDNN": False,
+  "REBINNED": True,
+  "ABCDNN": True,
   "YIELDS": False,
-  "NORM BIN WIDTH": False,
+  "NORM BIN WIDTH": True,
   "COMPARE SHAPES": False,
   "SCALE SIGNAL YIELD": True,
   "SCALE SIGNAL XSEC": False,
+  "SYMM ERROR": False,
   "REAL PULL": False,
   "BLIND": False,
-  "Y LOG": True,
+  "Y LOG": False,
   "SMOOTH": True,
+  "OTHER": False, # plot an additional shape that is user defined
 }
 
 params = {
-  "POSTFIX TEXT": "Preliminary",
+  "POSTFIX TEXT": "Work in Progress",
   "INCLUDE LEP": [ "E", "M", "L" ], # E,M,L
-  "ERROR BAND": [ "STAT", "NORM", "SHAPE" ], # STAT, SHAPE, NORM
+  "ERROR BAND": [ "SHAPE", "STAT", "NORM" ], # STAT, SHAPE, NORM
   "EXCLUDE SYST": [ # templates will contain some systematics that are being unused, so exclude them from the plots 
     "PDFEWK", "PDFQCD", "PDFTOP", "PDFTTBAR", "PDFTTH", "PDFSIG", "PDFTTTT", "PDFST",
     "PSWGT", "PSWGTSIG", "PSWGTTTBAR", "PSWGTTOP", "PSWGTTTH", "PSWGTEWK", "PSWGTQCD", "PSWGTTTTT", "PSWGTST",
@@ -30,25 +32,10 @@ params = {
     #"PREFIRE",
     #"MURSIG", "MURTTBAR", "MURTOP", "MURTTH", "MUREWK", "MURQCD",
     #"MUFSIG", "MUFTTBAR", "MUFTOP", "MUFTTH", "MUFEWK", "MUFQCD",
-    "MURFSIG", "MURFTTBAR", "MURFTOP", "MURFTTH", "MURFEWK", "MURFQCD", "MURFTTTT", "MURFST",
-    "MUENVSIG", "MUENVTTBAR", "MUENVTOP", "MUENVTTH", "MUENVEWK", "MUENVQCD", "MUENVTTTT", "MUEVNST",
-    #"MURFCORRD", "MURFCORRDSIG", "MURFCORRDTTBAR", "MURFCORRDTOP", "MURFCORRDTTH", "MURFCORRDEWK", "MURFCORRDQCD",
-    #"MUENV", "MURF", "MUF", "MUR", "MURFCORRD",
-    #"ISR",  
+    #"MURFSIG", "MURFTTBAR", "MURFTOP", "MURFTTH", "MURFEWK", "MURFQCD", "MURFTTTT", "MURFST",
+    "MUF", "MUR", "MURF", "MURFEWK", "MURFQCD", "MURFCORRD", 
+    "ISR", 
     #"FSR",   
-    #"HOTSTAT",   
-    #"HOTCSPUR",
-    #"HOTCLOSURE",
-    #"LF", # this is fine
-    #"LFSTATS2", # this one might have an issue
-    #"lfstats2", # this one might have an issue
-    #"HF", # this is fine
-    #"hfstats1",
-    #"hfstats2",
-    #"cferr1",
-    #"cferr2",
-    #"JER", 
-    #"JEC", 
   ],
   "SCALE SIGNAL YIELD": 1000,
   "DAT COLOR": ROOT.kBlack,
@@ -66,10 +53,14 @@ params = {
     "EWK": ROOT.kGreen + 2,
     "TOP": ROOT.kTeal + 1, 
     "ST": ROOT.kSpring + 7,
-    "QCD": ROOT.kViolet + 1,
+    "QCD": ROOT.kRed + 2,
     "TTBAR": ROOT.kOrange - 2,
     "ABCDNN": ROOT.kOrange - 2,
     "ERROR": ROOT.kBlack,
+  },
+  "SIG COLORS": {
+    "TTTW": ROOT.kViolet + 6,
+    "TTTJ": ROOT.kMagenta + 2
   },
   "Y DIV": 0.35,
   "CANVAS": {
@@ -84,6 +75,9 @@ params = {
     "X2": 0.45,
     "Y2": 0.88,
     "TEXT SIZE": 0.02
+  },
+  "RATIO": {
+    "RANGE": [0.01,1.99],
   }
 }
 
