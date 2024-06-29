@@ -74,12 +74,14 @@ for file_ in os.listdir( args.dataset ):
 parameters["PATIENCE"] = config.params["KFCV"]["PATIENCE"]
 parameters["EPOCHS"]    = config.params["KFCV"]["EPOCHS"]
   
-model_path = os.path.join(folder, "final_model_{}.tf".format( parameters[ "TAG" ] ) )
+model_path = os.path.join( folder, "final_model_{}.tf".format( parameters["TAG"] ) )
   
 save_path = os.path.join( args.dataset.split("/")[0], "events.root" )
 
 # Gather list of signal and background folders
   
+print( parameters.keys() )
+
 model = mltools.CrossValidationModel(
   parameters,
   parameters["SIGNAL FILES"], parameters["BACKGROUND FILES"], parameters["VARIABLES"], 

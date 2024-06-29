@@ -17,20 +17,20 @@ import config
 parser = ArgumentParser()
 parser.add_argument( "-y",  "--year" )
 parser.add_argument( "-s",  "--seedvars" )
-parser.add_argument( "-nj", "--NJETS" )
-parser.add_argument( "-nb", "--NBJETS" )
-parser.add_argument( "-ht", "--AK4HT" )
-parser.add_argument( "-met", "--MET" )
-parser.add_argument( "-lpt", "--LEPPT" )
-parser.add_argument( "-mt", "--MT" )
-parser.add_argument( "-dr", "--MINDR" )
+parser.add_argument( "-nj", "--NJETS", default = "4" )
+parser.add_argument( "-nb", "--NBJETS", default = "1" )
+parser.add_argument( "-ht", "--AK4HT", default = "450" )
+parser.add_argument( "-met", "--MET", default = "20" )
+parser.add_argument( "-lpt", "--LEPPT", default = "20" )
+parser.add_argument( "-mt", "--MT", default = "0" )
+parser.add_argument( "-dr", "--MINDR", default = "0.2" )
 args = parser.parse_args()
 
 sys.argv = []
 import jobtracker as jt
 from ROOT import TMVA, TCut, TFile
 
-seed_vars = set(b64decode(args.seedvars).split(","))
+seed_vars = set( [ var.decode("utf-8") for var in b64decode(args.seedvars).split(b",") ] )
 
 print(">> TTT Condor Job using {} samples".format( config.step2Sample[ args.year ] ) )
 
@@ -43,42 +43,6 @@ loader = TMVA.DataLoader( "tmva_data" )
 factory = TMVA.Factory("VariableImportance",
                        "!V:!ROC:Silent:!Color:!DrawProgressBar:Transformations=I;:AnalysisType=Classification")
 
-# Add variables from seed to loader
-num_vars = 0
-print( ">> Using the following variables: " )
-for var_data in config.varList["DNN"]:
-  if var_data[0] in seed_vars:
-    num_vars += 1
-    print( "    {:<4} {}".format( str(num_vars) + ".", var_data[0] ) )
-    loader.AddVariable( var_data[0], var_data[1], "", "F" )
-    
-# Add signal and background trees to loader
-print( ">> Loading trees" )
-sFiles, bFiles = [], []
-sTrees, bTrees = [], []
-for sig in config.sig_training[ args.year ]:
-  sFiles.append( TFile.Open( inputDir + sig ) )
-  sTree = sFiles[-1].Get("ljmet")
-  sTree.SetBranchStatus( "*", 0 )
-  for vName in config.branches:
-    sTree.SetBranchStatus( vName, 1 )
-  sTrees.append( sTree )
-  sTrees[-1].GetEntry(0)
-  loader.AddSignalTree( sTrees[-1], 1 )
-
-
-for bkg in config.bkg_training[ args.year ]:
-  bFiles.append( TFile.Open( inputDir + bkg ) )
-  bTree = bFiles[-1].Get( "ljmet" )
-  bTree.SetBranchStatus( "*", 0 )
-  for vName in config.branches:
-    bTree.SetBranchStatus( vName, 1 )
-  bTrees.append( bTree )
-  bTrees[-1].GetEntry(0)
-  if bTree.GetEntries() != 0:
-    loader.AddBackgroundTree( bTrees[-1], 1 )
-
-
 # Set weights and cuts
 cutStr = config.base_cut
 cutStr += " && ( isTraining == 2 || isTraining == 3 )"
@@ -87,8 +51,48 @@ cutStr += " && ( AK4HT > {} ) && ( corr_met_MultiLepCalc > {} ) && ( MT_lepMet >
 cutStr += " && ( leptonPt_MultiLepCalc > {})".format( args.LEPPT ) 
 
 loader.SetSignalWeightExpression( "1" )
-#loader.SetBackgroundWeightExpression( config.weightStr )
 loader.SetBackgroundWeightExpression( "1" )
+
+# Add variables from seed to loader
+num_vars = 0
+print( ">> Training with the following variables: " )
+var_load = [ "DataPastTriggerX", "MCPastTriggerX", "isTraining" ]
+for var_data in config.varList["DNN"]:
+  if var_data[0] in seed_vars: 
+    num_vars += 1
+    print( "    {:<4} {}".format( str(num_vars) + ".", var_data[0] ) )
+    loader.AddVariable( var_data[0] )#, var_data[1], "", "F" )
+    var_load.append( var_data[0] )
+  if var_data[0] not in var_load and var_data[0] in cutStr:
+    var_load.append( var_data[0] )
+    
+# Add signal and background trees to loader
+print( ">> Loading trees" )
+sFiles, bFiles = [], []
+sTrees, bTrees = [], []
+for sig in config.sig_training[ args.year ]:
+  print( ">> Adding signal file: {}".format( sig ) )
+  sFiles.append( TFile.Open( inputDir + sig ) )
+  sTree = sFiles[-1].Get("ljmet")
+  sTree.SetBranchStatus( "*", 0 )
+  for vName in var_load:
+    sTree.SetBranchStatus( vName, 1 )
+  sTrees.append( sTree )
+  sTrees[-1].GetEntry(0)
+  loader.AddSignalTree( sTrees[-1], 1 )
+
+
+for bkg in config.bkg_training[ args.year ]:
+  print( ">> Adding background file: {}".format( bkg ) ) 
+  bFiles.append( TFile.Open( inputDir + bkg ) )
+  bTree = bFiles[-1].Get( "ljmet" )
+  bTree.SetBranchStatus( "*", 0 )
+  for vName in var_load:
+    bTree.SetBranchStatus( vName, 1 )
+  bTrees.append( bTree )
+  bTrees[-1].GetEntry(0)
+  if bTree.GetEntries() != 0:
+    loader.AddBackgroundTree( bTrees[-1], 1 )
 
 cut = TCut( cutStr )
 
@@ -123,7 +127,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=15:BatchSize=128:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=30:BatchSize=128:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

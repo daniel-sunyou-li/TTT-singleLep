@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from json import loads as load_json
 from json import dump as dump_json
 
-execfile( "EOSSafeUtils.py" )
+exec( open( "EOSSafeUtils.py" ).read() )
 
 # read in arguments
 parser = ArgumentParser()
@@ -54,7 +54,6 @@ def check_samples( inLoc, outLoc, shifts, year ):
       fStep2[ shift ] = EOSlistdir( os.path.join( eosDir, shift ) )
     elif inLoc == "BRUX":
       status, dirList = xrdClient.dirlist( os.path.join( "/" + config.step2DirBRUX[ year ].split( "//" )[-1], shift ) )
-      print( dirList )
       fStep2[ shift ] = [ item.name for item in dirList ]
 
     if outLoc == "LPC":
@@ -199,7 +198,7 @@ def submit_jobs( sFiles, shift, inputDir, outputDir, logDir, models, params ):
 
 def main():    
   print( "[START] Submitting step3 application jobs...")
-  voms_init()
+  #voms_init()
   shifts = [ "nominal" ] 
   if args.shifts:
     shifts = []

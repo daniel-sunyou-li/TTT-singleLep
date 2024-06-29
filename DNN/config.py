@@ -19,11 +19,10 @@ step2DirBRUX = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".for
 
 step3DirBRUX = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
 
-step2DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
+step2DirLPC = { year: "~/nobackup/TTT/CMSSW_13_3_0/src/TTT-singleLep/DNN/{}/".format( step2Sample[ year ] ) for year in years }
 
-step3DirLPC = { year: "~/nobackup/CMSSW_10_6_29/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
+step3DirLPC = { year: "~/nobackup/TTT/CMSSW_13_3_0/src/TTT-singleLep/DNN/{}/".format( step3Sample[ year ] ) for year in years }
 
-#step2DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 step2DirXRD = { year: "root://brux30.hep.brown.edu:1094//store/user/{}/{}/".format( eosUserName, step2Sample[ year ] ) for year in years }
 
 step3DirXRD = { year: "root://cmsxrootd.fnal.gov//store/user/{}/{}/".format( eosUserName, step3Sample[ year ] ) for year in years }
@@ -40,8 +39,8 @@ params = {
   "HPO": { # hyper parameter optimization settings
     "CALLS":    30,  # total number of hpo iterations
     "STARTS":   20,  # number of randomly sampled hpo iterations
-    "EPOCHS":   100, # number of epochs to survey at each hpo iteration
-    "PATIENCE": 5,  # number of epochs before early stopping 
+    "EPOCHS":   200, # number of epochs to survey at each hpo iteration
+    "PATIENCE": 10,  # number of epochs before early stopping 
     "OPT SPACE": { # add multiple values to list VALUE for HPO search, otherwise sets fixed value 
       "HIDDEN LAYERS":          { "TYPE": "INTEGER",     "VALUE": [ 1, 3 ] },  # number of hidden layers
       "HIDDEN NODES":           { "TYPE": "INTEGER",     "VALUE": [ 10, 40 ] }, # number of nodes per hidden layer
@@ -87,9 +86,9 @@ shifts = {
 # signal sample to be used in training
 sig_training = { 
   year: [
-    #"TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
-    #"TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
-    "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root"
+    "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
+    "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
+    #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root"
   ] for year in years
 }
 
@@ -97,13 +96,13 @@ sig_training = {
 bkg_training = {
   year: [
     #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_6_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_7_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_6_hadd.root",
+    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_7_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
     "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
@@ -190,10 +189,10 @@ varList["DNN"] = [
   ("NJets_JetSubCalc", "AK4 jet multiplicity", 0, 15, 16),
   #("NJetsForward_JetSubCalc", "AK4 forward jet multiplicity", 0, 5, 6),
   ("NJetsPU_JetSubCalc", "Pileup jet multiplicity", 0, 5, 6),
-  ("theJetEtaAverageNotBJet_JetSubCalc", "Average LF Jet #eta", 0, 3, 31 ),
+  #("theJetEtaAverageNotBJet_JetSubCalc", "Average LF Jet #eta", 0, 3, 31 ),
   ("theJetEtaAverage_JetSubCalc", "Average Jet #eta", 0, 3, 31 ),
-  ("theJetEtaPtWeighted_JetSubCalc", "p_T Weighted Average Jet #eta", 0, 3, 31 ),
-  ("theJetEta_JetNotBJetMaxPt_JetSubCalc", "Max p_T LF Jet #eta", 0, 3, 31 ),
+  #("theJetEtaPtWeighted_JetSubCalc", "p_T Weighted Average Jet #eta", 0, 3, 31 ),
+  #("theJetEta_JetNotBJetMaxPt_JetSubCalc", "Max p_T LF Jet #eta", 0, 3, 31 ),
   ("HT_2m", "HTwoTwoPtBjets [GeV]", -20, 5000, 201),
   ("Sphericity", "Sphericity", 0, 1.0, 51),
   ("Aplanarity", "Aplanarity", 0, 0.5, 51),
@@ -225,12 +224,12 @@ varList["Step3"].append( tuple( ( "DNN_3t", "ttt discriminator", 0, 1, 101) ) )
 
 # weight event count
 
-weightStr = "triggerXSF * triggerSF * pileupWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc * " + \
+weightStr = "triggerSF * pileupWeight * pileupJetIDWeight * lepIdSF * EGammaGsfSF * isoSF * L1NonPrefiringProb_CommonCalc * " + \
             "(MCWeight_MultiLepCalc / abs(MCWeight_MultiLepCalc) ) * xsecEff * tthfWeight * btagDeepJetWeight * btagDeepJet2DWeight_HTnj"
 
 # general cut, add selection based cuts in training scripts
 
-base_cut =  "DataPastTriggerX == 1 && MCPastTriggerX == 1 && !TMath::IsNaN(theJetEtaAverageNotBJet_JetSubCalc)"
+base_cut =  "DataPastTriggerX == 1 && MCPastTriggerX == 1"
 
 # branches to add to step3 ntuple
 branches = [

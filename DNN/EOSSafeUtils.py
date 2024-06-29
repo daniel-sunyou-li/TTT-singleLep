@@ -73,9 +73,9 @@ def EOSlistdir(Dir):
 
 def BRUXlistdir(Dir):
 	if not Dir.startswith('/store'):
-		print 'BRUXlistdir: begin path with /store'
+		print( 'BRUXlistdir: begin path with /store' )
 		return 
-        items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
+		items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
 	return striplist(items)
 
 def EOSlist_root_files(Dir):
@@ -91,9 +91,9 @@ def EOSlist_root_files(Dir):
 
 def BRUXlist_root_files(Dir):
 	if not Dir.startswith('/store'):
-		print 'BRUXlistdir: begin path with /store'
+		print( 'BRUXlistdir: begin path with /store' )
 		return 
-        items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
+		items = os.popen('gfal-ls gsiftp://brux30.hep.brown.edu//isilon/hadoop/'+Dir).readlines()
 	items2 = striplist(items)
 	rootlist = []
 	for item in items2:

@@ -1,13 +1,13 @@
 #!/bin/sh
 
-year=2017
-dirXRD=root://brux30.hep.brown.edu:1094//isilon/hadoop/store/user/dali/FWLJMET106XUL_singleLep${year}UL_RunIISummer20_3t_step2
+year=2016APV
+dirXRD=root://brux30.hep.brown.edu:1094//store/user/dali/FWLJMET106XUL_singleLep${year}UL_RunIISummer20_3t_step2
 shift=nominal
 samples=(
 #"SingleElectron"
 #"EGamma"
 #"SingleMuon"
-#"TTTJ_TuneCP5_13TeV-madgraph-pythia8"
+"TTTJ_TuneCP5_13TeV-madgraph-pythia8"
 #"TTTW_TuneCP5_13TeV-madgraph-pythia8"
 #"WW_TuneCP5_13TeV-pythia8"
 #"WZ_TuneCP5_13TeV-pythia8"
@@ -70,7 +70,7 @@ samples=(
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_1"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_2"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_3"
-"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
+#"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4"
@@ -80,7 +80,7 @@ samples=(
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10"
-"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_11"
+#"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_11"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_12"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b"
 #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
@@ -94,7 +94,7 @@ echo "[START]" $dirXRD $shift
 mkdir -vp FWLJMET106XUL_singleLep${year}UL_RunIISummer20_3t_step3/${shift}
 
 for fName in ${samples[@]}; do
-  python step3.py -f ${dirXRD}/${shift}/${fName}_hadd.root
+  python3 step3.py -f ${dirXRD}/${shift}/${fName}_hadd.root
   mv ${fName}_hadd.root FWLJMET106XUL_singleLep${year}UL_RunIISummer20_3t_step3/${shift}/ 
 done
 

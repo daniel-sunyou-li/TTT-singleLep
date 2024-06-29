@@ -89,8 +89,8 @@ def check_voms():
   print( ">> Checking VOMS" )
   try:
     output = check_output( "voms-proxy-info", shell=True )
-    if output.rfind( "timeleft" ) > -1:
-      if int( output[ output.rfind(": ")+2: ].replace( ":", "" ) ) > 0:
+    if output.rfind( b"timeleft" ) > -1:
+      if int( output[ output.rfind(b": ")+2: ].replace( ":", "" ) ) > 0:
         print( "[OK ] VOMS found" )
         return True
       return False
@@ -101,7 +101,7 @@ def voms_init():
 # Initialize the VOMS proxy if it is not already running
   if not check_voms():
     print( ">> Initializing VOMS" )
-    output = check_output( "voms-proxy-init --voms cms", shell=True )
+    output = check_output( "grid-proxy-init", shell=True )
     if "failure" in output:
       print( ">> Incorrect password entered. Try again." )
       voms_init()
@@ -110,14 +110,14 @@ def voms_init():
 # Submit a single job to Condor
 def submit_job(job):
 # encode the job's seed
-  seed_vars = b64encode(",".join([v for v, s in (job.seed if job.subseed == None else job.subseed).states.iteritems() if s]))
+  seed_vars = b64encode( ",".join( [ v for v, s in ( job.seed if job.subseed == None else job.subseed ).states.items() if s ] ).encode("utf-8") )
   runDir = os.getcwd() 
 # Create a job file
   condorParams = {
     "MEMORY": "2 GB",
     "RUNDIR": runDir,
     "FILENAME": job.name,
-    "SEEDVARS": seed_vars,
+    "SEEDVARS": seed_vars.decode("utf-8"),
     "EOSUSERNAME": config.eosUserName,
     "YEAR": args.year,
     "NJETS": args.NJETS,
@@ -155,15 +155,15 @@ Queue 1"""%condorParams )
     pass
 
   info_lock.acquire()
-  if output != None and output.find("submitted") != -1:
-    i = output.find("Submitting job(s).") + 19
-    ns_jobs = int(output[i:output.find("job(s)", i)])
+  if output != None and output.find(b"submitted") != -1:
+    i = output.find(b"Submitting job(s).") + 19
+    ns_jobs = int(output[i:output.find(b"job(s)", i)])
 
-    i = output.find("to cluster ") + 11
-    cluster = output[i:output.find(".", i)]
+    i = output.find(b"to cluster ") + 11
+    cluster = output[i:output.find(b".", i)]
 
-    i = output.find("jobs to ") + 8
-    sched = output[i:output.find("\n", i)]
+    i = output.find(b"jobs to ") + 8
+    sched = output[i:output.find(b"\n", i)]
 
     submitted_jobs.value += ns_jobs
     if job.subseed == None:
@@ -185,7 +185,7 @@ def submit_joblist(job_list):
   procs = []
   j = 0
   while j < len(job_list):
-    if len(procs) < args.processes:
+    if len(procs) < int(args.processes):
 # Start a new process for this job
       p = Process(target=submit_job, args=(job_list[j],))
       p.start()
@@ -209,7 +209,7 @@ def submit_joblist(job_list):
 
   if len(failed_jobs) > 0:
     print( ">> {} jobs failed to submit.".format( len(failed_jobs) ) )
-    choice = raw_input ( ">> Retry? (Y/n) " ) 
+    choice = input( ">> Retry? (Y/n) " ) 
     if "n" in choice:
       print( "[OK ] Done." )
       return
@@ -247,9 +247,14 @@ def submit_new_jobs():
   jf.pickle[ "CUTS" ][ "MT" ] = args.MT
   jf.pickle[ "CUTS" ][ "MINDR" ] = args.MINDR
   print( ">> Submitting new jobs into folder: {}".format(jf.path))
-  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, args.NJETS, args.NBJETS, args.AK4HT, args.LEPPT, args.MET, args.MT, args.MINDR )
+  selection = config.base_cut
+  selection += " && ( NJetsCSV_JetSubCalc >= {} ) && ( NJets_JetSubCalc >= {} )".format( args.NJETS, args.NBJETS )
+  selection += " && ( minDR_lepJet > {} )".format( args.MINDR )
+  selection += " && ( AK4HT >= {} ) && ( MT_lepMet > {} ) && ( corr_met_MultiLepCalc > {} )".format( args.AK4HT, args.MT, args.MET )
+  selection += " && ( leptonPt_MultiLepCalc > {} && ( isElectron || isMuon ) )".format( args.LEPPT )
+  seeds = generate_uncorrelated_seeds( args.seeds, variables, args.correlation, args.year, selection )
 
-  print "Generating jobs."
+  print( "Generating jobs." )
   if jf.pickle[ "JOBS" ] == None:
     jf.pickle[ "JOBS" ] = []
   job_list = []
@@ -284,7 +289,7 @@ def submit_new_jobs():
 
   print( "[OK ] Done." )
 
-voms_init()
+#voms_init()
 
 # Track Progress
 info_lock = Lock()

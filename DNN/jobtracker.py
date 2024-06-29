@@ -8,7 +8,7 @@ import pickle
 LOG = True
 def log(s):
     if LOG:
-        print s
+        print( s )
 
 class Seed(object):
     def __init__(self, variables):
@@ -56,11 +56,11 @@ class Seed(object):
                 seed.exclude(variables[i])
         
         if seed.binary != bitstring:
-            print "Provided : " + bitstring
-            print "Generated: " + seed.binary
+            print( "Provided : " + bitstring )
+            print( "Generated: " + seed.binary )
             for i, c in enumerate(seed.binary):
                 if c != bitstring[i]:
-                    print "    " + variables[i]
+                    print( "    " + variables[i] )
             raise ValueError("Mismatching bitstrings!")
         return seed
 

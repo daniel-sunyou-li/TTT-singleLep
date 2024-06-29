@@ -74,7 +74,7 @@ def reweight_importances( year, variables, importances, selection ):
   for i in range(len(corr_mat)):
     for j in range(len(corr_mat)):
       if i == j:
-     	mod_corr_mat[i,j] = corr_mat[i,j]
+        mod_corr_mat[i,j] = corr_mat[i,j]
       elif j > i:
         mod_corr_mat[i,j] = corr_mat[i,j]
         for k in range(j):
@@ -127,11 +127,11 @@ def get_correlated_groups(corr_mat, variables, cutoff):
 				
   return groups, pairs
 
-def generate_uncorrelated_seeds(count, variables, cutoff, year, njets, nbjets, ak4ht, lepPt, met, mt, minDR ):
+def generate_uncorrelated_seeds(count, variables, cutoff, year, selection ):
   # Generates <count> uncorrelated Seed objects using the specified variables
   # Get correlated pairs of variables
   groups, _ = get_correlated_groups(
-    get_correlation_matrix(year, variables, njets, nbjets, ak4ht, lepPt, met, mt, minDR ),
+    get_correlation_matrix( year, variables, selection ),
     variables,
     cutoff
   )

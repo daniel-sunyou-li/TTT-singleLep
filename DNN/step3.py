@@ -54,7 +54,8 @@ def get_predictions( models, varlist, fName, tName = "ljmet" ):
         if df.Count() == 0: 
             events.append( np.asarray([]) )
         else:
-            eventDict = df.AsNumpy( columns = [ variable.encode( "ascii", "ignore" ) for variable in variables ] )
+            eventDict = df.AsNumpy( columns = [ variable.encode( "ascii", "ignore" ).decode("utf-8") for variable in variables ] )
+            print( eventDict.keys() )
             eventList = []
             for variable in sorted( variables ):
                 eventList.append( eventDict[ variable ] )
