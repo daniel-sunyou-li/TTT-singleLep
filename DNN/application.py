@@ -170,12 +170,12 @@ def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params 
   jdf = open(jdfName, "w")
   jdf.write(
 """universe = vanilla
-Executable = application.sh
+Executable = scripts/application.sh
 Should_Transfer_Files = Yes
 WhenToTransferOutput = ON_EXIT
 request_memory = %(MEMORY)s
 Requirements = has_avx == true
-Transfer_Input_Files = %(MODEL)s, %(PARAMFILE)s, step3.py, config.py
+Transfer_Input_Files = %(MODEL)s, %(PARAMFILE)s, python/step3.py, config.py
 Output = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.out
 Error = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.err
 Log = %(LOGDIR)s/%(SHIFT)s/%(FILENAME)s.log

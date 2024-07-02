@@ -110,10 +110,10 @@ def submit_job(job):
   with open( job.path, "w" ) as f:
     f.write(
 """universe = vanilla
-Executable = %(RUNDIR)s/remote.sh
+Executable = %(RUNDIR)s/scripts/remote.sh
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-Transfer_Input_Files = %(RUNDIR)s/remote.py, %(RUNDIR)s/config.py, %(RUNDIR)s/jobtracker.py
+Transfer_Input_Files = %(RUNDIR)s/python/remote.py, %(RUNDIR)s/config.py, %(RUNDIR)s/python/jobtracker.py
 request_memory = %(MEMORY)s
 JobBatchName = VariableImportance
 Output = %(FILENAME)s.out
