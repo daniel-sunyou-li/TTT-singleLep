@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 import config
-import mltools
+import python.mltools
 
 parser = ArgumentParser()
 parser.add_argument( "-d", "--dataset", required = True, help="The dataset folders to search for HPO information")

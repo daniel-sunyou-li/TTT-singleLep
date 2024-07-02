@@ -1,4 +1,4 @@
-import jobtracker as jt
+import python.jobtracker as jt
 import numpy as np
 
 from argparse import ArgumentParser

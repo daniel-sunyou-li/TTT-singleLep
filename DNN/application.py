@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from json import loads as load_json
 from json import dump as dump_json
 
-exec( open( "EOSSafeUtils.py" ).read() )
+exec( open( "python/EOSSafeUtils.py" ).read() )
 
 # read in arguments
 parser = ArgumentParser()

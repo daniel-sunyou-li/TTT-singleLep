@@ -1,4 +1,4 @@
-import jobtracker as jt
+import python.jobtracker as jt
 from argparse import ArgumentParser
 from multiprocessing import Process, Lock, Value
 from subprocess import check_output

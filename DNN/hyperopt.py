@@ -22,9 +22,9 @@ args = parser.parse_args()
 
 sys.argv = []
 
-from correlation import reweight_importances
+from python.correlation import reweight_importances
 import config
-import mltools
+import python.mltools
 
 # Load dataset
 datafile_path = None
