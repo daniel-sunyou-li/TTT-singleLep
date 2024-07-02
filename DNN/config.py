@@ -84,54 +84,52 @@ shifts = {
 }
 
 # signal sample to be used in training
-sig_training = { 
-  year: [
-    "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
-    "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
-    #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root"
-  ] for year in years
-}
+sig_training = [ 
+  "TTTJ_TuneCP5_13TeV-madgraph-pythia8_hadd.root", # make sure TTTJ is first
+  "TTTW_TuneCP5_13TeV-madgraph-pythia8_hadd.root"
+  #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root"
+]
 
 # background samples to be used in training, only using ttbar events
-bkg_training = {
-  year: [
-    #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_6_hadd.root",
-    #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_7_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
-    "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
-    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
-    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
-    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
-    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
-    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
-    #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"  
-  ] for year in years
-}
+# only include enough top-pair to LF relative to HF final states to match the SR proportions
+bkg_training = [
+  #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_6_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_7_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
+  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
+  #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+  #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+  #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+  #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+  #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+  #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+  #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+  #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+  #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+  #"TTToHadronic_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root",
+  #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
+  #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
+  #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
+  #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttcc_hadd.root",
+  #"TTToSemiLepton_HT500Njet9_TuneCP5_13TeV-powheg-pythia8_ttjj_hadd.root"  
+]
+
 
 varList["DNN"] = [
   #("AK4HTpMETpLepPt", "S_{T} [GeV]" , 0, 4000, 101),  # poor data/MC agreement
@@ -188,7 +186,7 @@ varList["DNN"] = [
   ("fourthcsvb_bb", "DeepJet(4th)", -2, 1.5, 51),
   ("NJets_JetSubCalc", "AK4 jet multiplicity", 0, 15, 16),
   #("NJetsForward_JetSubCalc", "AK4 forward jet multiplicity", 0, 5, 6),
-  ("NJetsPU_JetSubCalc", "Pileup jet multiplicity", 0, 5, 6),
+  #("NJetsPU_JetSubCalc", "Pileup jet multiplicity", 0, 5, 6),
   #("theJetEtaAverageNotBJet_JetSubCalc", "Average LF Jet #eta", 0, 3, 31 ),
   ("theJetEtaAverage_JetSubCalc", "Average Jet #eta", 0, 3, 31 ),
   #("theJetEtaPtWeighted_JetSubCalc", "p_T Weighted Average Jet #eta", 0, 3, 31 ),

@@ -26,28 +26,34 @@ def get_correlation_matrix( year, variables, selection ):
   # Load signal and background
   rFile = {} 
   rTree = {}
-  bkgrnd_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", config.sig_training[ str(year) ][0] )
+  # this is just a placeholder since we are not actually going to calculate the correlation from background with loader
+  if year == "Run2":
+    bkgrnd_path = os.path.join( config.step2DirXRD[ "17" ], "nominal/", config.sig_training[0] )
+  else:
+    bkgrnd_path = os.path.join( config.step2DirXRD[ year ], "nominal/", config.sig_training[0] )
   rFile["BKG"] = TFile.Open( bkgrnd_path )
   rTree["BKG"] = rFile["BKG"].Get( "ljmet" )
   loader.AddBackgroundTree( rTree["BKG"] )
   
-  for signal in config.sig_training[ str(year) ]:
-    signal_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", signal )
+  for signal in config.sig_training:
+    if year == "Run2":
+      signal_path = os.path.join( config.step2DirXRD[ "17" ], "nominal/", signal )
+    else:
+      signal_path = os.path.join( config.step2DirXRD[ str(year) ], "nominal/", signal )
     rFile[signal] = TFile.Open( signal_path )
     rTree[signal] = rFile[signal].Get( "ljmet" )
     loader.AddSignalTree( rTree[signal] )
 
 
   # Set weights
-  weight_string = config.weightStr
-  loader.SetSignalWeightExpression( weight_string )
-  loader.SetBackgroundWeightExpression( weight_string )
+  loader.SetSignalWeightExpression( "1" )
+  loader.SetBackgroundWeightExpression( "1" )
 
   # Set cuts
   cut_string = TCut( selection )
   loader.PrepareTrainingAndTestTree(
     cut_string, cut_string,
-    "nTrain_Signal=0:nTrain_Background=0:SplitMode=Random:NormMode=NumEvents:!V:VerboseLevel=Info"
+    "nTrain_Signal=5000:nTrain_Background=5000:SplitMode=Random:NormMode=NumEvents:!V:VerboseLevel=Info"
   )
     
   # Set the pointer to the right histogram

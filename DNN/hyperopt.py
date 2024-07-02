@@ -129,9 +129,9 @@ background_files = []
 if args.Run2: years = [ "16APV", "16", "17", "18" ]
 for year in years:
   tree_folder = config.step2DirXRD[ year ] + "nominal/"
-  for sig_ in config.sig_training[ year ]:
+  for sig_ in config.sig_training:
     signal_files.append( os.path.join( tree_folder, sig_ ) )
-  for bkg_ in config.bkg_training[ year ]:
+  for bkg_ in config.bkg_training:
     if year == "18" and "TTTT" in bkg_: bkg_ = bkg_.replace( "_hadd", "_1_hadd" )
     background_files.append( os.path.join( tree_folder, bkg_ ) )
 

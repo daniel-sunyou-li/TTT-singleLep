@@ -32,13 +32,17 @@ from ROOT import TMVA, TCut, TFile
 
 seed_vars = set( [ var.decode("utf-8") for var in b64decode(args.seedvars).split(b",") ] )
 
-print(">> TTT Condor Job using {} samples".format( config.step2Sample[ args.year ] ) )
+print(">> TTT Condor Job using {} samples".format( args.year ) )
+
+if args.year in [ "16APV", "16", "17", "18" ]:
+  year = [ args.year ]
+else:
+  year = [ "16APV", "16", "17", "18" ]
 
 # Initialize TMVA
 TMVA.Tools.Instance()
 TMVA.PyMethodBase.PyInitialize()
 
-inputDir = config.step2DirXRD[ args.year ] + "nominal/"
 loader = TMVA.DataLoader( "tmva_data" )
 factory = TMVA.Factory("VariableImportance",
                        "!V:!ROC:Silent:!Color:!DrawProgressBar:Transformations=I;:AnalysisType=Classification")
@@ -61,7 +65,7 @@ for var_data in config.varList["DNN"]:
   if var_data[0] in seed_vars: 
     num_vars += 1
     print( "    {:<4} {}".format( str(num_vars) + ".", var_data[0] ) )
-    loader.AddVariable( var_data[0] )#, var_data[1], "", "F" )
+    loader.AddVariable( var_data[0] )
     var_load.append( var_data[0] )
   if var_data[0] not in var_load and var_data[0] in cutStr:
     var_load.append( var_data[0] )
@@ -70,36 +74,41 @@ for var_data in config.varList["DNN"]:
 print( ">> Loading trees" )
 sFiles, bFiles = [], []
 sTrees, bTrees = [], []
-for sig in config.sig_training[ args.year ]:
-  print( ">> Adding signal file: {}".format( sig ) )
-  sFiles.append( TFile.Open( inputDir + sig ) )
-  sTree = sFiles[-1].Get("ljmet")
-  sTree.SetBranchStatus( "*", 0 )
-  for vName in var_load:
-    sTree.SetBranchStatus( vName, 1 )
-  sTrees.append( sTree )
-  sTrees[-1].GetEntry(0)
-  loader.AddSignalTree( sTrees[-1], 1 )
+
+for year_ in year:
+  for sig in config.sig_training:
+    inputDir = config.step2DirXRD[ year_ ] + "nominal/" + sig
+    print( ">> Adding {} signal file: {}".format( year_, inputDir ) )
+    sFiles.append( TFile.Open( inputDir ) )
+    sTree = sFiles[-1].Get("ljmet")
+    sTree.SetBranchStatus( "*", 0 )
+    for vName in var_load:
+      sTree.SetBranchStatus( vName, 1 )
+    sTrees.append( sTree )
+    sTrees[-1].GetEntry(0)
+    loader.AddSignalTree( sTrees[-1], 1 )
 
 
-for bkg in config.bkg_training[ args.year ]:
-  print( ">> Adding background file: {}".format( bkg ) ) 
-  bFiles.append( TFile.Open( inputDir + bkg ) )
-  bTree = bFiles[-1].Get( "ljmet" )
-  bTree.SetBranchStatus( "*", 0 )
-  for vName in var_load:
-    bTree.SetBranchStatus( vName, 1 )
-  bTrees.append( bTree )
-  bTrees[-1].GetEntry(0)
-  if bTree.GetEntries() != 0:
-    loader.AddBackgroundTree( bTrees[-1], 1 )
+for year_ in year:
+  for bkg in config.bkg_training:
+    inputDir = config.step2DirXRD[ year_ ] + "nominal/" + bkg
+    print( ">> Adding {} background file: {}".format( year_, inputDir ) )
+    bFiles.append( TFile.Open( inputDir ) )
+    bTree = bFiles[-1].Get( "ljmet" )
+    bTree.SetBranchStatus( "*", 0 )
+    for vName in var_load:
+      bTree.SetBranchStatus( vName, 1 )
+    bTrees.append( bTree )
+    bTrees[-1].GetEntry(0)
+    if bTree.GetEntries() != 0:
+      loader.AddBackgroundTree( bTrees[-1], 1 )
 
 cut = TCut( cutStr )
 
 # Prepare tree
 loader.PrepareTrainingAndTestTree( 
     cut, cut, 
-    "SplitMode=Random:NormMode=NumEvents:!V:nTrain_Signal=10000:nTrain_Background=10000"
+    "SplitMode=Random:NormMode=NumEvents:!V:nTrain_Signal=20000:nTrain_Background=20000"
 )
 
 # Build model
@@ -110,8 +119,9 @@ model.add( Dense( num_vars,
                 input_dim = num_vars,
                 activation = "relu") )
 for _ in range( 2 ):
-    model.add( Dropout( 0.5 ) )
-    model.add( Dense( 32, activation = "relu" ) )
+    model.add( Dropout( 0.2 ) )
+    model.add( Dense( 50, activation = "relu" ) )
+    model.add( BatchNormalization() )
 model.add( Dense( 2, activation="sigmoid" ) )
 
 model.compile(
@@ -127,7 +137,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=30:BatchSize=128:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:BatchSize=128:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"

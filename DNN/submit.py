@@ -10,7 +10,7 @@ import config
 
 parser = ArgumentParser()
 parser.add_argument( "-p",   "--processes",   default = "2",         help = "The number of processes used to [re]submit jobs." )
-parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from: 16, 17, 18" )
+parser.add_argument( "-y",   "--year",        required = True,       help = "The dataset year to use data from: 16APV, 16, 17, 18, Run2" )
 parser.add_argument( "-n",   "--seeds",       default = "200",       help = "The number of seeds to submit (only in submit mode)." )
 parser.add_argument( "-c",   "--correlation", default = "60",        help = "The correlation cutoff percentage." )
 parser.add_argument( "-l",   "--varlist",     default = "all",       help = "The variables to use when generating seeds." )
@@ -30,15 +30,16 @@ args = parser.parse_args()
 
 from correlation import generate_uncorrelated_seeds
 
-if args.year not in [ "16APV", "16", "17", "18" ]:
-  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16APV, 16, 17, 18.".format( args.year ) )
+if args.year not in [ "16APV", "16", "17", "18", "Run2" ]:
+  raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16APV, 16, 17, 18, Run2.".format( args.year ) )
+
+if args.year in [ "16APV", "16", "17", "18" ]:
+  year = [ args.year ]
+elif args.year in [ "Run2" ]:
+  year = [ "16APV", "16", "17", "18" ]
 
 # Parse command line arguments
 jt.LOG = args.verbose
-
-# set some paraMETers
-step2Sample = config.step2Sample[ args.year ] 
-step2DirLPC = config.step2DirLPC[ args.year ] 
 
 # collect folders to use in resubmission
 folders = []
@@ -68,7 +69,6 @@ if not args.resubmit:
 def print_options():
   print( ">> {}ubmitting jobs to LPC Condor using the options: ".format( "Res" if resubmit else "S" ) )
   print( ">> Year: {}".format( args.year ) )
-  print( ">> Training Samples: {}".format( step2Sample ) )
   print( ">> Correlation Threshold: {}".format( args.correlation ) ) 
   print( ">> # Seeds: {}".format( args.seeds ) )
   print( ">> # Jets: {}+".format( args.NJETS ) )
@@ -84,29 +84,6 @@ def print_options():
   print( "{} Resubmit".format( "[ON ]" if args.test else "[OFF]" ) )
   sleep(5)  
 
-def check_voms():
-# Returns True if the VOMS proxy is already running
-  print( ">> Checking VOMS" )
-  try:
-    output = check_output( "voms-proxy-info", shell=True )
-    if output.rfind( b"timeleft" ) > -1:
-      if int( output[ output.rfind(b": ")+2: ].replace( ":", "" ) ) > 0:
-        print( "[OK ] VOMS found" )
-        return True
-      return False
-  except:
-    return False
-    
-def voms_init():
-# Initialize the VOMS proxy if it is not already running
-  if not check_voms():
-    print( ">> Initializing VOMS" )
-    output = check_output( "grid-proxy-init", shell=True )
-    if "failure" in output:
-      print( ">> Incorrect password entered. Try again." )
-      voms_init()
-  print( "[OK ] VOMS initialized" )
-  
 # Submit a single job to Condor
 def submit_job(job):
 # encode the job's seed
@@ -238,7 +215,7 @@ def resubmit_jobs():
 def submit_new_jobs():
   jf = jt.JobFolder.create(folders[0])
   jf.pickle[ "YEAR" ] = args.year
-  jf.pickle[ "BACKGROUND" ] = config.bkg_training[ args.year ]
+  jf.pickle[ "BACKGROUND" ] = config.bkg_training
   jf.pickle[ "CUTS" ][ "AK4HT" ] = args.AK4HT
   jf.pickle[ "CUTS" ][ "NJETS" ] = args.NJETS
   jf.pickle[ "CUTS" ][ "NBJETS" ] = args.NBJETS
@@ -288,8 +265,6 @@ def submit_new_jobs():
   submit_joblist( job_list )
 
   print( "[OK ] Done." )
-
-#voms_init()
 
 # Track Progress
 info_lock = Lock()

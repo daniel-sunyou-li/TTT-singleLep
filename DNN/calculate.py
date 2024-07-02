@@ -116,7 +116,7 @@ for jf in job_folders:
   for seed_j in jf.seed_jobs:
     if seed_j.has_result:
       seed_rocs[seed_j.seed] = (seed_j.roc_integral, jf)
-      for var, included in seed_j.seed.states.iteritems():
+      for var, included in seed_j.seed.states.items():
         if included:
           if var in significance_stats:
             significance_stats[var]["freq"] += 1
@@ -126,14 +126,14 @@ for jf in job_folders:
 print( "Found " + str(len(seed_rocs.keys())) + " seed ROC-integrals." )
 
 n = 1
-for seed, seed_roc in seed_rocs.iteritems():
+for seed, seed_roc in seed_rocs.items():
   print("Processing seed {}.\r".format(n)),
   n += 1
   for subseed_j in seed_roc[1].subseed_jobs(seed):
     if subseed_j.subseed == seed:
       continue
     if subseed_j.has_result:
-      for var, included in subseed_j.subseed.states.iteritems():
+      for var, included in subseed_j.subseed.states.items():
         if not included and seed.states[var]:
           if var in significances:
             significances[var].append(seed_roc[0] - subseed_j.roc_integral)
@@ -141,7 +141,7 @@ for seed, seed_roc in seed_rocs.iteritems():
             significances[var] = [seed_roc[0] - subseed_j.roc_integral]
     
 print( "\n>> Computing stats." )
-for var, significance in significances.iteritems():
+for var, significance in significances.items():
   normalization += sum(significance)
 
   # Compute stats
