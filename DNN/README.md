@@ -109,25 +109,28 @@ The command is:
 After this step finishes, the model with the best performance out of the `k` folds is saved in `/dataset_4j_2017/1to50/` and will be applied to the produce the step3 files on Condor. 
 
 ## Submit Step3 Condor Jobs
-The step3 files will be stored on CMSEOS. The step3 script can take multiple models so the step3 file can hold multiple discriminators for different sets of jet cuts and number of input variables. The command is:
+The step3 files will be stored on cmslpc EOS. The step3 script can take multiple models so the step3 file can hold multiple discriminators for different sets of jet cuts and number of input variables. Some options include:
+* `y` (year) = 16APV, 16, 17 or 18
+* `-l` (optional) = name of the condor log directory
+* `-i` (location of input files) = LPC or BRUX
+* `-o` (location of output files) = LPC or BRUX (cannot transfer from LPC to BRUX, but checks if files are stored on BRUX)
+* `--resubmit` (optional) = resubmit failed jobs
+* `--test` (optional) = only submit a single job
+* `--shift` (optional) = process the JEC reduced systematic samples
 
-    source /cvmfs/cms.cern.ch/cmsset_default.sh
-    # source /cvmfs/cms.cern.ch/cmsset_default.csh
-    cmsenv
-    python application.py -y 2017 -l application_log_2017 -sys -v dataset_4j_2017/1to40/ dataset_4j_2017/1to50/
+  
+The command is:
+
+    python3 application.py -y <16APV/16/17/18> -i BRUX -o LPC 
     
 The Condor jobs can be checked directly by checking the Condor job outputs:
 
     ls application_log_2017/*.out | wc # the number of finished jobs
     ls application_log_2017/*.log | wc # the total number of jobs
     
-For any jobs that failed, resubmit using:
+Once jobs are finished, you will find the step3 files stored on cmslpc EOS at:
 
-    python application.py -y 2017 -l application_log_resubmit -v -r application_log_2017 dataset_4j_2017/1to40/ dataset_4j_2017/1to50/
+    eosls /store/user/[EOS Username]/FWLJMET106X_singleLep<year>UL_RunIISummer20_<tag>_step3/<shift>/
     
-Once jobs are finished, you will find the step3 files stored on CMSEOS at:
-
-    eosls /store/user/[EOS Username]/FWLJMET102X_1lep2017_Oct2019_4t_10072020_step2/[tag]/
-    
-where `tag` can be `nominal`, `JECup`, `JECdown`, `JERup`, or `JERdown`.  After finishing producing the step3 files, refer to the [`singleLepAnalyzer`](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/tree/test/singleLepAnalyzer) subdirectory for instructions for running on BRUX.
+where `shift` can be `nominal`, or one of many JEC reduced systematics. After finishing producing the step3 files, refer to the [`singleLepAnalyzer`](https://github.com/daniel-sunyou-li/TTT-singleLep/tree/UL/singleLepAnalyzer) subdirectory for instructions for running on BRUX.
     
