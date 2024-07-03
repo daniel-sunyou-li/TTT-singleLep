@@ -18,80 +18,93 @@ Install `scikit-optimize` (`skopt`) for hyper parameter optimization:
 
     pip install --user scikit-optimize  
 
-Setup the `CMSSW` environment
+Setup the `CMSSW` environment (__Note__: `CMSSW_13_3_0` is used rather than `CMSSW_10_6_29` for compatability reasons with cmslpc-el9. There is no dependency on the CMSSW version, it is only run in CMSSW to use ROOT for I/O.)
 
     source /cvmfs/cms.cern.ch/cmsset_default.csh
-    setenv SCRAM_ARCH slc7_amd64_gcc700
-    cmsrel CMSSW_10_6_29
-    cd CMSSW_10_6_29/src/
+    cmsrel CMSSW_13_3_0
+    cd CMSSW_13_3_0/src/
     git clone https://github.com/daniel-sunyou-li/TTT-singleLep.git
     cd src/TTT-singleLep/DNN/
     
-Depending on the step being run, set-up the `DNN` environment with the commands listed in `start.txt`.
+Depending on the step being run, set-up the `DNN` environment with the commands listed in `env/start.txt`.
 
 Edit `config.py` to define user and variable parameters. Make sure that the following are in agreement with your `step2` samples:
 * `postfix`
+* `FWLJMet` paths for BRUX, LPC, EOS, etc.
     
 ## Submit Variable Importance Condor Jobs
-Setup the environment for submitting the Condor jobs
+Setup the environment for submitting the Condor jobs (can find again in `env/start.txt.`.)
 
-    source /cvmfs/sft.cern.ch/lcg/contrib/gcc/7.3.0/x86_64-centos7-gcc7-opt/setup.sh
-    # source /cvmfs/sft.cern.ch/lcg/contrib/gcc/7.3.0/x86_64-centos7-gcc7-opt/setup.csh
-    source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt/bin/thisroot.sh
-    # source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.16.00/x86_64-centos7-gcc48-opt/bin/thisroot.sh
+    source /cvmfs/cms.cern.ch/cmsset_default.csh # or .sh for bash
+    cmsenv
     
-Note that after running these source commands, you will not be able to upload files to CMSEOS.  You will need to restart the console and follow the previous steps. Submit _n_ seed Condor jobs.  The `.job`, `.log`, `.out` and `.err` files are stored in the directory `condor_log_[day].[month].[year]`. The following options should be modified depending on your situation:
-* `year (-y)` = `2017` or `2018`  
-* `njets (-nj)` = `2` or `4`  
-* `correlation (-c)` = `50` to `100`, `60` (recommended)  
-* `seeds (-n)` = `500` (recommnded)  
+Note that after running these source commands, you will not be able to upload files to CMSEOS.  You will need to restart the console and follow the previous steps. Submit _n_ seed Condor jobs.  The `.job`, `.log`, `.out` and `.err` files are stored in the directory `condor_log_[day].[month].[year]`. The submission options include:
+* `-y` (year) = 16, 16APV, 17, 18 or Run2
+* `-c` (correlation threshold) = 0 to 100, 60 (recommended)
+* `-n` (number of seeds) = 100 (recommended)
+* `--test` (submit only one job, optional)
+* `-nj` (jet multiplicity cut $\geq$) = 4 (default)
+* `-nb` (b-jet multiplicity cut $\geq$) = 1 (default)
+* `-ht` ($H_T$ >) = 390 (default)
+* `-lpt` (lepton $p_T$ >) = 20 (default)
+* `-met` (missing transverse momentum >) = 20 (default)
+* `-mt` (transverse mass of lepton and missing transverse momentum >) = 0 (default)
+* `-dr` (minimum $\Delta r$ between lepton and jet) = 0.2 (default)
 
-Submit the jobs using:
+Submit the jobs using (as an example):
 
-    python submit.py -y 2017 -nj 4 -c 60 -n 500
+    python3 submit_vi_condor.py -y Run2 -n 100 -c 60 -nj 4 -nb 1 
 
 While the jobs run, check on the progress using:
  
-    python folders.py condor_log_[day].[month].[year]
+    python3 process_condor_log.py <condor log directory>
     
 if there are any failed jobs, resubmit with:
 
-    python submit.py -y 2017 --unstarted -r condor_log_[day].[month].[year]
+    python3 submit.py -y Run2 --resubmit <condor log directory>
 
 ## Run the Variable Importance Calculation
 After all your jobs have finished, calculate the variable importance.  First, compact all of the Condor results to a `.jtd` file with:
 
-    python folders.py -c condor_log_[day].[month].[year]
+    python3 process_condor_log.py <condor log directory> -c
     
-At this point, it's recommended to move all the `.jtd` files for a given set of {`year`, `njets`} into one directory:
+At this point, it's recommended to move all the `.jtd` files for a set of seeds with a similar selection into one directory:
 
-    mkdir condor_log_4j_2017
-    mv *.jtd condor_log_4j_2017/
+    mkdir seed_output
+    mv *.jtd seed_output
     
 Run the calculation script and save the results to a similarly named directory
 
-    mkdir dataset_4j_2017
-    python calculate.py -f dataset_4j_2017 condor_log_4j_2017/*
+    mkdir dataset
+    python3 calculate_vi.py -f dataset seed_output
     
-The results produced are used automatically in the following steps. They can also be visualized using the python notebooks located in the [/notebooks/](https://github.com/daniel-sunyou-li/TTTT_TMVA_DNN/tree/test/notebooks) repository.
+The results produced are used automatically in the following steps.
     
 ## Run the Hyper Parameter Optimization
-Hyper parameter optimization is used to optimize the performance of a neural network by tuning the network architecture for a given number of input variables using the `scikit-optimize` library.  The input variables are grouped based on their ranking, determined in the previous step.  For this step, it is important _not_ to run the previous `source` command and `cmsenv`. The main option to set for this step is `numvars (-n)` = `1` to `76`, the recommended number is to include all variables that have a non-zero, positive importance value:
+Hyper parameter optimization is used to optimize the performance of a neural network by tuning the network architecture for a given number of input variables using the `scikit-optimize` library.  The input variables are grouped based on their ranking, determined in the previous step.  For this step, it is important _not_ to run the previous `source` command and `cmsenv`. The main option to set for this step is `-n` (number of variables) = `1` to `X`, the recommended number is to include all variables that have a non-zero, positive significance value. You can also customize the hyper parameter phase space surveyed in `config.py` including how many optimization steps are used. Other running options include:
+* `dataset` (positional) = folder where the variable importance results are stored
+* `-n` (number of variables) = `1` to `X` where `X` is the total number of variables in the variable importance ranking list
+* `-r` (signal-to-background ratio) = `1` (recommended) or `-1` to use all samples available
+* `-t` (tag) = postfix to add to the new DNN branch to be produced
+* `--Run2` (optional) = run the training over samples from all eras
+* `--override` (optional) = produce a new `.root` file with all the selected events    
 
-    source /cvmfs/cms.cern.ch/cmsset_default.sh
-    # source /cvmfs/cms.cern.ch/cmsset_default.csh
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-centos7-gcc8-opt/setup.sh
-    # source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-centos7-gcc8-opt/setup.csh
-    python hyperopt.py -y 2017 -n 50 -nj 4 dataset_4j_2017/
-    
+        source /cvmfs/cms.cern.ch/cmsset_default.csh
+        source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc12-opt/setup.csh
+        source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.32.02/x86_64-almalinux9.4-gcc114-opt/bin/thisroot.csh
+        python nn_hyperopt.py -n 50 -r 1 -t 3t dataset_4j_2017/ --Run2 
+ 
 ## Run the k-fold Cross Validation
-After determining the an optimal set of hyper parameters, with the results stored in a directory of the form `/dataset_4j_2017/1to50/`, run the `k`-fold cross validation to obtain statistics on the model performance.  The command is:
+After determining an optimal set of hyper parameters, with the results stored in a directory of the form `dataset`, run the k-fold cross validation to obtain statistics on the model performance. The important running options include: 
+* `-d` (dataset) = folder containing the hyper parameter optimization results
+* `-f` (folder) = folder to store the output of the k-fold CV training
+* `-k` (folds) = 10 (recommended) number of partitions for the training/validation events
+* `-m` (metric) = AUC (recommended) which metric to use for determining best model
 
-    source /cvmfs/cms.cern.ch/cmsset_default.sh
-    # source /cvmfs/cms.cern.ch/cmsset_default.csh
-    source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-centos7-gcc8-opt/setup.sh
-    # source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-centos7-gcc8-opt/setup.csh
-    python final.py -y 2017 -k 10 -f dataset_4j_2017/1to50/ dataset_4j_2017/1to50/
+
+The command is:
+
+        python3 nn_final.py -k 10 -f dataset/1to50/ -d dataset/1to50/ -m AUC
     
 After this step finishes, the model with the best performance out of the `k` folds is saved in `/dataset_4j_2017/1to50/` and will be applied to the produce the step3 files on Condor. 
 
