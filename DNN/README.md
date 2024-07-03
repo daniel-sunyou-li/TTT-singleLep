@@ -1,12 +1,12 @@
-# TTT Single-Lepton Final State DNN -- Quick Start Instructions #
-This repository contains code for producing step3 `.root` files used in calculating the limits for the single-lepton final state in four top quark events. The code is partitioned into four steps:
+# Triple-Top Search in the Single-Lepton Final State: Classification DNN  -- Quick Start Instructions #
+This repository contains code for producing step3 `.root` files used in calculating the limits for the single-lepton final state in triple-top quark events. The step3 outputs can also be used for a data-driven background estimation method [ABCDnn]([url](https://github.com/daniel-sunyou-li/ABCDnn)). The code is partitioned into four steps:
 
 1. [__Variable Importance Calculation__](#Submit-Variable-Importance-Condor-Jobs)
 2. [__Hyper Parameter Optimization__](#Run-the-Hyper-Parameter-Optimization)
 3. [__k-Fold Cross Validation Training__](#Run-the-k-fold-Cross-Validation)
 4. [__step3 `.root` File Production__](#Submit-Step3-Condor-Jobs)
 
-The step3 files are to be used by the [singleLepAnalyzer](https://github.com/BrownCMS/singleLepAnalyzer) to produce the limits. The TTTT DNN code is intended to be run on the LPC while the singleLepAnalyzer is intended to be run on the Brown Linux server (BRUX).  To run all the code successfully, you will need to have accounts on BRUX, FNAL LPC and CERN LXPLUS.  You will also need storage requested on [CMSEOS](https://uscms.org/uscms_at_work/computing/LPC/usingEOSAtLPC.shtml#createEOSArea) and have a working [CERN grid certificate](https://uscms.org/uscms_at_work/computing/getstarted/get_grid_cert.shtml). The general-use instructions are as follows:
+The step3 files are to be used by the [singleLepAnalyzer](https://github.com/daniel-sunyou-li/TTT-singleLep/tree/UL/singleLepAnalyzer) to produce the limits. The TTTT DNN code is intended to be run on the LPC while the singleLepAnalyzer is intended to be run on the Brown Linux server (BRUX).  To run all the code successfully, you will need to have accounts on BRUX, FNAL LPC and CERN LXPLUS.  You will also need storage requested on [CMSEOS](https://uscms.org/uscms_at_work/computing/LPC/usingEOSAtLPC.shtml#createEOSArea) and have a working [CERN grid certificate](https://uscms.org/uscms_at_work/computing/getstarted/get_grid_cert.shtml). The general-use instructions are as follows:
 
 ## Setup on LPC
 Sign-in to the LPC using your FNAL [username]
