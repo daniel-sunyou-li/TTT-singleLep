@@ -3,7 +3,7 @@ sys.argv = []
 from ROOT import TMVA, TFile, TCut
 from random import randint
 import numpy as np
-from jobtracker import Seed
+from python.jobtracker import Seed
 import config
 
 # Initialize ROOT.TMVA library

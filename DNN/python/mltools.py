@@ -68,8 +68,8 @@ class MLTrainingInstance(object):
     rFile = uproot.open( path )
     rTreeSig = rFile[ "signal" ]
     rTreeBkg = rFile[ "background" ]
-    self.cut_events["TOTAL SIGNAL"] = rTreeSig.pandas.df( self.variables )
-    self.cut_events["TOTAL BACKGROUND"] = rTreeBkg.pandas.df( self.variables )
+    self.cut_events["TOTAL SIGNAL"] = rTreeSig.arrays( self.variables, library = "pd" )
+    self.cut_events["TOTAL BACKGROUND"] = rTreeBkg.arrays( self.variables, library = "pd" )
 
   def apply_cut( self ): # applies cuts to events as well as computing the event weight from the cut events to set relative proportion of events
     print( "[START] Applying event selection..." )
@@ -155,7 +155,7 @@ class MLTrainingInstance(object):
         else:
           nKeep = min( int( nKeep ), int( ( self.nSigPass * self.ratio ) / len( self.cut_events["BACKGROUND"].keys() ) ) ) # each background should equally contribute to meet signal-to-background ratio
       print( "  + {}: {} / {} events".format( path.split("/")[-1], nKeep, int( self.nPass[path] ) ) )
-      for i in tqdm.tqdm( range( nKeep ) ):
+      for i in tqdm.tqdm( range( np.min( ( nKeep, int( self.nPass[path] ) ) ) ) ):
         for variable in self.variables:
           self.rVariablesBkg[ variable ][ "ARRAY" ][0] = self.cut_events["BACKGROUND"][path][variable][i]
         self.rTreeBkg.Fill() 
@@ -360,18 +360,18 @@ class CrossValidationModel( HyperParameterModel ):
       print(">> Cross Validation Iteration {} of {}".format(k + 1, self.num_folds))  
       clear_session()
 
-      model_name = os.path.join(self.model_folder, "fold_{}.tf".format(k+1))
+      model_name = os.path.join( self.model_folder, "fold_{}.h5".format(k+1))
 
       self.build_model()
 
       model_checkpoint = ModelCheckpoint(
-        model_name,
-        verbose=0,
-        save_best_only=True,
-        monitor="val_loss",
-        save_weights_only=False,
-        mode="auto",
-        period=1
+        filepath = model_name,
+        verbose = 1,
+        save_best_only = True,
+        monitor = "val_loss",
+        save_weights_only = False,
+        mode = "auto",
+        period = 1
       )
 
       early_stopping = EarlyStopping(
@@ -385,7 +385,7 @@ class CrossValidationModel( HyperParameterModel ):
       history = self.model.fit(
         shuffled_train_x, shuffled_train_y,
         epochs = self.parameters[ "EPOCHS" ],
-        batch_size = 2**self.parameters[ "BATCH POWER" ],
+        batch_size = 2**int(self.parameters[ "BATCH POWER" ]),
         shuffle = True,
         verbose = 1,
         callbacks = [ early_stopping, model_checkpoint ],

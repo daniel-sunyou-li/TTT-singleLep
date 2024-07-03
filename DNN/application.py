@@ -139,7 +139,7 @@ def check_json( folders ):
 def check_model( folders ):
   models = []
   for folder in folders:
-    modelCheck = glob.glob("{}/*.tf".format(folder))
+    modelCheck = glob.glob("{}/*.h5".format(folder))
     opt_model = None
     for modelName in modelCheck:
       if "final" in modelName.lower(): opt_model = modelName

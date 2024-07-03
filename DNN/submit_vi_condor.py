@@ -28,7 +28,7 @@ parser.add_argument(         "--unstarted",   action = "store_true", help = "Inc
 parser.add_argument( "folders", nargs="*",    default = [],          help = "Condor log folders to [re]submit to." ) 
 args = parser.parse_args()
 
-from correlation import generate_uncorrelated_seeds
+from python.correlation import generate_uncorrelated_seeds
 
 if args.year not in [ "16APV", "16", "17", "18", "Run2" ]:
   raise ValueError( "[ERR] {} is an invalid year. Please choose from: 16APV, 16, 17, 18, Run2.".format( args.year ) )

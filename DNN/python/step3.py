@@ -22,7 +22,7 @@ parser = ArgumentParser()
 parser.add_argument("-f","--file",required=True)
 args = parser.parse_args()
 
-modelNames = glob.glob("*.tf")
+modelNames = glob.glob("*.h5")
 jsonNames  = glob.glob("*.json")
 
 def setup( modelNames, jsonNames ):

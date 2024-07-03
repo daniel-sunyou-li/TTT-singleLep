@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 import config
-import python.mltools
+import python.mltools as mltools
 
 parser = ArgumentParser()
 parser.add_argument( "-d", "--dataset", required = True, help="The dataset folders to search for HPO information")
@@ -74,7 +74,7 @@ for file_ in os.listdir( args.dataset ):
 parameters["PATIENCE"] = config.params["KFCV"]["PATIENCE"]
 parameters["EPOCHS"]    = config.params["KFCV"]["EPOCHS"]
   
-model_path = os.path.join( folder, "final_model_{}.tf".format( parameters["TAG"] ) )
+model_path = os.path.join( folder, "final_model_{}.h5".format( parameters["TAG"] ) )
   
 save_path = os.path.join( args.dataset.split("/")[0], "events.root" )
 

@@ -18,7 +18,7 @@ parser.add_argument("-o", "--sort-order", default="significance", help="Which at
 parser.add_argument("--sort-increasing", action="store_true", help="Sort in increasing instead of decreasing order")
 args = parser.parse_args()
 
-print(" >> Running variable significance calculation")
+print(">> Running variable significance calculation")
 
 # Interpret folder paths
 for d in args.folders:
@@ -69,7 +69,7 @@ for folder in condor_folders:
   if jf.pickle[ "JOBS" ] == None:
     # Folder needs to be imported
     print( "[WARN] The folder {} has not been loaded by the job tracker.".format(folder) )
-    choice = raw_input ("Import with default variables? (Y/n)")
+    choice = input("Import with default variables? (Y/n)")
     if "n" in choice.lower():
       print( ">> Folder skipped." )
       continue

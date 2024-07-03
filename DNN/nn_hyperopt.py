@@ -24,7 +24,7 @@ sys.argv = []
 
 from python.correlation import reweight_importances
 import config
-import python.mltools
+import python.mltools as mltools
 
 # Load dataset
 datafile_path = None
@@ -39,7 +39,7 @@ if datafile_path == None:
   
 print( ">> Loading variable importance data from {}.".format( datafile_path ) )
 # Read the data file
-selection = ""
+selection = []
 var_data = {}
 years = []
 with open( datafile_path, "r" ) as f:
@@ -52,11 +52,17 @@ with open( datafile_path, "r" ) as f:
     print( ">> Including years: {}".format( year ) )
   while not "Normalization" in line:
     line = f.readline()
-    if "Selection" in line:
-      selection = line.split(":")[-1][:-1]
-      print( ">> Event selection: {}".format( selection ) )
+    if "AK4HT" in line: selection.append( "AK4HT > {}".format( line.split(":")[-1] ).strip("\n") )
+    if "NJETS" in line: selection.append( "NJets_JetSubCalc >= {}".format( line.split(":")[-1] ).strip("\n") )
+    if "NBJETS" in line: selection.append( "NJetsCSV_JetSubCalc >= {}".format( line.split(":")[-1] ).strip("\n") )
+    if "MET" in line: selection.append( "corr_met_MultiLepCalc > {}".format( line.split(":")[-1] ).strip("\n") )
+    if "LEPPT" in line: selection.append( "leptonPt_MultiLepCalc > {}".format( line.split(":")[-1] ).strip("\n") )
+    if "MT" in line: selection.append( "MT_lepMet > {}".format( line.split(":")[-1] ).strip("\n") )
+    if "MINDR" in line: selection.append( "minDR_lepJet > {}".format( line.split(":")[-1].strip("\n") ) )
     if line == "":
       raise IOError( ">> End of File Reached, no data found." )
+  selection = " && ".join( selection )
+  print( ">> Event selection: {}".format( selection ) )
   # Data reached.
   # Read headers
   headers = [ h.strip().rstrip().lower().replace(".", "") for h in f.readline().rstrip().split("/") ]
@@ -312,7 +318,7 @@ with open(os.path.join(args.dataset, subDirName, "optimized_params_" + CONFIG["T
     else:
       f.write( "{}:{}\n".format( param_, config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ][0] ) )
 with open( os.path.join( args.dataset, subDirName, "optimized_params_" + CONFIG["TAG"] + ".json"), "w") as f:
-  json_dict = dict( [ ( key, res_gp.x[val] ) for key, val in opt_order.iteritems() ] )
+  json_dict = dict( [ ( key, str( res_gp.x[val] ) ) for key, val in opt_order.items() ] )
   for param_ in config.params[ "HPO" ][ "OPT SPACE" ]:
     if len( config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ] ) == 1:
       json_dict.update( { param_: config.params[ "HPO" ][ "OPT SPACE" ][ param_ ][ "VALUE" ][0] } )

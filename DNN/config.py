@@ -39,12 +39,12 @@ params = {
   "HPO": { # hyper parameter optimization settings
     "CALLS":    30,  # total number of hpo iterations
     "STARTS":   20,  # number of randomly sampled hpo iterations
-    "EPOCHS":   200, # number of epochs to survey at each hpo iteration
+    "EPOCHS":   100, # number of epochs to survey at each hpo iteration
     "PATIENCE": 10,  # number of epochs before early stopping 
     "OPT SPACE": { # add multiple values to list VALUE for HPO search, otherwise sets fixed value 
       "HIDDEN LAYERS":          { "TYPE": "INTEGER",     "VALUE": [ 1, 3 ] },  # number of hidden layers
-      "HIDDEN NODES":           { "TYPE": "INTEGER",     "VALUE": [ 10, 40 ] }, # number of nodes per hidden layer
-      "BATCH POWER":            { "TYPE": "INTEGER",     "VALUE": [ 4, 7 ] },  # number of events in batch as 2^N
+      "HIDDEN NODES":           { "TYPE": "INTEGER",     "VALUE": [ 10, 50 ] }, # number of nodes per hidden layer
+      "BATCH POWER":            { "TYPE": "INTEGER",     "VALUE": [ 5, 9] },  # number of events in batch as 2^N
       "LEARNING RATE":          { "TYPE": "CATEGORICAL", "VALUE": [ 0.0001, 0.0005, 0.001, 0.005 ] }, # learning rate step size for Adam optimizer
       "TRAINING REGULATOR":     { "TYPE": "CATEGORICAL", "VALUE": [ "DROPOUT", "BATCH NORMALIZATION", "BOTH", "NONE" ] }, # training regulators
       "ACTIVATION FUNCTION":    { "TYPE": "CATEGORICAL", "VALUE": [ "relu", "elu", "softplus" ] }, # non-linear activation function for hidden node output
@@ -56,7 +56,7 @@ params = {
     }
   },
   "KFCV": { # k-fold cross validation settings
-    "EPOCHS": 5000,
+    "EPOCHS": 1000,
     "PATIENCE": 20,
     "SAVE AUC POINTS": 20,
   }
@@ -66,11 +66,11 @@ params = {
 shifts = {
   "JER": True,
   "JEC": False, # fully de-correlated, corresponds to total JEC from LJMet
-  "FlavorQCD": True,
-  "FlavorPureGluon": False,
-  "FlavorPureQuark": False,
-  "FlavorPureCharm": False,
-  "FlavorPureBottom": False,
+  "FlavorQCD": False,
+  "FlavorPureGluon": True,
+  "FlavorPureQuark": True,
+  "FlavorPureCharm": True,
+  "FlavorPureBottom": True,
   "RelativeBal": True,
   "RelativeSample_Era": True,
   "HF": True,
@@ -94,8 +94,8 @@ sig_training = [
 # only include enough top-pair to LF relative to HF final states to match the SR proportions
 bkg_training = [
   #"TTTT_TuneCP5_13TeV-amcatnlo-pythia8_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_1_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_2_hadd.root",
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_3_hadd.root",
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_4_hadd.root",
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_5_hadd.root",
@@ -104,15 +104,15 @@ bkg_training = [
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_8_hadd.root",
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_9_hadd.root",
   #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttjj_10_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttcc_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_ttbb_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt1b_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b_hadd.root",
   "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttbb_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
-  #"TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttcc_hadd.root",
+  "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj_hadd.root",
   #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt1b_hadd.root",
   #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_tt2b_hadd.root",
   #"TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_ttbb_hadd.root",
@@ -166,8 +166,8 @@ varList["DNN"] = [
   ("mass_lepBJet0", "M(l,b_{1}) [GeV]", 0, 1800, 101),
   ("mass_lepBJet_mindr", "M(l,b) with min[#DeltaR(l,b)] [GeV]", 0, 800, 51),
   ("secondJetPt", "p_{T}(j_{2}) [GeV]", 0, 2500, 101),
-  ("fifthJetPt", "p_{T}(j_{5}) [GeV]", 0, 400, 101), # poor data/MC 
-  ("sixthJetPt", "p_{T}(j_{6}) [GeV]", 0, 400, 51),  # poor data/MC
+  ("fifthJetPt", "p_{T}(j_{5}) [GeV]", 0, 400, 101),  
+  ("sixthJetPt", "p_{T}(j_{6}) [GeV]", 0, 400, 51),  
   #("PtFifthJet", "5^{th} jet p_{T} [GeV]", -1, 2000, 101), # poor data/MC
   ("mass_minLLdr", "M(j,j) with min[#DeltaR(j,j)], j #neq b [GeV]", 0, 600, 51),
   ("mass_maxBBmass", "max[M(b,b)] [GeV]", 0, 2000, 101),

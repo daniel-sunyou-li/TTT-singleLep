@@ -1,4 +1,4 @@
-import python.jobtracker
+import python.jobtracker as jobtracker
 from argparse import ArgumentParser
 import os.path
 
@@ -38,7 +38,7 @@ elif args.import_data != None:
         jf = jobtracker.JobFolder(folder)
         if jf.pickle[ "JOBS" ] != None:
             print( "[WARN] {} already has a spec file!".format(folder) )
-            choice = raw_input( "Overwrite? (y/N) " )
+            choice = input( "Overwrite? (Y/N) " )
             if not "y" in choice.lower():
                 print( "Skipping." )
                 continue
