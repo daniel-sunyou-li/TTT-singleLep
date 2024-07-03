@@ -12,7 +12,7 @@ The step3 files are to be used by the [singleLepAnalyzer](https://github.com/dan
 Sign-in to the LPC using your FNAL [username]
 
     kinit -f [username]@FNAL.GOV
-    ssh -xy [username]@cmslpc-sl7.fnal.gov
+    ssh -xy [username]@cmslpc-el9.fnal.gov
     
 Install `scikit-optimize` (`skopt`) for hyper parameter optimization:
 
