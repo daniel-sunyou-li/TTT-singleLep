@@ -108,7 +108,7 @@ cut = TCut( cutStr )
 # Prepare tree
 loader.PrepareTrainingAndTestTree( 
     cut, cut, 
-    "SplitMode=Random:NormMode=NumEvents:!V:nTrain_Signal=20000:nTrain_Background=20000"
+    "SplitMode=Random:NormMode=NumEvents:!V:nTrain_Signal=10000:nTrain_Background=10000"
 )
 
 # Build model
@@ -137,7 +137,7 @@ factory.BookMethod(
     loader,
     TMVA.Types.kPyKeras,
     "PyKeras",
-    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:BatchSize=128:SaveBestOnly=true"
+    "!H:!V:VarTransform=G:FilenameModel=" + model_name + ":NumEpochs=50:BatchSize=516:SaveBestOnly=true"
 )
 
 (TMVA.gConfig().GetIONames()).fWeightFileDir = "weights"
