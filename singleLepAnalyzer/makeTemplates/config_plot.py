@@ -15,8 +15,8 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "SYMM ERROR": False,
   "REAL PULL": False,
-  "BLIND": False,
-  "Y LOG": False,
+  "BLIND": True,
+  "Y LOG": True,
   "SMOOTH": True,
   "OTHER": False, # plot an additional shape that is user defined
 }

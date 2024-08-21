@@ -4,7 +4,7 @@ import os, sys, time, math, fnmatch
 import numpy as np
 sys.path.append( os.path.dirname( os.getcwd() ) )
 from array import array
-from utils import hist_tag, hist_parse
+from utils import hist_tag, hist_parse, abcdnn_tag
 import config, xsec
 from argparse import ArgumentParser
 
@@ -533,6 +533,21 @@ class ModifyTemplate():
 
     print( "[DONE] Normalized {} ABCDnn histograms".format( count ) )
 
+  def uncorrelate_abcdnn( self ):
+    print( "[START] Decorrelating ABCDnn histograms by model tag" )
+    hist_names = self.rebinned[ "BKG SYST" ].keys()
+    count = 0
+    for hist_name in hist_names:
+      if not self.doABCDNN: continue
+      parse = hist_parse( hist_name, samples )
+      parse_abcdnn = abcdnn_tag( hist_name )
+      if "ABCDNN" not in parse[ "SYST" ]: continue
+      count += 1
+      hist_name_new = self.rebinned[ "BKG SYST" ][ hist_name ].GetName().replace( "{}UP".format( parse[ "SYST" ] ), "{}{}UP".format( parse[ "SYST" ], parse_abcdnn ) ).replace( "{}DN".format( parse[ "SYST" ] ), "{}{}DN".format( parse[ "SYST" ], parse_abcdnn ) )
+      self.rebinned[ "BKG SYST" ][ hist_name_new ] = self.rebinned[ "BKG SYST" ][ hist_name ].Clone( hist_name_new )
+      self.rebinned[ "BKG SYST" ][ hist_name_new ].SetDirectory(0)
+    print( "[DONE] Adjusted ABCDnn shifts by model for {} histograms".format( count ) )
+
   def symmetrize_HOTclosure( self ): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
     print( "[START] Symmetrizing the HOT closure systematic down shifts to match the up shifts" )
@@ -909,6 +924,8 @@ def main():
     template.add_PDF_shapes()
   if options[ "NORM ABCDNN" ]:
     template.normalize_abcdnn()
+  if options[ "UNCORRELATE ABCDNN" ]:
+    template.uncorrelate_abcdnn()
   if options[ "SMOOTH" ]:
     template.add_smooth_shapes()
   if options[ "UNCORRELATE YEARS" ]:

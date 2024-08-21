@@ -262,7 +262,7 @@ mkdir -vp Results/{3}/\n\
 combineCards.py UL16APV=limits_UL16APV_{3}/cmb/combined.txt.cmb UL16=limits_UL16_{3}/cmb/combined.txt.cmb UL17=limits_UL17_{3}/cmb/combined.txt.cmb  UL18=limits_UL18_{3}/cmb/combined.txt.cmb > Results/{3}/workspace.txt \n\
 text2workspace.py Results/{3}/workspace.txt -o Results/{3}/workspace.root --channel-masks\n\
 combine -M Significance Results/{3}/workspace.root {5} {10} > Results/{3}/significance_merge{7}_stat{8}{9}.txt \n\
-combine -M AsymptoticLimits Results/{3}/workspace.root {6} {10} > Results/{3}/limits_merge{7}_stat{8}{9}.txt\n".format(
+combine -M AsymptoticLimits Results/{3}/workspace.root {6} {11} > Results/{3}/limits_merge{7}_stat{8}{9}.txt\n".format(
           cmsswbase, os.getcwd(), tagAllSyst, tagNoSyst, 
           " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), 
           " ".join( config.params[ "COMBINE" ][ "SIGNIFICANCE" ][ "ARGS" ] ), 
@@ -483,9 +483,11 @@ def impact_plots_era():
           nameLog = "log_UL{}_{}_{}".format( training[ "year" ], args.region, training[ "tag" ] )
           if not os.path.exists( nameLog ): os.system( "mkdir -vp {}".format( nameLog ) )
           html_line = ""
-          if len( args.html ) > 0:
+          try:
             if not os.path.exists( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ): os.mkdir( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) )
             html_line = "cp impacts*.pdf {}".format( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ) 
+          except:
+            print( "[INFO] Not saving impact plots to html area." )
           shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
           shell.write(
 "#!/bin/bash\n\
@@ -614,7 +616,7 @@ plotImpacts.py -i impacts_{2}_{7}.json -o impacts_{2}_{7} --cms-label=\"Work in 
 cd .. \n".format(
             cmsswbase, os.getcwd(), tagAllSyst, tagFreeze, freezeParam,
             " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
-            "", tagBlind
+            "\{prop_bin.*\}", tagBlind
           )
         )
         shell.close()

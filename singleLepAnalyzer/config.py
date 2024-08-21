@@ -30,7 +30,7 @@ options = {
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
     "ABCDNN": True,
-    "FINAL ANALYSIS": True # true when ready for unblinding, otherwise keep false
+    "FINAL ANALYSIS": False # true when ready for unblinding, otherwise keep false
   },
   "HISTS": {
     "RENORM PDF": True,        # renormalize the PDF weights
@@ -53,6 +53,7 @@ options = {
     "SYMM HOTCLOSURE": True,       # symmetrize hotclosure systematic
     "SYMM THEORY": False,
     "NORM ABCDNN": True,
+    "UNCORRELATE ABCDNN": True,
     "SCALE SIGNAL XSEC": False,    
     "COMBINE SIGNALS": True,       # merge all signal histograms into a single histogram called SIG
     "ADD SHAPE SYST YIELD": False,
@@ -65,14 +66,14 @@ options = {
     "TEST PSEUDO DATA": False      # treat the unfiltered background MC as pseudo data to test the effect of filtering
   },
   "COMBINE": {
-    "BLIND": False,    # use Asimov MC as obs or use data
-    "ABCDNN": True,    # use ABCDnn and extended ABCD corrected histograms
-    "SMOOTH": True,    # use smoothed systematic histograms
-    "GROUPS": False,    # evaluate significance and limits with combinations of systematic groups
+    "BLIND": True,            # use Asimov MC as obs or use data
+    "ABCDNN": True,           # use ABCDnn and extended ABCD corrected histograms
+    "SMOOTH": True,           # use smoothed systematic histograms
+    "GROUPS": False,          # evaluate significance and limits with combinations of systematic groups
     "COMBINE SIGNALS": False, # combine all signal samples into one histogram
     "IMPACTS": {
-      "MASKED": False,  # include evaluations of impacts with channels masked
-      "FREEZE": False,  # include evaluations of impacts with NP frozen
+      "MASKED": False,        # include evaluations of impacts with channels masked
+      "FREEZE": False,        # include evaluations of impacts with NP frozen
     },
     "MURF CORR TTTX": False # correlate the muR/F theory uncertainties between three and four top processes
   }
@@ -97,12 +98,6 @@ params = {
         "NH": [ "1p" ],
         "NB": [ "2p" ],
         "NJ": [ "6p" ],
-      },
-      "nJ7pnB3pnHOT1p": {
-        "LEPTON": [ "E", "M", "L" ],
-        "NH": [ "1p" ],
-        "NB": [ "3p" ],
-        "NJ": [ "7p" ]
       }
     },                      
     "CONTROL VARIABLES":  [ "NJ", "NB" ],       # X and Y control variables to define regions
@@ -111,12 +106,26 @@ params = {
     "MINOR BKG": [ "TTTT", "TTH", "TOP" ],   # Minor backgrounds to include with ABCDnn in SR
     "SYSTEMATICS": [ "ABCDNNCLOSURE", "ABCDNNPEAK", "ABCDNNTAIL", "EXTABCDSYST", "EXTABCDSTAT", "EXTABCDCLOSURE" ],
   },
+  "EXTENDED ABCD": { # transfer factors
+    "nJ6pnB2pnHOT0": {
+      "16APV": { "isE": 0.05428, "isM": 0.05712 },
+      "16":    { "isE": 0.04171, "isM": 0.04269 },
+      "17":    { "isE": 0.01908, "isM": 0.02116 },
+      "18":    { "isE": 0.03629, "isM": 0.03515 },
+    },
+    "nJ6pnB2pnHOT1p": {
+      "16APV": { "isE": 0.04070, "isM": 0.04452 },
+      "16":    { "isE": 0.03755, "isM": 0.03963 },
+      "17":    { "isE": 0.01827, "isM": 0.01983 },
+      "18":    { "isE": 0.03436, "isM": 0.03395 },
+    }
+  },
   "HISTS": {
     "LUMISCALE": 1,         # scale the luminosity multiplicatively in templates
     "REBIN": -1,            # rebin histograms to have this number of bins
     "TTHFSF": 4.7/3.9,      # from TOP-18-002 (v34), set to 1 if tt heavy flavor scaling not used
     "TTLFSF": -1.,          # if ttLFsf -1, compute automatically using ttHFsf, else set manually
-    "MIN BKG YIELD": 0.00,  # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.003 )
+    "MIN BKG YIELD": 0.00, # minimum yield threshold for a bkg group to be included in combine analysis ( default = 0.003 )
     "MAX BKG ERROR": 0.50   # maximum uncertainty threshold for a bkg group to be included in combine analysis ( default = 0.50 )
   },
   "MODIFY BINNING": {
@@ -124,7 +133,7 @@ params = {
     "MIN MERGE": 1,             # merge at least this number of bins
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
-    "LOWESS": 0.67,             # relative proportion of neighboring datapoints to consider during smoothing 
+    "LOWESS": 0.33,             # relative proportion of neighboring datapoints to consider during smoothing 
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
       "NJET", "NJETSF", "PSWGT", "BTAG"
@@ -137,25 +146,25 @@ params = {
     "FITS": { # arguments used with Combine -M MultiDimFit
       "ARGS": [
         "--cminDefaultMinimizerStrategy=0",
-        "--setCrossingTolerance=0.001",   # default is 0.0001
-        "--setRobustFitTolerance=1000",   # default is 0.1, setting higher to account for poor EDM initial state
-        "--stepSize=0.01",                 # default is 0.2
-        "--robustFit=1",
-        "--rMin -40",
-        "--rMax 40",
+        #"--setCrossingTolerance=0.001",   # default is 0.0001
+        #"--setRobustFitTolerance=1000",   # default is 0.1, setting higher to account for poor EDM initial state
+        #"--stepSize=0.01",                 # default is 0.2
+        #"--robustFit=1",
+        "--rMin -50",
+        "--rMax 150",
         #"--robustHesse=1",
         #"--freezeParameter TOPPTLOWESS",
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,HOTCLOSURELOWESS16APV,", # 2016APV freeze
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,FSRTTBARLOWESS,ISRTTBARLOWESS", # 2016 freeze
-        #"--expectSignal=1",
-        #"-t -1",
+        "--expectSignal=1",
+        "-t -1",
         "-m 125", # higgs mass, doesn't really matter for three top
       ]
     },
     "SIGNIFICANCE": { # arguments used with Combine -M Significance
       "ARGS": [
         "--cminDefaultMinimizerStrategy=0",
-        "--cminDefaultMinimizerTolerance=0.00001",
+        #"--cminDefaultMinimizerTolerance=0.00001",
         "-m 125",
         #"--rMin -40",
         #"--rMax 40"
@@ -164,7 +173,7 @@ params = {
     "LIMITS": { # arguments used with Combine -M AsymptoticLimits
       "ARGS": [
         "--cminDefaultMinimizerStrategy=0",
-        "--cminDefaultMinimizerTolerance=0.00001",
+        #"--cminDefaultMinimizerTolerance=0.00001",
         #"--rMin=-40",
         #"--rMax=40"
       ]
@@ -208,7 +217,7 @@ systematics = {
     "UE": ( False, False, False )
   },
   "REDUCED JEC": {
-    "Total": False,             # use either Total or FlavorQCD, RelativeBal, RelativeSampel_Era, HF, HF_Era, BBEC1, BBEC1_Era, EC2, EC2_Era, Absolute, Absolute_Era
+    "Total": False,              # use either Total or FlavorQCD, RelativeBal, RelativeSampel_Era, HF, HF_Era, BBEC1, BBEC1_Era, EC2, EC2_Era, Absolute, Absolute_Era
     "FlavorQCD": False,          # use either FlavorQCD or FlavorPureGluon/Quark/Charm/Bottom (breakdown)
     "FlavorPureGluon": options[ "MODIFY BINNING" ][ "JECFLAVORQCD BREAKDOWN" ],
     "FlavorPureQuark": options[ "MODIFY BINNING" ][ "JECFLAVORQCD BREAKDOWN" ],
@@ -299,63 +308,45 @@ systematics = {
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.023,
-      "16":    1.023,
-      "17":    1.015,
-      "18":    1.014
+      "16APV": { "isE": 1.021, "isM": 1.020 },
+      "16":    { "isE": 1.020, "isM": 1.018 },
+      "17":    { "isE": 1.013, "isM": 1.011 },
+      "18":    { "isE": 1.011, "isM": 1.009 }
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": 1.040,
-      "16":    1.039,
-      "17":    1.026,
-      "18":    1.024
+      "16APV": { "isE": 1.036, "isM": 1.033 },
+      "16":    { "isE": 1.035, "isM": 1.032 },
+      "17":    { "isE": 1.022, "isM": 1.020 },
+      "18":    { "isE": 1.019, "isM": 1.018 }
     },
-    "nJ7pnB3pnHOT1p": {
-      "16APV": 1.084,
-      "16": 1.081,
-      "17": 1.054,
-      "18": 1.044
-    }
   },
   "EXTABCDSTAT": {
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.010,
-      "16":    1.009,
-      "17":    1.006,
-      "18":    1.005
+      "16APV": { "isE": 1.010, "isM": 1.008 },
+      "16":    { "isE": 1.010, "isM": 1.008 },
+      "17":    { "isE": 1.007, "isM": 1.006 },
+      "18":    { "isE": 1.006, "isM": 1.005 }
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": 1.011,
-      "16":    1.011,
-      "17":    1.007,
-      "18":    1.006
+      "16APV": { "isE": 1.012, "isM": 1.011 },
+      "16":    { "isE": 1.011, "isM": 1.010 },
+      "17":    { "isE": 1.008, "isM": 1.007 },
+      "18":    { "isE": 1.007, "isM": 1.006 }
     },
-    "nJ7pnB3pnHOT1p": {
-      "16APV": 1.041,
-      "16": 1.042,
-      "17": 1.029,
-      "18": 1.023
-    }
   },
   "EXTABCDCLOSURE": { 
     "nJ6pnB2pnHOT0": {
-      "16APV": 1.150,  # 1.014
-      "16":    1.150,
-      "17":    1.100,
-      "18":    1.100
+      "16APV": { "isE": 1.10, "isM": 1.05 }, 
+      "16":    { "isE": 1.10, "isM": 1.05 },
+      "17":    { "isE": 1.10, "isM": 1.05 },
+      "18":    { "isE": 1.10, "isM": 1.05 }
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": 1.250,
-      "16":    1.250,
-      "17":    1.150,
-      "18":    1.150
+      "16APV": { "isE": 1.15, "isM": 1.10 },
+      "16":    { "isE": 1.15, "isM": 1.10 },
+      "17":    { "isE": 1.15, "isM": 1.10 },
+      "18":    { "isE": 1.15, "isM": 1.10 }
     },
-    "nJ7pnB3pnHOT1p": {
-      "16APV": 1.016,
-      "16":    1.061,
-      "17":    1.009,
-      "18":    1.047
-    }
   },
   "PILEUP": 1.046,
   "TTHF": { year: 1.04 for year in years },
@@ -429,8 +420,8 @@ event_cuts = {
   "met": 20,          # BASELINE = 20,  S1/2/3 = 20 
   "mtW": 0,           # BASELINE = 0,   S1/2/3 = 0
   "met+mtW": 0.,      # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
-  "ht": 450,          # BASELINE = 450 for 2016APV/2016 and 500 for 2017/2018
-  "mindr_lj": 0.2,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
+  "ht": 500,          # BASELINE = 450 for 2016APV/2016 and 500 for 2017/2018
+  "mindr_lj": 0.4,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
   "dnn": 0.           # BASELINE = 0,   S1 = 0, S2 = 0.2, S3 = 0
 }
 
@@ -463,7 +454,7 @@ plot_params = {
     "NB": ( "NJetsCSV_JetSubCalc", bins( 0, 6, 7 ), "N_{B}" ),
     "NW": ( "NJetsWtagged", bins( 0, 6, 7 ), "W-tagged Jet Multiplicity" ),
     "NT": ( "NJetsTtagged", bins( 0, 4, 5 ), "t-tagged Jet Multiplicity" ),
-    "DNN": ( "DNN_1to40_Run2_nJ4pnB1p", bins( 0, 1, 51 ), "DNN" ),
+    "DNN": ( "DNN_1to40_nJ4pnB1p", bins( 0, 1, 51 ), "DNN" ),
     "DNN3": ( "DNN_1to3_3t", bins( 0, 1, 41 ), "DNN (1-3)" ), 
     "DNN5": ( "DNN_1to5_3t", bins( 0, 1, 41 ), "DNN (1-5)" ),
     "DNN10": ( "DNN_1to10_3t", bins( 0, 1, 41 ), "DNN (1-10)" ),

@@ -93,7 +93,10 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
       quit( "[ERR] Couldn't find a compatible ABCDnn configuration for category: {}".format( category ) )
     abcdnnName     = variableName + "_{}".format( abcdnnTag )
     print( "   + Including ABCDnn Histograms with tag {}".format( abcdnnTag ) )
-    mc_weights[ "ABCDNN" ] = "transfer_{}".format( abcdnnTag ) 
+    if "isE" in category:
+      mc_weights[ "ABCDNN" ] = str( config.params[ "EXTENDED ABCD" ][ abcdnnTag ][ args.year ][ "isE" ] ) 
+    else:
+      mc_weights[ "ABCDNN" ] = str( config.params[ "EXTENDED ABCD" ][ abcdnnTag ][ args.year ][ "isM" ] )
 
   if process.startswith( "TTTo" ): # https://twiki.cern.ch/twiki/bin/view/Sandbox/JamesKeaveneySandbox
     mc_weights[ "NOMINAL" ] += " * topPtWeight13TeV"

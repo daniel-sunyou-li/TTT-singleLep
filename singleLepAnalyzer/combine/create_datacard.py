@@ -229,7 +229,7 @@ class DataCard():
       if category in self.regions[ "SIGNAL" ]:
         self.harvester.AddObservations( [ "*" ], [ self.prefix ], [ self.year ], [ category ], self.category_arr[ category ] )
         self.harvester.AddProcesses(    [ "*" ], [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "BKG" ][ category ] ) ), self.category_arr[ category ], False  )
-        self.harvester.AddProcesses(    [ "" ],  [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "SIG" ][ category ] ) ), self.category_arr[ category ], True  )
+        self.harvester.AddProcesses(    [ "" ], [ self.prefix ], [ self.year ], [ category ], list( set( self.hist_groups[ "SIG" ][ category ] ) ), self.category_arr[ category ], True  )
         count[ "SR" ] += 1
       else:
         self.harvester.AddObservations( [ "all" ], [ self.prefix ], [ self.year ], [ category ], self.category_arr[ category ] )
@@ -494,7 +494,7 @@ class DataCard():
           elif group in [ "EWK", "TTTJ", "ST" ] and syst == "isr":
             self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "SF" ], bSmooth )
             if self.abcdnn:
-              self.add_model( syst.upper() + "QCD", [ group ], self.categories[ "ABCDNN" ], bSmooth )
+              self.add_model( syst.upper() + "EWK", [ group ], self.categories[ "ABCDNN" ], bSmooth )
           elif syst == "isr":
             self.add_model( syst.upper() + group, [ group ], self.categories[ "SF" ], bSmooth )
             if self.abcdnn:
@@ -568,21 +568,27 @@ class DataCard():
   def add_ABCDNN_systematics( self ): 
     for category in self.categories[ "ABCDNN" ]:
       tag = abcdnn_tag( category )
+      lepton_tag = "isE" if "isE" in category else "isM"
       if args.normSyst:
-        if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSYST$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ] )
-        if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    self.add_norm( "EXTABCDSTAT$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ]  )
-        if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: self.add_norm( "EXTABCDCLOSURE", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ] )
+        if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    
+          self.add_xsec( "EXTABCDSYST$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ][ self.year ][ lepton_tag ] )
+        if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    
+          self.add_xsec( "EXTABCDSTAT$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ][ self.year ][ lepton_tag ]  )
+        if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: 
+          self.add_xsec( "EXTABCDCLOSURE$ERA", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ][ self.year ][ lepton_tag ] )
 
     if args.shapeSyst:
-      if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNPEAK" ][2]
-        self.add_shape( "ABCDNNPEAK", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
-      if config.systematics[ "MC" ][ "ABCDNNTAIL" ][0] and "ABCDNNTAIL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNTAIL" ][2]
-        self.add_shape( "ABCDNNTAIL", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, True )
-      if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][0] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
-        bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
-        self.add_shape( "ABCDNNCLOSURE", [ "ABCDNN" ], self.categories[ "ABCDNN" ], bSmooth, False )
+      for category in self.categories[ "ABCDNN" ]:
+        tag = abcdnn_tag( category )
+        if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+          bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNPEAK" ][2]
+          self.add_shape( "ABCDNNPEAK{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+        if config.systematics[ "MC" ][ "ABCDNNTAIL" ][0] and "ABCDNNTAIL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+          bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNTAIL" ][2]
+          self.add_shape( "ABCDNNTAIL{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+        if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][0] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
+          bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
+          self.add_shape( "ABCDNNCLOSURE{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 
@@ -613,7 +619,7 @@ class DataCard():
   
   def add_auto_MC_statistics( self ):
     print( "[START] Adding auto MC statistics to DataCard" )
-    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 10." )
+    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 5." )
     print( "[DONE]" )
     
   def rename_and_write( self, limit = True ):

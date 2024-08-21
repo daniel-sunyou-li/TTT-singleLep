@@ -59,9 +59,10 @@ def normalization_uncertainty( hist, i, theory_systematic ):
   correlated_syst = 0
   if parse[ "ABCDNN" ] and parse[ "COMBINE" ] == "ABCDNN":
     tagABCDNN = abcdnn_tag( parse[ "CATEGORY" ] )
-    correlated_syst += ( config.systematics[ "EXTABCDSYST" ][ tagABCDNN ][ args.year ] - 1.0 )**2
-    correlated_syst += ( config.systematics[ "EXTABCDSTAT" ][ tagABCDNN ][ args.year ] - 1.0 )**2
-    correlated_syst += ( config.systematics[ "EXTABCDCLOSURE" ][ tagABCDNN ][ args.year ] - 1.0 )**2
+    lepton = "isE" if "isE" in parse[ "CATEGORY" ] else "isM"
+    correlated_syst += ( config.systematics[ "EXTABCDSYST" ][ tagABCDNN ][ args.year ][ lepton ] - 1.0 )**2
+    correlated_syst += ( config.systematics[ "EXTABCDSTAT" ][ tagABCDNN ][ args.year ][ lepton ] - 1.0 )**2
+    correlated_syst += ( config.systematics[ "EXTABCDCLOSURE" ][ tagABCDNN ][ args.year ][ lepton ] - 1.0 )**2
   else:
     correlated_syst += ( config.systematics[ "PILEUP" ] - 1.0 )**2
     correlated_syst += ( config.systematics[ "LUMI" ][ args.year ] - 1.0 )**2
@@ -688,11 +689,10 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     sublegend.SetTextFont(42)
     sublegend.SetTextSize( config_plot.params[ "LEGEND" ][ "TEXT SIZE" ] )
 
-    if not blind:
-      sublegend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
     if not blind and config.options[ "GENERAL" ][ "FINAL ANALYSIS" ]:
-      for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
-        legend.AddEntry( hists[ "SIG" ][ hist_tag( process, category ) ], process, "f" )
+      sublegend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
+    for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
+      legend.AddEntry( hists[ "SIG" ][ hist_tag( process, category ) ], process, "f" )
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       legend.AddEntry( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ], "ABCDNN", "f" )
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:

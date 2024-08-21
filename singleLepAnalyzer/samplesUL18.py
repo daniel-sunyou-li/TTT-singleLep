@@ -6,11 +6,11 @@ import config
 samples = {
   "TEST": {
     #"TTToSemiLeptonictt1b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt1b",
-    #"TTToSemiLeptonicHT500ttjj": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj",
+    "TTToSemiLeptonicHT500ttjj": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_ttjj",
     #"TTToSemiLeptonictt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT0Njet0_tt2b",
     #"TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     #"TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
-    "TTTT1": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_1",
+    #"TTTT1": "TTTT_TuneCP5_13TeV-amcatnlo-pythia8_1",
     #"DataE": "SingleElectron",
     #"TTToSemiLeptonicHT500tt2b": "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_HT500Njet9_tt2b"
   },
@@ -60,7 +60,7 @@ for DYM_HT in [ "200to400", "400to600", "600to800", "800to1200", "1200to2500", "
 for WJets_HT in [ "200To400", "400To600", "600To800", "800To1200", "1200To2500", "2500ToInf" ]: 
   samples[ "BKG" ][ "WJetsMG" + WJets_HT.split( "To" )[0] ] = "WJetsToLNu_HT-{}_TuneCP5_13TeV-madgraphMLM-pythia8".format( WJets_HT )
   
-for QCD_HT in [ "200to300", "300to500", "500to700", "700to1000", "1000to1500", "1500to2000", "2000toInf" ]: 
+for QCD_HT in [ "300to500", "500to700", "700to1000", "1000to1500", "1500to2000", "2000toInf" ]: # exclude 200to300
   samples[ "BKG" ][ "QCD" + QCD_HT.split( "to" )[0] ] = "QCD_HT{}_TuneCP5_PSWeights_13TeV-madgraph-pythia8".format( QCD_HT ) 
   
 shifts = {
@@ -121,7 +121,7 @@ ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT500", "TTToSemiLeptonicH
 groups[ "BKG" ][ "PROCESS" ] = {
   "WJETS": [ "WJetsMG200", "WJetsMG400", "WJetsMG600", "WJetsMG800", "WJetsMG1200", "WJetsMG2500" ],
   "DYM": [ "DYM200", "DYM400", "DYM600", "DYM800", "DYM1200", "DYM2500" ],
-  "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
+  "QCD": [ "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ], # exclude QCD200 since 0 events
   "VV": [ "WW", "WZ", "ZZ" ],
   "ST": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
   "TTTT": split[ "TTTT" ],
@@ -147,7 +147,7 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "ST":  groups[ "BKG" ][ "PROCESS" ][ "ST" ],
   "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTV", "TTXY" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": [ "QCD200", "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
+  "QCD": [ "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ], 
   "TTH": groups[ "BKG" ][ "PROCESS" ][ "TTH" ],
   "TTTT": groups[ "BKG" ][ "PROCESS" ][ "TTTT" ]
 }
