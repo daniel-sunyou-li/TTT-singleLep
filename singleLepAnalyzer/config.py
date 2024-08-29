@@ -38,7 +38,7 @@ options = {
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
-    "BLIND": False,                #  
+    "BLIND": True,                #  
     "PDF": True,                   # add PDF systematic uncertainty
     "CR SYST": False,              # add systematic uncertainty to control region
     "SHAPE SYST": True,            # add systematic shape uncertainty 
@@ -402,9 +402,9 @@ hist_bins = {
   },
   "VR": {
     "LEPTON": [ "E", "M" ],
-    "NH": [ "0", "1p" ],
-    "NB": [ "1", "2p" ],
-    "NJ": [ "4", "5", "6p" ]
+    "NH": [ "0p" ],
+    "NB": [ "1p" ],
+    "NJ": [ "4b5" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],

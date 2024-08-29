@@ -1063,14 +1063,19 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
       hist_shift_smooth = {}
       ratio = {}
       ratio_smooth = {}
+      #skip = False
       for shift in [ "UP", "DN" ]:
         if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
           if "ABCD" in syst: # only ABCDnn histograms have ABCDnn systematics, everything else treated nominally
-            hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category, syst + shift ) ] 
-            hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( "ABCDNN", category, systSmooth + shift ) ]
-            for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
-              hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
-              hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
+            if hist_tag( "ABCDNN", category, syst + shift ) not in histograms[ "BKG" ].keys():  
+              #skip = True
+              continue
+            else:
+              hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category, syst + shift ) ] 
+              hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( "ABCDNN", category, systSmooth + shift ) ]
+              for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
+                hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
+                hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
           else: # add nominal ABCDnn histograms, but shift on other minor backgrounds
             hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
             hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
@@ -1140,6 +1145,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
           hist_shift_smooth[ "DN" ].SetLineWidth(2)
           hist_shift_smooth[ "DN" ].Draw( "SAME HIST" )
 
+      #if skip: continue
 
       latex = ROOT.TLatex()
       latex.SetNDC()

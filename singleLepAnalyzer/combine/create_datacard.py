@@ -458,12 +458,12 @@ class DataCard():
   def add_theory_systematics( self ):
     print( "[START] Retrieving theoretical systematics from {}".format( self.templateName ) )
     
-    if config.options[ "COMBINE" ][ "COMBINE SIGNALS" ]:
-      self.add_xsec( "XSEC_SIG", [ "SIG" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "SIG" ] )
-    else:
+    if "TTTW" not in config.params[ "COMBINE" ][ "SIGNALS" ]:
       self.add_xsec( "XSEC_TTTW", [ "TTTW" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTW" ] )
+    if "TTTJ" not in config.params[ "COMBINE" ][ "SIGNALS" ]:
       self.add_xsec( "XSEC_TTTJ", [ "TTTJ" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTJ" ] )
-    self.add_xsec( "XSEC_TTTT", [ "TTTT" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTT" ] )
+    if "TTTT" not in config.params[ "COMBINE" ][ "SIGNALS" ]:
+      self.add_xsec( "XSEC_TTTT", [ "TTTT" ], self.categories[ "SF" ] + self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "TTTT" ] )
     self.add_xsec( "XSEC_TTBAR", [ "TTBB", "TTNOBB" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "TTBAR" ] )
     self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "SF" ], config.systematics[ "XSEC" ][ "EWK" ] )
     if self.abcdnn and "EWK" in config.params[ "ABCDNN" ][ "MINOR BKG" ]: self.add_xsec( "XSEC_EWK", [ "EWK" ], self.categories[ "ABCDNN" ], config.systematics[ "XSEC" ][ "EWK" ] )
