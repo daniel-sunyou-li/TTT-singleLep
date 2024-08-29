@@ -238,7 +238,7 @@ branches = [
 "pileupJetIDWeight", "pileupJetIDWeightUp", "pileupJetIDWeightDown",
 "lepIdSF", "EGammaGsfSF", "isoSF", 
 "L1NonPrefiringProb_CommonCalc", "L1NonPrefiringProbUp_CommonCalc", "L1NonPrefiringProbDown_CommonCalc",
-"renormWeights", "renormPSWeights", "pdfWeights",
+"renormWeights", "renormPSWeights", "pdfWeights", "alphaSWeights",
 "MCWeight_MultiLepCalc", "xsecEff", "tthfWeight", "btagDeepJetWeight", "btagDeepJet2DWeight_HTnj", "DataPastTriggerX", "MCPastTriggerX", "isTraining", "topPtWeight13TeV", 
 "leptonPt_MultiLepCalc", "leptonEta_MultiLepCalc", "leptonPhi_MultiLepCalc", "corr_met_MultiLepCalc", "MT_lepMet", "minDR_lepJet", "AK4HT", 
 "theJetPt_JetSubCalc_PtOrdered", "theJetEta_JetSubCalc_PtOrdered", "NJetsPU_JetSubCalc", "NJetsCSV_JetSubCalc", "NJetsWtagged", "NJetsTtagged", "NresolvedTops1pFake",

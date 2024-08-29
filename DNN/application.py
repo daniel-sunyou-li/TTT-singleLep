@@ -153,7 +153,7 @@ def check_model( folders ):
    
  
 def submit_condor( fileName, inputDir, outputDir, logDir, shift, models, params ):
-  request_memory = "10000" 
+  request_memory = "12000" 
   if "tttosemilepton" in fileName.lower() and "ttjj" in fileName.lower(): request_memory = "16384" 
   if args.resubmit: request_memory = "10240"
   dict = {
