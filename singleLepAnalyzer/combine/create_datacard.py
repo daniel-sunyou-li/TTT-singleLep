@@ -156,12 +156,14 @@ class DataCard():
       if parse[ "IS SYST" ]: 
         continue
       if parse[ "CATEGORY" ] in self.categories[ "EXCLUDE" ]: continue
-      if parse[ "GROUP" ] == "SIG":
-        if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
-          self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-        else:
+      if parse[ "CATEGORY" ] not in self.hist_groups[ "SIG" ]:
+        self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ] = []
+        self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = []
+        self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = []
+      if parse[ "COMBINE" ] in self.signals:
+        if parse[ "COMBINE" ] not in self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ]:
           self.hist_groups[ "SIG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
-      elif parse[ "GROUP" ] == "BKG":
+      elif parse[ "COMBINE" ] in self.backgrounds or parse[ "COMBINE" ] in self.minor_backgrounds:
         if templateFile.Get( hist_name ).Integral() < 1: 
           print( "[WARN] {} is beneath yield threshold, excluding...".format( hist_name )  )
           exclude_count += 1
@@ -171,16 +173,13 @@ class DataCard():
         elif parse[ "COMBINE" ] == "ABCDNN" and not self.abcdnn:
           continue
         else:
-          if parse[ "CATEGORY" ] not in self.hist_groups[ "BKG" ]:
-            self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-          else:
+          if parse[ "COMBINE" ] not in self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ]:
             self.hist_groups[ "BKG" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
       elif parse[ "GROUP" ] == "DAT":
-        if parse[ "CATEGORY" ] not in self.hist_groups[ "DAT" ].keys():
-          self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ] = [ parse[ "COMBINE" ] ]
-        else:
+        if parse[ "COMBINE" ] not in self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ]:
           self.hist_groups[ "DAT" ][ parse[ "CATEGORY" ] ].append( parse[ "COMBINE" ] )
     
+    print( self.hist_groups )
     templateFile.Close()
     self.masses = ch.ValsFromRange( "690" )
     print( "[DONE] Finished assigning physics groups to datacard templates. Excluded {} processes failing statistical threshold requirement.".format( exclude_count ) )
@@ -619,7 +618,7 @@ class DataCard():
   
   def add_auto_MC_statistics( self ):
     print( "[START] Adding auto MC statistics to DataCard" )
-    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 5." )
+    self.harvester.AddDatacardLineAtEnd( "* autoMCStats 1." )
     print( "[DONE]" )
     
   def rename_and_write( self, limit = True ):
