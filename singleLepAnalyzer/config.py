@@ -54,6 +54,7 @@ options = {
     "SYMM THEORY": False,
     "NORM ABCDNN": True,
     "UNCORRELATE ABCDNN": True,
+    "SPLIT ABCDNN SYST": True,     # split the abcdnn shape systematics into two regions
     "SCALE SIGNAL XSEC": False,    
     "COMBINE SIGNALS": True,       # merge all signal histograms into a single histogram called SIG
     "ADD SHAPE SYST YIELD": False,

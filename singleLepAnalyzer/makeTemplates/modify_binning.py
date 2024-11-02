@@ -548,6 +548,31 @@ class ModifyTemplate():
       self.rebinned[ "BKG SYST" ][ hist_name_new ].SetDirectory(0)
     print( "[DONE] Adjusted ABCDnn shifts by model for {} histograms".format( count ) )
 
+  def split_abcdnn_syst( self ):
+    print( "[START] Splitting histogram systematics into two regions" )
+    hist_names = self.rebinned[ "BKG SYST" ].keys()
+    count = 0
+    if not self.doABCDNN:
+      return
+    for hist_name in hist_names:
+      parse = hist_parse( hist_name, samples )
+      parse_abcdnn = abcdnn_tag( hist_name )
+      if "ABCDNN" not in parse["SYST"]: continue
+      count += 1
+      nbins = self.rebinned["BKG SYST"][hist_name].GetXaxis().GetNbins()
+      hist_name_1 = self.rebinned["BKG SYST"][hist_name].GetName().replace( parse["SYST"], f"{parse["SYST"]}R1" )
+      hist_name_2 = self.rebinned["BKG SYST"][hist_name].GetName().replace( parse["SYST"], f"{parse["SYST"]}R2" )
+      self.rebinned["BKG SYST"][hist_name_1] = self.rebinned["BKG SYST"][hist_name].Clone(hist_name_1)
+      self.rebinned["BKG SYST"][hist_name_2] = self.rebinned["BKG SYST"][hist_name].Clone(hist_name_2)
+      for i in range(1,nbins+1):
+        if i < int(nbins/2):
+          self.rebinned["BKG SYST"][hist_name_2].SetBinContent(i,self.rebinned["BKG"][hist_tag(parse["COMBINE"],parse["CATEGORY"])].GetBinContent(i))
+        else:
+          self.rebinned["BKG SYST"][hist_name_1].SetBinContent(i,self.rebinned["BKG"][hist_tag(parse["COMBINE"],parse["CATEGORY"])].GetBinContent(i))
+      self.rebinned["BKG SYST"][hist_name_1].SetDirectory(0)
+      self.rebinned["BKG SYST"][hist_name_2].SetDirectory(0)
+    print(f"[DONE] Split {count} histograms into two regions")
+
   def symmetrize_HOTclosure( self ): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
     print( "[START] Symmetrizing the HOT closure systematic down shifts to match the up shifts" )
@@ -926,6 +951,8 @@ def main():
     template.normalize_abcdnn()
   if options[ "UNCORRELATE ABCDNN" ]:
     template.uncorrelate_abcdnn()
+  if options[ "SPLIT ABCDNN SYST" ]:
+    template.split_abcdnn_syst()
   if options[ "SMOOTH" ]:
     template.add_smooth_shapes()
   if options[ "UNCORRELATE YEARS" ]:
