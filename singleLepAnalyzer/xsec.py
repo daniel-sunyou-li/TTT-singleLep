@@ -20,6 +20,7 @@ filtEff_tt = {
 
 k_factor = {
   "WJetsMG": 1.21,
+  "DY": 1.23,
   "TTTJ": 1.75,    # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
   "TTTW": 1.86,    # NLO QCD 5FS https://github.com/gdurieux/triple-top-nlo
 }
@@ -42,21 +43,25 @@ scale = { # artificial scaling incorporated in templates.py
   "DYM2500": 0.617254
 }
 
-tt_xsec = 831.8
+tt_xsec = 833.9
 
 xsec = { #pb
-  "TTTJ": 0.0003974 * k_factor[ "TTTJ" ],
-  "TTTW": 0.0007314 * k_factor[ "TTTW" ],
-  "TTTT": 0.01197,
-  "TTWW": 0.00703,
-  "TTWZ": 0.002453,
-  "TTWH": 0.001141,
-  "TTHH": 0.0006655,
-  "TTZH": 0.00113,
-  "TTZZ": 0.001385,
-  "TTWl": 0.2161,
-  "TTWq": 0.4377,
-  "TTZlM10": 0.2439,
+  "TTTJ": 0.0007,
+  "TTTW": 0.0013,
+  "TTTJp": 0.00021,
+  "TTTJm": 0.00049,
+  "TTTWp": 0.00066,
+  "TTTWm": 0.00066,
+  "TTTT": 0.01337, # https://www.arxiv.org/pdf/2212.03259
+  "TTWW": 0.0115,
+  "TTWZ": 0.001582,
+  "TTWH": 0.001535,
+  "TTHH": 0.000757,
+  "TTZH": 0.001535,
+  "TTZZ": 0.001982,
+  "TTWl": 0.2316, # https://www.arxiv.org/pdf/2001.03031
+  "TTWq": 0.3604, # https://www.arxiv.org/pdf/2001.03031
+  "TTZlM10": 0.281,
   "TTZlM1to10": 0.05324,
   "TTHB": 0.291,
   "TTHnoB": 0.209,
@@ -74,19 +79,19 @@ xsec = { #pb
   "QCD2000": 25.24,
   "WW": 118.7,
   "WZ": 47.13,
-  "ZZ": 16.523,
-  "DYM200": 54.951,
-  "DYM400": 7.862,
-  "DYM600": 1.977,
-  "DYM800": 0.858,
-  "DYM1200": 0.191,
-  "DYM2500": 0.0045,
-  "WJetsMG200": 359.7 * k_factor[ "WJetsMG" ],
-  "WJetsMG400": 48.91 * k_factor[ "WJetsMG" ],
-  "WJetsMG600": 12.05 * k_factor[ "WJetsMG" ],
-  "WJetsMG800": 5.501 * k_factor[ "WJetsMG" ],
-  "WJetsMG1200": 1.329 * k_factor[ "WJetsMG" ],
-  "WJetsMG2500": 0.03216 * k_factor[ "WJetsMG" ],
+  "ZZ": 16.19,
+  "DYM200": 54.951 * k_factor["DY"] * scale["DYM200"],
+  "DYM400": 7.862 * k_factor["DY"] * scale["DYM400"],
+  "DYM600": 1.977 * k_factor["DY"] * scale["DYM600"],
+  "DYM800": 0.858 * k_factor["DY"] * scale["DYM800"],
+  "DYM1200": 0.191 * k_factor["DY"] * scale["DYM1200"],
+  "DYM2500": 0.0045 * k_factor["DY"] * scale["DYM2500"],
+  "WJetsMG200": 359.7 * k_factor[ "WJetsMG" ] * scale["WJetsMG200"],
+  "WJetsMG400": 48.91 * k_factor[ "WJetsMG" ] * scale["WJetsMG400"],
+  "WJetsMG600": 12.05 * k_factor[ "WJetsMG" ] * scale["WJetsMG600"],
+  "WJetsMG800": 5.501 * k_factor[ "WJetsMG" ] * scale["WJetsMG800"],
+  "WJetsMG1200": 1.329 * k_factor[ "WJetsMG" ] * scale["WJetsMG1200"],
+  "WJetsMG2500": 0.03216 * k_factor[ "WJetsMG" ] * scale["WJetsMG2500"],
   "TTToSemiLeptonic": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9" ] ),
   "TTToSemiLeptonicUEUP": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9UEUP" ] ),
   "TTToSemiLeptonicUEDN": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * ( 1.0 - filtEff_tt[ "Njet9UEDN" ] ),
@@ -97,7 +102,7 @@ xsec = { #pb
   "TTToSemiLeptonicHT500UEDN": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9UEDN" ],
   "TTToSemiLeptonicHT500HDUP": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDUP" ],
   "TTToSemiLeptonicHT500HDDN": tt_xsec * BR[ "TT" ][ "SemiLeptonic" ] * filtEff_tt[ "Njet9HDDN" ],
-  "TTToSemiLeptonHT500": 2.251,
+  "TTToSemiLeptonHT500": tt_xsec * BR["TT"]["SemiLeptonic"] * filtEff_tt["Njet9"],
   "TTToHadronic": tt_xsec * BR[ "TT" ][ "Hadronic" ],
   "TTToHadronicUEUP": tt_xsec * BR[ "TT" ][ "Hadronic" ],
   "TTToHadronicUEDN": tt_xsec * BR[ "TT" ][ "Hadronic" ],

@@ -221,6 +221,7 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
         except:
           histograms[ "TOTAL BKG" ][ category ] = histograms[ "BKG" ][ hist_name ].Clone()
     elif parse[ "GROUP" ] == "SIG" and parse[ "COMBINE" ] != "SIG":
+      if hist_name.split("_")[0] not in config.params["COMBINE"]["SIGNALS"]: continue
       if args.verbose and not parse[ "IS SYST" ]: print( "  + SIG: {}".format( hist_name ) )
       scale = 1.
       if scale_signal_yield: scale *= config_plot.params[ "SCALE SIGNAL YIELD" ]
@@ -229,6 +230,7 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
       histograms[ "SIG" ][ hist_name ].Scale( scale )
       if not parse[ "IS SYST" ]:
         try:
+          print("Adding to signal: {}".format(hist_name))
           histograms[ "TOTAL SIG" ][ category ].Add( histograms[ "SIG" ][ hist_name ] )
         except:
           histograms[ "TOTAL SIG" ][ category ] = histograms[ "SIG" ][ hist_name ].Clone()
@@ -297,16 +299,14 @@ def load_histograms( groups, templateDir, rebinned, scale_signal_xsec, scale_sig
               error_up = histograms[ "BKG" ][ hist_tag( group, category, syst + "UP" ) ].GetBinContent(i) - histograms[ "BKG" ][ hist_tag( group, category ) ].GetBinContent(i)
               error_dn = histograms[ "BKG" ][ hist_tag( group, category ) ].GetBinContent(i) - histograms[ "BKG" ][ hist_tag( group, category, syst + "DN" ) ].GetBinContent(i)
               if error_up > 0: 
-                error_bkg[ category ][i]["UP"] += error_up**2
+                error_bkg[category][i]["UP"] += error_up**2
                 systTotalUp += error_up**2
-              else: 
-                error_bkg[ category ][i]["DN"] += error_up**2
-                systTotalDn += error_up**2
-              if error_dn > 0: 
-                error_bkg[ category ][i]["DN"] += error_dn**2
+                error_bkg[category][i]["DN"] += error_dn**2
                 systTotalDn += error_dn**2
               else: 
-                error_bkg[ category ][i]["UP"] += error_dn**2
+                error_bkg[category][i]["DN"] += error_up**2
+                systTotalDn += error_up**2
+                error_bkg[category][i]["UP"] += error_dn**2
                 systTotalUp += error_dn**2
             except:
               #print( "[WARN] Unable to add {} uncertainty for {} {}".format( syst, group, category ) )
@@ -521,9 +521,10 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     hists[ "TOTAL SIG" ][ category ].SetLineStyle(7)
     hists[ "TOTAL SIG" ][ category ].SetFillStyle(0)
     hists[ "TOTAL SIG" ][ category ].SetLineWidth(3)
-    if ( config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and log ):
-      hists[ "TOTAL SIG" ][ category ].SetLineWidth(0)
-    hists[ "TOTAL SIG" ][ category ].Draw( "HIST" )
+    #if ( config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and log ):
+    #  hists[ "TOTAL SIG" ][ category ].SetLineWidth(0)
+    #hists[ "TOTAL SIG" ][ category ].Draw( "HIST" )
+    hists[ "TOTAL SIG" ][ category ].Draw()
     
     if args.variable in [ "JETPT", "JETETA", "JETPHI" ]:
       hists[ "TOTAL SIG" ][ category ].GetYaxis().SetTitle( "Jets/Bin" )
@@ -538,14 +539,14 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     # prepare and draw the background histograms
     bkg_stack = ROOT.THStack( "BKG STACK", "" )
     plot_order = []
-    if config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and not config_plot.options[ "BLIND" ]:
-      for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
-        hists[ "SIG" ][ hist_tag( process, category ) ].SetLineColor( config_plot.params[ "SIG COLORS" ][ process ] )
-        hists[ "SIG" ][ hist_tag( process, category ) ].SetFillColor( config_plot.params[ "SIG COLORS" ][ process ] )
-        hists[ "SIG" ][ hist_tag( process, category ) ].SetLineWidth(2)
-        if config_plot.options[ "SCALE SIGNAL YIELD" ]: # unscale the signals
-          hists[ "SIG" ][ hist_tag( process, category ) ].Scale( 1. / config_plot.params[ "SCALE SIGNAL YIELD" ] )
-        bkg_stack.Add( hists[ "SIG" ][ hist_tag( process, category ) ] )
+    #if config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and not config_plot.options[ "BLIND" ]:
+    #  for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
+    #    hists[ "SIG" ][ hist_tag( process, category ) ].SetLineColor( config_plot.params[ "SIG COLORS" ][ process ] )
+    #    hists[ "SIG" ][ hist_tag( process, category ) ].SetFillColor( config_plot.params[ "SIG COLORS" ][ process ] )
+    #    hists[ "SIG" ][ hist_tag( process, category ) ].SetLineWidth(2)
+    #    if config_plot.options[ "SCALE SIGNAL YIELD" ]: # unscale the signals
+    #      hists[ "SIG" ][ hist_tag( process, category ) ].Scale( 1. / config_plot.params[ "SCALE SIGNAL YIELD" ] )
+    #    bkg_stack.Add( hists[ "SIG" ][ hist_tag( process, category ) ] )
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]: plot_order.append( group )
       plot_order.append( "ABCDNN" )
@@ -574,8 +575,9 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
       hists[ "OTHER" ][ hist_tag( "TTTT", category ) ].SetFillStyle(0)
       hists[ "OTHER" ][ hist_tag( "TTTT", category ) ].SetLineWidth(2)
       hists[ "OTHER" ][ hist_tag( "TTTT", category ) ].Draw( "SAME HIST" )
-    if ( config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and not log ) or ( not config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ):
-      hists[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
+    #if ( config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] and not log ) or ( not config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ):
+    #  hists[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
+    hists[ "TOTAL SIG" ][ category ].Draw( "SAME HIST" )
 
     hists[ "STAT BKG ERR" ][ category ].SetFillStyle(3001)
     hists[ "STAT BKG ERR" ][ category ].SetFillColor( ROOT.kRed + 2 )
@@ -595,6 +597,12 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
       hists[ "TOTAL DAT" ][ category ].SetMarkerColor( config_plot.params[ "DAT COLOR" ] )
       hists[ "TOTAL DAT" ][ category ].SetTitle( "" )
       
+      if config_plot.options["PARTIAL BLIND"]:
+        nbins = hists["TOTAL DAT"][category].GetXaxis().GetNbins()
+        blind_idx = int(nbins*config_plot.params["PARTIAL BLIND"])
+        for i in range(1,nbins+1):
+          if i > blind_idx:
+            hists["TOTAL DAT"][category].SetBinContent(i,0)
       
       if not norm_bin_width: 
         hists[ "TOTAL DAT" ][ category ].SetMaximum( 1.2 * max( hists[ "TOTAL DAT" ][ category ].GetMaximum(), hists[ "TOTAL BKG" ][ category ].GetMaximum() ) )
@@ -691,8 +699,8 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
 
     if not blind and config.options[ "GENERAL" ][ "FINAL ANALYSIS" ]:
       sublegend.AddEntry( hists[ "TOTAL DAT" ][ category ], "DATA", "ep" )
-    for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
-      legend.AddEntry( hists[ "SIG" ][ hist_tag( process, category ) ], process, "f" )
+      #for process in config.params[ "COMBINE" ][ "SIGNALS" ]:
+      #  legend.AddEntry( hists[ "SIG" ][ hist_tag( process, category ) ], process, "f" )
     if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
       legend.AddEntry( hists[ "BKG" ][ hist_tag( "ABCDNN", category ) ], "ABCDNN", "f" )
       for group in config.params[ "COMBINE" ][ "BACKGROUNDS" ]:
@@ -707,11 +715,11 @@ def plot_distribution( templateDir, lep, groups, hists, categories, lumiStr, plo
     sublegend.AddEntry( hists[ "TOTAL BKG ERR" ][ category ], "+".join( config_plot.params[ "ERROR BAND" ] ), "f" )
     sublegend.AddEntry( hists[ "STAT BKG ERR" ][ category ], "STAT", "f" )
       
-    if ( not log and config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ) or ( not config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ):
-      if scale_signal_yield:
-        sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG x{}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "l" )
-      else:
-        sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG", "l" )
+    #if ( not log and config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ) or ( not config.options[ "GENERAL" ][ "FINAL ANALYSIS" ] ):
+    if scale_signal_yield:
+      sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG x{}".format( config_plot.params[ "SCALE SIGNAL YIELD" ] ), "l" )
+    else:
+      sublegend.AddEntry( hists[ "TOTAL SIG" ][ category ], "SIG", "l" )
     legend.Draw( "SAME" )
     sublegend.Draw( "SAME" )
     
@@ -991,18 +999,20 @@ def plot_background_ratio( hists, categories, lepton, groups, templateDir, doABC
   ROOT.SetOwnership( canvas, False )
 
 def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, categories, lumiStr, blind, log, doABCDNN, rebinned, syst_list, norm_bin_width ):
-  print( "[START] Plotting systematic shift background histograms" )
+  print("[START] Plotting systematic shift background histograms")
   progress = tqdm( [ category for category in categories if "is" + lep in category ] )
   for category in progress:
-    progress.set_description( "Category: {}".format( category ) )
+    progress.set_description("Category: {}".format(category))
     for syst in syst_list:
-      if config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper() in syst: continue
-      if syst in config_plot.params[ "EXCLUDE SYST" ]: continue 
+      if config.params["MODIFY BINNING"]["SMOOTHING ALGO"].upper() in syst: continue
+      if syst in config_plot.params["EXCLUDE SYST"]: continue 
       if "SIG" in syst: continue
       if "TOPPT" in syst and hist_parse( category, samples )[ "ABCDNN" ]: continue
       if "ABCD" in syst and not hist_parse( category, samples )[ "ABCDNN" ]: continue
+      if "nJ" in syst and "nB" in syst: continue
       systSmooth = syst + config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
       if args.test and syst != syst_list[0]: continue
+      #print("[VERBOSE] Plotting background systematic {}".format(syst))
       canvas = ROOT.TCanvas( hist_tag( category, syst, "BKG" ), hist_tag( category, syst, "BKG" ), 60, 60, config_plot.params[ "CANVAS" ][ "W REF" ], config_plot.params[ "CANVAS" ][ "H REF" ] )
       canvas.cd()
       canvas.SetFillColor(0)
@@ -1067,8 +1077,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
       for shift in [ "UP", "DN" ]:
         if doABCDNN and hist_parse( category, samples )[ "ABCDNN" ]:
           if "ABCD" in syst: # only ABCDnn histograms have ABCDnn systematics, everything else treated nominally
-            if hist_tag( "ABCDNN", category, syst + shift ) not in histograms[ "BKG" ].keys():  
-              #skip = True
+            if hist_tag( "ABCDNN", category, syst + shift ) not in histograms["BKG"].keys():  
               continue
             else:
               hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category, syst + shift ) ] 
@@ -1080,7 +1089,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
             hist_shift[ shift ] = histograms[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
             hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( "ABCDNN", category ) ].Clone()
             for group in config.params[ "ABCDNN" ][ "MINOR BKG" ]:
-              if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group not in [ "EWK", "TTTJ", "ST" ] ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group not in [ "QCD", "TTTT", "TTTW", "TTH", "TOP" ] ) or ( ( "TOP" in syst and "PT" not in syst ) and group not in [ "TTNOBB", "TTBB" ] ):
+              if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group not in [ "EWK", "TTTJ", "TTTJm", "TTTJp", "ST" ] ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group not in [ "QCD", "TTTT", "TTTW", "TTTWp", "TTTWm", "TTH", "TOP" ] ) or ( ( "TOP" in syst and "PT" not in syst ) and group not in [ "TTNOBB", "TTBB" ] ):
                 hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
                 hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
               else: 
@@ -1104,7 +1113,7 @@ def plot_shifts_bkg( templateDir, lep, groups, histograms, histogramsSmooth, cat
                 hist_shift_smooth[ shift ] = histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ].Clone()
         else:
           for group in sorted( groups[ "BKG" ][ "SUPERGROUP" ].keys(), reverse = True ):
-            if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group not in [ "EWK", "TTTJ", "ST" ] ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group not in [ "QCD", "TTTT", "TTTW", "TTH", "TOP" ] ) or ( ( "TOP" in syst and "PT" not in syst ) and group not in [ "TTNOBB", "TTBB" ] ):
+            if ( "TTBAR" in syst and group not in [ "TTNOBB", "TTBB" ] ) or ( "EWK" in syst and group not in [ "EWK", "TTTJ", "TTTJm", "TTTJp", "ST" ] ) or ( ( "QCD" in syst and "FLAVOR" not in syst ) and group not in [ "QCD", "TTTT", "TTTW", "TTTWm", "TTTWp", "TTH", "TOP" ] ) or ( ( "TOP" in syst and "PT" not in syst ) and group not in [ "TTNOBB", "TTBB" ] ):
               try: 
                 hist_shift[ shift ].Add( histograms[ "BKG" ][ hist_tag( group, category ) ] )
                 hist_shift_smooth[ shift ].Add( histogramsSmooth[ "BKG" ][ hist_tag( group, category ) ] )
@@ -1573,7 +1582,7 @@ def main():
           histogramsSmooth = hists_smooth,
           categories = categories, 
           lumiStr = config.lumiStr[ args.year ], 
-          blind = blind, 
+          blind = True, 
           log = config_plot.options[ "Y LOG" ], 
           doABCDNN = config_plot.options[ "ABCDNN" ], 
           rebinned = config_plot.options[ "REBINNED" ],
@@ -1588,7 +1597,7 @@ def main():
           histogramsSmooth = hists_smooth,
           categories = categories,
           lumiStr = config.lumiStr[ args.year ],
-          blind = blind,
+          blind = True,
           log = config_plot.options[ "Y LOG" ],
           rebinned = config_plot.options[ "REBINNED" ],
           syst_list = syst_list,

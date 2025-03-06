@@ -206,6 +206,16 @@ class ModifyTemplate():
     total_count = 0
     for hist_key in self.histograms:
       for hist_name in self.histograms[ hist_key ]:
+        if self.options["PARTIAL FIT"]:
+          cutoff_i = int(self.params["PARTIAL FIT"]*self.histograms[hist_key][hist_name].GetXaxis().GetNbins())
+          if self.options["PARTIAL FIT UPPER"]:
+            for i in range(1,cutoff_i+1):
+              self.histograms[hist_key][hist_name].SetBinContent(i,config.params["GENERAL"]["ZERO"])
+              self.histograms[hist_key][hist_name].SetBinError(i,config.params["GENERAL"]["ZERO"])
+          else:
+            for i in range(cutoff_i+1,self.histograms[hist_key][hist_name].GetXaxis().GetNbins()+1):
+              self.histograms[hist_key][hist_name].SetBinContent(i,config.params["GENERAL"]["ZERO"])
+              self.histograms[hist_key][hist_name].SetBinError(i,config.params["GENERAL"]["ZERO"])
         self.histograms[ hist_key ][ hist_name ].SetDirectory(0)
         total_count += 1
 
@@ -295,8 +305,16 @@ class ModifyTemplate():
           del self.xbins[ "LIMIT" ][ channel ][i]
           
       self.xbins[ "MODIFY" ][ channel ] = array( "d", self.xbins[ "LIMIT" ][ channel ] )
+      if self.options["PARTIAL FIT"]:
+        if self.options["PARTIAL FIT UPPER"]:
+          del self.xbins["MODIFY"][channel][0]
+          del self.xbins["MODIFY"][channel][0]
+        else:
+          del self.xbins["MODIFY"][channel][-1]
+          del self.xbins["MODIFY"][channel][-1]
+          del self.xbins["MODIFY"][channel][-1]
       print( "   >> New binning ({} bins): {}".format( 
-        i, self.xbins[ "MODIFY" ][ channel ]
+        len(self.xbins["MODIFY"][channel]), self.xbins[ "MODIFY" ][ channel ]
       ) )
         
   def rebin( self ): # done
@@ -312,14 +330,21 @@ class ModifyTemplate():
         for channel in self.xbins[ "MODIFY" ]:
           if channel in hist_name:
             xbins_channel = self.xbins[ "MODIFY" ][ channel ]
+
         self.rebinned[ hist_key ][ hist_name ] = self.histograms[ hist_key ][ hist_name ].Rebin(
           len( xbins_channel ) - 1,
           hist_name,
           xbins_channel
         )
         self.rebinned[ hist_key ][ hist_name ].SetDirectory(0)
-        overflow( self.rebinned[ hist_key ][ hist_name ] )
-        underflow( self.rebinned[ hist_key ][ hist_name ] )
+        if self.options["PARTIAL FIT"]:
+          if self.options["PARTIAL FIT UPPER"]:
+            overflow(self.rebinned[hist_key][hist_name])
+          else:
+            underflow(self.rebinned[hist_key][hist_name])
+        else:
+          overflow( self.rebinned[ hist_key ][ hist_name ] )
+          underflow( self.rebinned[ hist_key ][ hist_name ] )
         
         count += 1
     
@@ -386,6 +411,7 @@ class ModifyTemplate():
           self.rebinned[ hist_key ][ hist_name_new ].SetDirectory(0)
           count += 1
     print( "[DONE] Adjusted systematic shift names by year for {} histograms".format( count ) )
+
 
   def scale_process( self ): 
     print( "[START] Scaling process cross sections for the following:" )
@@ -560,18 +586,16 @@ class ModifyTemplate():
       if "ABCDNN" not in parse["SYST"]: continue
       count += 1
       nbins = self.rebinned["BKG SYST"][hist_name].GetXaxis().GetNbins()
-      hist_name_1 = self.rebinned["BKG SYST"][hist_name].GetName().replace( parse["SYST"], f"{parse["SYST"]}R1" )
-      hist_name_2 = self.rebinned["BKG SYST"][hist_name].GetName().replace( parse["SYST"], f"{parse["SYST"]}R2" )
-      self.rebinned["BKG SYST"][hist_name_1] = self.rebinned["BKG SYST"][hist_name].Clone(hist_name_1)
-      self.rebinned["BKG SYST"][hist_name_2] = self.rebinned["BKG SYST"][hist_name].Clone(hist_name_2)
-      for i in range(1,nbins+1):
-        if i < int(nbins/2):
-          self.rebinned["BKG SYST"][hist_name_2].SetBinContent(i,self.rebinned["BKG"][hist_tag(parse["COMBINE"],parse["CATEGORY"])].GetBinContent(i))
-        else:
-          self.rebinned["BKG SYST"][hist_name_1].SetBinContent(i,self.rebinned["BKG"][hist_tag(parse["COMBINE"],parse["CATEGORY"])].GetBinContent(i))
-      self.rebinned["BKG SYST"][hist_name_1].SetDirectory(0)
-      self.rebinned["BKG SYST"][hist_name_2].SetDirectory(0)
-    print(f"[DONE] Split {count} histograms into two regions")
+      split_bins = np.array_split(list(range(1,nbins+1)),self.params["ABCDNN SPLIT REGIONS"])
+      for i in range(self.params["ABCDNN SPLIT REGIONS"]):
+        hist_name_split = self.rebinned["BKG SYST"][hist_name].GetName().replace( parse["SYST"],parse["SYST"] + "R{}".format(i+1) )
+        self.rebinned["BKG SYST"][hist_name_split] = self.rebinned["BKG SYST"][hist_name].Clone(hist_name_split)
+        for j in range(1,nbins+1):
+          if j not in split_bins[i]:
+            self.rebinned["BKG SYST"][hist_name_split].SetBinContent(j,self.rebinned["BKG"][hist_tag(parse["COMBINE"],parse["CATEGORY"])].GetBinContent(j))
+        self.rebinned["BKG SYST"][hist_name_split].SetDirectory(0)
+
+    print("[DONE] Split {} histograms into {} regions".format(count,self.params["ABCDNN SPLIT REGIONS"]))
 
   def symmetrize_HOTclosure( self ): # done
     # make the up and down shifts of the HOTClosure systematic symmetric
@@ -616,7 +640,7 @@ class ModifyTemplate():
             for term in [ "muR", "cNS" ]:
               if not config.systematics[ "PS BREAKDOWN" ][ parse[ "SYST" ].lower() + pQCD + term ]: continue
               self.rebinned[ "BKG SYST" ][ hist_name.replace( parse[ "SYST" ].upper(), parse[ "SYST" ].upper() + pQCD + term.upper() ) ].Scale( self.rebinned[ "BKG" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Integral() / self.rebinned[ "BKG SYST" ][ hist_name ].Integral() )
-          self.rebinned[ "BKG SYST" ][ hist_name ].Scale( self.rebinned[ "BKG" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Integral() / self.rebinned[ "BKG SYST" ][ hist_name ].Integral() )
+          self.rebinned[ "BKG SYST" ][ hist_name ].Scale( self.rebinned[ "BKG" ][ hist_tag( parse[ "COMBINE" ], parse[ "CATEGORY" ] ) ].Integral() / ( config.params["GENERAL"]["ZERO"] + self.rebinned[ "BKG SYST" ][ hist_name ].Integral() ) )
           norm_bkg += 1
         else:
          continue
@@ -669,16 +693,16 @@ class ModifyTemplate():
           for shift in [ "UP", "DN" ]:
             self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
             self.rebinned[ hist_key ][ "{}_{}_{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
-            if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TTH", "TTTT", "TOP", "TTTW" ]: # correlate all MURF ttbar theory systematics together
+            if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TTH", "TTTT", "TOP", "TTTW", "TTTWp", "TTTWm" ]: # correlate all MURF ttbar theory systematics together
               self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
-            elif parse[ "COMBINE" ] in [ "TTTJ", "ST", "EWK" ]: # correlate signal processes together
+            elif parse[ "COMBINE" ] in [ "TTTJ", "TTTJp", "TTTJm", "ST", "EWK" ]: # correlate signal processes together
               self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
             else: # correlate MURF theory systematics by group
               self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}{}{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, parse[ "COMBINE" ], shift ) ].SetDirectory(0)
-            if parse[ "COMBINE" ] in [ "TTTT", "TTTJ", "TTTW" ]:
+            if parse[ "COMBINE" ] in [ "TTTT", "TTTJ", "TTTW", "TTTJp", "TTTJm", "TTTWp", "TTTWm" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ] = hist_muRF[ key + shift ].Clone( "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}TTTX{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], key, shift ) ].SetDirectory(0)
             
@@ -747,10 +771,10 @@ class ModifyTemplate():
             if syst in [ "ISR", "FSR" ] and not config.systematics[ "PS BREAKDOWN" ][ syst.lower() ]: continue
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) )
             self.rebinned[ hist_key ][ "{}_{}_{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst + shift ) ].SetDirectory(0)
-            if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ]:
+            if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW", "TTTWm", "TTTWp" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].SetDirectory(0)
-            elif parse[ "COMBINE" ] in [ "TTTJ", "EWK", "ST" ]:
+            elif parse[ "COMBINE" ] in [ "TTTJ", "TTTJp", "TTTJm", "EWK", "ST" ]:
               self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ] = hist_PSWeight[ syst + shift ].Clone( "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) )
               self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], syst, shift ) ].SetDirectory(0)
             else:
@@ -762,10 +786,10 @@ class ModifyTemplate():
               for term in [ "muR", "cNS" ]:
                 psTag = syst.lower() + pQCD + term
                 if not config.systematics[ "PS BREAKDOWN" ][ syst.lower() + pQCD + term ]: continue
-                if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW" ]:
+                if parse[ "COMBINE" ] in [ "TTNOBB", "TTBB", "QCD", "TOP", "TTH", "TTTT", "TTTW", "TTTWm", "TTTWp" ]:
                   self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) ] = hist_PSWeight[ psTag.upper() + shift ].Clone( "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) )
                   self.rebinned[ hist_key ][ "{}_{}_{}QCD{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) ].SetDirectory(0)
-                elif parse[ "COMBINE" ] in [ "TTTJ", "EWK", "ST" ]:
+                elif parse[ "COMBINE" ] in [ "TTTJ", "TTTJm", "TTTJp", "EWK", "ST" ]:
                   self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) ] = hist_PSWeight[ psTag.upper() + shift ].Clone( "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) )
                   self.rebinned[ hist_key ][ "{}_{}_{}EWK{}".format( parse[ "COMBINE" ], parse[ "CATEGORY" ], psTag.upper(), shift ) ].SetDirectory(0)
                 else:
@@ -865,7 +889,9 @@ class ModifyTemplate():
             sig_name = hist_tag( "SIG", parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] )
             self.rebinned[ hist_key ][ sig_name ] = self.rebinned[ hist_key ][ hist_name ].Clone( sig_name )
             for sig_ in config.params[ "COMBINE" ][ "SIGNALS" ][1:]:
-              if ( sig_ == "TTTJ" and "QCD" in parse[ "SYST" ] ) or ( sig_ == "TTTW" and "EWK" in parse[ "SYST" ] ): continue
+              if ( "TTTJ" in sig_ and "QCD" in parse[ "SYST" ] ) or ( "TTTW" in sig_ and "EWK" in parse[ "SYST" ] ): continue
+              if ( "TTTJ" in sig_ and "TTTW" in parse["SYST"] ) or ( "TTTW" in sig_ and "TTTJ" in parse["SYST"] ): continue
+              if ( "TTTJp" in sig_ and "TTTJM" in parse["SYST"].upper() ) or ( "TTTJm" in sig_ and "TTTJP" in parse["SYST"].upper() ) or ( "TTTWm" in sig_ and "TTTWP" in parse["SYST"].upper() ) or ( "TTTWp" in sig_ and "TTTWM" in parse["SYST"].upper() ): continue
               self.rebinned[ hist_key ][ sig_name ].Add( self.rebinned[ hist_key ][ hist_tag( sig_, parse[ "CATEGORY" ], parse[ "SYST" ] + parse[ "SHIFT" ] ) ] )
           count += 1
     print( "[DONE] Created {} combined signal histograms.".format( count ) )
@@ -949,10 +975,10 @@ def main():
     template.add_PDF_shapes()
   if options[ "NORM ABCDNN" ]:
     template.normalize_abcdnn()
-  if options[ "UNCORRELATE ABCDNN" ]:
-    template.uncorrelate_abcdnn()
   if options[ "SPLIT ABCDNN SYST" ]:
     template.split_abcdnn_syst()
+  if options[ "UNCORRELATE ABCDNN" ]:
+    template.uncorrelate_abcdnn()
   if options[ "SMOOTH" ]:
     template.add_smooth_shapes()
   if options[ "UNCORRELATE YEARS" ]:

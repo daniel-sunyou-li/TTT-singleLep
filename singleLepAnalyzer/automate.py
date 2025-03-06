@@ -250,7 +250,7 @@ mkdir -vp Results/{2}/\n\
 combineCards.py UL16APV=limits_UL16APV_{2}/cmb/combined.txt.cmb UL16=limits_UL16_{2}/cmb/combined.txt.cmb UL17=limits_UL17_{2}/cmb/combined.txt.cmb  UL18=limits_UL18_{2}/cmb/combined.txt.cmb > Results/{2}/workspace.txt\n\
 text2workspace.py Results/{2}/workspace.txt -o Results/{2}/workspace.root --channel-masks\n\
 combine -M Significance Results/{2}/workspace.root {5} {10} > Results/{2}/significance_merge{7}_stat{8}{9}.txt\n\
-combine -M AsymptoticLimits Results/{2}/workspace.root {6} {10} > Results/{2}/limits_merge{7}_stat{8}{9}.txt\n\
+combine -M AsymptoticLimits Results/{2}/workspace.root {6} {11} > Results/{2}/limits_merge{7}_stat{8}{9}.txt\n\
 cd Results/{2}/\n\
 ValidateDatacards.py workspace.root --printLevel 2\n\
 combine -M FitDiagnostics workspace.root {4}\n\
@@ -467,7 +467,7 @@ def impact_plots_era():
   ]
   tagSmooth = "" if not config.options[ "COMBINE" ][ "SMOOTH" ] else config.params[ "MODIFY BINNING" ][ "SMOOTHING ALGO" ].upper()
   tagABCDnn = "" if not config.options[ "COMBINE" ][ "ABCDNN" ] else "ABCDNN"
-  tagBlind = "unblind" if "-t -1" not in config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] else "blind"
+  tagBlind = "blind" if config.options[ "COMBINE" ][ "BLIND" ] else "unblind"
  
   for training in trainings:
     for variable in training[ "variable" ]:
@@ -488,6 +488,10 @@ def impact_plots_era():
             html_line = "cp impacts*.pdf {}".format( os.path.join( args.html, "impacts_UL{}_{}_{}_{}".format( training[ "year" ], variable, training[ "tag" ], args.region ) ) ) 
           except:
             print( "[INFO] Not saving impact plots to html area." )
+          fit_params = config.params["COMBINE"]["FITS"]["ARGS"]
+          if config.options["COMBINE"]["BLIND"]:
+            fit_params.append("-t -1")
+            fit_params.append("--expectSignal=1")
           shell = open( "{}/{}.sh".format( nameLog, nameCondor ), "w" )
           shell.write(
 "#!/bin/bash\n\
@@ -503,7 +507,7 @@ combineTool.py -M Impacts -d ../workspace.root -m 125 --doFits --parallel 40 --e
 combineTool.py -M Impacts -d ../workspace.root -m 125 -o impacts_UL{2}_{4}_{3}_{5}_{12}_{13}.json --exclude rgx{8} \n\
 plotImpacts.py -i impacts_UL{2}_{4}_{3}_{5}_{12}_{13}.json -o impacts_UL{2}_{4}_{3}_{5}_{12}_{13} --cms-label \"Work in Progress\" \n\
 {11} \n".format(
-  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + systTag + tagSmooth, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ), html_line, postfix, tagBlind 
+  cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + systTag + tagSmooth, tagFreeze, "\{prop_bin.*\}", freezeParam, " ".join(fit_params), html_line, postfix, tagBlind 
 )
           )
           shell.close()

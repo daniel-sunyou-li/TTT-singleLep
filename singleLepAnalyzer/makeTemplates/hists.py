@@ -500,7 +500,7 @@ def analyze( rTree, nHist, year, process, variable, doSYST, doPDF, doABCDNN, cat
 
 def numTrueHist( useJES, useABCDNN ):
   def add_process( nHist, group, key, process, shift, postfix ):
-    rFile = ROOT.TFile.Open( os.path.join( config.inputDir[ args.year ].replace( "step3", "step1hadds" ).replace( "step2", "step1hadds" ), shift + "/", samples.samples[ group ][ process ] + "_{}.root".format( postfix ) ) )
+    rFile = ROOT.TFile.Open( os.path.join( config.inputDir[ args.year ].replace( "step3", "step1hadds" ).replace( "step2", "step1hadds" ),  shift + "/", samples.samples[ group ][ process ] + "_{}.root".format( postfix ) ) )
     nHist[ key ] = rFile.Get( "NumTrueHist" ).Integral()
     rFile.Close()
     return nHist
@@ -519,10 +519,13 @@ def numTrueHist( useJES, useABCDNN ):
               systJEC_ = systJEC.replace( "Era", "20" + args.year ).replace( "APV", "" )
               if systJEC.upper() == "TOTAL":
                 nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.upper() + shift_.upper(), process, "JEC" + shift, "hadd" )
+                #nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.upper() + shift_.upper(), process, "nominal", "hadd" )
               else:
                 nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, systJEC_ + shift, "hadd" )
+                #nHist = add_process( nHist, group, process + "_" + "JEC" + systJEC_.replace( "_", "" ).upper() + shift_.upper(), process, "nominal", "hadd" )
           if config.systematics[ "MC" ][ "JER" ][0]:
             nHist = add_process( nHist, group, process + "_" + "JER" + shift_.upper(), process, "JER" + shift, "hadd" )
+            #nHist = add_process( nHist, group, process + "_" + "JER" + shift_.upper(), process, "nominal", "hadd" )
   return nHist
 
 def make_hists( groups, group, category, nHist, useABCDNN ): 

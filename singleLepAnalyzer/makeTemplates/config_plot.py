@@ -7,7 +7,7 @@ options = {
   "ALL SYSTEMATICS": True,
   "CR SYST": False,
   "REBINNED": False,
-  "ABCDNN": False,
+  "ABCDNN": True,
   "YIELDS": False,
   "NORM BIN WIDTH": True,
   "COMPARE SHAPES": False,
@@ -15,6 +15,7 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "SYMM ERROR": False,
   "REAL PULL": False,
+  "PARTIAL BLIND": True,        # unblind a portion of the background-enriched region, specify % in params
   "BLIND": False,
   "Y LOG": True,
   "SMOOTH": True,
@@ -40,6 +41,7 @@ params = {
     "ABCDNNPEAKnJ6pnB2pnHOT0", "ABCDNNPEAKnJ6pnB2pnHOT1p",
     #"FSR",   
   ],
+  "PARTIAL BLIND": 0.5,
   "SCALE SIGNAL YIELD": 1000,
   "DAT COLOR": ROOT.kBlack,
   "SIG COLOR": ROOT.kBlack,
@@ -63,7 +65,11 @@ params = {
   },
   "SIG COLORS": {
     "TTTW": ROOT.kViolet + 6,
-    "TTTJ": ROOT.kMagenta + 2
+    "TTTWp": ROOT.kViolet + 6,
+    "TTTWm": ROOT.kViolet - 4,
+    "TTTJ": ROOT.kMagenta + 2,
+    "TTTJp": ROOT.kMagenta + 2,
+    "TTTJm": ROOT.kMagenta
   },
   "Y DIV": 0.35,
   "CANVAS": {

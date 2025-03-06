@@ -20,6 +20,10 @@ samples = {
   "SIG": {
     "TTTJ": "TTTJ_TuneCP5_13TeV-madgraph-pythia8",
     "TTTW": "TTTW_TuneCP5_13TeV-madgraph-pythia8",
+    "TTTJp": "TTTJplus-DR1_TuneCP5_13TeV_amcatnlo-pythia8",
+    "TTTJm": "TTTJminus-DR1_TuneCP5_13TeV_amcatnlo-pythia8",
+    "TTTWp": "TTTWplus-DR1_TuneCP5_13TeV_amcatnlo-pythia8",
+    "TTTWm": "TTTWminus-DR1_TuneCP5_13TeV_amcatnlo-pythia8"
   },
   "BKG": {
     "WW": "WW_TuneCP5_13TeV-pythia8",
@@ -102,17 +106,17 @@ groups[ "TEST" ][ "PROCESS" ] = [ str( key ) for key in samples[ "TEST" ].keys()
  
 groups[ "DAT" ][ "PROCESS" ] = [ "DataE", "DataM" ]  
 
-groups[ "SIG" ][ "PROCESS" ] = [ "TTTW", "TTTJ" ]
+groups[ "SIG" ][ "PROCESS" ] = [ "TTTW", "TTTJ", "TTTWp", "TTTWm", "TTTJp", "TTTJm" ]
   
 ttbar = [ "TTToHadronic", "TTTo2L2Nu", "TTToSemiLeptonHT500", "TTToSemiLeptonicHT500", "TTToSemiLeptonic" ]
 groups[ "BKG" ][ "PROCESS" ] = {
   "WJETS": [ "WJetsMG200", "WJetsMG400", "WJetsMG600", "WJetsMG800", "WJetsMG1200", "WJetsMG2500" ],
   "DYM": [ "DYM200", "DYM400", "DYM600", "DYM800", "DYM1200", "DYM2500" ],
-  "QCD": [ "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ], # exclude QCDHT200 since ~0 events
+  "QCD": [ "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ], # exclude QCDHT200 since ~0 events
   "VV": [ "WW", "WZ", "ZZ" ],
   "ST": [ "Ts", "Tt", "Tbt", "TtW", "TbtW" ],
   "TTH": [ "TTHB", "TTHnoB" ],
-  "TTV": [ "TTWl", "TTWq", "TTZlM10", "TTZlM1to10" ], 
+  "TTV": [ "TTWq", "TTWl", "TTZlM10", "TTZlM1to10" ], 
   "TTXY": [ "TTWW", "TTWH", "TTHH", "TTZZ", "TTWZ", "TTZH" ],
   "TTTT": [ "TTTT" ],
   "TTJJ": [ tt + "ttjj" for tt in ttbar if tt != "TTToSemiLeptonic" ], 
@@ -134,7 +138,7 @@ groups[ "BKG" ][ "SUPERGROUP" ] = {
   "ST": groups[ "BKG" ][ "PROCESS" ][ "ST" ],
   "TOP": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTV", "TTXY" ] ] ).tolist(),
   "EWK": np.concatenate( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "WJETS", "DYM", "VV" ] ] ).tolist(),
-  "QCD": [ "QCD300", "QCD500", "QCD700", "QCD1000", "QCD1500", "QCD2000" ],
+  "QCD": groups[ "BKG" ][  "PROCESS" ][ "QCD" ],
   "TTH": groups[ "BKG" ][ "PROCESS" ][ "TTH" ],
   "TTTT": groups[ "BKG" ][ "PROCESS" ][ "TTTT" ]
 }

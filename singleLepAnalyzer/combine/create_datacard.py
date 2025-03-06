@@ -570,24 +570,69 @@ class DataCard():
       lepton_tag = "isE" if "isE" in category else "isM"
       if args.normSyst:
         if "EXTABCDSYST" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    
-          self.add_xsec( "EXTABCDSYST$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ][ self.year ][ lepton_tag ] )
+          self.add_xsec( "EXTABCDSYST{}{}$ERA".format(lepton_tag,tag), [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSYST" ][ tag ][ self.year ][ lepton_tag ] )
         if "EXTABCDSTAT" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:    
-          self.add_xsec( "EXTABCDSTAT$ERA", [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ][ self.year ][ lepton_tag ]  )
+          self.add_xsec( "EXTABCDSTAT{}{}$ERA".format(lepton_tag,tag), [ "ABCDNN" ], [ category ], config.systematics[ "EXTABCDSTAT" ][ tag ][ self.year ][ lepton_tag ]  )
         if "EXTABCDCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]: 
-          self.add_xsec( "EXTABCDCLOSURE$ERA", [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ][ self.year ][ lepton_tag ] )
+          self.add_xsec( "EXTABCDCLOSURE{}{}$ERA".format(lepton_tag,tag), [ "ABCDNN" ],  [ category ], config.systematics[ "EXTABCDCLOSURE" ][ tag ][ self.year ][ lepton_tag ] )
 
     if args.shapeSyst:
+      era_decorrelate = ["2016APV","2016","2017","2018"]
       for category in self.categories[ "ABCDNN" ]:
         tag = abcdnn_tag( category )
         if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNPEAK" ][2]
-          self.add_shape( "ABCDNNPEAK{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+          if config.options["COMBINE"]["SPLIT ABCDNN"]:
+            for i in range(1,config.params["MODIFY BINNING"]["ABCDNN SPLIT REGIONS"]+1):
+              if self.year in era_decorrelate:
+                self.add_shape( "ABCDNNPEAKR{}{}$ERA".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+              else:
+                self.add_shape( "ABCDNNPEAKR{}{}".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNPEAK{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNPEAK{}".format(tag), ["ABCDNN"], [category], bSmooth, False )
+          else:
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNPEAK{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNPEAK{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+
         if config.systematics[ "MC" ][ "ABCDNNTAIL" ][0] and "ABCDNNTAIL" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNTAIL" ][2]
-          self.add_shape( "ABCDNNTAIL{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+          if config.options[ "COMBINE" ][ "SPLIT ABCDNN" ]:
+            for i in range(1,config.params["MODIFY BINNING"]["ABCDNN SPLIT REGIONS"]+1):
+              if self.year in era_decorrelate:
+                self.add_shape( "ABCDNNTAILR{}{}$ERA".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+              else:
+                self.add_shape( "ABCDNNTAILR{}{}".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNTAIL{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNTAIL{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+          else:
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNTAIL{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNTAIL{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+
         if config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][0] and "ABCDNNCLOSURE" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNCLOSURE" ][2]
-          self.add_shape( "ABCDNNCLOSURE{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+          if config.options[ "COMBINE" ][ "SPLIT ABCDNN" ]:
+            for i in range(1,config.params["MODIFY BINNING"]["ABCDNN SPLIT REGIONS"]+1):
+              if self.year in era_decorrelate:
+                self.add_shape( "ABCDNNCLOSURER{}{}$ERA".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+              else:
+                self.add_shape( "ABCDNNCLOSURER{}{}".format(i,tag), ["ABCDNN"], [category], bSmooth, False )
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNCLOSURE{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNCLOSURE{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+          else:
+            if self.year in era_decorrelate:
+              self.add_shape( "ABCDNNCLOSURE{}$ERA".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
+            else:
+              self.add_shape( "ABCDNNCLOSURE{}".format( tag ), [ "ABCDNN" ], [ category ], bSmooth, False )
 
     print( "[DONE] Added Extended ABCD normalization systematics and ABCDNN shape systematics" )
 

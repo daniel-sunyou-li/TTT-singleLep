@@ -30,7 +30,7 @@ options = {
     "PDF": True,          # pdf systematics
     "SYSTEMATICS": True,  # include other systematics defined in systematics[ "MC" ]
     "ABCDNN": True,
-    "FINAL ANALYSIS": False # true when ready for unblinding, otherwise keep false
+    "FINAL ANALYSIS": True # true when ready for unblinding, otherwise keep false
   },
   "HISTS": {
     "RENORM PDF": True,        # renormalize the PDF weights
@@ -38,7 +38,7 @@ options = {
     "SCALE SIGNAL 1PB": False, # Scale the signal xsec to 1 PB for future studies
   },
   "MODIFY BINNING": {
-    "BLIND": True,                #  
+    "BLIND": True,                 #  
     "PDF": True,                   # add PDF systematic uncertainty
     "CR SYST": False,              # add systematic uncertainty to control region
     "SHAPE SYST": True,            # add systematic shape uncertainty 
@@ -47,6 +47,8 @@ options = {
     "PS WEIGHTS": True,            # include parton shower weighting systematics as well as evaluate systematic envelope (PSwgt)
     "NORM THEORY SIG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the signal
     "NORM THEORY BKG SYST": True,  # normalize the theoretical systematics (MURF, PS WEIGHTS, PDF) for the background
+    "PARTIAL FIT": True,           # Only retain a portion of the fit distribution
+    "PARTIAL FIT UPPER": True,    # partial fit on upper cutoff or lower cutoff
     "SCALE PROCESS": True,         # scale process cross sections by specified value in xsec.py 
     "SYMM SMOOTHING": False,       # symmetrize the systematics per bin before smoothing
     "SYMM TOP PT": True,           # symmetrize top pt systematic
@@ -69,6 +71,7 @@ options = {
   "COMBINE": {
     "BLIND": True,            # use Asimov MC as obs or use data
     "ABCDNN": True,           # use ABCDnn and extended ABCD corrected histograms
+    "SPLIT ABCDNN": True,     # use split ABCDnn shape systematic histograms rather than combined
     "SMOOTH": True,           # use smoothed systematic histograms
     "GROUPS": False,          # evaluate significance and limits with combinations of systematic groups
     "COMBINE SIGNALS": False, # combine all signal samples into one histogram
@@ -109,16 +112,16 @@ params = {
   },
   "EXTENDED ABCD": { # transfer factors
     "nJ6pnB2pnHOT0": {
-      "16APV": { "isE": 0.05428, "isM": 0.05712 },
-      "16":    { "isE": 0.04171, "isM": 0.04269 },
-      "17":    { "isE": 0.01908, "isM": 0.02116 },
-      "18":    { "isE": 0.03629, "isM": 0.03515 },
+      "16APV": { "isE": 0.05818, "isM": 0.06174 }, # NLO updated
+      "16":    { "isE": 0.04492, "isM": 0.04682 }, # NLO updated
+      "17":    { "isE": 0.03947, "isM": 0.04402 }, # NLO updated
+      "18":    { "isE": 0.03813, "isM": 0.03698 }, # NLO updated
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": { "isE": 0.04070, "isM": 0.04452 },
-      "16":    { "isE": 0.03755, "isM": 0.03963 },
-      "17":    { "isE": 0.01827, "isM": 0.01983 },
-      "18":    { "isE": 0.03436, "isM": 0.03395 },
+      "16APV": { "isE": 0.04266, "isM": 0.04500 }, # NLO updated
+      "16":    { "isE": 0.03769, "isM": 0.04060 }, # NLO updated
+      "17":    { "isE": 0.03594, "isM": 0.03861 }, # NLO updated
+      "18":    { "isE": 0.03405, "isM": 0.03375 }, # NLO updated
     }
   },
   "HISTS": {
@@ -132,8 +135,10 @@ params = {
   "MODIFY BINNING": {
     "STAT THRESHOLD": 0.3,      # the ratio of yield error to yield must be below this value per bin ( default = 0.3 )
     "MIN MERGE": 1,             # merge at least this number of bins
+    "PARTIAL FIT": 0.5,         # percentage of the original fit bins to retain for fit
     "THRESHOLD BB": 0.05 ,      # total bkg statistical uncertainty threshold to assign bin-by-bin nuisances  ( default = 0.05 )
     "SMOOTHING ALGO": "lowess", # smoothing algorithm to use
+    "ABCDNN SPLIT REGIONS": 2,  # number of regions to split the abcdnn uncertainty into
     "LOWESS": 0.33,             # relative proportion of neighboring datapoints to consider during smoothing 
     "REMOVE SYST FROM YIELD": [ # list of systematics to exclude from yield calculation
       "HDAMP", "UE", 
@@ -143,29 +148,28 @@ params = {
   "COMBINE": {
     "BACKGROUNDS": [ "TTTT", "TTH", "TOP", "EWK", "ST", "QCD", "TTBB", "TTNOBB" ], 
     "DATA": [ "data_obs" ],
-    "SIGNALS": [ "TTTJ", "TTTW" ],
+    "SIGNALS": [ "TTTJm", "TTTJp", "TTTWm", "TTTWp" ],
     "FITS": { # arguments used with Combine -M MultiDimFit
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=0",
+        "--cminDefaultMinimizerStrategy=1",
         #"--setCrossingTolerance=0.001",   # default is 0.0001
         #"--setRobustFitTolerance=1000",   # default is 0.1, setting higher to account for poor EDM initial state
         #"--stepSize=0.01",                 # default is 0.2
-        #"--robustFit=1",
-        "--rMin -50",
-        "--rMax 150",
+        "--robustFit=1",
+        "--rMin -400",
+        "--rMax 300",
         #"--robustHesse=1",
         #"--freezeParameter TOPPTLOWESS",
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,HOTCLOSURELOWESS16APV,", # 2016APV freeze
         #"--freezeParameter ISRTOPLOWESS,JECFLAVORQCDLOWESS,MURFTTBARLOWESS,FSRTTBARLOWESS,ISRTTBARLOWESS", # 2016 freeze
-        "--expectSignal=1",
-        "-t -1",
+        #"--expectSignal=1",
+        #"-t -1",
         "-m 125", # higgs mass, doesn't really matter for three top
       ]
     },
     "SIGNIFICANCE": { # arguments used with Combine -M Significance
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=0",
-        #"--cminDefaultMinimizerTolerance=0.00001",
+        "--cminDefaultMinimizerStrategy=1",
         "-m 125",
         #"--rMin -40",
         #"--rMax 40"
@@ -173,10 +177,10 @@ params = {
     },
     "LIMITS": { # arguments used with Combine -M AsymptoticLimits
       "ARGS": [
-        "--cminDefaultMinimizerStrategy=0",
+        "--cminDefaultMinimizerStrategy=1",
         #"--cminDefaultMinimizerTolerance=0.00001",
-        #"--rMin=-40",
-        #"--rMax=40"
+        "--rMin=-100",
+        "--rMax=100"
       ]
     }
   }
@@ -300,8 +304,8 @@ systematics = {
     "TTH": 1.08,             # from theory
     "TTTJ": [ 0.90, 1.12 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
     "TTTW": [ 0.85, 1.16 ],  # NLO uncertainty from https://github.com/gdurieux/triple-top-nlo
-    "SIG": [ 0.87, 1.15 ],
-    "TTTT": [ 0.86, 1.08 ],  # same as TOP group
+    "SIG":  [ 0.87, 1.15 ],
+    "TTTT": [ 0.886, 1.036 ],  # https://www.arxiv.org/pdf/2212.03259 -> 0.886, 1.036
     "TOP": 1.05,             # aligning with ttV, ttH and tt+xy uncertainties from OSDL and SSDL 4T analyses
     "ST": 1.04,                 
     "EWK": 1.038             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV scale and pdf added in quadrature 
@@ -309,44 +313,44 @@ systematics = {
   # all of the Extended ABCD uncertainties calculated using specific analysis region (i.e. nJ = {4,5,6+} and nB = {2,3+} ), make sure using corresponding uncertainty value for given analysis regions
   "EXTABCDSYST": {
     "nJ6pnB2pnHOT0": {
-      "16APV": { "isE": 1.021, "isM": 1.020 },
-      "16":    { "isE": 1.020, "isM": 1.018 },
-      "17":    { "isE": 1.013, "isM": 1.011 },
-      "18":    { "isE": 1.011, "isM": 1.009 }
+      "16APV": { "isE": 1.033, "isM": 1.029 }, # NLO updated
+      "16":    { "isE": 1.034, "isM": 1.030 }, # NLO updated
+      "17":    { "isE": 1.022, "isM": 1.020 }, # NLO updated
+      "18":    { "isE": 1.018, "isM": 1.016 }  # NLO updated
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": { "isE": 1.036, "isM": 1.033 },
-      "16":    { "isE": 1.035, "isM": 1.032 },
-      "17":    { "isE": 1.022, "isM": 1.020 },
-      "18":    { "isE": 1.019, "isM": 1.018 }
+      "16APV": { "isE": 1.070, "isM": 1.060 }, # NLO updated
+      "16":    { "isE": 1.068, "isM": 1.060 }, # NLO updated
+      "17":    { "isE": 1.045, "isM": 1.039 }, # NLO updated
+      "18":    { "isE": 1.037, "isM": 1.033 }  # NLO updated
     },
   },
   "EXTABCDSTAT": {
     "nJ6pnB2pnHOT0": {
-      "16APV": { "isE": 1.010, "isM": 1.008 },
-      "16":    { "isE": 1.010, "isM": 1.008 },
-      "17":    { "isE": 1.007, "isM": 1.006 },
-      "18":    { "isE": 1.006, "isM": 1.005 }
+      "16APV": { "isE": 1.010, "isM": 1.009 }, # NLO updated
+      "16":    { "isE": 1.010, "isM": 1.009 }, # NLO updated
+      "17":    { "isE": 1.007, "isM": 1.006 }, # NLO updated
+      "18":    { "isE": 1.005, "isM": 1.005 }  # NLO updated
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": { "isE": 1.012, "isM": 1.011 },
-      "16":    { "isE": 1.011, "isM": 1.010 },
-      "17":    { "isE": 1.008, "isM": 1.007 },
-      "18":    { "isE": 1.007, "isM": 1.006 }
+      "16APV": { "isE": 1.013, "isM": 1.012 }, # NLO updated
+      "16":    { "isE": 1.013, "isM": 1.011 }, # NLO updated
+      "17":    { "isE": 1.008, "isM": 1.007 }, # NLO updated
+      "18":    { "isE": 1.007, "isM": 1.006 }  # NLO updated
     },
   },
   "EXTABCDCLOSURE": { 
     "nJ6pnB2pnHOT0": {
-      "16APV": { "isE": 1.10, "isM": 1.05 }, 
-      "16":    { "isE": 1.10, "isM": 1.05 },
-      "17":    { "isE": 1.10, "isM": 1.05 },
-      "18":    { "isE": 1.10, "isM": 1.05 }
+      "16APV": { "isE": 1.025, "isM": 1.056 }, # NLO updated
+      "16":    { "isE": 1.105, "isM": 1.103 }, # NLO updated
+      "17":    { "isE": 1.146, "isM": 1.117 }, # NLO updated 1.146, 1.117
+      "18":    { "isE": 1.165, "isM": 1.154 }  # NLO updated
     },
     "nJ6pnB2pnHOT1p": {
-      "16APV": { "isE": 1.15, "isM": 1.10 },
-      "16":    { "isE": 1.15, "isM": 1.10 },
-      "17":    { "isE": 1.15, "isM": 1.10 },
-      "18":    { "isE": 1.15, "isM": 1.10 }
+      "16APV": { "isE": 1.186, "isM": 1.107 }, # NLO updated
+      "16":    { "isE": 1.064, "isM": 1.106 }, # NLO updated
+      "17":    { "isE": 1.192, "isM": 1.147 }, # NLO updated 1.192, 1.147
+      "18":    { "isE": 1.176, "isM": 1.191 }  # NLO updated
     },
   },
   "PILEUP": 1.046,
@@ -404,13 +408,13 @@ hist_bins = {
   "VR": {
     "LEPTON": [ "E", "M" ],
     "NH": [ "0p" ],
-    "NB": [ "1p" ],
+    "NB": [ "2p" ],
     "NJ": [ "4b5" ]
   },
   "BASELINE": {
     "LEPTON": [ "E", "M" ],
     "NH": [ "0p" ],
-    "NB": [ "1p" ],
+    "NB": [ "2p" ],
     "NJ": [ "4p" ]
   },
 }
@@ -422,7 +426,7 @@ event_cuts = {
   "mtW": 0,           # BASELINE = 0,   S1/2/3 = 0
   "met+mtW": 0.,      # BASELINE = 0,   S1 = 0, S2 = 70, S2 = 70
   "ht": 500,          # BASELINE = 450 for 2016APV/2016 and 500 for 2017/2018
-  "mindr_lj": 0.4,    # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
+  "mindr_lj": 0.4,     # BASELINE = 0.2,   S1/2 = 0.2, S3 = 0.2
   "dnn": 0.           # BASELINE = 0,   S1 = 0, S2 = 0.2, S3 = 0
 }
 
@@ -455,7 +459,7 @@ plot_params = {
     "NB": ( "NJetsCSV_JetSubCalc", bins( 0, 6, 7 ), "N_{B}" ),
     "NW": ( "NJetsWtagged", bins( 0, 6, 7 ), "W-tagged Jet Multiplicity" ),
     "NT": ( "NJetsTtagged", bins( 0, 4, 5 ), "t-tagged Jet Multiplicity" ),
-    "DNN": ( "DNN_1to40_nJ4pnB1p", bins( 0, 1, 51 ), "DNN" ),
+    "DNN": ( "DNN_1to30_nJ4pnB1p", bins( 0, 1, 51 ), "DNN" ),
     "DNN3": ( "DNN_1to3_3t", bins( 0, 1, 41 ), "DNN (1-3)" ), 
     "DNN5": ( "DNN_1to5_3t", bins( 0, 1, 41 ), "DNN (1-5)" ),
     "DNN10": ( "DNN_1to10_3t", bins( 0, 1, 41 ), "DNN (1-10)" ),
@@ -518,7 +522,7 @@ plot_params = {
     "BDT3J_2": ( "BDTtrijet2", bins( -1, 1, 21 ), "trijet2 discriminator" ),
     "BDT3J_3": ( "BDTtrijet3", bins( -1, 1, 21 ), "trijet3 discriminator" ),
     "BDT3J_4": ( "BDTtrijet4", bins( -1, 1, 21 ), "trijet4 discriminator" ),
-    "NH": ( "NresolvedTops1pFake", bins( 0, 3, 4 ), "N_{HOT}" ),
+    "NH": ( "NresolvedTops1pFake", bins( 0, 4, 5 ), "N_{HOT}" ),
     "HOT1_MASS": ( "HOTGoodTrijet1_mass", bins( 0, 250, 21 ), "HOTGoodTrijet1_mass [GeV]" ),
     "HOT1_DJMASS": ( "HOTGoodTrijet1_dijetmass", bins( 0, 250, 21 ), "HOTGoodTrijet1_dijetmass [GeV]" ),
     "HOT1_PTRATIO": ( "HOTGoodTrijet1_pTratio", bins( 0, 1, 21 ), "HOTGoodTrijet1_pTratio" ),
