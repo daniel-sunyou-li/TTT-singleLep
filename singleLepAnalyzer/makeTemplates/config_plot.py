@@ -15,7 +15,7 @@ options = {
   "SCALE SIGNAL XSEC": False,
   "SYMM ERROR": False,
   "REAL PULL": False,
-  "PARTIAL BLIND": True,        # unblind a portion of the background-enriched region, specify % in params
+  "PARTIAL BLIND": False,        # unblind a portion of the background-enriched region, specify % in params
   "BLIND": False,
   "Y LOG": True,
   "SMOOTH": True,
@@ -53,14 +53,14 @@ params = {
     "TT2B": ROOT.kRed + 3,
     "TTBB": ROOT.kOrange + 7, 
     "TTNOBB": ROOT.kOrange - 2,
-    "TTTT": ROOT.kAzure - 3,
-    "TTH": ROOT.kAzure + 10,  
+    "TTTT": ROOT.kAzure+1,
+    "TTH": ROOT.kGray+2,  
     "EWK": ROOT.kGreen + 2,
-    "TOP": ROOT.kTeal + 1, 
+    "TOP": ROOT.kCyan-3, 
     "ST": ROOT.kSpring + 7,
     "QCD": ROOT.kRed + 2,
-    "TTBAR": ROOT.kOrange - 2,
-    "ABCDNN": ROOT.kOrange - 2,
+    "TTBAR": ROOT.kOrange-3,
+    "ABCDNN": ROOT.kOrange-3,
     "ERROR": ROOT.kBlack,
   },
   "SIG COLORS": {

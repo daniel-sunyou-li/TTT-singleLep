@@ -74,7 +74,7 @@ options = {
     "SPLIT ABCDNN": True,     # use split ABCDnn shape systematic histograms rather than combined
     "SMOOTH": True,           # use smoothed systematic histograms
     "GROUPS": False,          # evaluate significance and limits with combinations of systematic groups
-    "COMBINE SIGNALS": False, # combine all signal samples into one histogram
+    "COMBINE SIGNALS": True, # combine all signal samples into one histogram
     "IMPACTS": {
       "MASKED": False,        # include evaluations of impacts with channels masked
       "FREEZE": False,        # include evaluations of impacts with NP frozen
