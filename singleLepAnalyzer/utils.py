@@ -64,7 +64,7 @@ def hist_parse( hist_name, samples ):
       parse[ "PROCESS" ] = part
       parse[ "GROUP" ] = "SIG"
       parse[ "COMBINE" ] = part
-    elif part in samples.groups[ "BKG" ][ "SUPERGROUP" ].keys() + [ "ABCDNN" ]:
+    elif part in list(samples.groups[ "BKG" ][ "SUPERGROUP" ].keys()) + [ "ABCDNN" ]:
       parse[ "GROUP" ] = "BKG"
       parse[ "COMBINE" ] = part
     elif part in samples.groups[ "BKG" ][ "ALL" ]:

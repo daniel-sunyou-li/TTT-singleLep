@@ -36,6 +36,7 @@ def condor_template( logName, nameCondor ):
   jobFile.write(
 """universe = vanilla \n\
 Executable = {0}.sh \n\
+Environment = "HOME=/home/dli50" \n\
 Should_Transfer_Files = YES \n\
 WhenToTransferOutput = ON_EXIT \n\
 JobBatchName = {1} \n\
@@ -58,7 +59,7 @@ def make_templates():
   os.chdir( "makeTemplates" )
   for training in trainings:
     for variable in training[ "variable" ]:
-      command = "python condor_templates.py -y {} -v {} -p {} -r {}".format(
+      command = "python3 condor_templates.py -y {} -v {} -p {} -r {}".format(
         training[ "year" ],
         variable,
         training[ "tag" ],
@@ -84,8 +85,8 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python templates.py -y {2} -t {3} -v {4} -r {5} \n\
-python modify_binning.py -y {2} -t {3} -v {4} -r {5} {6}".format( 
+python3 templates.py -y {2} -t {3} -v {4} -r {5} \n\
+python3 modify_binning.py -y {2} -t {3} -v {4} -r {5} {6}".format( 
   cmsswbase, os.getcwd(), training[ "year" ], training[ "tag" ], variable, args.region, doABCDnn )
       )
       shell.close()
@@ -111,8 +112,8 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
 cd {1} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6} \n\
-python plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6}".format(
+python3 plot_templates.py -y {2} -v {3} -t {4} -r {5} --ratios --templates {6} \n\
+python3 plot_templates.py -y {2} -v {3} -t {4} -r {5} --shifts {6}".format(
   cmsswbase, os.getcwd(), 
   training[ "year" ], variable, training[ "tag" ], args.region, argHTML
 )
@@ -197,7 +198,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {0} \n\
 eval `scramv1 runtime -sh`\n\
 cd {1} \n\
-python create_datacard.py -y {2} -v {3} -r {4} -t {5} {6} \n\
+python3 create_datacard.py -y {2} -v {3} -r {4} -t {5} {6} \n\
 cd limits_UL{2}_{3}_{4}_{5}_{7}{15}\n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 8\n\
 ValidateDatacards.py cmb/combined.txt.cmb --printLevel 2\n\
@@ -208,7 +209,7 @@ mv *.png cmb/FitDiagnostics_UL{2}_{3}_{4}_{5}_{7}/ \n\
 combine -M Significance cmb/workspace.root {9} {10} > significance_merge{13}_stat{14}{16}.txt\n\
 combine -M AsymptoticLimits cmb/workspace.root {11} {12} > limits_merge{13}_stat{14}{16}.txt\n\
 cd ..\n\
-python systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
+python3 systematicsAnalyzer.py limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/combined.txt.cmb -a > limits_UL{2}_{3}_{4}_{5}_{7}{15}/cmb/datacard_UL{2}_{3}_{4}_{5}_{7}.html".format(
             cmsswbase, os.getcwd(), training[ "year" ], variable, args.region, training[ "tag" ], 
             systCombo[ systTag ], postfix, 
             " ".join( config.params[ "COMBINE" ][ "FITS" ][ "ARGS" ] ),
@@ -257,7 +258,7 @@ combine -M FitDiagnostics workspace.root {4}\n\
 mkdir -vp FitDiagnostics_{2}\n\
 mv *.png FitDiagnostics_{2}/ \n\
 cd ../../\n\
-python systematicsAnalyzer.py Results/{2}/workspace.txt -a > Results/{2}/datacard_{2}.html\n\
+python3 systematicsAnalyzer.py Results/{2}/workspace.txt -a > Results/{2}/datacard_{2}.html\n\
 mkdir -vp Results/{3}/\n\
 combineCards.py UL16APV=limits_UL16APV_{3}/cmb/combined.txt.cmb UL16=limits_UL16_{3}/cmb/combined.txt.cmb UL17=limits_UL17_{3}/cmb/combined.txt.cmb  UL18=limits_UL18_{3}/cmb/combined.txt.cmb > Results/{3}/workspace.txt \n\
 text2workspace.py Results/{3}/workspace.txt -o Results/{3}/workspace.root --channel-masks\n\
@@ -343,7 +344,7 @@ cd {0}\n\
 eval `scramv1 runtime -sh`\n\
 cd {1}\n\
 mkdir Results/{3}_{4}_{5}_{6}/correlations\n\
-python diffNuisances.py -f html -p {2} Results/{3}_{4}_{5}_{6}/fitDiagnosticsTest.root > correlation_{2}_{3}_{4}_{5}_{6}.html\n\
+python3 diffNuisances.py -f html -p {2} Results/{3}_{4}_{5}_{6}/fitDiagnosticsTest.root > correlation_{2}_{3}_{4}_{5}_{6}.html\n\
 mv correlation_{2}_{3}_{4}_{5}_{6}.html Results/{3}_{4}_{5}_{6}/correlations/".format( 
       cmsswbase, os.getcwd(), systName, variable, args.region, tag, postfix
       )
@@ -436,7 +437,7 @@ source /cvmfs/cms.cern.ch/cmsset_default.sh\n\
 cd {0}\n\
 eval `scramv1 runtime -sh`\n\
 cd {1}\n\
-python diffNuisances.py -f html -a -p {2} limits_UL{3}_{4}_{5}_{6}_{7}/fitDiagnosticsTest.root > correlation_UL{3}_{2}.html\n\
+python3 diffNuisances.py -f html -a -p {2} limits_UL{3}_{4}_{5}_{6}_{7}/fitDiagnosticsTest.root > correlation_UL{3}_{2}.html\n\
 mv correlation_UL{3}_{2}.html limits_UL{3}_{4}_{5}_{6}_{7}/cmb/".format( 
   cmsswbase, os.getcwd(), systName, training[ "year" ], variable, args.region, training[ "tag" ], tagABCDnn + tagSmooth
 )
@@ -896,12 +897,12 @@ def likelihood_fit_2D():
 source /cvmfs/cms.cern.ch/cmsset_default.sh \n\
 cd {0} \n\
 eval `scramv1 runtime -sh` \n\
-python create_datacard.py -y {2} -v {3} -r {4} -t {5} --xsecSyst \n\
+python3 create_datacard.py -y {2} -v {3} -r {4} -t {5} --xsecSyst \n\
 cd {1}/limits_UL{2}_{3}_{4}_{5}_{6}/ \n\
 combineTool.py -M T2W -i cmb/ -o workspace.root --parallel 8 \n\
 text2workspace.py cmb/combined.txt.cmb -m 125 -P HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel --PO \"map=.*/TTTT:r_TTTT[1,0,10]\" --PO \"map=.*/SIG:r_SIG[1,0,10]\" -o cmb/workspace_2DNLL.root \n\
 combine -M MultiDimFit cmb/workspace_2DNLL.root -n .scan2D --algo grid --points 1600 -t -1 --cminDefaultMinimizer 0 -P r_SIG -P r_TTTT --setParameterRanges r_SIG=0,10:r_TTTT=0,10 \n\
-python plot_2D_scan.py -f cmb/higgsCombine.scan2D.MultiDimFit.mH125.root \n\
+python3 plot_2D_scan.py -f cmb/higgsCombine.scan2D.MultiDimFit.mH125.root \n\
 combine -M MultiDimFit cmb/workspace_2NLL.root -n .robustHesse -P r_SIG -P r_TTTT --setParameterRanges r_SIG=0,10:r_TTTT=0,10 --robustHesse 1 --robustHesseSave 1 --saveFitResult --cminDefaultMinimizer 1 -t -1 \n\
 ".format(
   cmsswbase, os.getcwd(), training_[ "year" ], variable_, args.region, training_[ "tag" ], postfix,

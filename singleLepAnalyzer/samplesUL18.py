@@ -176,6 +176,6 @@ groups[ "BKG" ][ "HT" ] = {
   "QCD": groups[ "BKG" ][ "SUPERGROUP" ][ "QCD" ]
 }
   
-groups[ "BKG" ][ "TOPPT" ] = {
-  process: np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TTBB", "TT1B", "TT2B" ] ] ).flatten().tolist()
-}
+#groups[ "BKG" ][ "TOPPT" ] = {
+#  process: np.array( [ groups[ "BKG" ][ "PROCESS" ][ process ] for process in [ "TTJJ", "TTCC", "TTBB", "TT1B", "TT2B" ] ] ).flatten().tolist()
+#}
