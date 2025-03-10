@@ -580,6 +580,7 @@ class DataCard():
       era_decorrelate = ["2016APV","2016","2017","2018"]
       for category in self.categories[ "ABCDNN" ]:
         tag = abcdnn_tag( category )
+        lepton_tag = "isE" if "isE" in category else "isM" 
         if config.systematics[ "MC" ][ "ABCDNNPEAK" ][0] and "ABCDNNPEAK" in config.params[ "ABCDNN" ][ "SYSTEMATICS" ]:
           bSmooth = self.smooth and config.systematics[ "MC" ][ "ABCDNNPEAK" ][2]
           if config.options["COMBINE"]["SPLIT ABCDNN"]:
